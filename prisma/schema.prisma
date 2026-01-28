@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Bill {
+  id             String   @id @default(cuid())
+  billNumber     Int      @unique @default(autoincrement())
+  vehicleNo      String
+  customerName   String
+  route          String
+  startMeter     Float
+  endMeter       Float
+  hireRate       Float
+  allowedKm      Float    @default(0) // Standard included distance for packages
+  waitingCharge  Float    @default(0)
+  gatePass       Float    @default(0)
+  packageCharge  Float    @default(0)
+  totalAmount    Float
+  currency       String   @default("LKR")
+  exchangeRate   Float    @default(1.0)
+  totalAmountLKR Float    @default(0)
+  paymentMethod  String   @default("CASH") // CASH, CREDIT
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("bills")
+}
+
+model Vehicle {
+  id          String   @id @default(cuid())
+  vehicleNo   String   @unique
+  model       String?
+  category    String   @default("CAR") // CAR, VAN, SUV, etc.
+  status      String   @default("ACTIVE") // ACTIVE, MAINTENANCE, RETIRED
+  defaultRate Float    @default(0)
+  excessKmRate Float   @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("vehicles")
+}
+
+model BusinessProfile {
+  id          String   @id @default(cuid())
+  companyName String   @default("My Transport Company")
+  address     String?
+  phone       String?
+  email       String?
+  website     String?
+  usdRate     Float    @default(300.0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("business_profile")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  mobile    String?
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("customers")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Booking {
+  id           String   @id @default(cuid())
+  vehicleNo    String
+  customerName String
+  startDate    DateTime
+  endDate      DateTime?
+  destination  String?
+  status       String   @default("CONFIRMED") // CONFIRMED, CANCELLED, COMPLETED
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("bookings")
+}

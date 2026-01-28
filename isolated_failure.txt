@@ -1,0 +1,29 @@
+
+> vehicle-hire-billing@0.1.0 test
+> jest src/__tests__/properties/form-submission-feedback.test.tsx
+
+FAIL src/__tests__/properties/form-submission-feedback.test.tsx (33.463 s)
+  Property 14: Form Submission Feedback
+    × should provide feedback for any submission outcome (30602 ms)
+
+  ● Property 14: Form Submission Feedback › should provide feedback for any submission outcome
+
+    thrown: "Exceeded timeout of 30000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 30 |[39m     })[33m;[39m
+     [90m 31 |[39m
+    [31m[1m>[22m[39m[90m 32 |[39m     test([32m'should provide feedback for any submission outcome'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m    |[39m     [31m[1m^[22m[39m
+     [90m 33 |[39m         [36mawait[39m fc[33m.[39massert(
+     [90m 34 |[39m             fc[33m.[39masyncProperty(
+     [90m 35 |[39m                 fc[33m.[39mrecord({[0m
+
+      at test (src/__tests__/properties/form-submission-feedback.test.tsx:32:5)
+      at Object.describe (src/__tests__/properties/form-submission-feedback.test.tsx:26:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        36.734 s
+Ran all test suites matching src/__tests__/properties/form-submission-feedback.test.tsx.
