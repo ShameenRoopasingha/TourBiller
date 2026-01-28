@@ -182,7 +182,7 @@ export function BillCreator({
                                     Print Invoice
                                 </a>
                             </Button>
-                            <Button variant="outline" size="sm" className="bg-white" onClick={() => window.location.href = '/dashboard'}>
+                            <Button variant="outline" size="sm" className="bg-white" onClick={() => window.location.href = '/'}>
                                 Go to Dashboard
                             </Button>
                         </div>

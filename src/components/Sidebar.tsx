@@ -6,7 +6,7 @@ import { LayoutDashboard, Car, Users, FileText, CalendarDays } from 'lucide-reac
 import { cn } from '@/lib/utils';
 
 const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Vehicles', href: '/vehicles', icon: Car },
     { name: 'Customers', href: '/customers', icon: Users },
     { name: 'Bookings', href: '/bookings', icon: CalendarDays },
@@ -19,7 +19,7 @@ export function Sidebar() {
     return (
         <div className="h-screen w-64 bg-card border-r border-border flex flex-col fixed left-0 top-0">
             <div className="p-6 border-b border-border">
-                <Link href="/dashboard" className="flex items-center gap-2 font-bold text-2xl tracking-tight">
+                <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight">
                     <span className="text-primary">Tour</span>Biller
                 </Link>
             </div>

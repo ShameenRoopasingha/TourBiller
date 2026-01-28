@@ -62,7 +62,7 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
     }
 
     // Revalidate the dashboard page
-    revalidatePath('/dashboard');
+    revalidatePath('/');
 
     return {
       success: true,
