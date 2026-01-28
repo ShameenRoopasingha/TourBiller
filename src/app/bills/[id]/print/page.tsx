@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { getBillById, getBusinessProfile } from '@/lib/actions';
+import { type Bill, type BusinessProfile } from '@/lib/validations';
 import { InvoiceTemplate } from '@/components/InvoiceTemplate';
 
 
@@ -17,9 +18,8 @@ async function PrintBill({ id }: { id: string }) {
     }
 
     return <InvoiceTemplate
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        bill={billResult.data as any}
-        businessProfile={profileResult.success ? (profileResult.data as any) : undefined}
+        bill={billResult.data as Bill}
+        businessProfile={profileResult.success ? (profileResult.data as BusinessProfile) : undefined}
     />;
 }
 

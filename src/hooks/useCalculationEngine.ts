@@ -87,7 +87,8 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
 
   // Update field function
   const updateField = useCallback((field: string, value: number) => {
-    if (field in fields) {
+    // Check if the field is a valid calculation field using the static initial object
+    if (Object.prototype.hasOwnProperty.call(initialFields, field)) {
       setFields(prev => ({
         ...prev,
         [field]: Math.max(0, value), // Ensure non-negative values

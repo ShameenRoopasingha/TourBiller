@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Loader2, Search, Users, Plus, Pencil, Trash2 } from 'lucide-react';
 import { getCustomers, deleteCustomer } from '@/lib/customer-actions';
@@ -36,7 +36,7 @@ export function CustomerList() {
 
     const query = searchParams.get('q') || '';
 
-    const fetchCustomers = async () => {
+    const fetchCustomers = useCallback(async () => {
         setLoading(true);
         setError(null);
 
@@ -49,12 +49,12 @@ export function CustomerList() {
         }
 
         setLoading(false);
-    };
+    }, [query]);
 
     useEffect(() => {
         const timeoutId = setTimeout(fetchCustomers, 300);
         return () => clearTimeout(timeoutId);
-    }, [query]);
+    }, [fetchCustomers]);
 
     const handleSearch = (term: string) => {
         const params = new URLSearchParams(searchParams);

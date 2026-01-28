@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Car, Users, FileText, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -42,25 +42,24 @@ export function Sidebar() {
                     );
                 })}
                 <div className="pt-4 mt-4 border-t">
-                    <Link href="/settings">
-                        <div className={cn(
-                            "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-                            pathname === '/settings'
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                        )}>
-                            <Users className="h-5 w-5" />
-                            <span className="font-medium">Settings</span>
-                        </div>
-                    </Link>
+                    {/* Settings moved to bottom footer */}
                 </div>
             </nav>
 
-            <div className="p-4 border-t border-border">
-                <div className="text-xs text-muted-foreground text-center">
-                    Vehicle Hire Billing System
-                    <br />v0.1.0
+            <div className="p-4 border-t border-border flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                    <span className="font-semibold">TourBiller</span> v0.1
                 </div>
+                <Link href="/settings" aria-label="Settings">
+                    <div className={cn(
+                        "p-2 rounded-full transition-colors",
+                        pathname === '/settings'
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                    )}>
+                        <Settings className="h-5 w-5" />
+                    </div>
+                </Link>
             </div>
         </div>
     );
