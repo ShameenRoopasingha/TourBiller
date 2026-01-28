@@ -17,7 +17,8 @@ async function PrintBill({ id }: { id: string }) {
     }
 
     return <InvoiceTemplate
-        bill={billResult.data}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        bill={billResult.data as any}
         businessProfile={profileResult.success ? profileResult.data : undefined}
     />;
 }
