@@ -29,7 +29,8 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
     const [error, setError] = useState<string | null>(null);
 
     const form = useForm<BusinessProfileFormData>({
-        resolver: zodResolver(BusinessProfileSchema),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(BusinessProfileSchema) as any,
         defaultValues: {
             companyName: initialData?.companyName || 'My Transport Company',
             address: initialData?.address || '',
