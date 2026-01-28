@@ -143,7 +143,7 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
                 <div className="text-center text-[9px] text-gray-400 mt-2">
                     System Generated Invoice | Thank you for your business!
                     <div className="mt-0.5 text-[8px] opacity-70">
-                        Powered by <span className="font-semibold">Bitgard Software</span>
+                        Powered by <span className="font-semibold text-black">Bitgard PVT LTD</span> (+94 70 563 3969)
                     </div>
                 </div>
             </div>
