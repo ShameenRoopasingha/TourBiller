@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus, Printer } from 'lucide-react';
+import { Loader2, Printer } from 'lucide-react';
 import { BillSchema, type BillFormData, type Vehicle, type Customer } from '@/lib/validations';
 import { createBill } from '@/lib/actions';
 import { getVehicles } from '@/lib/vehicle-actions';
@@ -92,6 +92,8 @@ export function BillCreator({
         },
     });
 
+    const watchedAllowedKm = form.watch('allowedKm');
+
     // Effect to check if vehicle selection needs to trigger rate update
     useEffect(() => {
         if (initialVehicleNo && vehicles.length > 0) {
@@ -145,6 +147,21 @@ export function BillCreator({
         const value = parseFloat(e.target.value) || 0;
         fieldChange(value);
         updateField(fieldName, value);
+    };
+
+    const handleVehicleChange = (
+        e: React.ChangeEvent<HTMLInputElement>,
+        fieldChange: (value: string) => void
+    ) => {
+        const value = e.target.value;
+        fieldChange(value);
+
+        const selectedVehicle = vehicles.find(v => v.vehicleNo === value);
+        if (selectedVehicle) {
+            const rate = selectedVehicle.defaultRate ?? 0;
+            form.setValue('hireRate', rate);
+            updateField('hireRate', rate);
+        }
     };
 
     return (
@@ -344,7 +361,7 @@ export function BillCreator({
                                                 name="hireRate"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>{form.watch('allowedKm') > 0 ? "Excess Rate / km" : "Rate / km"}</FormLabel>
+                                                        <FormLabel>{watchedAllowedKm > 0 ? "Excess Rate / km" : "Rate / km"}</FormLabel>
                                                         <FormControl>
                                                             <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'hireRate')} />
                                                         </FormControl>
@@ -426,15 +443,15 @@ export function BillCreator({
                                                 <span className="text-muted-foreground">Total Distance</span>
                                                 <span className="font-medium">{distance.toFixed(1)} km</span>
                                             </div>
-                                            {form.watch('allowedKm') > 0 && (
+                                            {watchedAllowedKm > 0 && (
                                                 <>
                                                     <div className="flex justify-between text-xs text-muted-foreground pl-2 border-l-2 border-primary/20">
                                                         <span>Included</span>
-                                                        <span>{form.watch('allowedKm')} km</span>
+                                                        <span>{watchedAllowedKm} km</span>
                                                     </div>
                                                     <div className="flex justify-between text-xs text-muted-foreground pl-2 border-l-2 border-primary/20">
                                                         <span>Excess</span>
-                                                        <span>{Math.max(0, distance - form.watch('allowedKm')).toFixed(1)} km</span>
+                                                        <span>{Math.max(0, distance - watchedAllowedKm).toFixed(1)} km</span>
                                                     </div>
                                                 </>
                                             )}
