@@ -10,7 +10,8 @@ async function SettingsContent() {
     return (
         <div className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-bold tracking-tight mb-6">Settings</h1>
-            <BusinessProfileForm initialData={profile} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <BusinessProfileForm initialData={profile as any} />
         </div>
     );
 }
