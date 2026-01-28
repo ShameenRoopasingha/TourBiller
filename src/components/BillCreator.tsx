@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Printer } from 'lucide-react';
 import { BillSchema, type BillFormData, type Vehicle, type Customer } from '@/lib/validations';
@@ -92,7 +92,11 @@ export function BillCreator({
         },
     });
 
-    const watchedAllowedKm = form.watch('allowedKm');
+    const watchedAllowedKm = useWatch({
+        control: form.control,
+        name: 'allowedKm',
+        defaultValue: 0
+    });
 
     // Effect to check if vehicle selection needs to trigger rate update
     useEffect(() => {
