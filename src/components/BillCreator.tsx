@@ -9,7 +9,7 @@ import { BillSchema, type BillFormData, type Vehicle, type Customer } from '@/li
 import { createBill } from '@/lib/actions';
 import { getVehicles } from '@/lib/vehicle-actions';
 import { getCustomers } from '@/lib/customer-actions';
-import { getLastMeterReading } from '@/lib/vehicle-actions';
+
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
