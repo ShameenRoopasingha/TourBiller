@@ -263,3 +263,25 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
     return { success: false, error: 'Failed to update business profile' };
   }
 }
+
+/**
+ * Delete a bill by ID
+ */
+export async function deleteBill(id: string): Promise<ActionResult<void>> {
+  try {
+    await prisma.bill.delete({
+      where: { id },
+    });
+
+    revalidatePath('/bills');
+    revalidatePath('/'); // Update dashboard stats
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting bill:', error);
+    return {
+      success: false,
+      error: 'Failed to delete bill',
+    };
+  }
+}

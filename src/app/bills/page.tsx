@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Plus, Printer, FileText, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { DeleteBillButton } from '@/components/DeleteBillButton';
 
 async function BillsList({ searchQuery }: { searchQuery?: string }) {
     const { success, data: bills, error } = await getBills(searchQuery);
@@ -68,8 +69,8 @@ async function BillsList({ searchQuery }: { searchQuery?: string }) {
                             <TableCell>{bill.vehicleNo}</TableCell>
                             <TableCell>
                                 <span className={`text-xs px-2 py-1 rounded-full font-medium ${bill.paymentMethod === 'CASH'
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-blue-100 text-blue-700'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-blue-100 text-blue-700'
                                     }`}>
                                     {bill.paymentMethod}
                                 </span>
@@ -84,6 +85,7 @@ async function BillsList({ searchQuery }: { searchQuery?: string }) {
                                         <span className="sr-only">Print</span>
                                     </a>
                                 </Button>
+                                <DeleteBillButton billId={bill.id} billNumber={bill.billNumber} />
                             </TableCell>
                         </TableRow>
                     ))}
