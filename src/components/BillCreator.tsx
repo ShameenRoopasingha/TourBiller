@@ -12,6 +12,7 @@ import { getVehicles } from '@/lib/vehicle-actions';
 import { getCustomers } from '@/lib/customer-actions';
 
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
+import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -51,7 +52,6 @@ export function BillCreator({
     const [successId, setSuccessId] = useState<string | null>(null);
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
-    const [customerAddress, setCustomerAddress] = useState('');
 
 
 
@@ -63,6 +63,8 @@ export function BillCreator({
         updateField,
         resetCalculations,
     } = useCalculationEngine();
+
+    const handleEnterKey = useEnterNavigation();
 
     const form = useForm<BillFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,9 +139,7 @@ export function BillCreator({
         });
 
         // Ensure address is sent
-        if (customerAddress) {
-            formData.append('customerAddress', customerAddress);
-        }
+
 
         // Append Booking ID if present to auto-close booking
         if (initialBookingId) {
@@ -228,7 +228,11 @@ export function BillCreator({
             </div>
 
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-6"
+                    onKeyDown={handleEnterKey}
+                >
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
                         {/* LEFT COLUMN: INPUTS */}
@@ -287,9 +291,9 @@ export function BillCreator({
                                                                 field.onChange(e);
                                                                 const selected = customers.find(c => c.name === e.target.value);
                                                                 if (selected && selected.address) {
-                                                                    setCustomerAddress(selected.address);
+                                                                    form.setValue('customerAddress', selected.address);
                                                                 } else {
-                                                                    setCustomerAddress('');
+                                                                    form.setValue('customerAddress', '');
                                                                 }
                                                             }}
                                                         />
@@ -307,16 +311,22 @@ export function BillCreator({
                                         />
                                     </div>
 
-                                    <FormItem>
-                                        <FormLabel>Customer Address</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="Customer Address"
-                                                value={customerAddress}
-                                                onChange={(e) => setCustomerAddress(e.target.value)}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
+                                    <FormField
+                                        control={form.control}
+                                        name="customerAddress"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Customer Address</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Customer Address"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
                                     <FormField
                                         control={form.control}

@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Save } from 'lucide-react';
 import { updateBusinessProfile } from '@/lib/actions';
 import { BusinessProfileSchema, type BusinessProfileFormData, type BusinessProfile } from '@/lib/validations';
+import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,6 +29,7 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const handleEnterKey = useEnterNavigation();
 
     const form = useForm<BusinessProfileFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,7 +95,7 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
                 )}
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" onKeyDown={handleEnterKey}>
                         <FormField
                             control={form.control}
                             name="companyName"

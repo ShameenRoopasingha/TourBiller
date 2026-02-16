@@ -7,6 +7,7 @@ import { Loader2, Plus, Trash2, MapPin } from 'lucide-react';
 
 import { TourScheduleSchema, type TourScheduleFormData } from '@/lib/validations';
 import { createTourSchedule, updateTourSchedule } from '@/lib/tour-schedule-actions';
+import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,6 +52,7 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const handleEnterKey = useEnterNavigation();
 
     const isEditing = !!initialData;
 
@@ -159,7 +161,7 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
     };
 
     return (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={handleEnterKey}>
             {error && (
                 <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>

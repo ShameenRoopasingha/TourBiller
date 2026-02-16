@@ -7,6 +7,7 @@ import { Loader2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { CustomerSchema, type CustomerFormData, type Customer } from '@/lib/validations';
 import { createCustomer, updateCustomer } from '@/lib/customer-actions';
+import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -27,6 +28,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
+    const handleEnterKey = useEnterNavigation();
 
     const form = useForm<CustomerFormData>({
         resolver: zodResolver(CustomerSchema),
@@ -76,7 +78,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
             )}
 
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={handleEnterKey}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}

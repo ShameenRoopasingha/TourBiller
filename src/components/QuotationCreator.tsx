@@ -8,6 +8,7 @@ import { Loader2, FileCheck, Calculator } from 'lucide-react';
 import { QuotationSchema, type QuotationFormData } from '@/lib/validations';
 import { generateQuotation } from '@/lib/quotation-actions';
 import { formatCurrency } from '@/lib/calculations';
+import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,6 +77,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState<ScheduleOption | null>(null);
+    const handleEnterKey = useEnterNavigation();
 
     const form = useForm<QuotationFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -190,7 +192,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
     const fmt = formatCurrency;
 
     return (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={handleEnterKey}>
             {error && (
                 <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>

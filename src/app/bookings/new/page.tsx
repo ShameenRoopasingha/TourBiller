@@ -8,6 +8,7 @@ import { BookingSchema, type BookingFormData, type Vehicle, type Customer } from
 import { createBooking } from '@/lib/booking-actions';
 import { getVehicles } from '@/lib/vehicle-actions';
 import { getCustomers } from '@/lib/customer-actions';
+import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,6 +31,7 @@ export default function NewBookingPage() {
     const [error, setError] = useState<string | null>(null);
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
+    const handleEnterKey = useEnterNavigation();
 
     useEffect(() => {
         const loadData = async () => {
@@ -98,7 +100,7 @@ export default function NewBookingPage() {
                     )}
 
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={handleEnterKey}>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormField
