@@ -70,7 +70,7 @@ export function BillCreator({
         defaultValues: {
             vehicleNo: initialVehicleNo || '',
             customerName: initialCustomerName || '',
-            area: '', // dummy for layout
+
             customerAddress: '',
             route: '',
             startMeter: 0,
