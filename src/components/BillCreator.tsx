@@ -164,7 +164,7 @@ export function BillCreator({
 
     const handleNumericChange = (
         e: React.ChangeEvent<HTMLInputElement>,
-        fieldChange: (value: any) => void,
+        fieldChange: (value: string | number) => void,
         fieldName: string
     ) => {
         // Let the form hold the raw string (so empty inputs are possible)
