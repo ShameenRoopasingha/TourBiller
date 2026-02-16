@@ -231,6 +231,7 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
       phone: formData.get('phone') as string,
       email: formData.get('email') as string,
       website: formData.get('website') as string,
+      logoUrl: formData.get('logoUrl') as string,
     };
 
     const validatedData = BusinessProfileSchema.parse(rawData);

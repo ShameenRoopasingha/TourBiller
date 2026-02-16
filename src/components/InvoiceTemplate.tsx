@@ -48,6 +48,16 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
                 {/* Header Section */}
                 <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-2">
                     <div className="w-1/2">
+                        {businessProfile?.logoUrl && (
+                            <div className="mb-2">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={businessProfile.logoUrl}
+                                    alt="Company Logo"
+                                    className="h-12 w-12 rounded-full object-cover"
+                                />
+                            </div>
+                        )}
                         <h1 className="text-xl font-bold uppercase tracking-wider">{companyName}</h1>
                         <p className="text-[10px] text-gray-600 mt-1 whitespace-pre-wrap">
                             {address}

@@ -57,6 +57,7 @@ model BusinessProfile {
   email       String?
   website     String?
   usdRate     Float    @default(300.0)
+  logoUrl     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

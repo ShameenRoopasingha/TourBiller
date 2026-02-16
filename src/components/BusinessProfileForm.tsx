@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -37,6 +38,7 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
             phone: initialData?.phone || '',
             email: initialData?.email || '',
             website: initialData?.website || '',
+            logoUrl: initialData?.logoUrl || '',
             usdRate: initialData?.usdRate || 300,
         },
     });
@@ -52,6 +54,7 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
         if (data.phone) formData.append('phone', data.phone);
         if (data.email) formData.append('email', data.email);
         if (data.website) formData.append('website', data.website);
+        if (data.logoUrl) formData.append('logoUrl', data.logoUrl);
         formData.append('usdRate', data.usdRate.toString());
 
         const result = await updateBusinessProfile(formData);
@@ -164,6 +167,36 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
                                 )}
                             />
                         </div>
+
+                        <FormField
+                            control={form.control}
+                            name="logoUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Logo URL (Public Image Link)</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="https://example.com/logo.png" {...field} />
+                                    </FormControl>
+                                    <FormDescription className="text-xs text-muted-foreground">
+                                        Provide a direct link to your logo image.
+                                    </FormDescription>
+                                    {field.value && (
+                                        <div className="mt-2 border rounded-md p-2 w-fit">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                                src={field.value}
+                                                alt="Logo Preview"
+                                                className="h-12 w-12 rounded-full object-cover"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <div className="pt-4 flex justify-end">
                             <Button type="submit" disabled={isSubmitting}>
