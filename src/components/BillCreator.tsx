@@ -51,6 +51,7 @@ export function BillCreator({
     const [successId, setSuccessId] = useState<string | null>(null);
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
+    const [customerAddress, setCustomerAddress] = useState('');
 
 
 
@@ -69,6 +70,8 @@ export function BillCreator({
         defaultValues: {
             vehicleNo: initialVehicleNo || '',
             customerName: initialCustomerName || '',
+            area: '', // dummy for layout
+            customerAddress: '',
             route: '',
             startMeter: 0,
             endMeter: 0,
@@ -132,6 +135,11 @@ export function BillCreator({
         Object.entries(data).forEach(([key, value]) => {
             formData.append(key, value.toString());
         });
+
+        // Ensure address is sent
+        if (customerAddress) {
+            formData.append('customerAddress', customerAddress);
+        }
 
         // Append Booking ID if present to auto-close booking
         if (initialBookingId) {
@@ -271,6 +279,15 @@ export function BillCreator({
                                                             {...field}
                                                             list="customer-list"
                                                             autoComplete="off"
+                                                            onChange={(e) => {
+                                                                field.onChange(e);
+                                                                const selected = customers.find(c => c.name === e.target.value);
+                                                                if (selected && selected.address) {
+                                                                    setCustomerAddress(selected.address);
+                                                                } else {
+                                                                    setCustomerAddress('');
+                                                                }
+                                                            }}
                                                         />
                                                     </FormControl>
                                                     <datalist id="customer-list">
@@ -285,6 +302,17 @@ export function BillCreator({
                                             )}
                                         />
                                     </div>
+
+                                    <FormItem>
+                                        <FormLabel>Customer Address</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Customer Address"
+                                                value={customerAddress}
+                                                onChange={(e) => setCustomerAddress(e.target.value)}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
 
                                     <FormField
                                         control={form.control}

@@ -84,7 +84,12 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
                         <div className="bg-gray-50 p-2 border border-gray-200 rounded-sm">
                             <div className="grid grid-cols-[80px_1fr] gap-1 text-[11px]">
                                 <span className="font-semibold text-gray-600">Customer:</span>
-                                <span className="font-bold truncate">{bill.customerName}</span>
+                                <div className="flex flex-col">
+                                    <span className="font-bold truncate">{bill.customerName}</span>
+                                    {bill.customerAddress && (
+                                        <span className="text-[9px] text-gray-500 truncate">{bill.customerAddress}</span>
+                                    )}
+                                </div>
 
                                 <span className="font-semibold text-gray-600">Vehicle:</span>
                                 <span className="font-bold">{bill.vehicleNo}</span>

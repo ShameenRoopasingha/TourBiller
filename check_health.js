@@ -8,32 +8,24 @@ async function checkModel(name, modelDelegate) {
         console.log(`✅ ${name}: ${count} records found.`);
         return true;
     } catch (error) {
-        console.error(`❌ ${name}: Failed to fetch. Error: ${error.message}`);
+        // Log brief error to avoid truncation
+        console.log(`❌ ${name}: ERR: ${error.message.split('\n')[0].substring(0, 100)}`);
         return false;
     }
 }
 
 async function main() {
-    console.log('--- STARTING SYSTEM HEALTH CHECK ---');
+    console.log('START HEALTH CHECK');
 
-    const results = await Promise.all([
-        checkModel('Bill', prisma.bill),
-        checkModel('Vehicle', prisma.vehicle),
-        checkModel('Customer', prisma.customer),
-        checkModel('Booking', prisma.booking),
-        checkModel('TourSchedule', prisma.tourSchedule),
-        checkModel('BusinessProfile', prisma.businessProfile),
-    ]);
+    // Check models sequentially needed to see errors clearly
+    await checkModel('Bill', prisma.bill);
+    await checkModel('Vehicle', prisma.vehicle);
+    await checkModel('Customer', prisma.customer);
+    await checkModel('Booking', prisma.booking);
+    await checkModel('TourSchedule', prisma.tourSchedule);
+    await checkModel('BusinessProfile', prisma.businessProfile);
 
-    console.log('--- HEALTH CHECK COMPLETE ---');
-
-    const allPassed = results.every(r => r === true);
-    if (allPassed) {
-        console.log('🎉 System is HEALTHY. Database is accessible.');
-    } else {
-        console.log('⚠️ Some checks FAILED. Please check the logs above.');
-    }
-
+    console.log('END HEALTH CHECK');
     await prisma.$disconnect();
 }
 

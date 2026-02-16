@@ -15,6 +15,7 @@ model Bill {
   billNumber     Int      @unique @default(autoincrement())
   vehicleNo      String
   customerName   String
+  customerAddress String?
   route          String
   startMeter     Float
   endMeter       Float

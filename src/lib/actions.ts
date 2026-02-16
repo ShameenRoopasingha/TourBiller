@@ -15,6 +15,7 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
     const rawData = {
       vehicleNo: formData.get('vehicleNo') as string,
       customerName: formData.get('customerName') as string,
+      customerAddress: (formData.get('customerAddress') as string) || undefined,
       route: formData.get('route') as string,
       startMeter: parseFloat(formData.get('startMeter') as string),
       endMeter: parseFloat(formData.get('endMeter') as string),
