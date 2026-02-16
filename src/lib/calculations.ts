@@ -64,3 +64,10 @@ export function calculateExtraCharges(
 ): number {
   return waitingCharge + gatePass + packageCharge;
 }
+
+/**
+ * Calculate balance due (Total - Advance)
+ */
+export function calculateBalance(totalAmount: number, advanceAmount: number): number {
+  return Math.max(0, totalAmount - advanceAmount);
+}

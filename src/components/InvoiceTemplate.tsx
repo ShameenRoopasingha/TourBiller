@@ -125,9 +125,25 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
                             {/* Totals */}
                             <div className="col-span-12 border-t-2 border-black mt-2 pt-1"></div>
 
-                            <div className="col-span-6 font-bold text-lg text-right pr-2">TOTAL</div>
-                            <div className="col-span-6 text-right font-bold text-lg bg-gray-100 px-1 border border-gray-300">
+                            <div className="col-span-8 text-right pr-2">Total Amount</div>
+                            <div className="col-span-4 text-right font-medium">
                                 {formatCurrency(bill.totalAmount)}
+                            </div>
+
+                            {bill.advanceAmount > 0 && (
+                                <>
+                                    <div className="col-span-8 text-right pr-2 text-gray-600">Less: Advance Payment</div>
+                                    <div className="col-span-4 text-right font-medium text-gray-600">
+                                        -{formatCurrency(bill.advanceAmount)}
+                                    </div>
+                                </>
+                            )}
+
+                            <div className="col-span-12 border-t border-dotted border-black my-1"></div>
+
+                            <div className="col-span-6 font-bold text-lg text-right pr-2">BALANCE DUE</div>
+                            <div className="col-span-6 text-right font-bold text-lg bg-gray-100 px-1 border border-gray-300">
+                                {formatCurrency(Math.max(0, bill.totalAmount - (bill.advanceAmount || 0)))}
                             </div>
                             <div className="col-span-12 border-b-2 double border-black mt-1"></div>
                         </div>

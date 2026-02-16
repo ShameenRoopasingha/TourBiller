@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings } from 'lucide-react';
+import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -10,6 +10,8 @@ const navItems = [
     { name: 'Vehicles', href: '/vehicles', icon: Car },
     { name: 'Customers', href: '/customers', icon: Users },
     { name: 'Bookings', href: '/bookings', icon: CalendarDays },
+    { name: 'Tour Schedules', href: '/tour-schedules', icon: Map },
+    { name: 'Quotations', href: '/quotations', icon: FileCheck },
     { name: 'New Bill', href: '/bills/new', icon: FileText },
 ];
 

@@ -23,6 +23,7 @@ model Bill {
   waitingCharge  Float    @default(0)
   gatePass       Float    @default(0)
   packageCharge  Float    @default(0)
+  advanceAmount  Float    @default(0) // Advance payment deducted
   totalAmount    Float
   currency       String   @default("LKR")
   exchangeRate   Float    @default(1.0)
@@ -95,8 +96,75 @@ model Booking {
   destination  String?
   status       String   @default("CONFIRMED") // CONFIRMED, CANCELLED, COMPLETED
   notes        String?
+  advanceAmount Float    @default(0)
+  refundStatus String?   // NULL, REFUNDED, FORFEITED
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@map("bookings")
+}
+
+model TourSchedule {
+  id                 String   @id @default(cuid())
+  name               String
+  description        String?
+  days               Int
+  basePricePerPerson Float    @default(0)
+  vehicleCategory    String   @default("CAR")
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  items      TourScheduleDayItem[]
+  quotations Quotation[]
+
+  @@map("tour_schedules")
+}
+
+model TourScheduleDayItem {
+  id             String @id @default(cuid())
+  tourScheduleId String
+  dayNumber      Int
+  title          String
+  description    String?
+  distanceKm     Float  @default(0)
+  accommodation  Float  @default(0)
+  meals          Float  @default(0)
+  activities     Float  @default(0)
+  otherCosts     Float  @default(0)
+
+  tourSchedule TourSchedule @relation(fields: [tourScheduleId], references: [id], onDelete: Cascade)
+
+  @@map("tour_schedule_day_items")
+}
+
+model Quotation {
+  id                 String    @id @default(cuid())
+  quotationNumber    Int       @unique @default(autoincrement())
+  tourScheduleId     String
+  customerName       String
+  customerEmail      String?
+  customerPhone      String?
+  vehicleNo          String?
+  numberOfPersons    Int       @default(1)
+  startDate          DateTime?
+  hireRatePerKm      Float     @default(0)
+  totalDistance       Float     @default(0)
+  transportCost      Float     @default(0)
+  accommodationTotal Float     @default(0)
+  mealsTotal         Float     @default(0)
+  activitiesTotal    Float     @default(0)
+  otherCostsTotal    Float     @default(0)
+  markup             Float     @default(0)
+  discount           Float     @default(0)
+  totalAmount        Float     @default(0)
+  notes              String?
+  validUntil         DateTime?
+  status             String    @default("DRAFT")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  tourSchedule TourSchedule @relation(fields: [tourScheduleId], references: [id])
+
+  @@map("quotations")
 }

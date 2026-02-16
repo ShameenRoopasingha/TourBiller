@@ -13,10 +13,11 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
         const rawData = {
             vehicleNo: formData.get('vehicleNo') as string,
             customerName: formData.get('customerName') as string,
-            startDate: formData.get('startDate') as string, // Will be coerced by Zod
+            startDate: formData.get('startDate') as string,
             endDate: formData.get('endDate') ? formData.get('endDate') as string : undefined,
             destination: formData.get('destination') as string,
             notes: formData.get('notes') as string,
+            advanceAmount: parseFloat(formData.get('advanceAmount') as string) || 0,
             status: 'CONFIRMED',
         };
 
@@ -63,9 +64,34 @@ export async function getBookings(status?: string): Promise<ActionResult<Booking
  */
 export async function cancelBooking(id: string): Promise<ActionResult<void>> {
     try {
+        // 1. Fetch booking to check date
+        const booking = await prisma.booking.findUnique({
+            where: { id },
+        });
+
+        if (!booking) {
+            return { success: false, error: 'Booking not found' };
+        }
+
+        // 2. Calculate Refund Status
+        let refundStatus = null;
+        if ((booking as any).advanceAmount > 0) {
+            const now = new Date();
+            const tripDate = new Date(booking.startDate);
+            const diffTime = tripDate.getTime() - now.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            // Refund Policy: > 7 days = REFUNDED, <= 7 days = FORFEITED
+            refundStatus = (diffDays > 7) ? 'REFUNDED' : 'FORFEITED';
+        }
+
+        // 3. Update Booking
         await prisma.booking.update({
             where: { id },
-            data: { status: 'CANCELLED' },
+            data: {
+                status: 'CANCELLED',
+                refundStatus: refundStatus
+            } as any,
         });
 
         revalidatePath('/bookings');
@@ -74,5 +100,25 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
     } catch (error) {
         console.error('Error cancelling booking:', error);
         return { success: false, error: 'Failed to cancel booking' };
+    }
+}
+
+/**
+ * Get a single booking by ID
+ */
+export async function getBookingById(id: string): Promise<ActionResult<Booking>> {
+    try {
+        const booking = await prisma.booking.findUnique({
+            where: { id },
+        });
+
+        if (!booking) {
+            return { success: false, error: 'Booking not found' };
+        }
+
+        return { success: true, data: booking as Booking };
+    } catch (error) {
+        console.error('Error fetching booking:', error);
+        return { success: false, error: 'Failed to fetch booking' };
     }
 }

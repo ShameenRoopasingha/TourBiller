@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Printer } from 'lucide-react';
 import { BillSchema, type BillFormData, type Vehicle, type Customer } from '@/lib/validations';
 import { createBill } from '@/lib/actions';
+import { getBookingById } from '@/lib/booking-actions';
 import { getVehicles } from '@/lib/vehicle-actions';
 import { getCustomers } from '@/lib/customer-actions';
 
@@ -51,17 +52,7 @@ export function BillCreator({
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
 
-    useEffect(() => {
-        const loadData = async () => {
-            const [vResult, cResult] = await Promise.all([
-                getVehicles(),
-                getCustomers()
-            ]);
-            if (vResult.success && vResult.data) setVehicles(vResult.data);
-            if (cResult.success && cResult.data) setCustomers(cResult.data);
-        };
-        loadData();
-    }, []);
+
 
     const {
         formattedTotalAmount,
@@ -85,12 +76,32 @@ export function BillCreator({
             waitingCharge: 0,
             gatePass: 0,
             packageCharge: 0,
+            advanceAmount: 0,
             allowedKm: 0,
             currency: 'LKR',
             exchangeRate: 1,
             paymentMethod: 'CASH',
         },
     });
+
+    useEffect(() => {
+        const loadData = async () => {
+            const [vResult, cResult] = await Promise.all([
+                getVehicles(),
+                getCustomers()
+            ]);
+            if (vResult.success && vResult.data) setVehicles(vResult.data);
+            if (cResult.success && cResult.data) setCustomers(cResult.data);
+
+            if (initialBookingId) {
+                const bResult = await getBookingById(initialBookingId);
+                if (bResult.success && bResult.data && bResult.data.advanceAmount) {
+                    form.setValue('advanceAmount', bResult.data.advanceAmount);
+                }
+            }
+        };
+        loadData();
+    }, [form, initialBookingId]);
 
     const watchedAllowedKm = useWatch({
         control: form.control,
@@ -399,6 +410,22 @@ export function BillCreator({
                                                     <FormLabel>Gate Pass</FormLabel>
                                                     <FormControl>
                                                         <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'gatePass')} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="advanceAmount"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Advance Deducted</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'advanceAmount')} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>

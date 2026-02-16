@@ -51,6 +51,7 @@ export default function NewBookingPage() {
             customerName: '',
             status: 'CONFIRMED',
             destination: '',
+            advanceAmount: 0,
             notes: '',
         },
     });
@@ -193,19 +194,41 @@ export default function NewBookingPage() {
                                 />
                             </div>
 
-                            <FormField
-                                control={form.control}
-                                name="destination"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Destination</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g. Kandy Tour" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="destination"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Destination</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. Kandy Tour" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="advanceAmount"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Advance Payment (Rs)</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    placeholder="0.00"
+                                                    {...field}
+                                                    onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
                             <FormField
                                 control={form.control}

@@ -22,6 +22,7 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
       waitingCharge: parseFloat(formData.get('waitingCharge') as string) || 0,
       gatePass: parseFloat(formData.get('gatePass') as string) || 0,
       packageCharge: parseFloat(formData.get('packageCharge') as string) || 0,
+      advanceAmount: parseFloat(formData.get('advanceAmount') as string) || 0,
       allowedKm: parseFloat(formData.get('allowedKm') as string) || 0,
       currency: (formData.get('currency') as string) || 'LKR',
       exchangeRate: parseFloat(formData.get('exchangeRate') as string) || 1,
