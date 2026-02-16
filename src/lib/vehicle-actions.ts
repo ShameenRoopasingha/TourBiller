@@ -25,6 +25,10 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
         });
 
         revalidatePath('/vehicles');
+        revalidatePath('/quotations/new');
+        revalidatePath('/bills/new');
+        revalidatePath('/bookings/new');
+        revalidatePath('/'); // Dashboard
 
         return {
             success: true,
@@ -83,6 +87,10 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
         });
 
         revalidatePath('/vehicles');
+        revalidatePath('/quotations/new');
+        revalidatePath('/bills/new');
+        revalidatePath('/bookings/new');
+        revalidatePath('/'); // Dashboard
 
         return { success: true, data: id };
     } catch (error) {
@@ -104,6 +112,10 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
         });
 
         revalidatePath('/vehicles');
+        revalidatePath('/quotations/new');
+        revalidatePath('/bills/new');
+        revalidatePath('/bookings/new');
+        revalidatePath('/'); // Dashboard
 
         return { success: true };
     } catch (error) {

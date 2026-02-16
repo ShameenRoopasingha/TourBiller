@@ -23,6 +23,9 @@ export async function createCustomer(formData: FormData): Promise<ActionResult<s
         });
 
         revalidatePath('/customers');
+        revalidatePath('/quotations/new');
+        revalidatePath('/bills/new');
+        revalidatePath('/bookings/new');
 
         return {
             success: true,
@@ -80,6 +83,9 @@ export async function updateCustomer(id: string, formData: FormData): Promise<Ac
         });
 
         revalidatePath('/customers');
+        revalidatePath('/quotations/new');
+        revalidatePath('/bills/new');
+        revalidatePath('/bookings/new');
 
         return { success: true, data: id };
     } catch (error) {
@@ -101,6 +107,9 @@ export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
         });
 
         revalidatePath('/customers');
+        revalidatePath('/quotations/new');
+        revalidatePath('/bills/new');
+        revalidatePath('/bookings/new');
 
         return { success: true };
     } catch (error) {

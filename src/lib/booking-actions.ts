@@ -28,6 +28,8 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
         });
 
         revalidatePath('/bookings');
+        revalidatePath('/'); // Dashboard
+        revalidatePath('/bills/new'); // Availability might change
 
         return {
             success: true,
@@ -95,6 +97,8 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
         });
 
         revalidatePath('/bookings');
+        revalidatePath('/'); // Dashboard
+        revalidatePath('/bills/new');
 
         return { success: true };
     } catch (error) {
