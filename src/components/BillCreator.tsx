@@ -164,12 +164,16 @@ export function BillCreator({
 
     const handleNumericChange = (
         e: React.ChangeEvent<HTMLInputElement>,
-        fieldChange: (value: number) => void,
+        fieldChange: (value: any) => void,
         fieldName: string
     ) => {
-        const value = parseFloat(e.target.value) || 0;
-        fieldChange(value);
-        updateField(fieldName, value);
+        // Let the form hold the raw string (so empty inputs are possible)
+        const rawValue = e.target.value;
+        fieldChange(rawValue);
+
+        // Feed the calculation engine a number (0 if invalid/empty)
+        const value = parseFloat(rawValue);
+        updateField(fieldName, isNaN(value) ? 0 : value);
     };
 
     const handleVehicleChange = (
