@@ -12,7 +12,7 @@ const navItems = [
     { name: 'Bookings', href: '/bookings', icon: CalendarDays },
     { name: 'Tour Schedules', href: '/tour-schedules', icon: Map },
     { name: 'Quotations', href: '/quotations', icon: FileCheck },
-    { name: 'New Bill', href: '/bills/new', icon: FileText },
+    { name: 'Bills', href: '/bills', icon: FileText },
 ];
 
 export function Sidebar() {

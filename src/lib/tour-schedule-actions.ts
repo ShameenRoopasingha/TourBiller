@@ -82,6 +82,7 @@ export async function createTourSchedule(
         });
 
         revalidatePath('/tour-schedules');
+        revalidatePath('/quotations/new');
         return { success: true, data: schedule.id };
     } catch (error) {
         console.error('Error creating tour schedule:', error);
@@ -212,6 +213,7 @@ export async function updateTourSchedule(
         });
 
         revalidatePath('/tour-schedules');
+        revalidatePath('/quotations/new');
         return { success: true, data: id };
     } catch (error) {
         console.error('Error updating tour schedule:', error);
@@ -233,6 +235,7 @@ export async function deleteTourSchedule(id: string): Promise<ActionResult<void>
         });
 
         revalidatePath('/tour-schedules');
+        revalidatePath('/quotations/new');
         return { success: true };
     } catch (error) {
         console.error('Error deleting tour schedule:', error);
