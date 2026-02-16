@@ -171,28 +171,41 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
                         <FormField
                             control={form.control}
                             name="logoUrl"
-                            render={({ field }) => (
+                            render={({ field: { value, onChange, ...fieldProps } }) => (
                                 <FormItem>
-                                    <FormLabel>Logo URL (Public Image Link)</FormLabel>
+                                    <FormLabel>Company Logo</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="https://example.com/logo.png" {...field} />
-                                    </FormControl>
-                                    <FormDescription className="text-xs text-muted-foreground">
-                                        Provide a direct link to your logo image.
-                                    </FormDescription>
-                                    {field.value && (
-                                        <div className="mt-2 border rounded-md p-2 w-fit">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
-                                                src={field.value}
-                                                alt="Logo Preview"
-                                                className="h-12 w-12 rounded-full object-cover"
-                                                onError={(e) => {
-                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                        <div className="flex items-center gap-4">
+                                            {value && (
+                                                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={value}
+                                                        alt="Logo Preview"
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                </div>
+                                            )}
+                                            <Input
+                                                {...fieldProps}
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(event) => {
+                                                    const file = event.target.files?.[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            onChange(reader.result as string);
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
                                                 }}
                                             />
                                         </div>
-                                    )}
+                                    </FormControl>
+                                    <FormDescription className="text-xs text-muted-foreground">
+                                        Upload a logo image (JPG, PNG). It will be cropped to a circle.
+                                    </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
