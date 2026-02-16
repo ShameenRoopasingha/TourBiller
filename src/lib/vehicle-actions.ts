@@ -11,7 +11,7 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
     try {
         const rawData = {
             vehicleNo: formData.get('vehicleNo') as string,
-            model: formData.get('model') as string,
+            model: (formData.get('model') as string) || undefined,
             category: formData.get('category') as string,
             status: formData.get('status') as string,
             defaultRate: parseFloat(formData.get('defaultRate') as string) || 0,
@@ -72,7 +72,7 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
     try {
         const rawData = {
             vehicleNo: formData.get('vehicleNo') as string,
-            model: formData.get('model') as string,
+            model: (formData.get('model') as string) || undefined,
             category: formData.get('category') as string,
             status: formData.get('status') as string,
             defaultRate: parseFloat(formData.get('defaultRate') as string) || 0,

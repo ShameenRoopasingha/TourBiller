@@ -12,8 +12,8 @@ export async function createCustomer(formData: FormData): Promise<ActionResult<s
         const rawData = {
             name: formData.get('name') as string,
             mobile: formData.get('mobile') as string,
-            email: formData.get('email') as string,
-            address: formData.get('address') as string,
+            email: (formData.get('email') as string) || undefined,
+            address: (formData.get('address') as string) || undefined,
         };
 
         const validatedData = CustomerSchema.parse(rawData);
@@ -71,8 +71,8 @@ export async function updateCustomer(id: string, formData: FormData): Promise<Ac
         const rawData = {
             name: formData.get('name') as string,
             mobile: formData.get('mobile') as string,
-            email: formData.get('email') as string,
-            address: formData.get('address') as string,
+            email: (formData.get('email') as string) || undefined,
+            address: (formData.get('address') as string) || undefined,
         };
 
         const validatedData = CustomerSchema.parse(rawData);

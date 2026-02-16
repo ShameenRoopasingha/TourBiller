@@ -227,11 +227,11 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
   try {
     const rawData = {
       companyName: formData.get('companyName') as string,
-      address: formData.get('address') as string,
-      phone: formData.get('phone') as string,
-      email: formData.get('email') as string,
-      website: formData.get('website') as string,
-      logoUrl: formData.get('logoUrl') as string,
+      address: (formData.get('address') as string) || undefined,
+      phone: (formData.get('phone') as string) || undefined,
+      email: (formData.get('email') as string) || undefined,
+      website: (formData.get('website') as string) || undefined,
+      logoUrl: (formData.get('logoUrl') as string) || undefined,
     };
 
     const validatedData = BusinessProfileSchema.parse(rawData);

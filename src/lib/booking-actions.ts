@@ -15,8 +15,8 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
             customerName: formData.get('customerName') as string,
             startDate: formData.get('startDate') as string,
             endDate: formData.get('endDate') ? formData.get('endDate') as string : undefined,
-            destination: formData.get('destination') as string,
-            notes: formData.get('notes') as string,
+            destination: (formData.get('destination') as string) || undefined,
+            notes: (formData.get('notes') as string) || undefined,
             advanceAmount: parseFloat(formData.get('advanceAmount') as string) || 0,
             status: 'CONFIRMED',
         };
@@ -77,7 +77,7 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
 
         // 2. Calculate Refund Status
         let refundStatus = null;
-        if ((booking as any).advanceAmount > 0) {
+        if (booking.advanceAmount > 0) {
             const now = new Date();
             const tripDate = new Date(booking.startDate);
             const diffTime = tripDate.getTime() - now.getTime();
@@ -92,8 +92,8 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
             where: { id },
             data: {
                 status: 'CANCELLED',
-                refundStatus: refundStatus
-            } as any,
+                refundStatus: refundStatus,
+            },
         });
 
         revalidatePath('/bookings');
