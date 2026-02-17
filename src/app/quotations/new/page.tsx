@@ -31,7 +31,14 @@ async function NewQuotationForm() {
             vehicleNo: v.vehicleNo,
             model: v.model ?? null,
             category: v.category,
-            defaultRate: v.defaultRate,
+            ratePerDay: v.ratePerDay,
+            kmPerDay: v.kmPerDay,
+            excessKmRate: v.excessKmRate,
+            extraHourRate: v.extraHourRate,
+            seats: v.seats ?? null,
+            acType: v.acType ?? null,
+            features: v.features ?? null,
+            insuranceCoverage: v.insuranceCoverage ?? null,
         }));
 
     return (

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { getQuotationById } from '@/lib/quotation-actions';
 import { getBusinessProfile } from '@/lib/actions';
+import { getVehicles } from '@/lib/vehicle-actions';
 import { QuotationTemplate } from '@/components/QuotationTemplate';
 
 async function PrintQuotation({ id }: { id: string }) {
@@ -15,9 +16,38 @@ async function PrintQuotation({ id }: { id: string }) {
         return notFound();
     }
 
+    const quotation = quotationResult.data;
+
+    // Fetch vehicle specs if quotation has a vehicle
+    let vehicleSpecs: {
+        vehicleSeats?: number | null;
+        vehicleAcType?: string | null;
+        vehicleFeatures?: string | null;
+        vehicleInsuranceCoverage?: string | null;
+        vehicleExcessKmRate?: number | null;
+        vehicleExtraHourRate?: number | null;
+    } = {};
+
+    if (quotation.vehicleNo) {
+        const vehiclesResult = await getVehicles(quotation.vehicleNo);
+        if (vehiclesResult.success && vehiclesResult.data) {
+            const vehicle = vehiclesResult.data.find(v => v.vehicleNo === quotation.vehicleNo);
+            if (vehicle) {
+                vehicleSpecs = {
+                    vehicleSeats: vehicle.seats,
+                    vehicleAcType: vehicle.acType,
+                    vehicleFeatures: vehicle.features,
+                    vehicleInsuranceCoverage: vehicle.insuranceCoverage,
+                    vehicleExcessKmRate: vehicle.excessKmRate,
+                    vehicleExtraHourRate: vehicle.extraHourRate,
+                };
+            }
+        }
+    }
+
     return (
         <QuotationTemplate
-            quotation={quotationResult.data}
+            quotation={{ ...quotation, ...vehicleSpecs }}
             businessProfile={profileResult.success ? profileResult.data : undefined}
         />
     );

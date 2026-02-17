@@ -42,6 +42,10 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
             website: initialData?.website || '',
             logoUrl: initialData?.logoUrl || '',
             usdRate: initialData?.usdRate || 300,
+            bankName: initialData?.bankName || '',
+            bankBranch: initialData?.bankBranch || '',
+            bankAccountNo: initialData?.bankAccountNo || '',
+            bankAccountName: initialData?.bankAccountName || '',
         },
     });
 
@@ -58,6 +62,10 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
         if (data.website) formData.append('website', data.website);
         if (data.logoUrl) formData.append('logoUrl', data.logoUrl);
         formData.append('usdRate', data.usdRate.toString());
+        if (data.bankName) formData.append('bankName', data.bankName);
+        if (data.bankBranch) formData.append('bankBranch', data.bankBranch);
+        if (data.bankAccountNo) formData.append('bankAccountNo', data.bankAccountNo);
+        if (data.bankAccountName) formData.append('bankAccountName', data.bankAccountName);
 
         const result = await updateBusinessProfile(formData);
 
@@ -212,6 +220,65 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
                                 </FormItem>
                             )}
                         />
+
+                        {/* Bank Details Section */}
+                        <div className="border-t pt-4 mt-2">
+                            <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Bank Details (for Quotations)</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="bankName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Bank Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. BOC" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="bankBranch"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Branch</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. Delgoda" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="bankAccountNo"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Account Number</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. 80228624" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="bankAccountName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Account Holder Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. A.P. W. Jithsara" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
 
                         <div className="pt-4 flex justify-end">
                             <Button type="submit" disabled={isSubmitting}>

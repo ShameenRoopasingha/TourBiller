@@ -62,7 +62,14 @@ interface VehicleOption {
     vehicleNo: string;
     model: string | null;
     category: string;
-    defaultRate: number;
+    ratePerDay: number;
+    kmPerDay: number;
+    excessKmRate: number;
+    extraHourRate: number;
+    seats: number | null;
+    acType: string | null;
+    features: string | null;
+    insuranceCoverage: string | null;
 }
 
 interface QuotationCreatorProps {
@@ -77,6 +84,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState<ScheduleOption | null>(null);
+    const [selectedVehicle, setSelectedVehicle] = useState<VehicleOption | null>(null);
     const handleEnterKey = useEnterNavigation();
 
     const form = useForm<QuotationFormData>({
@@ -89,14 +97,18 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
             customerPhone: '',
             vehicleNo: '',
             numberOfPersons: 1,
-            hireRatePerKm: 0,
+            hireRatePerDay: 0,
+            kmPerDay: 0,
             markup: 0,
             discount: 0,
+            driverCostPerDay: 0,
+            advanceAmount: 0,
+            excludedItems: 'Highway / expressway charges\nParking fees',
             notes: '',
         },
     });
 
-    const [watchedHireRate, watchedMarkup, watchedDiscount] = form.watch(['hireRatePerKm', 'markup', 'discount']);
+    const [watchedHireRate, watchedKmPerDay, watchedMarkup, watchedDiscount, watchedDriverCost] = form.watch(['hireRatePerDay', 'kmPerDay', 'markup', 'discount', 'driverCostPerDay']);
 
     // When schedule selection changes
     const handleScheduleChange = (scheduleId: string) => {
@@ -120,7 +132,11 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
         const vehicle = vehicles.find((v) => v.id === vehicleId);
         if (vehicle) {
             form.setValue('vehicleNo', vehicle.vehicleNo);
-            form.setValue('hireRatePerKm', vehicle.defaultRate);
+            form.setValue('hireRatePerDay', vehicle.ratePerDay);
+            form.setValue('kmPerDay', vehicle.kmPerDay);
+            setSelectedVehicle(vehicle);
+        } else {
+            setSelectedVehicle(null);
         }
     };
 
@@ -129,7 +145,9 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
         if (!selectedSchedule) {
             return {
                 totalDistance: 0,
+                includedKm: 0,
                 transportCost: 0,
+                driverTotal: 0,
                 accommodationTotal: 0,
                 mealsTotal: 0,
                 activitiesTotal: 0,
@@ -151,14 +169,21 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
             { distance: 0, accommodation: 0, meals: 0, activities: 0, other: 0 }
         );
 
-        const transportCost = itemTotals.distance * (Number(watchedHireRate) || 0);
-        const subtotal = transportCost + itemTotals.accommodation + itemTotals.meals + itemTotals.activities + itemTotals.other;
+        const ratePerDay = Number(watchedHireRate) || 0;
+        const kmAllowancePerDay = Number(watchedKmPerDay) || 0;
+        const days = selectedSchedule.days;
+        const transportCost = days * ratePerDay;
+        const includedKm = days * kmAllowancePerDay;
+        const driverTotal = days * (Number(watchedDriverCost) || 0);
+        const subtotal = transportCost + driverTotal + itemTotals.accommodation + itemTotals.meals + itemTotals.activities + itemTotals.other;
         const markupAmount = subtotal * ((Number(watchedMarkup) || 0) / 100);
         const totalAmount = Math.max(0, subtotal + markupAmount - (Number(watchedDiscount) || 0));
 
         return {
             totalDistance: itemTotals.distance,
+            includedKm,
             transportCost,
+            driverTotal,
             accommodationTotal: itemTotals.accommodation,
             mealsTotal: itemTotals.meals,
             activitiesTotal: itemTotals.activities,
@@ -167,7 +192,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
             markupAmount,
             totalAmount,
         };
-    }, [selectedSchedule, watchedHireRate, watchedMarkup, watchedDiscount]);
+    }, [selectedSchedule, watchedHireRate, watchedKmPerDay, watchedMarkup, watchedDiscount, watchedDriverCost]);
 
     const onSubmit = async (data: QuotationFormData) => {
         setIsSubmitting(true);
@@ -315,6 +340,19 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                         </div>
                     </div>
 
+                    {/* Vehicle Specifications Display */}
+                    {selectedVehicle && (selectedVehicle.seats || selectedVehicle.acType || selectedVehicle.features || selectedVehicle.insuranceCoverage) && (
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800 text-sm">
+                            <h4 className="font-semibold text-blue-700 dark:text-blue-400 mb-1">Vehicle Specifications</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-blue-600 dark:text-blue-300">
+                                {selectedVehicle.seats && <span>Seats: {selectedVehicle.seats}</span>}
+                                {selectedVehicle.acType && <span>AC: {selectedVehicle.acType}</span>}
+                                {selectedVehicle.features && <span className="col-span-2">Features: {selectedVehicle.features}</span>}
+                                {selectedVehicle.insuranceCoverage && <span className="col-span-2">Insurance: {selectedVehicle.insuranceCoverage}</span>}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="customerName">Customer Name *</Label>
@@ -387,12 +425,21 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="hireRatePerKm">Hire Rate / Km (LKR)</Label>
+                            <Label htmlFor="hireRatePerDay">Hire Rate / Day (LKR)</Label>
                             <Input
-                                id="hireRatePerKm"
+                                id="hireRatePerDay"
                                 type="number"
                                 step="0.01"
-                                {...form.register('hireRatePerKm')}
+                                {...form.register('hireRatePerDay')}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="kmPerDay">Km Per Day</Label>
+                            <Input
+                                id="kmPerDay"
+                                type="number"
+                                step="0.01"
+                                {...form.register('kmPerDay')}
                             />
                         </div>
                         <div className="space-y-2">
@@ -423,23 +470,78 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="notes">Notes</Label>
-                        <Textarea
-                            id="notes"
-                            placeholder="Additional notes or terms..."
-                            {...form.register('notes')}
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="driverCostPerDay">Driver Cost / Day (LKR)</Label>
+                            <Input
+                                id="driverCostPerDay"
+                                type="number"
+                                step="0.01"
+                                placeholder="e.g. 3000"
+                                {...form.register('driverCostPerDay')}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="advanceAmount">Advance Payment (LKR)</Label>
+                            <Input
+                                id="advanceAmount"
+                                type="number"
+                                step="0.01"
+                                placeholder="e.g. 25000"
+                                {...form.register('advanceAmount')}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="excludedItems">Excluded Items (Not Included)</Label>
+                            <Textarea
+                                id="excludedItems"
+                                placeholder="Highway / expressway charges&#10;Parking fees"
+                                rows={3}
+                                {...form.register('excludedItems')}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="notes">Notes</Label>
+                            <Textarea
+                                id="notes"
+                                placeholder="Additional notes or terms..."
+                                rows={3}
+                                {...form.register('notes')}
+                            />
+                        </div>
                     </div>
 
                     {/* Live Cost Summary */}
                     {selectedSchedule && (
                         <div className="mt-4 p-4 bg-muted/40 rounded-lg border">
                             <h4 className="font-semibold text-sm mb-3">Cost Summary</h4>
+
+                            {/* Hire Summary Banner */}
+                            {calculatedTotals.transportCost > 0 && (
+                                <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <p className="font-semibold text-blue-700 dark:text-blue-400 text-sm">
+                                        💰 Van Hire: {selectedSchedule?.days} days : {fmt(calculatedTotals.transportCost)} for {calculatedTotals.includedKm.toFixed(0)} km
+                                    </p>
+                                    {selectedVehicle && selectedVehicle.excessKmRate > 0 && (
+                                        <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                                            Any distance exceeding {calculatedTotals.includedKm.toFixed(0)} km will be charged at Rs. {selectedVehicle.excessKmRate} per additional km.
+                                        </p>
+                                    )}
+                                    {selectedVehicle && selectedVehicle.extraHourRate > 0 && (
+                                        <p className="text-xs text-blue-600 dark:text-blue-300 mt-0.5">
+                                            Extra hours will be charged at Rs. {selectedVehicle.extraHourRate} per hour.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">
-                                        Transport ({calculatedTotals.totalDistance.toFixed(1)} km × {fmt(Number(watchedHireRate) || 0)}/km)
+                                        Van Hire ({selectedSchedule?.days} days × {fmt(Number(watchedHireRate) || 0)}/day)
                                     </span>
                                     <span>{fmt(calculatedTotals.transportCost)}</span>
                                 </div>
@@ -459,6 +561,14 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                     <span className="text-muted-foreground">Other Costs</span>
                                     <span>{fmt(calculatedTotals.otherCostsTotal)}</span>
                                 </div>
+                                {(Number(watchedDriverCost) || 0) > 0 && (
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">
+                                            Driver ({selectedSchedule?.days} days × {fmt(Number(watchedDriverCost) || 0)}/day)
+                                        </span>
+                                        <span>{fmt(calculatedTotals.driverTotal)}</span>
+                                    </div>
+                                )}
                                 <div className="border-t pt-2 flex justify-between">
                                     <span className="text-muted-foreground">Subtotal</span>
                                     <span className="font-medium">{fmt(calculatedTotals.subtotal)}</span>

@@ -37,30 +37,40 @@ model Bill {
 }
 
 model Vehicle {
-  id          String   @id @default(cuid())
-  vehicleNo   String   @unique
-  model       String?
-  category    String   @default("CAR") // CAR, VAN, SUV, etc.
-  status      String   @default("ACTIVE") // ACTIVE, MAINTENANCE, RETIRED
-  defaultRate Float    @default(0)
-  excessKmRate Float   @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  vehicleNo         String   @unique
+  model             String?
+  category          String   @default("CAR") // CAR, VAN, SUV, etc.
+  status            String   @default("ACTIVE") // ACTIVE, MAINTENANCE, RETIRED
+  ratePerDay        Float    @default(0)    // daily hire rate
+  kmPerDay          Float    @default(0)    // km allowance per day
+  excessKmRate      Float    @default(0)    // charge per extra km
+  extraHourRate     Float    @default(0)    // charge per extra hour
+  seats             Int?     // Number of passenger seats
+  acType            String?  // e.g. "Line AC", "Dual AC", "Roof AC", "No AC"
+  features          String?  // Free-text specs: TV, sound system, seat type, etc.
+  insuranceCoverage String?  // e.g. "Rs. 500,000 per passenger"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@map("vehicles")
 }
 
 model BusinessProfile {
-  id          String   @id @default(cuid())
-  companyName String   @default("My Transport Company")
-  address     String?
-  phone       String?
-  email       String?
-  website     String?
-  usdRate     Float    @default(300.0)
-  logoUrl     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  companyName     String   @default("My Transport Company")
+  address         String?
+  phone           String?
+  email           String?
+  website         String?
+  usdRate         Float    @default(300.0)
+  logoUrl         String?
+  bankName        String?  // e.g. "BOC"
+  bankBranch      String?  // e.g. "Delgoda"
+  bankAccountNo   String?  // e.g. "80228624"
+  bankAccountName String?  // e.g. "A.P. W. Jithsara"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@map("business_profile")
 }
@@ -150,7 +160,8 @@ model Quotation {
   vehicleNo          String?
   numberOfPersons    Int       @default(1)
   startDate          DateTime?
-  hireRatePerKm      Float     @default(0)
+  hireRatePerDay     Float     @default(0)    // snapshot of vehicle rate/day
+  kmPerDay           Float     @default(0)    // snapshot of km allowance/day
   totalDistance       Float     @default(0)
   transportCost      Float     @default(0)
   accommodationTotal Float     @default(0)
@@ -159,6 +170,9 @@ model Quotation {
   otherCostsTotal    Float     @default(0)
   markup             Float     @default(0)
   discount           Float     @default(0)
+  driverCostPerDay   Float     @default(0)  // Driver meals & accommodation per day
+  advanceAmount      Float     @default(0)  // Required advance payment
+  excludedItems      String?   // e.g. "Highway charges, Parking fees"
   totalAmount        Float     @default(0)
   notes              String?
   validUntil         DateTime?

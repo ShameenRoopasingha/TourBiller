@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Printer, Trash2, FileCheck, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
@@ -68,6 +69,7 @@ const NEXT_STATUS: Record<string, string> = {
 };
 
 export function QuotationList({ quotations }: QuotationListProps) {
+    const router = useRouter();
     const [search, setSearch] = useState('');
     const [updating, setUpdating] = useState<string | null>(null);
     const [deleting, setDeleting] = useState<string | null>(null);
@@ -86,6 +88,7 @@ export function QuotationList({ quotations }: QuotationListProps) {
             alert(result.error || 'Failed to update status');
         }
         setUpdating(null);
+        router.refresh();
     };
 
     const handleDelete = async (id: string) => {
@@ -95,6 +98,7 @@ export function QuotationList({ quotations }: QuotationListProps) {
             alert(result.error || 'Failed to delete quotation');
         }
         setDeleting(null);
+        router.refresh();
     };
 
     const fmt = formatCurrency;

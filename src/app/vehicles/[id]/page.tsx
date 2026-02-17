@@ -9,7 +9,7 @@ import { Vehicle } from '@/lib/validations';
 async function EditVehicleForm({ id }: { id: string }) {
     const vehicle = await prisma.vehicle.findUnique({
         where: { id },
-    }) as unknown as Vehicle; // Force cast to match validation schema including defaultRate
+    }) as unknown as Vehicle;
 
     if (!vehicle) {
         return notFound();
@@ -19,7 +19,10 @@ async function EditVehicleForm({ id }: { id: string }) {
     return <VehicleForm vehicle={{
         ...vehicle,
         model: vehicle.model ?? '',
-        defaultRate: vehicle.defaultRate ?? 0
+        ratePerDay: vehicle.ratePerDay ?? 0,
+        kmPerDay: vehicle.kmPerDay ?? 0,
+        excessKmRate: vehicle.excessKmRate ?? 0,
+        extraHourRate: vehicle.extraHourRate ?? 0,
     }} />;
 }
 

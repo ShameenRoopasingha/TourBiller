@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { TourScheduleSchema, type ActionResult } from '@/lib/validations';
-import { revalidatePath } from 'next/cache';
+import { revalidateFor } from '@/lib/revalidation';
 
 // Types for server responses
 type TourScheduleWithItems = {
@@ -81,8 +81,7 @@ export async function createTourSchedule(
             return created;
         });
 
-        revalidatePath('/tour-schedules');
-        revalidatePath('/quotations/new');
+        revalidateFor('tourSchedule');
         return { success: true, data: schedule.id };
     } catch (error) {
         console.error('Error creating tour schedule:', error);
@@ -212,8 +211,7 @@ export async function updateTourSchedule(
             });
         });
 
-        revalidatePath('/tour-schedules');
-        revalidatePath('/quotations/new');
+        revalidateFor('tourSchedule');
         return { success: true, data: id };
     } catch (error) {
         console.error('Error updating tour schedule:', error);
@@ -234,8 +232,7 @@ export async function deleteTourSchedule(id: string): Promise<ActionResult<void>
             data: { isActive: false },
         });
 
-        revalidatePath('/tour-schedules');
-        revalidatePath('/quotations/new');
+        revalidateFor('tourSchedule');
         return { success: true };
     } catch (error) {
         console.error('Error deleting tour schedule:', error);

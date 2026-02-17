@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { QuotationSchema, type ActionResult } from '@/lib/validations';
-import { revalidatePath } from 'next/cache';
+import { revalidateFor } from '@/lib/revalidation';
 
 // Types for server responses
 type QuotationWithSchedule = {
@@ -15,7 +15,8 @@ type QuotationWithSchedule = {
     vehicleNo: string | null;
     numberOfPersons: number;
     startDate: Date | null;
-    hireRatePerKm: number;
+    hireRatePerDay: number;
+    kmPerDay: number;
     totalDistance: number;
     transportCost: number;
     accommodationTotal: number;
@@ -24,6 +25,9 @@ type QuotationWithSchedule = {
     otherCostsTotal: number;
     markup: number;
     discount: number;
+    driverCostPerDay: number;
+    advanceAmount: number;
+    excludedItems: string | null;
     totalAmount: number;
     notes: string | null;
     validUntil: Date | null;
@@ -63,9 +67,13 @@ export async function generateQuotation(
         vehicleNo?: string;
         numberOfPersons?: number;
         startDate?: string | Date;
-        hireRatePerKm?: number;
+        hireRatePerDay?: number;
+        kmPerDay?: number;
         markup?: number;
         discount?: number;
+        driverCostPerDay?: number;
+        advanceAmount?: number;
+        excludedItems?: string;
         notes?: string;
         validUntil?: string | Date;
     }
@@ -96,8 +104,9 @@ export async function generateQuotation(
                 { distance: 0, accommodation: 0, meals: 0, activities: 0, other: 0 }
             );
 
-            const transportCost = itemTotals.distance * (validated.hireRatePerKm || 0);
-            const subtotal = transportCost + itemTotals.accommodation + itemTotals.meals + itemTotals.activities + itemTotals.other;
+            const transportCost = schedule.days * (validated.hireRatePerDay || 0);
+            const driverTotal = schedule.days * (validated.driverCostPerDay || 0);
+            const subtotal = transportCost + driverTotal + itemTotals.accommodation + itemTotals.meals + itemTotals.activities + itemTotals.other;
             const markupAmount = subtotal * ((validated.markup || 0) / 100);
             const totalAmount = subtotal + markupAmount - (validated.discount || 0);
 
@@ -110,7 +119,8 @@ export async function generateQuotation(
                     vehicleNo: validated.vehicleNo || null,
                     numberOfPersons: validated.numberOfPersons || 1,
                     startDate: validated.startDate || null,
-                    hireRatePerKm: validated.hireRatePerKm || 0,
+                    hireRatePerDay: validated.hireRatePerDay || 0,
+                    kmPerDay: validated.kmPerDay || 0,
                     totalDistance: itemTotals.distance,
                     transportCost,
                     accommodationTotal: itemTotals.accommodation,
@@ -119,6 +129,9 @@ export async function generateQuotation(
                     otherCostsTotal: itemTotals.other,
                     markup: validated.markup || 0,
                     discount: validated.discount || 0,
+                    driverCostPerDay: validated.driverCostPerDay || 0,
+                    advanceAmount: validated.advanceAmount || 0,
+                    excludedItems: validated.excludedItems || null,
                     totalAmount: Math.max(0, totalAmount),
                     notes: validated.notes || null,
                     validUntil: validated.validUntil || null,
@@ -127,7 +140,7 @@ export async function generateQuotation(
             });
         });
 
-        revalidatePath('/quotations');
+        revalidateFor('quotation');
         return { success: true, data: quotation.id };
     } catch (error) {
         console.error('Error generating quotation:', error);
@@ -217,7 +230,7 @@ export async function updateQuotationStatus(
             data: { status },
         });
 
-        revalidatePath('/quotations');
+        revalidateFor('quotation');
         return { success: true };
     } catch (error) {
         console.error('Error updating quotation status:', error);
@@ -234,7 +247,7 @@ export async function deleteQuotation(id: string): Promise<ActionResult<void>> {
             where: { id },
         });
 
-        revalidatePath('/quotations');
+        revalidateFor('quotation');
         return { success: true };
     } catch (error) {
         console.error('Error deleting quotation:', error);

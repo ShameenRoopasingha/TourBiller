@@ -119,7 +119,7 @@ export function BillCreator({
         if (initialVehicleNo && vehicles.length > 0) {
             const selectedVehicle = vehicles.find(v => v.vehicleNo === initialVehicleNo);
             if (selectedVehicle) {
-                const rate = selectedVehicle.defaultRate ?? 0;
+                const rate = selectedVehicle.ratePerDay ?? 0;
                 form.setValue('hireRate', rate);
                 updateField('hireRate', rate);
             }
@@ -185,7 +185,7 @@ export function BillCreator({
 
         const selectedVehicle = vehicles.find(v => v.vehicleNo === value);
         if (selectedVehicle) {
-            const rate = selectedVehicle.defaultRate ?? 0;
+            const rate = selectedVehicle.ratePerDay ?? 0;
             form.setValue('hireRate', rate);
             updateField('hireRate', rate);
         }

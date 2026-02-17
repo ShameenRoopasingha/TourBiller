@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { VehicleSchema, type ActionResult, type Vehicle } from '@/lib/validations';
-import { revalidatePath } from 'next/cache';
+import { revalidateFor } from '@/lib/revalidation';
 
 /**
  * Create a new vehicle
@@ -14,8 +14,10 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
             model: (formData.get('model') as string) || undefined,
             category: formData.get('category') as string,
             status: formData.get('status') as string,
-            defaultRate: parseFloat(formData.get('defaultRate') as string) || 0,
+            ratePerDay: parseFloat(formData.get('ratePerDay') as string) || 0,
+            kmPerDay: parseFloat(formData.get('kmPerDay') as string) || 0,
             excessKmRate: parseFloat(formData.get('excessKmRate') as string) || 0,
+            extraHourRate: parseFloat(formData.get('extraHourRate') as string) || 0,
         };
 
         const validatedData = VehicleSchema.parse(rawData);
@@ -24,11 +26,7 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
             data: validatedData,
         });
 
-        revalidatePath('/vehicles');
-        revalidatePath('/quotations/new');
-        revalidatePath('/bills/new');
-        revalidatePath('/bookings/new');
-        revalidatePath('/'); // Dashboard
+        revalidateFor('vehicle');
 
         return {
             success: true,
@@ -75,8 +73,10 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
             model: (formData.get('model') as string) || undefined,
             category: formData.get('category') as string,
             status: formData.get('status') as string,
-            defaultRate: parseFloat(formData.get('defaultRate') as string) || 0,
+            ratePerDay: parseFloat(formData.get('ratePerDay') as string) || 0,
+            kmPerDay: parseFloat(formData.get('kmPerDay') as string) || 0,
             excessKmRate: parseFloat(formData.get('excessKmRate') as string) || 0,
+            extraHourRate: parseFloat(formData.get('extraHourRate') as string) || 0,
         };
 
         const validatedData = VehicleSchema.parse(rawData);
@@ -86,11 +86,7 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
             data: validatedData,
         });
 
-        revalidatePath('/vehicles');
-        revalidatePath('/quotations/new');
-        revalidatePath('/bills/new');
-        revalidatePath('/bookings/new');
-        revalidatePath('/'); // Dashboard
+        revalidateFor('vehicle');
 
         return { success: true, data: id };
     } catch (error) {
@@ -111,11 +107,7 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
             where: { id },
         });
 
-        revalidatePath('/vehicles');
-        revalidatePath('/quotations/new');
-        revalidatePath('/bills/new');
-        revalidatePath('/bookings/new');
-        revalidatePath('/'); // Dashboard
+        revalidateFor('vehicle');
 
         return { success: true };
     } catch (error) {

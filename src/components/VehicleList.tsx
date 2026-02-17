@@ -134,7 +134,8 @@ export function VehicleList() {
                                         <TableHead>Vehicle No.</TableHead>
                                         <TableHead>Model</TableHead>
                                         <TableHead>Category</TableHead>
-                                        <TableHead className="text-right">Default Rate</TableHead>
+                                        <TableHead className="text-center">Seats</TableHead>
+                                        <TableHead className="text-right">Rate/Day</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -145,7 +146,8 @@ export function VehicleList() {
                                             <TableCell className="font-medium">{vehicle.vehicleNo}</TableCell>
                                             <TableCell>{vehicle.model || '-'}</TableCell>
                                             <TableCell>{vehicle.category}</TableCell>
-                                            <TableCell className="text-right">{vehicle.defaultRate ? `Rs. ${vehicle.defaultRate}` : '-'}</TableCell>
+                                            <TableCell className="text-center">{vehicle.seats || '-'}</TableCell>
+                                            <TableCell className="text-right">{vehicle.ratePerDay ? `Rs. ${vehicle.ratePerDay.toLocaleString()}` : '-'}</TableCell>
                                             <TableCell>
                                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${vehicle.status === 'ACTIVE'
                                                     ? 'bg-green-100 text-green-700'

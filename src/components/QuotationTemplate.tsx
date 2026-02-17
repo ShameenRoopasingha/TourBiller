@@ -13,7 +13,8 @@ interface QuotationData {
     vehicleNo: string | null;
     numberOfPersons: number;
     startDate: Date | null;
-    hireRatePerKm: number;
+    hireRatePerDay: number;
+    kmPerDay: number;
     totalDistance: number;
     transportCost: number;
     accommodationTotal: number;
@@ -22,6 +23,9 @@ interface QuotationData {
     otherCostsTotal: number;
     markup: number;
     discount: number;
+    driverCostPerDay: number;
+    advanceAmount: number;
+    excludedItems: string | null;
     totalAmount: number;
     notes: string | null;
     validUntil: Date | null;
@@ -43,6 +47,13 @@ interface QuotationData {
             otherCosts: number;
         }[];
     };
+    // Vehicle specs (optional, fetched from vehicle record)
+    vehicleSeats?: number | null;
+    vehicleAcType?: string | null;
+    vehicleFeatures?: string | null;
+    vehicleInsuranceCoverage?: string | null;
+    vehicleExcessKmRate?: number | null;
+    vehicleExtraHourRate?: number | null;
 }
 
 interface BusinessProfileData {
@@ -52,6 +63,10 @@ interface BusinessProfileData {
     email: string | null;
     website: string | null;
     logoUrl?: string | null;
+    bankName?: string | null;
+    bankBranch?: string | null;
+    bankAccountNo?: string | null;
+    bankAccountName?: string | null;
 }
 
 interface QuotationTemplateProps {
@@ -81,7 +96,9 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
         quotation.activitiesTotal +
         quotation.otherCostsTotal;
 
-    const markupAmount = subtotal * (quotation.markup / 100);
+    const driverTotal = quotation.tourSchedule.days * (quotation.driverCostPerDay || 0);
+    const subtotalWithDriver = subtotal + driverTotal;
+    const markupAmount = subtotalWithDriver * (quotation.markup / 100);
 
     return (
         <div className="mx-auto bg-white font-mono text-[11px] text-black leading-snug">
@@ -191,6 +208,30 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                     </p>
                 )}
 
+                {/* ── Vehicle Specifications ── */}
+                {(quotation.vehicleSeats || quotation.vehicleAcType || quotation.vehicleFeatures || quotation.vehicleInsuranceCoverage) && (
+                    <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-sm">
+                        <h3 className="text-[10px] font-bold uppercase text-blue-700 mb-1 tracking-wide">Vehicle Specifications</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-0.5 text-[10px]">
+                            {quotation.vehicleSeats && (
+                                <div><span className="text-gray-500">Seats:</span> <span className="font-semibold">{quotation.vehicleSeats}</span></div>
+                            )}
+                            {quotation.vehicleAcType && (
+                                <div><span className="text-gray-500">AC Type:</span> <span className="font-semibold">{quotation.vehicleAcType}</span></div>
+                            )}
+                            {quotation.vehicleFeatures && (
+                                <div className="col-span-2"><span className="text-gray-500">Features:</span> <span className="font-semibold">{quotation.vehicleFeatures}</span></div>
+                            )}
+                            {quotation.vehicleInsuranceCoverage && (
+                                <div className="col-span-2"><span className="text-gray-500">Insurance:</span> <span className="font-semibold">{quotation.vehicleInsuranceCoverage}</span></div>
+                            )}
+                            {quotation.vehicleExcessKmRate != null && quotation.vehicleExcessKmRate > 0 && (
+                                <div><span className="text-gray-500">Excess Km Rate:</span> <span className="font-semibold">{fmt(quotation.vehicleExcessKmRate)}/km</span></div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Day-by-Day Itinerary ── */}
                 <div className="mb-3">
                     <h3 className="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-wide">Day-by-Day Itinerary</h3>
@@ -238,9 +279,19 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                         <h3 className="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-wide">Cost Summary</h3>
                         <div className="border border-gray-300 rounded-sm p-2 text-[11px] space-y-0.5">
                             <div className="grid grid-cols-[1fr_auto] gap-x-4">
-                                <span className="text-gray-600">Transport ({quotation.totalDistance.toFixed(0)} km × {fmt(quotation.hireRatePerKm)}/km)</span>
+                                <span className="text-gray-600">Van Hire ({quotation.tourSchedule.days} days × {fmt(quotation.hireRatePerDay)}/day for {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km)</span>
                                 <span className="text-right">{fmt(quotation.transportCost)}</span>
                             </div>
+                            {quotation.vehicleExcessKmRate != null && quotation.vehicleExcessKmRate > 0 && (
+                                <div className="text-[9px] text-gray-500 italic -mt-0.5">
+                                    Any km exceeding {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km charged at {fmt(quotation.vehicleExcessKmRate)}/km
+                                </div>
+                            )}
+                            {quotation.vehicleExtraHourRate != null && quotation.vehicleExtraHourRate > 0 && (
+                                <div className="text-[9px] text-gray-500 italic -mt-0.5">
+                                    Extra hours charged at {fmt(quotation.vehicleExtraHourRate)}/hr
+                                </div>
+                            )}
                             <div className="grid grid-cols-[1fr_auto] gap-x-4">
                                 <span className="text-gray-600">Accommodation</span>
                                 <span className="text-right">{fmt(quotation.accommodationTotal)}</span>
@@ -257,10 +308,16 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                                 <span className="text-gray-600">Other Costs</span>
                                 <span className="text-right">{fmt(quotation.otherCostsTotal)}</span>
                             </div>
+                            {driverTotal > 0 && (
+                                <div className="grid grid-cols-[1fr_auto] gap-x-4">
+                                    <span className="text-gray-600">Driver ({quotation.tourSchedule.days} days × {fmt(quotation.driverCostPerDay)}/day)</span>
+                                    <span className="text-right">{fmt(driverTotal)}</span>
+                                </div>
+                            )}
 
                             <div className="border-t border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-4">
                                 <span className="text-gray-600">Subtotal</span>
-                                <span className="text-right font-medium">{fmt(subtotal)}</span>
+                                <span className="text-right font-medium">{fmt(subtotalWithDriver)}</span>
                             </div>
                             {quotation.markup > 0 && (
                                 <div className="grid grid-cols-[1fr_auto] gap-x-4 text-green-700">
@@ -282,6 +339,37 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                         </div>
                     </div>
                 </div>
+
+                {/* ── Excluded Items ── */}
+                {quotation.excludedItems && (
+                    <div className="mb-3 text-[10px]">
+                        <div className="p-2 bg-red-50 border border-red-200 rounded-sm">
+                            <span className="font-bold text-red-700">Not Included: </span>
+                            <span className="whitespace-pre-wrap text-red-600">{quotation.excludedItems}</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Advance Payment & Bank Details ── */}
+                {quotation.advanceAmount > 0 && (
+                    <div className="mb-3 text-[10px]">
+                        <div className="p-2 bg-green-50 border border-green-200 rounded-sm">
+                            <span className="font-bold text-green-700">Advance Payment Required: </span>
+                            <span className="font-bold text-green-800">{fmt(quotation.advanceAmount)}</span>
+                            {businessProfile?.bankAccountNo && (
+                                <div className="mt-1 text-green-700">
+                                    <span className="font-semibold">Bank: </span>{businessProfile.bankName || 'N/A'}
+                                    {businessProfile.bankBranch && <> — {businessProfile.bankBranch} Branch</>}
+                                    <br />
+                                    <span className="font-semibold">A/C No: </span>{businessProfile.bankAccountNo}
+                                    {businessProfile.bankAccountName && (
+                                        <> — <span className="font-semibold">Name: </span>{businessProfile.bankAccountName}</>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* ── Notes & Validity ── */}
                 {(quotation.notes || quotation.validUntil) && (

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { BillSchema, BusinessProfileSchema, type ActionResult } from '@/lib/validations';
 import { type Bill, type BusinessProfile } from '@prisma/client';
 import { calculateTotalAmount } from '@/lib/calculations';
-import { revalidatePath } from 'next/cache';
+import { revalidateFor } from '@/lib/revalidation';
 
 /**
  * Create a new bill
@@ -44,27 +44,30 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
       validatedData.allowedKm
     );
 
-    // Save to database
-    const bill = await prisma.bill.create({
-      data: {
-        ...validatedData,
-        totalAmount,
-      },
+    // Save to database (use transaction to ensure bill + booking update are atomic)
+    const bookingId = formData.get('bookingId') as string;
+
+    const bill = await prisma.$transaction(async (tx) => {
+      const createdBill = await tx.bill.create({
+        data: {
+          ...validatedData,
+          totalAmount,
+        },
+      });
+
+      // Auto-Close Booking within the same transaction
+      if (bookingId) {
+        await tx.booking.update({
+          where: { id: bookingId },
+          data: { status: 'COMPLETED' },
+        });
+      }
+
+      return createdBill;
     });
 
-    // Handle Auto-Close Booking
-    const bookingId = formData.get('bookingId') as string;
-    if (bookingId) {
-      await prisma.booking.update({
-        where: { id: bookingId },
-        data: { status: 'COMPLETED' }
-      });
-      // Revalidate bookings page as well
-      revalidatePath('/bookings');
-    }
-
-    // Revalidate the dashboard page
-    revalidatePath('/');
+    // Revalidate all affected pages
+    revalidateFor('bill', 'booking');
 
     return {
       success: true,
@@ -149,53 +152,7 @@ export async function getBillById(id: string): Promise<ActionResult<Bill>> {
   }
 }
 
-/**
- * Get dashboard statistics
- */
-export async function getDashboardStats(): Promise<ActionResult<{
-  totalBills: number;
-  totalRevenue: number;
-  recentBills: Bill[];
-  activeVehicles: number;
-}>> {
-  try {
-    const [totalBills, revenueResult, recentBills, activeVehicles] = await Promise.all([
-      prisma.bill.count(),
-      prisma.bill.aggregate({
-        _sum: {
-          totalAmount: true,
-        },
-      }),
-      prisma.bill.findMany({
-        take: 5,
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.vehicle.count({
-        where: {
-          status: 'ACTIVE',
-        },
-      }),
-    ]);
 
-    return {
-      success: true,
-      data: {
-        totalBills,
-        totalRevenue: revenueResult._sum.totalAmount || 0,
-        recentBills,
-        activeVehicles,
-      },
-    };
-  } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    return {
-      success: false,
-      error: 'Failed to fetch dashboard statistics',
-    };
-  }
-}
 
 /**
  * Get business profile
@@ -233,6 +190,10 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
       email: (formData.get('email') as string) || undefined,
       website: (formData.get('website') as string) || undefined,
       logoUrl: (formData.get('logoUrl') as string) || undefined,
+      bankName: (formData.get('bankName') as string) || undefined,
+      bankBranch: (formData.get('bankBranch') as string) || undefined,
+      bankAccountNo: (formData.get('bankAccountNo') as string) || undefined,
+      bankAccountName: (formData.get('bankAccountName') as string) || undefined,
     };
 
     const validatedData = BusinessProfileSchema.parse(rawData);
@@ -252,7 +213,7 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
       });
     }
 
-    revalidatePath('/settings');
+    revalidateFor('businessProfile');
 
     return { success: true, data: profile };
   } catch (error) {
@@ -273,8 +234,7 @@ export async function deleteBill(id: string): Promise<ActionResult<void>> {
       where: { id },
     });
 
-    revalidatePath('/bills');
-    revalidatePath('/'); // Update dashboard stats
+    revalidateFor('bill');
 
     return { success: true };
   } catch (error) {

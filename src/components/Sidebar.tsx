@@ -1,9 +1,13 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck } from 'lucide-react';
+import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+
+const emptySubscribe = () => () => { };
 
 const navItems = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -17,6 +21,8 @@ const navItems = [
 
 export function Sidebar() {
     const pathname = usePathname();
+    const { resolvedTheme, setTheme } = useTheme();
+    const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
     return (
         <div className="h-screen w-64 bg-card border-r border-border flex flex-col fixed left-0 top-0">
@@ -52,16 +58,29 @@ export function Sidebar() {
                 <div className="text-xs text-muted-foreground">
                     <span className="font-semibold">TourBiller</span> v0.1
                 </div>
-                <Link href="/settings" aria-label="Settings">
-                    <div className={cn(
-                        "p-2 rounded-full transition-colors",
-                        pathname === '/settings'
-                            ? "bg-primary/10 text-primary"
-                            : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                    )}>
-                        <Settings className="h-5 w-5" />
-                    </div>
-                </Link>
+                <div className="flex items-center gap-1">
+                    {mounted ? (
+                        <button
+                            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                            className="p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
+                            aria-label="Toggle theme"
+                        >
+                            {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                        </button>
+                    ) : (
+                        <div className="p-2 h-9 w-9" />
+                    )}
+                    <Link href="/settings" aria-label="Settings">
+                        <div className={cn(
+                            "p-2 rounded-full transition-colors",
+                            pathname === '/settings'
+                                ? "bg-primary/10 text-primary"
+                                : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                        )}>
+                            <Settings className="h-5 w-5" />
+                        </div>
+                    </Link>
+                </div>
             </div>
         </div>
     );

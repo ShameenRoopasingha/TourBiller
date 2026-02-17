@@ -38,8 +38,14 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
             model: vehicle?.model || '',
             category: vehicle?.category || 'CAR',
             status: vehicle?.status || 'ACTIVE',
-            defaultRate: vehicle?.defaultRate || 0,
+            ratePerDay: vehicle?.ratePerDay || 0,
+            kmPerDay: vehicle?.kmPerDay || 0,
             excessKmRate: vehicle?.excessKmRate || 0,
+            extraHourRate: vehicle?.extraHourRate || 0,
+            seats: vehicle?.seats || undefined,
+            acType: vehicle?.acType || '',
+            features: vehicle?.features || '',
+            insuranceCoverage: vehicle?.insuranceCoverage || '',
         },
     });
 
@@ -115,12 +121,12 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
-                            name="defaultRate"
+                            name="ratePerDay"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Default Hire Rate (Rs.)</FormLabel>
+                                    <FormLabel>Rate Per Day (Rs.)</FormLabel>
                                     <FormControl>
-                                        <Input type="number" step="0.01" placeholder="e.g. 150.00" {...field} />
+                                        <Input type="number" step="0.01" placeholder="e.g. 17000" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -129,12 +135,42 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
 
                         <FormField
                             control={form.control}
+                            name="kmPerDay"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Km Allowance Per Day</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" step="0.01" placeholder="e.g. 100" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
                             name="excessKmRate"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Excess Km Rate (Rs.)</FormLabel>
                                     <FormControl>
-                                        <Input type="number" step="0.01" placeholder="e.g. 200.00" {...field} />
+                                        <Input type="number" step="0.01" placeholder="e.g. 120" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="extraHourRate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Extra Hour Rate (Rs.)</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" step="0.01" placeholder="e.g. 800" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -186,6 +222,79 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 </FormItem>
                             )}
                         />
+                    </div>
+
+                    {/* Vehicle Specifications */}
+                    <div className="border-t pt-4 mt-2">
+                        <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Vehicle Specifications</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="seats"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Number of Seats</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" min="1" placeholder="e.g. 14" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="acType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>AC Type</FormLabel>
+                                        <FormControl>
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                {...field}
+                                            >
+                                                <option value="">Select AC type...</option>
+                                                <option value="No AC">No AC</option>
+                                                <option value="Line AC">Line AC</option>
+                                                <option value="Dual AC">Dual AC</option>
+                                                <option value="Roof AC">Roof AC</option>
+                                            </select>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <FormField
+                                control={form.control}
+                                name="insuranceCoverage"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Insurance Coverage</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Rs. 500,000 per passenger" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="features"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Features / Amenities</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. TV, Sound system, Original seats" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-2">

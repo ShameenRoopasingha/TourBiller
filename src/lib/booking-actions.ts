@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { BookingSchema, type ActionResult } from '@/lib/validations';
 import { type Booking } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
+import { revalidateFor } from '@/lib/revalidation';
 
 /**
  * Create a new booking
@@ -27,9 +27,7 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
             data: validatedData,
         });
 
-        revalidatePath('/bookings');
-        revalidatePath('/'); // Dashboard
-        revalidatePath('/bills/new'); // Availability might change
+        revalidateFor('booking');
 
         return {
             success: true,
@@ -96,9 +94,7 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
             },
         });
 
-        revalidatePath('/bookings');
-        revalidatePath('/'); // Dashboard
-        revalidatePath('/bills/new');
+        revalidateFor('booking');
 
         return { success: true };
     } catch (error) {

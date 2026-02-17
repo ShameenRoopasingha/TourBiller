@@ -50,8 +50,14 @@ export const VehicleSchema = z.object({
   model: z.string().optional(),
   category: z.string().default("CAR"),
   status: z.string().default("ACTIVE"),
-  defaultRate: z.coerce.number().min(0).default(0),
+  ratePerDay: z.coerce.number().min(0).default(0),
+  kmPerDay: z.coerce.number().min(0).default(0),
   excessKmRate: z.coerce.number().min(0).default(0),
+  extraHourRate: z.coerce.number().min(0).default(0),
+  seats: z.coerce.number().min(0).optional(),
+  acType: z.string().optional(),
+  features: z.string().optional(),
+  insuranceCoverage: z.string().optional(),
 });
 
 export type VehicleFormData = z.infer<typeof VehicleSchema>;
@@ -74,6 +80,10 @@ export const BusinessProfileSchema = z.object({
   website: z.string().optional(),
   logoUrl: z.string().optional().or(z.literal('')),
   usdRate: z.coerce.number().min(0).default(300),
+  bankName: z.string().optional(),
+  bankBranch: z.string().optional(),
+  bankAccountNo: z.string().optional(),
+  bankAccountName: z.string().optional(),
 });
 
 export type BusinessProfileFormData = z.infer<typeof BusinessProfileSchema>;
@@ -178,9 +188,13 @@ export const QuotationSchema = z.object({
   vehicleNo: z.string().optional(),
   numberOfPersons: z.coerce.number().min(1).default(1),
   startDate: z.coerce.date().optional(),
-  hireRatePerKm: z.coerce.number().min(0).default(0),
+  hireRatePerDay: z.coerce.number().min(0).default(0),
+  kmPerDay: z.coerce.number().min(0).default(0),
   markup: z.coerce.number().min(0).default(0),
   discount: z.coerce.number().min(0).default(0),
+  driverCostPerDay: z.coerce.number().min(0).default(0),
+  advanceAmount: z.coerce.number().min(0).default(0),
+  excludedItems: z.string().optional(),
   notes: z.string().optional(),
   validUntil: z.coerce.date().optional(),
 });

@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { CustomerSchema, type ActionResult, type Customer } from '@/lib/validations';
-import { revalidatePath } from 'next/cache';
+import { revalidateFor } from '@/lib/revalidation';
 
 /**
  * Create a new customer
@@ -22,10 +22,7 @@ export async function createCustomer(formData: FormData): Promise<ActionResult<s
             data: validatedData,
         });
 
-        revalidatePath('/customers');
-        revalidatePath('/quotations/new');
-        revalidatePath('/bills/new');
-        revalidatePath('/bookings/new');
+        revalidateFor('customer');
 
         return {
             success: true,
@@ -82,10 +79,7 @@ export async function updateCustomer(id: string, formData: FormData): Promise<Ac
             data: validatedData,
         });
 
-        revalidatePath('/customers');
-        revalidatePath('/quotations/new');
-        revalidatePath('/bills/new');
-        revalidatePath('/bookings/new');
+        revalidateFor('customer');
 
         return { success: true, data: id };
     } catch (error) {
@@ -106,10 +100,7 @@ export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
             where: { id },
         });
 
-        revalidatePath('/customers');
-        revalidatePath('/quotations/new');
-        revalidatePath('/bills/new');
-        revalidatePath('/bookings/new');
+        revalidateFor('customer');
 
         return { success: true };
     } catch (error) {
