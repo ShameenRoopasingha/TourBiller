@@ -45,19 +45,24 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
             {/* Main Container - A5 Landscape approx 210mm x 148mm (minus margins) */}
             <div className="w-[190mm] h-[128mm] flex flex-col justify-between">
 
-                {/* Header Section */}
-                <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-2">
-                    <div className="w-1/2">
-                        {businessProfile?.logoUrl && (
-                            <div className="mb-2">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src={businessProfile.logoUrl}
-                                    alt="Company Logo"
-                                    className="h-12 w-12 rounded-full object-cover"
-                                />
-                            </div>
+                {/* Header Section - 3 Column Layout */}
+                <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-2 mb-2">
+                    {/* Column 1: Logo */}
+                    <div className="flex items-start pt-1">
+                        {businessProfile?.logoUrl ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                                src={businessProfile.logoUrl}
+                                alt="Company Logo"
+                                className="h-14 w-14 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="h-14 w-14" />
                         )}
+                    </div>
+
+                    {/* Column 2: Company Name & Contact */}
+                    <div>
                         <h1 className="text-xl font-bold uppercase tracking-wider">{companyName}</h1>
                         <p className="text-[10px] text-gray-600 mt-1 whitespace-pre-wrap">
                             {address}
@@ -65,6 +70,8 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
                             Tel: {phone} {email && `| ${email}`}
                         </p>
                     </div>
+
+                    {/* Column 3: Invoice Details */}
                     <div className="text-right">
                         <div className="text-2xl font-bold text-red-600">INVOICE NO: {bill.billNumber}</div>
                         <div className="text-xs">Date: {new Date(bill.createdAt).toLocaleDateString()}</div>

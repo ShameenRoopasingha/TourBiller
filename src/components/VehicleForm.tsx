@@ -38,10 +38,10 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
             model: vehicle?.model || '',
             category: vehicle?.category || 'CAR',
             status: vehicle?.status || 'ACTIVE',
-            ratePerDay: vehicle?.ratePerDay || 0,
-            kmPerDay: vehicle?.kmPerDay || 0,
-            excessKmRate: vehicle?.excessKmRate || 0,
-            extraHourRate: vehicle?.extraHourRate || 0,
+            ratePerDay: vehicle?.ratePerDay || ('' as unknown as number),
+            kmPerDay: vehicle?.kmPerDay || ('' as unknown as number),
+            excessKmRate: vehicle?.excessKmRate || ('' as unknown as number),
+            extraHourRate: vehicle?.extraHourRate || ('' as unknown as number),
             seats: vehicle?.seats || undefined,
             acType: vehicle?.acType || '',
             features: vehicle?.features || '',
@@ -124,7 +124,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                             name="ratePerDay"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Rate Per Day (Rs.)</FormLabel>
+                                    <FormLabel>Vehicle Rate Per Day (Rs.)</FormLabel>
                                     <FormControl>
                                         <Input type="number" step="0.01" placeholder="e.g. 17000" {...field} />
                                     </FormControl>
@@ -138,7 +138,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                             name="kmPerDay"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Km Allowance Per Day</FormLabel>
+                                    <FormLabel>Included Km Per Day</FormLabel>
                                     <FormControl>
                                         <Input type="number" step="0.01" placeholder="e.g. 100" {...field} />
                                     </FormControl>
@@ -154,7 +154,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                             name="excessKmRate"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Excess Km Rate (Rs.)</FormLabel>
+                                    <FormLabel>Extra Km Charge (Rs.)</FormLabel>
                                     <FormControl>
                                         <Input type="number" step="0.01" placeholder="e.g. 120" {...field} />
                                     </FormControl>
@@ -168,7 +168,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                             name="extraHourRate"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Extra Hour Rate (Rs.)</FormLabel>
+                                    <FormLabel>Extra Hour Charge (Rs.)</FormLabel>
                                     <FormControl>
                                         <Input type="number" step="0.01" placeholder="e.g. 800" {...field} />
                                     </FormControl>

@@ -1,0 +1,21 @@
+name: Supabase Keepalive
+
+on:
+  schedule:
+    # Runs every 3 days at 6:00 AM UTC
+    - cron: '0 6 */3 * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase DB
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.APP_URL }}/api/keepalive")
+          echo "Response code: $response"
+          if [ "$response" != "200" ]; then
+            echo "❌ Keepalive ping failed with status $response"
+            exit 1
+          fi
+          echo "✅ Database keepalive ping successful"

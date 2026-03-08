@@ -8,6 +8,7 @@ import { BookingSchema, type BookingFormData, type Vehicle, type Customer } from
 import { createBooking } from '@/lib/booking-actions';
 import { getVehicles } from '@/lib/vehicle-actions';
 import { getCustomers } from '@/lib/customer-actions';
+import { getTourSchedules } from '@/lib/tour-schedule-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,16 +32,19 @@ export default function NewBookingPage() {
     const [error, setError] = useState<string | null>(null);
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
+    const [schedules, setSchedules] = useState<{ id: string; name: string }[]>([]);
     const handleEnterKey = useEnterNavigation();
 
     useEffect(() => {
         const loadData = async () => {
-            const [vResult, cResult] = await Promise.all([
+            const [vResult, cResult, sResult] = await Promise.all([
                 getVehicles(),
-                getCustomers()
+                getCustomers(),
+                getTourSchedules()
             ]);
             if (vResult.success && vResult.data) setVehicles(vResult.data);
             if (cResult.success && cResult.data) setCustomers(cResult.data);
+            if (sResult.success && sResult.data) setSchedules(sResult.data);
         };
         loadData();
     }, []);
@@ -53,7 +57,7 @@ export default function NewBookingPage() {
             customerName: '',
             status: 'CONFIRMED',
             destination: '',
-            advanceAmount: 0,
+            advanceAmount: '' as unknown as number,
             notes: '',
         },
     });
@@ -202,9 +206,23 @@ export default function NewBookingPage() {
                                     name="destination"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Destination</FormLabel>
+                                            <FormLabel>Destination / Tour</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="e.g. Kandy Tour" {...field} />
+                                                <div className="relative">
+                                                    <Input
+                                                        placeholder="Select or type a destination..."
+                                                        {...field}
+                                                        list="schedule-list"
+                                                        autoComplete="off"
+                                                    />
+                                                    <datalist id="schedule-list">
+                                                        {schedules.map((s) => (
+                                                            <option key={s.id} value={s.name}>
+                                                                {s.name}
+                                                            </option>
+                                                        ))}
+                                                    </datalist>
+                                                </div>
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

@@ -136,6 +136,9 @@ export function VehicleList() {
                                         <TableHead>Category</TableHead>
                                         <TableHead className="text-center">Seats</TableHead>
                                         <TableHead className="text-right">Rate/Day</TableHead>
+                                        <TableHead className="text-right">Km/Day</TableHead>
+                                        <TableHead className="text-right">Extra Km</TableHead>
+                                        <TableHead className="text-right">Extra Hour</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -148,6 +151,9 @@ export function VehicleList() {
                                             <TableCell>{vehicle.category}</TableCell>
                                             <TableCell className="text-center">{vehicle.seats || '-'}</TableCell>
                                             <TableCell className="text-right">{vehicle.ratePerDay ? `Rs. ${vehicle.ratePerDay.toLocaleString()}` : '-'}</TableCell>
+                                            <TableCell className="text-right">{vehicle.kmPerDay || '-'}</TableCell>
+                                            <TableCell className="text-right">{vehicle.excessKmRate ? `Rs. ${vehicle.excessKmRate.toLocaleString()}` : '-'}</TableCell>
+                                            <TableCell className="text-right">{vehicle.extraHourRate ? `Rs. ${vehicle.extraHourRate.toLocaleString()}` : '-'}</TableCell>
                                             <TableCell>
                                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${vehicle.status === 'ACTIVE'
                                                     ? 'bg-green-100 text-green-700'

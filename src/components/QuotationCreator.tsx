@@ -97,18 +97,25 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
             customerPhone: '',
             vehicleNo: '',
             numberOfPersons: 1,
-            hireRatePerDay: 0,
-            kmPerDay: 0,
-            markup: 0,
-            discount: 0,
-            driverCostPerDay: 0,
-            advanceAmount: 0,
+            hireRatePerDay: '' as unknown as number,
+            kmPerDay: '' as unknown as number,
+            markup: '' as unknown as number,
+            discount: '' as unknown as number,
+            driverCostPerDay: '' as unknown as number,
+            advanceAmount: '' as unknown as number,
             excludedItems: 'Highway / expressway charges\nParking fees',
             notes: '',
+            validUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as unknown as Date,
         },
     });
 
     const [watchedHireRate, watchedKmPerDay, watchedMarkup, watchedDiscount, watchedDriverCost] = form.watch(['hireRatePerDay', 'kmPerDay', 'markup', 'discount', 'driverCostPerDay']);
+
+    // Filter vehicles by selected schedule's vehicle category
+    const filteredVehicles = useMemo(() => {
+        if (!selectedSchedule) return vehicles;
+        return vehicles.filter(v => v.category === selectedSchedule.vehicleCategory);
+    }, [vehicles, selectedSchedule]);
 
     // When schedule selection changes
     const handleScheduleChange = (scheduleId: string) => {
@@ -331,7 +338,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 defaultValue=""
                             >
                                 <option value="">-- Select vehicle --</option>
-                                {vehicles.map((v) => (
+                                {filteredVehicles.map((v) => (
                                     <option key={v.id} value={v.id}>
                                         {v.vehicleNo} {v.model ? `- ${v.model}` : ''} ({v.category})
                                     </option>
@@ -386,7 +393,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="vehicleNo">Vehicle No</Label>
+                            <Label htmlFor="vehicleNo">Vehicle Number</Label>
                             <Input
                                 id="vehicleNo"
                                 placeholder="e.g. ABC-1234"
@@ -394,7 +401,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="numberOfPersons">Number of Persons</Label>
+                            <Label htmlFor="numberOfPersons">Number of Guests</Label>
                             <Input
                                 id="numberOfPersons"
                                 type="number"
@@ -425,7 +432,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="hireRatePerDay">Hire Rate / Day (LKR)</Label>
+                            <Label htmlFor="hireRatePerDay">Vehicle Rate Per Day (Rs.)</Label>
                             <Input
                                 id="hireRatePerDay"
                                 type="number"
@@ -434,7 +441,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="kmPerDay">Km Per Day</Label>
+                            <Label htmlFor="kmPerDay">Included Km Per Day</Label>
                             <Input
                                 id="kmPerDay"
                                 type="number"
@@ -443,7 +450,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="markup">Markup (%)</Label>
+                            <Label htmlFor="markup">Commission (%)</Label>
                             <Input
                                 id="markup"
                                 type="number"
@@ -452,7 +459,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="discount">Discount (LKR)</Label>
+                            <Label htmlFor="discount">Discount (Rs.)</Label>
                             <Input
                                 id="discount"
                                 type="number"
@@ -461,7 +468,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="validUntil">Valid Until</Label>
+                            <Label htmlFor="validUntil">Quotation Valid Until</Label>
                             <Input
                                 id="validUntil"
                                 type="date"
@@ -472,7 +479,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="driverCostPerDay">Driver Cost / Day (LKR)</Label>
+                            <Label htmlFor="driverCostPerDay">Driver Cost Per Day (Rs.)</Label>
                             <Input
                                 id="driverCostPerDay"
                                 type="number"
@@ -482,7 +489,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="advanceAmount">Advance Payment (LKR)</Label>
+                            <Label htmlFor="advanceAmount">Advance Payment (Rs.)</Label>
                             <Input
                                 id="advanceAmount"
                                 type="number"
@@ -495,7 +502,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="excludedItems">Excluded Items (Not Included)</Label>
+                            <Label htmlFor="excludedItems">Not Included in This Quotation</Label>
                             <Textarea
                                 id="excludedItems"
                                 placeholder="Highway / expressway charges&#10;Parking fees"
@@ -504,7 +511,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="notes">Notes</Label>
+                            <Label htmlFor="notes">Additional Notes / Terms</Label>
                             <Textarea
                                 id="notes"
                                 placeholder="Additional notes or terms..."
@@ -575,7 +582,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 </div>
                                 {(Number(watchedMarkup) || 0) > 0 && (
                                     <div className="flex justify-between text-green-600">
-                                        <span>Markup ({watchedMarkup}%)</span>
+                                        <span>Commission ({watchedMarkup}%)</span>
                                         <span>+{fmt(calculatedTotals.markupAmount)}</span>
                                     </div>
                                 )}

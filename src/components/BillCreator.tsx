@@ -75,14 +75,14 @@ export function BillCreator({
 
             customerAddress: '',
             route: '',
-            startMeter: 0,
-            endMeter: 0,
-            hireRate: 0,
-            waitingCharge: 0,
-            gatePass: 0,
-            packageCharge: 0,
-            advanceAmount: 0,
-            allowedKm: 0,
+            startMeter: '' as unknown as number,
+            endMeter: '' as unknown as number,
+            hireRate: '' as unknown as number,
+            waitingCharge: '' as unknown as number,
+            gatePass: '' as unknown as number,
+            packageCharge: '' as unknown as number,
+            advanceAmount: '' as unknown as number,
+            allowedKm: '' as unknown as number,
             currency: 'LKR',
             exchangeRate: 1,
             paymentMethod: 'CASH',
@@ -96,17 +96,31 @@ export function BillCreator({
                 getCustomers()
             ]);
             if (vResult.success && vResult.data) setVehicles(vResult.data);
-            if (cResult.success && cResult.data) setCustomers(cResult.data);
+            if (cResult.success && cResult.data) {
+                setCustomers(cResult.data);
+                // Auto-fill customer address from pre-filled customer name
+                if (initialCustomerName) {
+                    const customer = cResult.data.find(c => c.name === initialCustomerName);
+                    if (customer?.address) {
+                        form.setValue('customerAddress', customer.address);
+                    }
+                }
+            }
 
             if (initialBookingId) {
                 const bResult = await getBookingById(initialBookingId);
-                if (bResult.success && bResult.data && bResult.data.advanceAmount) {
-                    form.setValue('advanceAmount', bResult.data.advanceAmount);
+                if (bResult.success && bResult.data) {
+                    if (bResult.data.advanceAmount) {
+                        form.setValue('advanceAmount', bResult.data.advanceAmount);
+                    }
+                    if (bResult.data.destination) {
+                        form.setValue('route', bResult.data.destination);
+                    }
                 }
             }
         };
         loadData();
-    }, [form, initialBookingId]);
+    }, [form, initialBookingId, initialCustomerName]);
 
     const watchedAllowedKm = useWatch({
         control: form.control,
@@ -119,9 +133,15 @@ export function BillCreator({
         if (initialVehicleNo && vehicles.length > 0) {
             const selectedVehicle = vehicles.find(v => v.vehicleNo === initialVehicleNo);
             if (selectedVehicle) {
-                const rate = selectedVehicle.ratePerDay ?? 0;
+                const rate = selectedVehicle.excessKmRate ?? 0;
+                const allowedKm = selectedVehicle.kmPerDay ?? 0;
+                const packageCharge = selectedVehicle.ratePerDay ?? 0;
                 form.setValue('hireRate', rate);
+                form.setValue('allowedKm', allowedKm);
+                form.setValue('packageCharge', packageCharge);
                 updateField('hireRate', rate);
+                updateField('allowedKm', allowedKm);
+                updateField('packageCharge', packageCharge);
             }
         }
     }, [initialVehicleNo, vehicles, form, updateField]);
@@ -185,9 +205,15 @@ export function BillCreator({
 
         const selectedVehicle = vehicles.find(v => v.vehicleNo === value);
         if (selectedVehicle) {
-            const rate = selectedVehicle.ratePerDay ?? 0;
+            const rate = selectedVehicle.excessKmRate ?? 0;
+            const allowedKm = selectedVehicle.kmPerDay ?? 0;
+            const packageCharge = selectedVehicle.ratePerDay ?? 0;
             form.setValue('hireRate', rate);
+            form.setValue('allowedKm', allowedKm);
+            form.setValue('packageCharge', packageCharge);
             updateField('hireRate', rate);
+            updateField('allowedKm', allowedKm);
+            updateField('packageCharge', packageCharge);
         }
     };
 

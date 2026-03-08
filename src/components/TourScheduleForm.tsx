@@ -70,11 +70,11 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
                 dayNumber: 1,
                 title: '',
                 description: '',
-                distanceKm: 0,
-                accommodation: 0,
-                meals: 0,
-                activities: 0,
-                otherCosts: 0,
+                distanceKm: '' as unknown as number,
+                accommodation: '' as unknown as number,
+                meals: '' as unknown as number,
+                activities: '' as unknown as number,
+                otherCosts: '' as unknown as number,
             },
         ];
 
@@ -85,7 +85,7 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
             name: initialData?.name || '',
             description: initialData?.description || '',
             days: initialData?.days || 1,
-            basePricePerPerson: initialData?.basePricePerPerson || 0,
+            basePricePerPerson: initialData?.basePricePerPerson || ('' as unknown as number),
             vehicleCategory: initialData?.vehicleCategory || 'CAR',
             isActive: true,
             items: defaultItems,
@@ -118,11 +118,11 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
             dayNumber: fields.length + 1,
             title: '',
             description: '',
-            distanceKm: 0,
-            accommodation: 0,
-            meals: 0,
-            activities: 0,
-            otherCosts: 0,
+            distanceKm: '' as unknown as number,
+            accommodation: '' as unknown as number,
+            meals: '' as unknown as number,
+            activities: '' as unknown as number,
+            otherCosts: '' as unknown as number,
         });
         form.setValue('days', fields.length + 1);
     };
@@ -221,7 +221,7 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="basePricePerPerson">Base Price Per Person (LKR)</Label>
+                        <Label htmlFor="basePricePerPerson">Base Price Per Person (Rs.)</Label>
                         <Input
                             id="basePricePerPerson"
                             type="number"
@@ -347,7 +347,11 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
                     <CardTitle className="text-sm">Schedule Totals</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-7 gap-4 text-sm">
+                        <div>
+                            <span className="text-muted-foreground">Days</span>
+                            <p className="font-semibold">{fields.length}</p>
+                        </div>
                         <div>
                             <span className="text-muted-foreground">Total Distance</span>
                             <p className="font-semibold">{totals.distance.toFixed(1)} km</p>
