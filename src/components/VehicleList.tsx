@@ -95,9 +95,6 @@ export function VehicleList() {
             <Card>
                 <CardHeader>
                     <CardTitle>Vehicle Registry</CardTitle>
-                    <CardDescription>
-                        Manage your fleet of vehicles.
-                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center mb-6">

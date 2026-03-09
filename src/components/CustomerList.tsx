@@ -95,9 +95,6 @@ export function CustomerList() {
             <Card>
                 <CardHeader>
                     <CardTitle>Customer Directory</CardTitle>
-                    <CardDescription>
-                        Manage your customer database.
-                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center mb-6">
