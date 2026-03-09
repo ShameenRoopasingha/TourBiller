@@ -149,13 +149,14 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
 
             if (result.success) {
                 setSuccess(true);
+                // Keep isSubmitting true during transition
                 setTimeout(() => router.push('/tour-schedules'), 1000);
             } else {
                 setError(result.error || 'An error occurred');
+                setIsSubmitting(false);
             }
         } catch {
             setError('An unexpected error occurred');
-        } finally {
             setIsSubmitting(false);
         }
     };

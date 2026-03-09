@@ -127,7 +127,7 @@ export function CustomerList() {
                             <p className="text-sm">Add a new customer to get started.</p>
                         </div>
                     ) : (
-                        <div className="rounded-md border">
+                        <div className="rounded-md border overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>

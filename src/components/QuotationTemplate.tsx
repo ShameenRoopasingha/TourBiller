@@ -106,7 +106,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 @media print {
                     @page {
                         size: A4 portrait;
-                        margin: 1cm;
+                        margin: 0;
                     }
                     body {
                         margin: 0;
@@ -117,7 +117,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 }
             `}</style>
 
-            <div className="w-[190mm] min-h-[277mm] mx-auto p-6 flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-0 bg-white overflow-hidden">
+            <div className="w-[190mm] mx-auto p-6 flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-8 bg-white overflow-hidden">
 
                 {/* ── Header - 3 Column Layout ── */}
                 <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-2 mb-4">

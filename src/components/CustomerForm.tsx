@@ -61,11 +61,12 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         if (result.success) {
             router.push('/customers');
             router.refresh();
+            // Intentionally not setting isSubmitting to false here
+            // so the loading spinner stays active while Next.js fetches the new page
         } else {
             setError(result.error || 'Failed to save customer');
+            setIsSubmitting(false);
         }
-
-        setIsSubmitting(false);
     };
 
     return (

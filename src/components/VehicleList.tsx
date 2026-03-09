@@ -127,7 +127,7 @@ export function VehicleList() {
                             <p className="text-sm">Add a new vehicle to get started.</p>
                         </div>
                     ) : (
-                        <div className="rounded-md border">
+                        <div className="rounded-md border overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>

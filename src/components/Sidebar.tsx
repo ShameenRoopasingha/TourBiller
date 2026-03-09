@@ -7,14 +7,22 @@ import { signOut } from 'next-auth/react';
 import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, Sun, Moon, LogOut, UserCog } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import {
+    Sidebar as ShadcnSidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from '@/components/ui/sidebar';
 
 const emptySubscribe = () => () => { };
 
 type NavItem = {
     name: string;
     href: string;
-    icon: any;
+    icon: React.ElementType;
     adminOnly?: boolean;
 };
 
@@ -43,41 +51,46 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
     const visibleItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
     return (
-        <div className="h-screen w-64 bg-card/40 backdrop-blur-xl border-r border-border/50 flex flex-col fixed left-0 top-0">
-            <div className="p-6 border-b border-border/50">
+        <ShadcnSidebar className="border-r border-border/50 bg-card/40 backdrop-blur-xl">
+            <div className="p-6 border-b border-border/50 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight">
                     <span className="text-primary">Tour</span>Biller
                 </Link>
             </div>
 
-            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-                {visibleItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    return (
-                        <Link key={item.href} href={item.href}>
-                            <motion.div 
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className={cn(
-                                    "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-                                    isActive
-                                        ? "bg-primary text-primary-foreground shadow-sm"
-                                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-                                )}
-                            >
-                                <item.icon className="h-5 w-5" />
-                                <span className="font-medium">{item.name}</span>
-                            </motion.div>
-                        </Link>
-                    );
-                })}
-            </nav>
+            <SidebarContent className="p-2">
+                <SidebarGroup>
+                    <SidebarMenu className="space-y-2">
+                        {visibleItems.map((item) => {
+                            const isActive = pathname === item.href;
+                            return (
+                                <SidebarMenuItem key={item.href}>
+                                    <SidebarMenuButton 
+                                        asChild 
+                                        isActive={isActive} 
+                                        className={cn(
+                                            "h-10 transition-colors",
+                                            isActive
+                                                ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground"
+                                                : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                                        )}
+                                    >
+                                        <Link href={item.href} className="flex items-center gap-3 px-2 w-full">
+                                            <item.icon className="h-5 w-5" />
+                                            <span className="font-medium text-base">{item.name}</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            );
+                        })}
+                    </SidebarMenu>
+                </SidebarGroup>
+            </SidebarContent>
 
-            <div className="p-4 border-t border-border/50 space-y-3">
-                {/* User info */}
+            <SidebarFooter className="p-4 border-t border-border/50 space-y-3">
                 <div className="flex items-center gap-2 px-1">
                     <div className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
                         isAdmin ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
                     )}>
                         {userName.charAt(0).toUpperCase()}
@@ -93,7 +106,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                     </Link>
                     <button
                         onClick={() => signOut({ callbackUrl: '/login' })}
-                        className="p-2 rounded-full transition-colors hover:bg-red-50 text-muted-foreground hover:text-red-600"
+                        className="p-2 rounded-full transition-colors hover:bg-red-50 text-muted-foreground hover:text-red-600 shrink-0"
                         aria-label="Sign out"
                         title="Sign out"
                     >
@@ -132,7 +145,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                         )}
                     </div>
                 </div>
-            </div>
-        </div>
+            </SidebarFooter>
+        </ShadcnSidebar>
     );
 }

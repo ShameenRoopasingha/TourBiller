@@ -110,7 +110,7 @@ export default function UsersPage() {
 
     return (
         <div className="container mx-auto py-10 max-w-4xl space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Users</h1>
                     <p className="text-muted-foreground">Manage admin and driver accounts</p>

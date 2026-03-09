@@ -210,13 +210,14 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
 
             if (result.success) {
                 setSuccess(true);
+                // Intentionally keeping isSubmitting true during the transition
                 setTimeout(() => router.push('/quotations'), 1000);
             } else {
                 setError(result.error || 'An error occurred');
+                setIsSubmitting(false);
             }
         } catch {
             setError('An unexpected error occurred');
-        } finally {
             setIsSubmitting(false);
         }
     };
@@ -274,7 +275,8 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                     {selectedSchedule && (
                         <div className="mt-4">
                             <h4 className="text-sm font-medium mb-2">Itinerary Preview</h4>
-                            <Table>
+                            <div className="rounded-md border overflow-x-auto">
+                                <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-[60px]">Day</TableHead>
@@ -300,6 +302,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                     ))}
                                 </TableBody>
                             </Table>
+                            </div>
                         </div>
                     )}
                 </CardContent>

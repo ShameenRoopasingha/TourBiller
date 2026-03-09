@@ -106,7 +106,7 @@ export function QuotationList({ quotations }: QuotationListProps) {
     return (
         <div className="space-y-4">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex justify-between items-center mb-4">
                 <div>
                     <h1 className="text-2xl font-bold flex items-center gap-2">
                         <FileCheck className="h-6 w-6" />
@@ -151,8 +151,9 @@ export function QuotationList({ quotations }: QuotationListProps) {
                             </Link>
                         </div>
                     ) : (
-                        <Table>
-                            <TableHeader>
+                        <div className="rounded-md border overflow-x-auto">
+                            <Table>
+                                <TableHeader>
                                 <TableRow>
                                     <TableHead>Q No.</TableHead>
                                     <TableHead>Customer</TableHead>
@@ -248,6 +249,7 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                 ))}
                             </TableBody>
                         </Table>
+                        </div>
                     )}
                 </CardContent>
             </Card>

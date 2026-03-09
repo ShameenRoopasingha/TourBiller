@@ -156,7 +156,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 @media print {
                     @page {
                         size: A4 portrait;
-                        margin: 1cm;
+                        margin: 0;
                     }
                     body {
                         margin: 0;
@@ -168,8 +168,8 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 }
             `}</style>
 
-            {/* Main Container - A4 Portrait (21cm x 29.7cm) */}
-            <div className="w-[190mm] min-h-[277mm] flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none p-6 print:p-0 bg-white my-8 print:my-0">
+            {/* Main Container - A4 Portrait (21cm x max intrinsic height) */}
+            <div className="w-[190mm] flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none p-6 print:p-8 bg-white my-8 print:my-0">
 
                 {/* Header Section - 3 Column Layout */}
                 <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-2 mb-2">

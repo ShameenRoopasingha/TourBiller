@@ -70,11 +70,11 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
         if (result.success) {
             router.push('/vehicles');
             router.refresh();
+            // Intentionally not setting isSubmitting to false here
         } else {
             setError(result.error || 'Failed to save vehicle');
+            setIsSubmitting(false);
         }
-
-        setIsSubmitting(false);
     };
 
     return (
