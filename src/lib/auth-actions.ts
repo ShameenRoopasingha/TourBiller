@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { type ActionResult } from '@/lib/validations';
 import crypto from 'crypto';
+import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * Request a password reset link (forgot password)
@@ -14,6 +15,13 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
         
         if (!email) {
             return { success: false, error: 'Email is required' };
+        }
+
+        // Rate limit: 5 password reset requests per email per 15 minutes
+        const { limited, retryAfterMs } = rateLimit(`pwd-reset:${email}`, 5, 15 * 60 * 1000);
+        if (limited) {
+            const retryMinutes = Math.ceil(retryAfterMs / 60000);
+            return { success: false, error: `Too many reset attempts. Please try again in ${retryMinutes} minute(s).` };
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
@@ -46,7 +54,7 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
         const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
         
         // In a real app, send an email here using SendGrid/Resend/Nodemailer
-        // Since we are mocking the email service, we log it to console for development
+        // Since we are mocking the email service, we log it to server console for development
         console.log('====================================');
         console.log(`MOCK EMAIL SENT TO: ${email}`);
         console.log(`SUBJECT: Reset your password for Tour Biller`);
@@ -54,11 +62,7 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
         console.log(`LINK: ${resetLink}`);
         console.log('====================================');
 
-        // We can optionally return the link for testing purposes if configured
-        if (process.env.NODE_ENV === 'development') {
-            return { success: true, data: resetLink as any };
-        }
-
+        // Never return the reset link to the client — it should only be in server logs
         return { success: true };
     } catch (error) {
         console.error('Error requesting password reset:', error);
@@ -107,36 +111,45 @@ export async function resetPassword(formData: FormData): Promise<ActionResult<vo
             return { success: false, error: 'Password must be at least 6 characters' };
         }
 
-        // Verify token again
-        const resetToken = await prisma.passwordResetToken.findUnique({
-            where: { token }
-        });
-
-        if (!resetToken || resetToken.expires < new Date()) {
-            return { success: false, error: 'Invalid or expired reset token' };
+        // Rate limit: 5 reset attempts per token per 15 minutes
+        const { limited, retryAfterMs } = rateLimit(`pwd-token:${token}`, 5, 15 * 60 * 1000);
+        if (limited) {
+            const retryMinutes = Math.ceil(retryAfterMs / 60000);
+            return { success: false, error: `Too many attempts. Please try again in ${retryMinutes} minute(s).` };
         }
 
-        const user = await prisma.user.findUnique({
-            where: { email: resetToken.email }
-        });
+        // Atomic: verify, update password, and delete token in one transaction
+        // This prevents race conditions where the same token could be used twice
+        await prisma.$transaction(async (tx) => {
+            const resetToken = await tx.passwordResetToken.findUnique({
+                where: { token }
+            });
 
-        if (!user) {
-            return { success: false, error: 'User not found' };
-        }
+            if (!resetToken || resetToken.expires < new Date()) {
+                throw new Error('Invalid or expired reset token');
+            }
 
-        // Hash new password
-        const hashedPassword = await bcrypt.hash(password, 10);
+            const user = await tx.user.findUnique({
+                where: { email: resetToken.email }
+            });
 
-        // Update password and delete all tokens for this user
-        await prisma.$transaction([
-            prisma.user.update({
+            if (!user) {
+                throw new Error('User not found');
+            }
+
+            // Hash new password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Update password and delete all tokens for this user
+            await tx.user.update({
                 where: { email: user.email },
                 data: { password: hashedPassword }
-            }),
-            prisma.passwordResetToken.deleteMany({
+            });
+
+            await tx.passwordResetToken.deleteMany({
                 where: { email: user.email }
-            })
-        ]);
+            });
+        });
 
         return { success: true };
     } catch (error) {

@@ -124,6 +124,9 @@ export const BookingSchema = z.object({
   status: z.string().default("CONFIRMED"),
   advanceAmount: z.coerce.number().min(0).default(0),
   notes: z.string().optional(),
+}).refine(data => !data.endDate || data.endDate >= data.startDate, {
+  message: "End date must be after or equal to start date",
+  path: ["endDate"]
 });
 
 export type BookingFormData = z.infer<typeof BookingSchema>;

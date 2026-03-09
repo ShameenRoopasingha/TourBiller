@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { TourScheduleSchema, type ActionResult } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
+import { requireAdmin } from '@/lib/auth-guard';
 
 // Types for server responses
 type TourScheduleWithItems = {
@@ -53,6 +54,11 @@ export async function createTourSchedule(
     }
 ): Promise<ActionResult<string>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const validated = TourScheduleSchema.parse(data);
 
         const schedule = await prisma.$transaction(async (tx) => {
@@ -176,6 +182,11 @@ export async function updateTourSchedule(
     }
 ): Promise<ActionResult<string>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const validated = TourScheduleSchema.parse(data);
 
         await prisma.$transaction(async (tx) => {
@@ -227,6 +238,11 @@ export async function updateTourSchedule(
  */
 export async function deleteTourSchedule(id: string): Promise<ActionResult<void>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         await prisma.tourSchedule.update({
             where: { id },
             data: { isActive: false },

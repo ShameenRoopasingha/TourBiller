@@ -7,7 +7,6 @@ const ADMIN_ONLY_ROUTES = [
     '/customers',
     '/tour-schedules',
     '/quotations',
-    '/settings',
     '/users',
 ];
 

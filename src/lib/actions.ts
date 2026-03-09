@@ -5,12 +5,18 @@ import { BillSchema, BusinessProfileSchema, type ActionResult } from '@/lib/vali
 import { type Bill, type BusinessProfile } from '@prisma/client';
 import { calculateTotalAmount } from '@/lib/calculations';
 import { revalidateFor } from '@/lib/revalidation';
+import { requireAdmin } from '@/lib/auth-guard';
 
 /**
  * Create a new bill
  */
 export async function createBill(formData: FormData): Promise<ActionResult<string>> {
   try {
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error };
+    }
+
     // Extract and parse form data
     const rawData = {
       vehicleNo: formData.get('vehicleNo') as string,
@@ -188,6 +194,11 @@ export async function getBusinessProfile(): Promise<ActionResult<BusinessProfile
  */
 export async function updateBusinessProfile(formData: FormData): Promise<ActionResult<BusinessProfile>> {
   try {
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error };
+    }
+
     const rawData = {
       companyName: formData.get('companyName') as string,
       address: (formData.get('address') as string) || undefined,
@@ -195,6 +206,7 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
       email: (formData.get('email') as string) || undefined,
       website: (formData.get('website') as string) || undefined,
       logoUrl: (formData.get('logoUrl') as string) || undefined,
+      usdRate: parseFloat(formData.get('usdRate') as string) || 300,
       bankName: (formData.get('bankName') as string) || undefined,
       bankBranch: (formData.get('bankBranch') as string) || undefined,
       bankAccountNo: (formData.get('bankAccountNo') as string) || undefined,
@@ -235,6 +247,11 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
  */
 export async function deleteBill(id: string): Promise<ActionResult<void>> {
   try {
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error };
+    }
+
     await prisma.bill.delete({
       where: { id },
     });

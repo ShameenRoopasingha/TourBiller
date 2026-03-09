@@ -7,6 +7,7 @@ import { Loader2, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function LoginPage() {
@@ -76,8 +77,7 @@ export default function LoginPage() {
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Password</label>
-                            <Input
-                                type="password"
+                            <PasswordInput
                                 placeholder="Enter your password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}

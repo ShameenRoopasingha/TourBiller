@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Plus, Trash2, Shield, Truck, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import {
     Card,
     CardContent,
@@ -28,6 +29,15 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { getUsers, createUser, deleteUser } from '@/lib/user-actions';
 
 type User = {
@@ -45,22 +55,35 @@ export default function UsersPage() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [error, setError] = useState('');
 
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<{ id: string, name: string } | null>(null);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+
     // Form fields
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('DRIVER');
 
-    const fetchUsers = async () => {
-        const result = await getUsers();
-        if (result.success && result.data) {
-            setUsers(result.data);
-        }
-        setLoading(false);
-    };
-
     useEffect(() => {
-        fetchUsers();
+        let isMounted = true;
+        
+        const initFetch = async () => {
+            const result = await getUsers();
+            if (!isMounted) return;
+            
+            if (result.success && result.data) {
+                setUsers(result.data);
+            }
+            setLoading(false);
+        };
+        
+        initFetch();
+        
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const handleCreate = async (e: React.FormEvent) => {
@@ -82,7 +105,8 @@ export default function UsersPage() {
             setPassword('');
             setRole('DRIVER');
             setDialogOpen(false);
-            fetchUsers();
+            const refresh = await getUsers();
+            if (refresh.success && refresh.data) setUsers(refresh.data);
         } else {
             setError(result.error || 'Failed to create user');
         }
@@ -90,14 +114,20 @@ export default function UsersPage() {
         setCreating(false);
     };
 
-    const handleDelete = async (id: string, userName: string) => {
-        if (!confirm(`Are you sure you want to delete "${userName}"?`)) return;
-        const result = await deleteUser(id);
+    const confirmDelete = async () => {
+        if (!userToDelete) return;
+        setIsDeleting(true);
+        const result = await deleteUser(userToDelete.id);
         if (result.success) {
-            fetchUsers();
+            setDeleteDialogOpen(false);
+            setUserToDelete(null);
+            setDeleteConfirmText('');
+            const refresh = await getUsers();
+            if (refresh.success && refresh.data) setUsers(refresh.data);
         } else {
             alert(result.error || 'Failed to delete user');
         }
+        setIsDeleting(false);
     };
 
     if (loading) {
@@ -110,6 +140,50 @@ export default function UsersPage() {
 
     return (
         <div className="container mx-auto py-10 max-w-4xl space-y-6">
+            
+            {/* High Warning Deletion Modal */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-red-500 flex items-center gap-2">
+                            <Trash2 className="h-5 w-5" />
+                            Delete User Account
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-3 pt-2">
+                            <p>
+                                You are about to permanently delete the account for <strong>{userToDelete?.name}</strong>. 
+                                This action <span className="text-red-500 font-bold">cannot be undone</span> and will remove all their access immediately.
+                            </p>
+                            <div className="bg-red-50 dark:bg-red-950/20 p-3 rounded-md text-sm border border-red-200 dark:border-red-900/30">
+                                Please type <strong className="select-all">{userToDelete?.name}</strong> to confirm.
+                            </div>
+                            <Input 
+                                value={deleteConfirmText}
+                                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                placeholder={userToDelete?.name}
+                                className="mt-2"
+                            />
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => {
+                            setDeleteConfirmText('');
+                            setUserToDelete(null);
+                        }}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <Button 
+                            variant="destructive" 
+                            disabled={deleteConfirmText !== userToDelete?.name || isDeleting}
+                            onClick={confirmDelete}
+                        >
+                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                            Delete User
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             <div className="flex justify-between items-center mb-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Users</h1>
@@ -156,8 +230,7 @@ export default function UsersPage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Password</label>
-                                <Input
-                                    type="password"
+                                <PasswordInput
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Min 6 characters"
@@ -252,7 +325,10 @@ export default function UsersPage() {
                                                 variant="ghost"
                                                 size="icon"
                                                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                onClick={() => handleDelete(user.id, user.name)}
+                                                onClick={() => {
+                                                    setUserToDelete({ id: user.id, name: user.name });
+                                                    setDeleteDialogOpen(true);
+                                                }}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>

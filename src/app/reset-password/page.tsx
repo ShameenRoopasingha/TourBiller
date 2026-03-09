@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { verifyResetToken, resetPassword } from '@/lib/auth-actions';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { PasswordInput } from '@/components/ui/password-input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -149,8 +149,7 @@ export default function ResetPasswordPage() {
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium">New Password</label>
-                            <Input
-                                type="password"
+                            <PasswordInput
                                 placeholder="Enter new password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -161,8 +160,7 @@ export default function ResetPasswordPage() {
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Confirm Password</label>
-                            <Input
-                                type="password"
+                            <PasswordInput
                                 placeholder="Confirm new password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}

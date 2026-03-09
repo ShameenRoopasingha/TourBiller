@@ -4,12 +4,18 @@ import { prisma } from '@/lib/prisma';
 import { BookingSchema, type ActionResult } from '@/lib/validations';
 import { type Booking } from '@prisma/client';
 import { revalidateFor } from '@/lib/revalidation';
+import { requireAuth, requireAdmin } from '@/lib/auth-guard';
 
 /**
  * Create a new booking
  */
 export async function createBooking(formData: FormData): Promise<ActionResult<string>> {
     try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const rawData = {
             vehicleNo: formData.get('vehicleNo') as string,
             customerName: formData.get('customerName') as string,
@@ -70,6 +76,11 @@ export async function getBookings(searchQuery?: string): Promise<ActionResult<Bo
  */
 export async function cancelBooking(id: string): Promise<ActionResult<void>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         // 1. Fetch booking to check date
         const booking = await prisma.booking.findUnique({
             where: { id },

@@ -3,12 +3,18 @@
 import { prisma } from '@/lib/prisma';
 import { CustomerSchema, type ActionResult, type Customer } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
+import { requireAdmin } from '@/lib/auth-guard';
 
 /**
  * Create a new customer
  */
 export async function createCustomer(formData: FormData): Promise<ActionResult<string>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const rawData = {
             name: formData.get('name') as string,
             mobile: formData.get('mobile') as string,
@@ -65,6 +71,11 @@ export async function getCustomers(searchQuery?: string): Promise<ActionResult<C
  */
 export async function updateCustomer(id: string, formData: FormData): Promise<ActionResult<string>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const rawData = {
             name: formData.get('name') as string,
             mobile: formData.get('mobile') as string,
@@ -96,6 +107,11 @@ export async function updateCustomer(id: string, formData: FormData): Promise<Ac
  */
 export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         await prisma.customer.delete({
             where: { id },
         });

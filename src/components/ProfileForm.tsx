@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { updateProfile, updatePassword } from '@/lib/profile-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Loader2, Save, KeyRound } from 'lucide-react';
 import { useSession } from 'next-auth/react';
@@ -166,8 +167,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                         <div className="space-y-4 max-w-md">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Current Password</label>
-                                <Input 
-                                    type="password" 
+                                <PasswordInput 
                                     value={currentPassword} 
                                     onChange={(e) => setCurrentPassword(e.target.value)} 
                                     required 
@@ -175,8 +175,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">New Password</label>
-                                <Input 
-                                    type="password" 
+                                <PasswordInput 
                                     value={newPassword} 
                                     onChange={(e) => setNewPassword(e.target.value)} 
                                     required 
@@ -185,8 +184,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Confirm New Password</label>
-                                <Input 
-                                    type="password" 
+                                <PasswordInput 
                                     value={confirmPassword} 
                                     onChange={(e) => setConfirmPassword(e.target.value)} 
                                     required 

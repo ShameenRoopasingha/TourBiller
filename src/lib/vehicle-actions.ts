@@ -3,12 +3,18 @@
 import { prisma } from '@/lib/prisma';
 import { VehicleSchema, type ActionResult, type Vehicle } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
+import { requireAdmin } from '@/lib/auth-guard';
 
 /**
  * Create a new vehicle
  */
 export async function createVehicle(formData: FormData): Promise<ActionResult<string>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const rawData = {
             vehicleNo: formData.get('vehicleNo') as string,
             model: (formData.get('model') as string) || undefined,
@@ -68,6 +74,11 @@ export async function getVehicles(searchQuery?: string): Promise<ActionResult<Ve
  */
 export async function updateVehicle(id: string, formData: FormData): Promise<ActionResult<string>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const rawData = {
             vehicleNo: formData.get('vehicleNo') as string,
             model: (formData.get('model') as string) || undefined,
@@ -103,6 +114,11 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
  */
 export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         await prisma.vehicle.delete({
             where: { id },
         });

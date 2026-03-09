@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import { type ActionResult } from '@/lib/validations';
 import { revalidatePath } from 'next/cache';
@@ -41,6 +42,15 @@ export async function getUsers(): Promise<ActionResult<UserData[]>> {
  */
 export async function createUser(formData: FormData): Promise<ActionResult<string>> {
     try {
+        // Authorization: Only admins can create users
+        const session = await auth();
+        const callerUser = session?.user?.email
+            ? await prisma.user.findUnique({ where: { email: session.user.email } })
+            : null;
+        if (!callerUser || callerUser.role !== 'ADMIN') {
+            return { success: false, error: 'Unauthorized: Only admins can create users.' };
+        }
+
         const name = formData.get('name') as string;
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
@@ -84,6 +94,22 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
  */
 export async function deleteUser(id: string): Promise<ActionResult<void>> {
     try {
+        const session = await auth();
+        // The basic JWT auth user payload only includes id, name, email, image.
+        // We need to fetch the full user to check their role.
+        const dbUser = session?.user?.email 
+            ? await prisma.user.findUnique({ where: { email: session.user.email } })
+            : null;
+
+        if (!dbUser || dbUser.role !== 'ADMIN') {
+            return { success: false, error: 'Unauthorized: Only admins can delete users.' };
+        }
+
+        // Prevent self-deletion
+        if (dbUser.id === id) {
+            return { success: false, error: 'You cannot delete your own account.' };
+        }
+
         await prisma.user.delete({ where: { id } });
         revalidatePath('/users');
         return { success: true };

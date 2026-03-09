@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { QuotationSchema, type ActionResult } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
+import { requireAdmin } from '@/lib/auth-guard';
 
 // Types for server responses
 type QuotationWithSchedule = {
@@ -79,6 +80,11 @@ export async function generateQuotation(
     }
 ): Promise<ActionResult<string>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const validated = QuotationSchema.parse(data);
 
         const quotation = await prisma.$transaction(async (tx) => {
@@ -243,6 +249,11 @@ export async function updateQuotationStatus(
  */
 export async function deleteQuotation(id: string): Promise<ActionResult<void>> {
     try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         await prisma.quotation.delete({
             where: { id },
         });

@@ -95,7 +95,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                     )}>
                         {userName.charAt(0).toUpperCase()}
                     </div>
-                    <Link href="/settings/profile" className="flex-1 min-w-0 hover:opacity-80 transition-opacity cursor-pointer">
+                    <Link href="/settings" className="flex-1 min-w-0 hover:opacity-80 transition-opacity cursor-pointer">
                         <div className="text-sm font-medium truncate">{userName}</div>
                         <div className={cn(
                             "text-[10px] font-bold uppercase",
@@ -131,18 +131,16 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                         ) : (
                             <div className="p-2 h-9 w-9" />
                         )}
-                        {isAdmin && (
-                            <Link href="/settings" aria-label="Settings">
-                                <div className={cn(
-                                    "p-2 rounded-full transition-colors",
-                                    pathname === '/settings'
-                                        ? "bg-primary/10 text-primary"
-                                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                                )}>
-                                    <Settings className="h-5 w-5" />
-                                </div>
-                            </Link>
-                        )}
+                        <Link href="/settings" aria-label="Settings">
+                            <div className={cn(
+                                "p-2 rounded-full transition-colors",
+                                pathname === '/settings'
+                                    ? "bg-primary/10 text-primary"
+                                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                            )}>
+                                <Settings className="h-5 w-5" />
+                            </div>
+                        </Link>
                     </div>
                 </div>
             </SidebarFooter>

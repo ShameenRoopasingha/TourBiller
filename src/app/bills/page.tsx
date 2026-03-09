@@ -15,8 +15,9 @@ import {
 import { Plus, Printer, FileText } from 'lucide-react';
 import { SearchInput } from '@/components/SearchInput';
 import { DeleteBillButton } from '@/components/DeleteBillButton';
+import { auth } from '@/lib/auth';
 
-async function BillsList({ searchQuery }: { searchQuery?: string }) {
+async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdmin: boolean }) {
     const { success, data: bills, error } = await getBills(searchQuery);
 
     if (!success || !bills) {
@@ -34,7 +35,7 @@ async function BillsList({ searchQuery }: { searchQuery?: string }) {
                 <FileText className="mx-auto h-12 w-12 mb-3 text-muted-foreground/20" />
                 <p className="text-lg font-medium">No bills found</p>
                 <p className="text-sm mb-4">{searchQuery ? 'Try a different search term' : 'Create a new bill to get started'}</p>
-                {!searchQuery && (
+                {!searchQuery && isAdmin && (
                     <Button asChild variant="outline">
                         <Link href="/bills/new">
                             <Plus className="mr-2 h-4 w-4" />
@@ -85,7 +86,7 @@ async function BillsList({ searchQuery }: { searchQuery?: string }) {
                                         <span className="sr-only">Print</span>
                                     </Link>
                                 </Button>
-                                <DeleteBillButton billId={bill.id} billNumber={bill.billNumber} />
+                                {isAdmin && <DeleteBillButton billId={bill.id} billNumber={bill.billNumber} />}
                             </TableCell>
                         </TableRow>
                     ))}
@@ -100,6 +101,8 @@ export default async function BillsPage(
         searchParams?: Promise<{ q?: string }>;
     }
 ) {
+    const session = await auth();
+    const isAdmin = (session?.user as any)?.role === 'ADMIN';
     const searchParams = await props.searchParams;
     const query = searchParams?.q || '';
 
@@ -110,12 +113,14 @@ export default async function BillsPage(
                     <h1 className="text-3xl font-bold tracking-tight">Bills</h1>
                     <p className="text-muted-foreground">Manage and view generated bills</p>
                 </div>
-                <Button asChild>
-                    <Link href="/bills/new">
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Bill
-                    </Link>
-                </Button>
+                {isAdmin && (
+                    <Button asChild>
+                        <Link href="/bills/new">
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Bill
+                        </Link>
+                    </Button>
+                )}
             </div>
 
             <SearchInput placeholder="Search by bill no, customer, vehicle..." />
@@ -127,8 +132,9 @@ export default async function BillsPage(
                     <div className="h-20 w-full bg-muted animate-pulse rounded-md" />
                 </div>
             }>
-                <BillsList searchQuery={query} />
+                <BillsList searchQuery={query} isAdmin={isAdmin} />
             </Suspense>
         </div>
     );
 }
+

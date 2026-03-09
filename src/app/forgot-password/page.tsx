@@ -26,10 +26,6 @@ export default function ForgotPasswordPage() {
         
         if (result.success) {
             setSuccess(true);
-            // In development, we can log the link for easy testing
-            if (result.data) {
-                console.log('RESET LINK:', result.data);
-            }
         } else {
             setError(result.error || 'Failed to request reset link.');
         }
