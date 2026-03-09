@@ -7,6 +7,7 @@ import { signOut } from 'next-auth/react';
 import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, Sun, Moon, LogOut, UserCog } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 const emptySubscribe = () => () => { };
 
@@ -54,15 +55,19 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                     const isActive = pathname === item.href;
                     return (
                         <Link key={item.href} href={item.href}>
-                            <div className={cn(
-                                "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-                                isActive
-                                    ? "bg-primary text-primary-foreground"
-                                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                            )}>
+                            <motion.div 
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className={cn(
+                                    "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                                    isActive
+                                        ? "bg-primary text-primary-foreground shadow-sm"
+                                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                                )}
+                            >
                                 <item.icon className="h-5 w-5" />
                                 <span className="font-medium">{item.name}</span>
-                            </div>
+                            </motion.div>
                         </Link>
                     );
                 })}

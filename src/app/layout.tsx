@@ -4,6 +4,7 @@ import './globals.css'
 import { Sidebar } from '@/components/Sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { auth } from '@/lib/auth';
+import { PageTransition } from '@/components/PageTransition';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -35,8 +36,8 @@ export default async function RootLayout({
               <div className="print:hidden z-40">
                 <Sidebar userRole={(session.user as any)?.role} userName={session.user?.name || 'User'} />
               </div>
-              <main className="flex-1 ml-64 p-8 bg-background/40 backdrop-blur-[2px] z-10 print:ml-0 print:p-0 print:bg-white">
-                {children}
+              <main className="flex-1 ml-64 p-8 bg-background/40 backdrop-blur-[2px] z-10 print:ml-0 print:p-0 print:bg-white overflow-hidden">
+                <PageTransition>{children}</PageTransition>
               </main>
             </div>
           ) : (
