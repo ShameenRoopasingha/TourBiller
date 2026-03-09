@@ -80,10 +80,10 @@ async function BillsList({ searchQuery }: { searchQuery?: string }) {
                             </TableCell>
                             <TableCell className="text-right">
                                 <Button variant="ghost" size="sm" asChild>
-                                    <a href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer" title="Print Bill">
+                                    <Link href={`/bills/${bill.id}/print`} title="Print Bill">
                                         <Printer className="h-4 w-4" />
                                         <span className="sr-only">Print</span>
-                                    </a>
+                                    </Link>
                                 </Button>
                                 <DeleteBillButton billId={bill.id} billNumber={bill.billNumber} />
                             </TableCell>

@@ -95,3 +95,55 @@
     color: var(--foreground);
   }
 }
+
+/* =========================================================================
+   Print Styles (A4 Enforcement)
+   ========================================================================= */
+
+@media print {
+  /* Force A4 Size */
+  @page {
+    size: A4;
+    margin: 1cm; /* standard print margins */
+  }
+
+  /* Base wrapper for A4 sizing strictly */
+  .print-a4-wrapper {
+    width: 21cm !important;
+    height: 29.7cm !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    overflow: hidden;
+  }
+
+  /* Optional: Landscape wrapper if a specific page (like big tables) needs to be landscape */
+  .print-a4-landscape {
+    width: 29.7cm !important;
+    height: 21cm !important;
+    page: landscape;
+  }
+  @page landscape {
+    size: A4 landscape;
+  }
+
+  /* 58mm Thermal Printer Support */
+  .print-thermal {
+    width: 58mm !important;
+    max-width: 58mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    overflow: hidden;
+    page: thermal;
+  }
+  @page thermal {
+    size: 58mm auto; /* 58mm width, continuous height */
+    margin: 0; 
+  }
+
+  /* Force background colors to show up in Chrome/Edge prints */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

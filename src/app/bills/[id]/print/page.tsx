@@ -7,7 +7,12 @@ import { InvoiceTemplate } from '@/components/InvoiceTemplate';
 
 
 
+import { auth } from '@/lib/auth';
+
 async function PrintBill({ id }: { id: string }) {
+    const session = await auth();
+    const userRole = (session?.user as any)?.role || 'DRIVER';
+
     const [billResult, profileResult] = await Promise.all([
         getBillById(id),
         getBusinessProfile()
@@ -20,6 +25,7 @@ async function PrintBill({ id }: { id: string }) {
     return <InvoiceTemplate
         bill={billResult.data as Bill}
         businessProfile={profileResult.success ? (profileResult.data as BusinessProfile) : undefined}
+        userRole={userRole}
     />;
 }
 

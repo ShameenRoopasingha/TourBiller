@@ -4,15 +4,17 @@ import { useEffect } from 'react';
 import { type Bill } from '@/lib/validations';
 import { formatCurrency } from '@/lib/calculations';
 import { PrintButton } from '@/components/PrintButton';
+import { BluetoothPrintButton } from '@/components/BluetoothPrintButton';
 
 import { BusinessProfile } from '@/lib/validations';
 
 interface InvoiceTemplateProps {
     bill: Bill;
     businessProfile?: BusinessProfile;
+    userRole?: 'ADMIN' | 'DRIVER';
 }
 
-export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps) {
+export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: InvoiceTemplateProps) {
     useEffect(() => {
         // Auto-print when component mounts
         const timer = setTimeout(() => {
@@ -26,24 +28,148 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
     const phone = businessProfile?.phone || '(555) 123-4567';
     const email = businessProfile?.email ? `Email: ${businessProfile.email}` : '';
 
+    const fmt = formatCurrency;
 
+    // --- 58mm THERMAL RECEIPT LAYOUT (FOR DRIVERS) ---
+    if (userRole === 'DRIVER') {
+        return (
+            <div className="flex flex-col items-center mx-auto text-black leading-tight bg-white print:bg-transparent min-h-screen">
+                <style jsx global>{`
+                    @media print {
+                        @page {
+                            size: 58mm auto;
+                            margin: 0;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            background: white !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                    }
+                `}</style>
+                
+                {/* Fixed physical 58mm width wrapper for Thermal Printers */}
+                <div className="w-[58mm] max-w-[58mm] print-thermal text-[10px] font-mono break-words bg-white border border-gray-200 print:border-none my-4 print:my-0 pb-10">
+                    {/* Header */}
+                    <div className="text-center border-b border-black border-dashed pb-2 mb-2 pt-2 flex flex-col items-center">
+                        {businessProfile?.logoUrl && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                                src={businessProfile.logoUrl}
+                                alt="Company Logo"
+                                className="h-12 w-12 rounded-lg object-cover mb-1 grayscale contrast-125"
+                            />
+                        )}
+                        <div className="font-bold text-sm uppercase">{companyName}</div>
+                        <div className="text-[9px] leading-tight mt-1 whitespace-pre-wrap">{address}</div>
+                        <div className="text-[9px]">TEL: {phone}</div>
+                        <div className="font-bold mt-2 text-xs uppercase underline">CASH RECEIPT</div>
+                    </div>
+
+                    {/* Meta Info */}
+                    <div className="px-1 text-[9px] mb-2 leading-snug">
+                        <div><span className="font-semibold">BILL NO: </span>#{bill.billNumber}</div>
+                        <div><span className="font-semibold">DATE: </span>{new Date(bill.createdAt).toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                        <div><span className="font-semibold">CUSTOMER: </span>{bill.customerName}</div>
+                        <div><span className="font-semibold">VEHICLE: </span>{bill.vehicleNo}</div>
+                        <div><span className="font-semibold">ROUTE: </span>{bill.route}</div>
+                    </div>
+
+                    <div className="border-t border-black border-dashed my-1"></div>
+
+                    {/* Table-like Rows */}
+                    <div className="px-1 w-full text-[9px]">
+                        <div className="flex justify-between font-bold border-b border-black pb-0.5 mb-1">
+                            <span>DESC</span>
+                            <span>AMT</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-start mb-0.5">
+                            <span className="w-[65%] leading-tight">Mileage ({bill.endMeter}-{bill.startMeter}km)</span>
+                            <span className="w-[35%] text-right">{fmt((bill.endMeter - bill.startMeter) * bill.hireRate)}</span>
+                        </div>
+                        {bill.waitingCharge > 0 && (
+                            <div className="flex justify-between">
+                                <span>Waiting Charge</span>
+                                <span>{fmt(bill.waitingCharge)}</span>
+                            </div>
+                        )}
+                        {bill.gatePass > 0 && (
+                            <div className="flex justify-between">
+                                <span>Gate Pass</span>
+                                <span>{fmt(bill.gatePass)}</span>
+                            </div>
+                        )}
+                        {bill.packageCharge > 0 && (
+                            <div className="flex justify-between">
+                                <span>Package Chg</span>
+                                <span>{fmt(bill.packageCharge)}</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="border-t border-black border-dashed my-1"></div>
+
+                    {/* Totals */}
+                    <div className="px-1 text-[10px]">
+                        <div className="flex justify-between items-center mb-0.5">
+                            <span>TOTAL</span>
+                            <span>{fmt(bill.totalAmount)}</span>
+                        </div>
+                        {bill.advanceAmount > 0 && (
+                            <div className="flex justify-between items-center text-[9px]">
+                                <span>ADVANCE</span>
+                                <span>-{fmt(bill.advanceAmount)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between items-center font-bold text-sm border-y border-black py-1 my-1">
+                            <span>BALANCE</span>
+                            <span>{fmt(Math.max(0, bill.totalAmount - (bill.advanceAmount || 0)))}</span>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="text-center text-[8px] mt-4 pt-1 border-t border-black border-dashed">
+                        <div>Customer Signature:</div>
+                        <br/><br/>
+                        <div>.......................</div>
+                        <div className="mt-3 font-semibold italic">Thank you!</div>
+                        <div className="mt-1 opacity-70">Powered By TourBiller</div>
+                    </div>
+                </div>
+                
+                {/* Connect/Print Actions Panel (Hidden on Print) */}
+                <div className="w-[58mm] mb-8 print:hidden flex flex-col gap-2">
+                    <PrintButton />
+                    <BluetoothPrintButton bill={bill} companyName={companyName} />
+                </div>
+            </div>
+        );
+    }
+
+    // --- A4 PORTRAIT INVOICE LAYOUT (FOR ADMINS) ---
     return (
-        <div className="flex flex-col items-center mx-auto font-mono text-xs text-black leading-tight">
+        <div className="flex flex-col items-center mx-auto font-mono text-xs text-black leading-tight bg-white print:bg-transparent min-h-screen">
             <style jsx global>{`
                 @media print {
                     @page {
-                        size: A5 landscape;
-                        margin: 0;
+                        size: A4 portrait;
+                        margin: 1cm;
                     }
                     body {
                         margin: 0;
-                        padding: 10mm;
+                        padding: 0;
+                        background: white !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
                     }
                 }
             `}</style>
 
-            {/* Main Container - A5 Landscape approx 210mm x 148mm (minus margins) */}
-            <div className="w-[190mm] h-[128mm] flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none p-[10mm] print:p-0">
+            {/* Main Container - A4 Portrait (21cm x 29.7cm) */}
+            <div className="w-[190mm] min-h-[277mm] flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none p-6 print:p-0 bg-white my-8 print:my-0">
 
                 {/* Header Section - 3 Column Layout */}
                 <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-2 mb-2">
@@ -130,36 +256,36 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
                             <div className="col-span-8 flex justify-between pr-2">
                                 <span>Mileage Cost</span>
                                 <span className="text-[10px] text-gray-500">
-                                    ({bill.endMeter} - {bill.startMeter} = {(bill.endMeter - bill.startMeter).toFixed(1)} km @ {bill.hireRate})
+                                    ({bill.endMeter} - {bill.startMeter} = {(bill.endMeter - bill.startMeter).toFixed(1)} km @ {fmt(bill.hireRate)})
                                 </span>
                             </div>
                             <div className="col-span-4 text-right font-medium">
-                                {formatCurrency((bill.endMeter - bill.startMeter) * bill.hireRate)}
+                                {fmt((bill.endMeter - bill.startMeter) * bill.hireRate)}
                             </div>
 
                             {/* Extra Charges */}
                             <div className="col-span-8">Waiting Charges</div>
-                            <div className="col-span-4 text-right font-medium">{formatCurrency(bill.waitingCharge)}</div>
+                            <div className="col-span-4 text-right font-medium">{fmt(bill.waitingCharge)}</div>
 
                             <div className="col-span-8">Gate Pass</div>
-                            <div className="col-span-4 text-right font-medium">{formatCurrency(bill.gatePass)}</div>
+                            <div className="col-span-4 text-right font-medium">{fmt(bill.gatePass)}</div>
 
                             <div className="col-span-8">Package Charge</div>
-                            <div className="col-span-4 text-right font-medium">{formatCurrency(bill.packageCharge)}</div>
+                            <div className="col-span-4 text-right font-medium">{fmt(bill.packageCharge)}</div>
 
                             {/* Totals */}
                             <div className="col-span-12 border-t-2 border-black mt-2 pt-1"></div>
 
                             <div className="col-span-8 text-right pr-2">Total Amount</div>
                             <div className="col-span-4 text-right font-medium">
-                                {formatCurrency(bill.totalAmount)}
+                                {fmt(bill.totalAmount)}
                             </div>
 
                             {bill.advanceAmount > 0 && (
                                 <>
                                     <div className="col-span-8 text-right pr-2 text-gray-600">Less: Advance Payment</div>
                                     <div className="col-span-4 text-right font-medium text-gray-600">
-                                        -{formatCurrency(bill.advanceAmount)}
+                                        -{fmt(bill.advanceAmount)}
                                     </div>
                                 </>
                             )}
@@ -168,7 +294,7 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
 
                             <div className="col-span-6 font-bold text-lg text-right pr-2">BALANCE DUE</div>
                             <div className="col-span-6 text-right font-bold text-lg bg-gray-100 px-1 border border-gray-300">
-                                {formatCurrency(Math.max(0, bill.totalAmount - (bill.advanceAmount || 0)))}
+                                {fmt(Math.max(0, bill.totalAmount - (bill.advanceAmount || 0)))}
                             </div>
                             <div className="col-span-12 border-b-2 double border-black mt-1"></div>
                         </div>
@@ -178,7 +304,7 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
                 {/* Footer Section */}
                 <div className="mt-4 pt-10 grid grid-cols-2 gap-8 text-[10px]">
                     <div className="text-center border-t border-dotted border-black pt-1">Customer Signature</div>
-                    <div className="text-center border-t border-dotted border-black pt-1">Driver Signature</div>
+                    <div className="text-center border-t border-dotted border-black pt-1">Authorized Signature</div>
                 </div>
 
                 <div className="text-center text-[9px] text-gray-400 mt-2">

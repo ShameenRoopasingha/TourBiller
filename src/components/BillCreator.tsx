@@ -1,6 +1,7 @@
 
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -227,12 +228,14 @@ export function BillCreator({
                         Bill created successfully. ID: {successId}
                         <div className="mt-2 flex gap-2">
                             <Button variant="outline" size="sm" className="bg-white" asChild>
-                                <a href={`/bills/${successId}/print`} target="_blank" rel="noopener noreferrer">
+                                <Link href={`/bills/${successId}/print`}>
                                     Print Invoice
-                                </a>
+                                </Link>
                             </Button>
-                            <Button variant="outline" size="sm" className="bg-white" onClick={() => window.location.href = '/'}>
-                                Go to Dashboard
+                            <Button variant="outline" size="sm" className="bg-white" asChild>
+                                <Link href="/">
+                                    Go to Dashboard
+                                </Link>
                             </Button>
                         </div>
                     </AlertDescription>
