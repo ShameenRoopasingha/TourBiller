@@ -381,17 +381,17 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
             </Card>
 
             {/* Submit */}
-            <div className="flex gap-3">
-                <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isEditing ? 'Update Schedule' : 'Create Schedule'}
-                </Button>
+            <div className="flex gap-3 justify-end">
                 <Button
                     type="button"
                     variant="outline"
                     onClick={() => router.push('/tour-schedules')}
                 >
                     Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isEditing ? 'Update Schedule' : 'Create Schedule'}
                 </Button>
             </div>
         </form>

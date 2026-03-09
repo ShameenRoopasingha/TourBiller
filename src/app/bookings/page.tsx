@@ -15,6 +15,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Plus, CalendarX, Clock } from 'lucide-react';
+import { SearchInput } from '@/components/SearchInput';
 
 function EndTourDialog({ vehicleNo, customerName, bookingId }: { vehicleNo: string, customerName: string, bookingId: string }) {
     return (
@@ -44,8 +45,8 @@ function EndTourDialog({ vehicleNo, customerName, bookingId }: { vehicleNo: stri
     )
 }
 
-async function BookingList() {
-    const { success, data: bookings } = await getBookings();
+async function BookingList({ searchQuery }: { searchQuery?: string }) {
+    const { success, data: bookings } = await getBookings(searchQuery);
 
     if (!success || !bookings) {
         return <div className="p-4 text-red-500">Failed to load bookings</div>;
@@ -80,11 +81,11 @@ async function BookingList() {
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2">
                                             <span className="font-bold text-lg">{booking.vehicleNo}</span>
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${displayStatus === 'CONFIRMED' ? 'bg-blue-100 text-blue-700' :
-                                                displayStatus === 'ONGOING' ? 'bg-green-100 text-green-700' :
-                                                    displayStatus === 'OVERDUE' ? 'bg-yellow-100 text-yellow-700' :
-                                                        displayStatus === 'CANCELLED' ? 'bg-red-100 text-red-700' :
-                                                            'bg-gray-100 text-gray-700'
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${displayStatus === 'CONFIRMED' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                                                displayStatus === 'ONGOING' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
+                                                    displayStatus === 'OVERDUE' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' :
+                                                        displayStatus === 'CANCELLED' ? 'bg-red-500/10 text-red-600 dark:text-red-400' :
+                                                            'bg-muted text-muted-foreground'
                                                 }`}>
                                                 {displayStatus}
                                             </span>
@@ -137,10 +138,15 @@ async function BookingList() {
     );
 }
 
-export default function BookingsPage() {
+export default async function BookingsPage(props: {
+    searchParams?: Promise<{ q?: string }>;
+}) {
+    const searchParams = await props.searchParams;
+    const query = searchParams?.q || '';
+
     return (
         <div className="container mx-auto py-10 max-w-4xl">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-4">
                 <div>
                     <h1 className="text-3xl font-bold">Bookings</h1>
                     <p className="text-muted-foreground">Manage vehicle reservations</p>
@@ -153,8 +159,12 @@ export default function BookingsPage() {
                 </Button>
             </div>
 
+            <div className="mb-6">
+                <SearchInput placeholder="Search by vehicle, customer, destination..." />
+            </div>
+
             <Suspense fallback={<div>Loading bookings...</div>}>
-                <BookingList />
+                <BookingList searchQuery={query} />
             </Suspense>
         </div>
     );

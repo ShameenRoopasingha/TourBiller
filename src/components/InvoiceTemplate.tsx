@@ -28,7 +28,7 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
 
 
     return (
-        <div className="mx-auto bg-white font-mono text-xs text-black leading-tight">
+        <div className="flex flex-col items-center mx-auto font-mono text-xs text-black leading-tight">
             <style jsx global>{`
                 @media print {
                     @page {
@@ -43,7 +43,7 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
             `}</style>
 
             {/* Main Container - A5 Landscape approx 210mm x 148mm (minus margins) */}
-            <div className="w-[190mm] h-[128mm] flex flex-col justify-between">
+            <div className="w-[190mm] h-[128mm] flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none p-[10mm] print:p-0">
 
                 {/* Header Section - 3 Column Layout */}
                 <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-2 mb-2">
@@ -73,7 +73,8 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
 
                     {/* Column 3: Invoice Details */}
                     <div className="text-right">
-                        <div className="text-2xl font-bold text-red-600">INVOICE NO: {bill.billNumber}</div>
+                        <div className="text-2xl font-bold text-red-600">INVOICE</div>
+                        <div className="text-base font-bold mt-0.5">#{bill.billNumber}</div>
                         <div className="text-xs">Date: {new Date(bill.createdAt).toLocaleDateString()}</div>
                         <div className="mt-1">
                             <span className="font-bold border border-black px-2 py-0.5 text-[10px] uppercase">
@@ -188,7 +189,8 @@ export function InvoiceTemplate({ bill, businessProfile }: InvoiceTemplateProps)
                 </div>
             </div>
 
-            <div className="mt-4 text-center print:hidden">
+            {/* Print Button - Below invoice, matching width */}
+            <div className="w-[190mm] mt-6 mb-8 print:hidden">
                 <PrintButton />
             </div>
         </div>

@@ -95,13 +95,18 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
  */
 export async function getBills(searchQuery?: string): Promise<ActionResult<Bill[]>> {
   try {
+    const cleanedQuery = searchQuery?.replace(/^#/, '') || '';
+    const billNum = parseInt(cleanedQuery);
+    const isNumericSearch = !isNaN(billNum) && cleanedQuery.trim() === String(billNum);
     const bills = await prisma.bill.findMany({
       where: searchQuery ? {
-        OR: [
-          { vehicleNo: { contains: searchQuery, mode: 'insensitive' } },
-          { customerName: { contains: searchQuery, mode: 'insensitive' } },
-          { billNumber: { equals: parseInt(searchQuery) || undefined } },
-        ],
+        OR: isNumericSearch
+          ? [{ billNumber: { equals: billNum } }]
+          : [
+              { vehicleNo: { contains: searchQuery, mode: 'insensitive' } },
+              { customerName: { contains: searchQuery, mode: 'insensitive' } },
+              { route: { contains: searchQuery, mode: 'insensitive' } },
+            ],
       } : undefined,
       orderBy: {
         createdAt: 'desc',

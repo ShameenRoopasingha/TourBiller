@@ -57,10 +57,10 @@ interface QuotationListProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-    DRAFT: 'bg-gray-100 text-gray-700 border-gray-300',
-    SENT: 'bg-blue-50 text-blue-700 border-blue-300',
-    ACCEPTED: 'bg-green-50 text-green-700 border-green-300',
-    EXPIRED: 'bg-red-50 text-red-700 border-red-300',
+    DRAFT: 'bg-muted text-muted-foreground border-border',
+    SENT: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+    ACCEPTED: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
+    EXPIRED: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
 };
 
 const NEXT_STATUS: Record<string, string> = {

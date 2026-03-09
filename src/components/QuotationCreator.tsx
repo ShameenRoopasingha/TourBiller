@@ -349,9 +349,9 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
 
                     {/* Vehicle Specifications Display */}
                     {selectedVehicle && (selectedVehicle.seats || selectedVehicle.acType || selectedVehicle.features || selectedVehicle.insuranceCoverage) && (
-                        <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800 text-sm">
-                            <h4 className="font-semibold text-blue-700 dark:text-blue-400 mb-1">Vehicle Specifications</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-blue-600 dark:text-blue-300">
+                        <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 text-sm">
+                            <h4 className="font-semibold text-primary mb-1">Vehicle Specifications</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-muted-foreground">
                                 {selectedVehicle.seats && <span>Seats: {selectedVehicle.seats}</span>}
                                 {selectedVehicle.acType && <span>AC: {selectedVehicle.acType}</span>}
                                 {selectedVehicle.features && <span className="col-span-2">Features: {selectedVehicle.features}</span>}
@@ -528,17 +528,17 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
 
                             {/* Hire Summary Banner */}
                             {calculatedTotals.transportCost > 0 && (
-                                <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                                    <p className="font-semibold text-blue-700 dark:text-blue-400 text-sm">
+                                <div className="mb-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                                    <p className="font-semibold text-primary text-sm">
                                         💰 Van Hire: {selectedSchedule?.days} days : {fmt(calculatedTotals.transportCost)} for {calculatedTotals.includedKm.toFixed(0)} km
                                     </p>
                                     {selectedVehicle && selectedVehicle.excessKmRate > 0 && (
-                                        <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                                        <p className="text-xs text-muted-foreground mt-1">
                                             Any distance exceeding {calculatedTotals.includedKm.toFixed(0)} km will be charged at Rs. {selectedVehicle.excessKmRate} per additional km.
                                         </p>
                                     )}
                                     {selectedVehicle && selectedVehicle.extraHourRate > 0 && (
-                                        <p className="text-xs text-blue-600 dark:text-blue-300 mt-0.5">
+                                        <p className="text-xs text-muted-foreground mt-0.5">
                                             Extra hours will be charged at Rs. {selectedVehicle.extraHourRate} per hour.
                                         </p>
                                     )}
@@ -603,17 +603,17 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
             </Card>
 
             {/* Submit */}
-            <div className="flex gap-3">
-                <Button type="submit" disabled={isSubmitting || !selectedSchedule} className="min-w-[160px]">
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Generate Quotation
-                </Button>
+            <div className="flex gap-3 justify-end">
                 <Button
                     type="button"
                     variant="outline"
                     onClick={() => router.push('/quotations')}
                 >
                     Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="min-w-[160px]">
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Generate Quotation
                 </Button>
             </div>
         </form>

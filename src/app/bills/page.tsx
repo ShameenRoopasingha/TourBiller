@@ -12,8 +12,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Plus, Printer, FileText, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Plus, Printer, FileText } from 'lucide-react';
+import { SearchInput } from '@/components/SearchInput';
 import { DeleteBillButton } from '@/components/DeleteBillButton';
 
 async function BillsList({ searchQuery }: { searchQuery?: string }) {
@@ -68,9 +68,9 @@ async function BillsList({ searchQuery }: { searchQuery?: string }) {
                             <TableCell>{bill.customerName}</TableCell>
                             <TableCell>{bill.vehicleNo}</TableCell>
                             <TableCell>
-                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${bill.paymentMethod === 'CASH'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-blue-100 text-blue-700'
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${bill.paymentMethod === 'CASH'
+                                    ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                                    : 'bg-primary/10 text-primary'
                                     }`}>
                                     {bill.paymentMethod}
                                 </span>
@@ -118,19 +118,7 @@ export default async function BillsPage(
                 </Button>
             </div>
 
-            <div className="flex items-center gap-2 max-w-sm">
-                <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <form>
-                        <Input
-                            name="q"
-                            placeholder="Search bills..."
-                            className="pl-9"
-                            defaultValue={query}
-                        />
-                    </form>
-                </div>
-            </div>
+            <SearchInput placeholder="Search by bill no, customer, vehicle..." />
 
             <Suspense fallback={
                 <div className="space-y-4">

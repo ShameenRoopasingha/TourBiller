@@ -101,7 +101,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
     const markupAmount = subtotalWithDriver * (quotation.markup / 100);
 
     return (
-        <div className="mx-auto bg-white font-mono text-[11px] text-black leading-snug">
+        <div className="flex flex-col items-center mx-auto font-mono text-[11px] text-black leading-snug">
             <style jsx global>{`
                 @media print {
                     @page {
@@ -117,21 +117,26 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 }
             `}</style>
 
-            <div className="w-[190mm] mx-auto p-6 print:p-0 flex flex-col">
+            <div className="w-[190mm] h-[281mm] mx-auto p-6 print:p-0 flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none bg-white overflow-hidden">
 
-                {/* ── Header ── */}
-                <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-4">
-                    <div className="w-1/2">
-                        {businessProfile?.logoUrl && (
-                            <div className="mb-3">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src={businessProfile.logoUrl}
-                                    alt="Company Logo"
-                                    className="h-14 w-14 rounded-full object-cover"
-                                />
-                            </div>
+                {/* ── Header - 3 Column Layout ── */}
+                <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-2 mb-4">
+                    {/* Column 1: Logo */}
+                    <div className="flex items-start pt-1">
+                        {businessProfile?.logoUrl ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                                src={businessProfile.logoUrl}
+                                alt="Company Logo"
+                                className="h-14 w-14 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="h-14 w-14" />
                         )}
+                    </div>
+
+                    {/* Column 2: Company Name & Contact */}
+                    <div>
                         <h1 className="text-xl font-bold uppercase tracking-wider">{companyName}</h1>
                         <p className="text-[10px] text-gray-600 mt-1 whitespace-pre-wrap">
                             {address && <>{address}<br /></>}
@@ -139,12 +144,14 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                             {email && <> | Email: {email}</>}
                         </p>
                     </div>
+
+                    {/* Column 3: Quotation Details */}
                     <div className="text-right">
                         <div className="text-2xl font-bold text-blue-700">
                             QUOTATION
                         </div>
                         <div className="text-base font-bold mt-0.5">
-                            Q-{String(quotation.quotationNumber).padStart(4, '0')}
+                            #{quotation.quotationNumber}
                         </div>
                         <div className="text-[10px] text-gray-500 mt-0.5">
                             Date: {new Date(quotation.createdAt).toLocaleDateString()}
@@ -154,7 +161,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                                 quotation.status === 'SENT' ? 'border-blue-600 text-blue-700' :
                                     quotation.status === 'EXPIRED' ? 'border-red-600 text-red-700' :
                                         'border-black text-black'
-                                }`}>
+                            }`}>
                                 {quotation.status}
                             </span>
                         </div>
@@ -233,7 +240,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 )}
 
                 {/* ── Day-by-Day Itinerary ── */}
-                <div className="mb-3">
+                <div className="mb-2">
                     <h3 className="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-wide">Day-by-Day Itinerary</h3>
                     <table className="w-full text-[10px] border-collapse border border-gray-300">
                         <thead>
@@ -274,65 +281,65 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 </div>
 
                 {/* ── Cost Summary ── */}
-                <div className="flex justify-end mb-3">
-                    <div className="w-[280px]">
+                <div className="mb-2">
+                    <div>
                         <h3 className="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-wide">Cost Summary</h3>
-                        <div className="border border-gray-300 rounded-sm p-2 text-[11px] space-y-0.5">
-                            <div className="grid grid-cols-[1fr_auto] gap-x-4">
+                        <div className="border border-gray-300 rounded-sm p-2 text-[11px]">
+                            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
                                 <span className="text-gray-600">Van Hire ({quotation.tourSchedule.days} days × {fmt(quotation.hireRatePerDay)}/day for {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km)</span>
                                 <span className="text-right">{fmt(quotation.transportCost)}</span>
                             </div>
                             {quotation.vehicleExcessKmRate != null && quotation.vehicleExcessKmRate > 0 && (
-                                <div className="text-[9px] text-gray-500 italic -mt-0.5">
+                                <div className="text-[9px] text-gray-500 italic py-0.5">
                                     Any km exceeding {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km charged at {fmt(quotation.vehicleExcessKmRate)}/km
                                 </div>
                             )}
                             {quotation.vehicleExtraHourRate != null && quotation.vehicleExtraHourRate > 0 && (
-                                <div className="text-[9px] text-gray-500 italic -mt-0.5">
+                                <div className="text-[9px] text-gray-500 italic py-0.5">
                                     Extra hours charged at {fmt(quotation.vehicleExtraHourRate)}/hr
                                 </div>
                             )}
-                            <div className="grid grid-cols-[1fr_auto] gap-x-4">
+                            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
                                 <span className="text-gray-600">Accommodation</span>
                                 <span className="text-right">{fmt(quotation.accommodationTotal)}</span>
                             </div>
-                            <div className="grid grid-cols-[1fr_auto] gap-x-4">
+                            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
                                 <span className="text-gray-600">Meals</span>
                                 <span className="text-right">{fmt(quotation.mealsTotal)}</span>
                             </div>
-                            <div className="grid grid-cols-[1fr_auto] gap-x-4">
+                            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
                                 <span className="text-gray-600">Activities</span>
                                 <span className="text-right">{fmt(quotation.activitiesTotal)}</span>
                             </div>
-                            <div className="grid grid-cols-[1fr_auto] gap-x-4">
+                            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
                                 <span className="text-gray-600">Other Costs</span>
                                 <span className="text-right">{fmt(quotation.otherCostsTotal)}</span>
                             </div>
                             {driverTotal > 0 && (
-                                <div className="grid grid-cols-[1fr_auto] gap-x-4">
+                                <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
                                     <span className="text-gray-600">Driver ({quotation.tourSchedule.days} days × {fmt(quotation.driverCostPerDay)}/day)</span>
                                     <span className="text-right">{fmt(driverTotal)}</span>
                                 </div>
                             )}
 
-                            <div className="border-t border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-4">
+                            <div className="border-t border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-4 py-1">
                                 <span className="text-gray-600">Subtotal</span>
                                 <span className="text-right font-medium">{fmt(subtotalWithDriver)}</span>
                             </div>
                             {quotation.markup > 0 && (
-                                <div className="grid grid-cols-[1fr_auto] gap-x-4 text-green-700">
+                                <div className="grid grid-cols-[1fr_auto] gap-x-4 text-green-700 py-1">
                                     <span>Markup ({quotation.markup}%)</span>
                                     <span className="text-right">+{fmt(markupAmount)}</span>
                                 </div>
                             )}
                             {quotation.discount > 0 && (
-                                <div className="grid grid-cols-[1fr_auto] gap-x-4 text-red-600">
+                                <div className="grid grid-cols-[1fr_auto] gap-x-4 text-red-600 py-1">
                                     <span>Discount</span>
                                     <span className="text-right">-{fmt(quotation.discount)}</span>
                                 </div>
                             )}
 
-                            <div className="border-t-2 border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-4 text-sm font-bold">
+                            <div className="border-t-2 border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-4 text-sm font-bold py-1">
                                 <span>TOTAL AMOUNT</span>
                                 <span className="text-right bg-gray-100 px-1 border border-gray-300">{fmt(quotation.totalAmount)}</span>
                             </div>
@@ -407,8 +414,8 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 </div>
             </div>
 
-            {/* Print Button (screen only) */}
-            <div className="mt-4 text-center print:hidden">
+            {/* Print Button - Below content, matching width */}
+            <div className="w-[190mm] mt-6 mb-8 print:hidden">
                 <PrintButton />
             </div>
         </div>

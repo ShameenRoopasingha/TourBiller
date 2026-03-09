@@ -45,10 +45,16 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
 /**
  * Get all bookings
  */
-export async function getBookings(status?: string): Promise<ActionResult<Booking[]>> {
+export async function getBookings(searchQuery?: string): Promise<ActionResult<Booking[]>> {
     try {
         const bookings = await prisma.booking.findMany({
-            where: status ? { status } : undefined,
+            where: searchQuery ? {
+                OR: [
+                    { vehicleNo: { contains: searchQuery, mode: 'insensitive' } },
+                    { customerName: { contains: searchQuery, mode: 'insensitive' } },
+                    { destination: { contains: searchQuery, mode: 'insensitive' } },
+                ],
+            } : undefined,
             orderBy: { startDate: 'asc' },
         });
 
