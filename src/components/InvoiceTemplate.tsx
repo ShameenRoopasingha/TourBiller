@@ -201,7 +201,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                     <div className="text-right">
                         <div className="text-2xl font-bold text-red-600">INVOICE</div>
                         <div className="text-base font-bold mt-0.5">#{bill.billNumber}</div>
-                        <div className="text-xs">Date: {new Date(bill.createdAt).toLocaleDateString()}</div>
+                        <div className="text-xs">Date: {new Date(bill.createdAt).toLocaleDateString('en-GB')}</div>
                         <div className="mt-1">
                             <span className="font-bold border border-black px-2 py-0.5 text-[10px] uppercase">
                                 {bill.paymentMethod || 'CASH'}
@@ -238,7 +238,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         <div className="text-[10px] space-y-1 pt-2">
                             <div className="flex flex-col gap-1">
                                 <span>Start: {new Date(bill.createdAt).toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                                <span>End:&nbsp;&nbsp;&nbsp;{new Date().toLocaleDateString()} --:--</span>
+                                <span>End:&nbsp;&nbsp;&nbsp;{new Date().toLocaleDateString('en-GB')} --:--</span>
                             </div>
                         </div>
                     </div>

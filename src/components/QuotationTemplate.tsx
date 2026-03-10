@@ -154,7 +154,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                             #{quotation.quotationNumber}
                         </div>
                         <div className="text-[10px] text-gray-500 mt-0.5">
-                            Date: {new Date(quotation.createdAt).toLocaleDateString()}
+                            Date: {new Date(quotation.createdAt).toLocaleDateString('en-GB')}
                         </div>
                         <div className="mt-1">
                             <span className={`font-bold border px-2 py-0.5 text-[10px] uppercase ${quotation.status === 'ACCEPTED' ? 'border-green-600 text-green-700' :
@@ -201,7 +201,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                             {quotation.startDate && (
                                 <>
                                     <span className="font-semibold text-gray-500">Start:</span>
-                                    <span>{new Date(quotation.startDate).toLocaleDateString()}</span>
+                                    <span>{new Date(quotation.startDate).toLocaleDateString('en-GB')}</span>
                                 </>
                             )}
                         </div>
@@ -389,7 +389,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                         )}
                         {quotation.validUntil && (
                             <p className="font-bold text-red-600">
-                                ⚠ This quotation is valid until: {new Date(quotation.validUntil).toLocaleDateString()}
+                                ⚠ This quotation is valid until: {new Date(quotation.validUntil).toLocaleDateString('en-GB')}
                             </p>
                         )}
                     </div>

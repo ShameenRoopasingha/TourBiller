@@ -65,7 +65,7 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                     {bills.map((bill) => (
                         <TableRow key={bill.id}>
                             <TableCell className="font-medium">#{bill.billNumber}</TableCell>
-                            <TableCell>{new Date(bill.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell>{new Date(bill.createdAt).toLocaleDateString('en-GB')}</TableCell>
                             <TableCell>{bill.customerName}</TableCell>
                             <TableCell>{bill.vehicleNo}</TableCell>
                             <TableCell>

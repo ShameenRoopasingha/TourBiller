@@ -318,7 +318,7 @@ export default function UsersPage() {
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground text-sm">
-                                            {new Date(user.createdAt).toLocaleDateString()}
+                                            {new Date(user.createdAt).toLocaleDateString('en-GB')}
                                         </TableCell>
                                         <TableCell>
                                             <Button

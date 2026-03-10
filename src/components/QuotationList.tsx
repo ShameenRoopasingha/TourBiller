@@ -193,7 +193,7 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-center text-sm">
-                                            {new Date(q.createdAt).toLocaleDateString()}
+                                            {new Date(q.createdAt).toLocaleDateString('en-GB')}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
