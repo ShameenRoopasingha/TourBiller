@@ -79,9 +79,9 @@ export function VehicleList() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Vehicles</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Vehicles</h2>
                     <p className="text-muted-foreground">Manage your fleet of vehicles</p>
                 </div>
                 <Button asChild>
@@ -128,7 +128,7 @@ export function VehicleList() {
                         </div>
                     ) : (
                         <div className="rounded-md border overflow-x-auto">
-                            <Table>
+                            <Table className="min-w-[600px]">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Vehicle No.</TableHead>

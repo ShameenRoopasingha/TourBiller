@@ -48,7 +48,7 @@ export default async function RootLayout({
                       </div>
                       <SidebarTrigger className="-mr-2" />
                     </header>
-                    <main className="flex-1 p-4 md:p-8 bg-background/40 backdrop-blur-[2px] z-10 print:p-0 print:bg-white overflow-hidden">
+                    <main className="flex-1 p-2 sm:p-4 md:p-8 bg-background/40 backdrop-blur-[2px] z-10 print:p-0 print:bg-white overflow-hidden">
                       <PageTransition>{children}</PageTransition>
                     </main>
                   </SidebarInset>

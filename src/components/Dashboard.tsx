@@ -65,21 +65,21 @@ export function Dashboard() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => router.push('/bookings/new')}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Booking
+                        <Plus className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">New Booking</span>
                     </Button>
                     <Button onClick={() => router.push('/bills/new')}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Bill
+                        <Plus className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">New Bill</span>
                     </Button>
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -93,11 +93,11 @@ export function Dashboard() {
                         ) : (
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <div className="text-2xl font-bold text-green-600">{stats.availableVehicles}</div>
+                                    <div className="text-xl sm:text-2xl font-bold text-green-600">{stats.availableVehicles}</div>
                                     <p className="text-xs text-muted-foreground">Available</p>
                                 </div>
                                 <div className="text-right border-l pl-4 border-gray-100">
-                                    <div className="text-2xl font-bold text-orange-600">{stats.occupiedVehicles}</div>
+                                    <div className="text-xl sm:text-2xl font-bold text-orange-600">{stats.occupiedVehicles}</div>
                                     <p className="text-xs text-muted-foreground">Occupied</p>
                                 </div>
                             </div>
@@ -117,7 +117,7 @@ export function Dashboard() {
                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         ) : (
                             <>
-                                <div className="text-2xl font-bold">
+                                <div className="text-xl sm:text-2xl font-bold">
                                     {formatCurrency(stats.revenueWeekly)}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
@@ -140,7 +140,7 @@ export function Dashboard() {
                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         ) : (
                             <>
-                                <div className="text-2xl font-bold">
+                                <div className="text-xl sm:text-2xl font-bold">
                                     {formatCurrency(stats.revenueYearly)}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
@@ -163,7 +163,7 @@ export function Dashboard() {
                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         ) : (
                             <>
-                                <div className="text-2xl font-bold">{stats.totalVehicles}</div>
+                                <div className="text-xl sm:text-2xl font-bold">{stats.totalVehicles}</div>
                                 <p className="text-xs text-muted-foreground">
                                     Total vehicles
                                 </p>
@@ -174,7 +174,7 @@ export function Dashboard() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
+                <Card className="md:col-span-4">
                     <CardHeader>
                         <CardTitle>Recent Bills</CardTitle>
                         <CardDescription>
@@ -200,8 +200,8 @@ export function Dashboard() {
                                 <p className="text-sm">Create a new bill to get started.</p>
                             </div>
                         ) : (
-                            <div className="rounded-md border">
-                                <Table>
+                            <div className="rounded-md border overflow-x-auto">
+                                <Table className="min-w-[500px]">
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Bill No.</TableHead>
@@ -239,7 +239,7 @@ export function Dashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="col-span-3">
+                <Card className="md:col-span-3">
                     <CardHeader>
                         <CardTitle>Ongoing Tours</CardTitle>
                         <CardDescription>

@@ -219,7 +219,7 @@ export function BillCreator({
     };
 
     return (
-        <div className="max-w-7xl mx-auto p-4 md:p-8">
+        <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-8">
             {successId && (
                 <Alert className="mb-6 bg-green-50 border-green-200 text-green-800">
                     <Printer className="h-4 w-4" />
@@ -251,7 +251,7 @@ export function BillCreator({
 
             <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">New Bill</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">New Bill</h1>
                     <p className="text-muted-foreground">Create a new invoice for vehicle hire.</p>
                 </div>
             </div>
@@ -577,7 +577,7 @@ export function BillCreator({
 
                                         <div className="flex justify-between items-end">
                                             <span className="text-lg font-bold">Total</span>
-                                            <span className="text-3xl font-bold text-primary">Rs.{formattedTotalAmount.replace('Rs. ', '')}</span>
+                                            <span className="text-xl sm:text-3xl font-bold text-primary">Rs.{formattedTotalAmount.replace('Rs. ', '')}</span>
                                         </div>
 
                                         <Button type="submit" className="w-full mt-6 h-12 text-lg font-semibold shadow-md" disabled={isSubmitting}>

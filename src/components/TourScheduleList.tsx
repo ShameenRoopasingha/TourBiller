@@ -89,7 +89,7 @@ export function TourScheduleList({ schedules }: TourScheduleListProps) {
     return (
         <div className="space-y-4">
             {/* Header */}
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                 <div>
                     <h1 className="text-2xl font-bold flex items-center gap-2">
                         <Map className="h-6 w-6" />
@@ -135,7 +135,7 @@ export function TourScheduleList({ schedules }: TourScheduleListProps) {
                         </div>
                     ) : (
                         <div className="rounded-md border overflow-x-auto">
-                            <Table>
+                            <Table className="min-w-[600px]">
                                 <TableHeader>
                                 <TableRow>
                                     <TableHead>Tour Name</TableHead>
