@@ -146,12 +146,12 @@ export default async function BookingsPage(props: {
 
     return (
         <div className="container mx-auto py-10 max-w-4xl">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Bookings</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold">Bookings</h1>
                     <p className="text-muted-foreground">Manage vehicle reservations</p>
                 </div>
-                <Button asChild>
+                <Button asChild className="w-full sm:w-auto">
                     <Link href="/bookings/new">
                         <Plus className="mr-2 h-4 w-4" />
                         New Booking
