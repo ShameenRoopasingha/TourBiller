@@ -38,7 +38,7 @@ export default async function RootLayout({
                   </div>
 
                   <div className="print:hidden z-40">
-                    <Sidebar userRole={(session.user as any)?.role} userName={session.user?.name || 'User'} />
+                    <Sidebar userRole={(session.user as { role?: string })?.role} userName={session.user?.name || 'User'} />
                   </div>
 
                   <SidebarInset className="flex w-full flex-col bg-transparent">
