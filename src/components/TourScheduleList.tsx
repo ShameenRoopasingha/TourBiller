@@ -175,7 +175,7 @@ export function TourScheduleList({ schedules }: TourScheduleListProps) {
                                             {calculateDistance(schedule.items).toFixed(0)} km
                                         </TableCell>
                                         <TableCell className="text-right font-medium">
-                                            Rs. {calculateTotal(schedule.items).toLocaleString()}
+                                            Rs. {calculateTotal(schedule.items).toLocaleString('en-US')}
                                         </TableCell>
                                         <TableCell className="text-center">
                                             {schedule._count?.quotations || 0}

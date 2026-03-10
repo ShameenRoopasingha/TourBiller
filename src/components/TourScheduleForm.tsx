@@ -359,23 +359,23 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
                         </div>
                         <div>
                             <span className="text-muted-foreground">Accommodation</span>
-                            <p className="font-semibold">Rs. {totals.accommodation.toLocaleString()}</p>
+                            <p className="font-semibold">Rs. {totals.accommodation.toLocaleString('en-US')}</p>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Meals</span>
-                            <p className="font-semibold">Rs. {totals.meals.toLocaleString()}</p>
+                            <p className="font-semibold">Rs. {totals.meals.toLocaleString('en-US')}</p>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Activities</span>
-                            <p className="font-semibold">Rs. {totals.activities.toLocaleString()}</p>
+                            <p className="font-semibold">Rs. {totals.activities.toLocaleString('en-US')}</p>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Other</span>
-                            <p className="font-semibold">Rs. {totals.otherCosts.toLocaleString()}</p>
+                            <p className="font-semibold">Rs. {totals.otherCosts.toLocaleString('en-US')}</p>
                         </div>
                         <div>
                             <span className="text-muted-foreground">Grand Total</span>
-                            <p className="font-bold text-primary text-lg">Rs. {grandTotal.toLocaleString()}</p>
+                            <p className="font-bold text-primary text-lg">Rs. {grandTotal.toLocaleString('en-US')}</p>
                         </div>
                     </div>
                 </CardContent>

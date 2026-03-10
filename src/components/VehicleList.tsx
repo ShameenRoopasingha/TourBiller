@@ -149,10 +149,10 @@ export function VehicleList() {
                                             <TableCell>{vehicle.model || '-'}</TableCell>
                                             <TableCell>{vehicle.category}</TableCell>
                                             <TableCell className="text-center">{vehicle.seats || '-'}</TableCell>
-                                            <TableCell className="text-right">{vehicle.ratePerDay ? `Rs. ${vehicle.ratePerDay.toLocaleString()}` : '-'}</TableCell>
+                                            <TableCell className="text-right">{vehicle.ratePerDay ? `Rs. ${vehicle.ratePerDay.toLocaleString('en-US')}` : '-'}</TableCell>
                                             <TableCell className="text-right">{vehicle.kmPerDay || '-'}</TableCell>
-                                            <TableCell className="text-right">{vehicle.excessKmRate ? `Rs. ${vehicle.excessKmRate.toLocaleString()}` : '-'}</TableCell>
-                                            <TableCell className="text-right">{vehicle.extraHourRate ? `Rs. ${vehicle.extraHourRate.toLocaleString()}` : '-'}</TableCell>
+                                            <TableCell className="text-right">{vehicle.excessKmRate ? `Rs. ${vehicle.excessKmRate.toLocaleString('en-US')}` : '-'}</TableCell>
+                                            <TableCell className="text-right">{vehicle.extraHourRate ? `Rs. ${vehicle.extraHourRate.toLocaleString('en-US')}` : '-'}</TableCell>
                                             <TableCell>
                                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${vehicle.status === 'ACTIVE'
                                                     ? 'bg-green-100 text-green-700'

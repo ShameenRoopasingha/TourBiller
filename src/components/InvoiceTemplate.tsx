@@ -71,7 +71,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                     {/* Meta Info */}
                     <div className="px-1 text-[9px] mb-2 leading-snug">
                         <div><span className="font-semibold">BILL NO: </span>#{bill.billNumber}</div>
-                        <div><span className="font-semibold">DATE: </span>{new Date(bill.createdAt).toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                        <div><span className="font-semibold">DATE: </span>{new Date(bill.createdAt).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
                         <div><span className="font-semibold">CUSTOMER: </span>{bill.customerName}</div>
                         <div><span className="font-semibold">VEHICLE: </span>{bill.vehicleNo}</div>
                         <div><span className="font-semibold">ROUTE: </span>{bill.route}</div>
@@ -237,7 +237,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
                         <div className="text-[10px] space-y-1 pt-2">
                             <div className="flex flex-col gap-1">
-                                <span>Start: {new Date(bill.createdAt).toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                <span>Start: {new Date(bill.createdAt).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                                 <span>End:&nbsp;&nbsp;&nbsp;{new Date().toLocaleDateString('en-GB')} --:--</span>
                             </div>
                         </div>
