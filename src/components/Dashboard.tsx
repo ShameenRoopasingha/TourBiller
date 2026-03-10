@@ -67,12 +67,12 @@ export function Dashboard() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <Button variant="outline" className="w-full sm:w-auto" onClick={() => router.push('/bookings/new')}>
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <Button variant="outline" className="flex-1 sm:flex-initial" onClick={() => router.push('/bookings/new')}>
                         <Plus className="mr-2 h-4 w-4" />
                         New Booking
                     </Button>
-                    <Button className="w-full sm:w-auto" onClick={() => router.push('/bills/new')}>
+                    <Button className="flex-1 sm:flex-initial" onClick={() => router.push('/bills/new')}>
                         <Plus className="mr-2 h-4 w-4" />
                         New Bill
                     </Button>
