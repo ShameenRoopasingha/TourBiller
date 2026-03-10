@@ -116,8 +116,8 @@ export function QuotationList({ quotations }: QuotationListProps) {
                         Manage tour quotations for customers
                     </p>
                 </div>
-                <Link href="/quotations/new">
-                    <Button>
+                <Link href="/quotations/new" className="w-full sm:w-auto">
+                    <Button className="w-full">
                         <FileCheck className="h-4 w-4 mr-2" /> New Quotation
                     </Button>
                 </Link>

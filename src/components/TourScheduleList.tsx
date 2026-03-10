@@ -99,8 +99,8 @@ export function TourScheduleList({ schedules }: TourScheduleListProps) {
                         Manage reusable tour itinerary templates
                     </p>
                 </div>
-                <Link href="/tour-schedules/new">
-                    <Button>
+                <Link href="/tour-schedules/new" className="w-full sm:w-auto">
+                    <Button className="w-full">
                         <Plus className="h-4 w-4 mr-2" /> New Schedule
                     </Button>
                 </Link>

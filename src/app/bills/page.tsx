@@ -108,13 +108,13 @@ export default async function BillsPage(
 
     return (
         <div className="container mx-auto py-10 max-w-5xl space-y-8">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Bills</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Bills</h1>
                     <p className="text-muted-foreground">Manage and view generated bills</p>
                 </div>
                 {isAdmin && (
-                    <Button asChild>
+                    <Button asChild className="w-full sm:w-auto">
                         <Link href="/bills/new">
                             <Plus className="mr-2 h-4 w-4" />
                             New Bill

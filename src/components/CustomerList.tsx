@@ -83,7 +83,7 @@ export function CustomerList() {
                     <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Customers</h2>
                     <p className="text-muted-foreground">Manage your customer database</p>
                 </div>
-                <Button asChild>
+                <Button asChild className="w-full sm:w-auto">
                     <Link href="/customers/new">
                         <Plus className="mr-2 h-4 w-4" />
                         Add Customer
