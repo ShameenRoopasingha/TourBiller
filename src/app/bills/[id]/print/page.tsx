@@ -11,7 +11,7 @@ import { auth } from '@/lib/auth';
 
 async function PrintBill({ id }: { id: string }) {
     const session = await auth();
-    const userRole = (session?.user as any)?.role || 'DRIVER';
+    const userRole = ((session?.user as { role?: string })?.role || 'DRIVER') as 'DRIVER' | 'ADMIN';
 
     const [billResult, profileResult] = await Promise.all([
         getBillById(id),

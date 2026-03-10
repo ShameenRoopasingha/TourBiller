@@ -29,7 +29,7 @@ export default auth((req) => {
         return NextResponse.redirect(loginUrl);
     }
 
-    const role = (req.auth.user as any)?.role;
+    const role = (req.auth.user as { role?: string })?.role;
 
     // If driver tries to access admin-only routes, redirect to dashboard
     if (role === 'DRIVER') {

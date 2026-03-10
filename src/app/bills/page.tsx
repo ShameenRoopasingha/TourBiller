@@ -102,7 +102,7 @@ export default async function BillsPage(
     }
 ) {
     const session = await auth();
-    const isAdmin = (session?.user as any)?.role === 'ADMIN';
+    const isAdmin = (session?.user as { role?: string })?.role === 'ADMIN';
     const searchParams = await props.searchParams;
     const query = searchParams?.q || '';
 
