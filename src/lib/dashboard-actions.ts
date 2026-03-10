@@ -30,7 +30,8 @@ export async function getDashboardStats() {
             ]
         };
 
-        // Run ALL queries in parallel for maximum speed
+        // Run ALL queries in a transaction to reuse a single DB connection
+        // (prevents "Max client connections reached" with PgBouncer session mode)
         const [
             totalVehicles,
             occupiedVehicles,
@@ -38,7 +39,7 @@ export async function getDashboardStats() {
             weeklyResult,
             recentBills,
             ongoingBookings
-        ] = await Promise.all([
+        ] = await prisma.$transaction([
             prisma.vehicle.count({ where: { status: 'ACTIVE' } }),
             prisma.booking.count({ where: ongoingBookingFilter }),
             prisma.bill.aggregate({
