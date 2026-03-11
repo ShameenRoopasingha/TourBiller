@@ -23,17 +23,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+
 
 interface QuotationRow {
     id: string;
@@ -73,6 +63,10 @@ export function QuotationList({ quotations }: QuotationListProps) {
     const [updating, setUpdating] = useState<string | null>(null);
     const [deleting, setDeleting] = useState<string | null>(null);
     const [converting, setConverting] = useState<string | null>(null);
+    const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+    const [confirmConvert, setConfirmConvert] = useState<string | null>(null);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
     const filtered = quotations.filter(
         (q) =>
@@ -83,35 +77,48 @@ export function QuotationList({ quotations }: QuotationListProps) {
 
     const handleStatusUpdate = async (id: string, status: string) => {
         setUpdating(id);
+        setErrorMsg(null);
+        setSuccessMsg(null);
         const result = await updateQuotationStatus(id, status);
         if (!result.success) {
-            alert(result.error || 'Failed to update status');
+            setErrorMsg(result.error || 'Failed to update status');
+        } else {
+            setSuccessMsg(`Status updated to ${status}`);
         }
         setUpdating(null);
         router.refresh();
     };
 
-    const handleDelete = async (id: string) => {
+    const executeDelete = async (id: string) => {
         setDeleting(id);
+        setErrorMsg(null);
+        setSuccessMsg(null);
         const result = await deleteQuotation(id);
         if (!result.success) {
-            alert(result.error || 'Failed to delete quotation');
+            setErrorMsg(result.error || 'Failed to delete quotation');
+        } else {
+            setSuccessMsg('Quotation deleted successfully');
         }
         setDeleting(null);
+        setConfirmDelete(null);
         router.refresh();
     };
 
-    const handleConvertToBooking = async (id: string) => {
+    const executeConvertToBooking = async (id: string) => {
         setConverting(id);
+        setErrorMsg(null);
+        setSuccessMsg(null);
         const result = await convertQuotationToBooking(id);
         if (!result.success) {
-            alert(result.error || 'Failed to convert quotation to booking');
+            setErrorMsg(result.error || 'Failed to convert quotation to booking');
         } else {
-            alert('Booking successfully created!');
-            // Pre-fresh the bookings page data by just router pushing there.
-            router.push('/bookings');
+            setSuccessMsg('Booking successfully created!');
+            setTimeout(() => {
+                router.push('/bookings');
+            }, 1000);
         }
         setConverting(null);
+        setConfirmConvert(null);
     };
 
     const fmt = formatCurrency;
@@ -136,15 +143,29 @@ export function QuotationList({ quotations }: QuotationListProps) {
                 </Link>
             </div>
 
-            {/* Search */}
-            <div className="relative w-full sm:max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder="Search quotations..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
-                />
+            {/* Search & Messages */}
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
+                <div className="relative w-full sm:max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search quotations..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9"
+                    />
+                </div>
+                <div className="flex-1">
+                    {errorMsg && (
+                        <div className="p-3 text-sm font-semibold text-red-700 bg-red-100 border border-red-200 rounded-md shadow-sm">
+                            {errorMsg}
+                        </div>
+                    )}
+                    {successMsg && (
+                        <div className="p-3 text-sm font-semibold text-green-700 bg-green-100 border border-green-200 rounded-md shadow-sm">
+                            {successMsg}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Table */}
@@ -210,85 +231,62 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
-                                                <Link href={`/quotations/${q.id}/print`}>
-                                                    <Button variant="ghost" size="sm" title="Print">
-                                                        <Printer className="h-4 w-4" />
-                                                    </Button>
-                                                </Link>
+                                                {confirmDelete === q.id ? (
+                                                    <div className="flex items-center gap-2 bg-destructive/10 px-2 py-1 rounded">
+                                                        <span className="text-xs font-semibold text-destructive">Delete?</span>
+                                                        <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={() => executeDelete(q.id)} disabled={deleting === q.id}>Yes</Button>
+                                                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setConfirmDelete(null)} disabled={deleting === q.id}>No</Button>
+                                                    </div>
+                                                ) : confirmConvert === q.id ? (
+                                                    <div className="flex items-center gap-2 bg-green-50 px-2 py-1 rounded">
+                                                        <span className="text-xs font-semibold text-green-700">Convert to Booking?</span>
+                                                        <Button variant="default" className="bg-green-600 hover:bg-green-700 h-7 text-xs" size="sm" onClick={() => executeConvertToBooking(q.id)} disabled={converting === q.id}>Yes</Button>
+                                                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setConfirmConvert(null)} disabled={converting === q.id}>No</Button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <Link href={`/quotations/${q.id}/print`}>
+                                                            <Button variant="ghost" size="sm" title="Print">
+                                                                <Printer className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
 
-                                                {NEXT_STATUS[q.status] && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleStatusUpdate(q.id, NEXT_STATUS[q.status])}
-                                                        disabled={updating === q.id || converting === q.id}
-                                                        title={`Mark as ${NEXT_STATUS[q.status]}`}
-                                                    >
-                                                        <ArrowRight className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-
-                                                {q.status !== 'ACCEPTED' && q.status !== 'EXPIRED' && (
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
+                                                        {NEXT_STATUS[q.status] && (
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                disabled={converting === q.id || updating === q.id}
+                                                                onClick={() => handleStatusUpdate(q.id, NEXT_STATUS[q.status])}
+                                                                disabled={updating === q.id || converting === q.id}
+                                                                title={`Mark as ${NEXT_STATUS[q.status]}`}
+                                                            >
+                                                                <ArrowRight className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+
+                                                        {q.status !== 'ACCEPTED' && q.status !== 'EXPIRED' && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => setConfirmConvert(q.id)}
+                                                                disabled={converting === q.id || updating === q.id || confirmDelete === q.id}
                                                                 title="Convert to Booking"
                                                                 className="text-green-600 hover:text-green-700 hover:bg-green-50"
                                                             >
                                                                 <ArrowRightLeft className="h-4 w-4" />
                                                             </Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>Convert to Booking</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    Are you sure you want to convert this quotation into a confirmed booking?
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction
-                                                                    className="bg-green-600 hover:bg-green-700"
-                                                                    onClick={() => handleConvertToBooking(q.id)}
-                                                                >
-                                                                    Convert to Booking
-                                                                </AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                )}
+                                                        )}
 
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="text-destructive hover:text-destructive"
+                                                            onClick={() => setConfirmDelete(q.id)}
+                                                            title="Delete Quotation"
+                                                            className="text-destructive hover:text-destructive hover:bg-red-50"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Delete Quotation</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                Are you sure you want to delete quotation Q-{String(q.quotationNumber).padStart(4, '0')}?
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction
-                                                                onClick={() => handleDelete(q.id)}
-                                                                disabled={deleting === q.id}
-                                                            >
-                                                                {deleting === q.id ? 'Deleting...' : 'Delete'}
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                    </>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>
