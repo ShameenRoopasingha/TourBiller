@@ -102,7 +102,6 @@ export function QuotationList({ quotations }: QuotationListProps) {
     };
 
     const handleConvertToBooking = async (id: string) => {
-        if (!confirm('Are you sure you want to convert this quotation into a confirmed booking?')) return;
         setConverting(id);
         const result = await convertQuotationToBooking(id);
         if (!result.success) {
@@ -230,16 +229,36 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                                 )}
 
                                                 {q.status !== 'ACCEPTED' && q.status !== 'EXPIRED' && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleConvertToBooking(q.id)}
-                                                        disabled={converting === q.id || updating === q.id}
-                                                        title="Convert to Booking"
-                                                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                                    >
-                                                        <ArrowRightLeft className="h-4 w-4" />
-                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                disabled={converting === q.id || updating === q.id}
+                                                                title="Convert to Booking"
+                                                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                            >
+                                                                <ArrowRightLeft className="h-4 w-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Convert to Booking</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    Are you sure you want to convert this quotation into a confirmed booking?
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    className="bg-green-600 hover:bg-green-700"
+                                                                    onClick={() => handleConvertToBooking(q.id)}
+                                                                >
+                                                                    Convert to Booking
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
                                                 )}
 
                                                 <AlertDialog>
