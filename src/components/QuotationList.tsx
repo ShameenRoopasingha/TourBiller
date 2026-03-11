@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Printer, Trash2, FileCheck, ArrowRight } from 'lucide-react';
+import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
-
-import { updateQuotationStatus, deleteQuotation } from '@/lib/quotation-actions';
+import { updateQuotationStatus, deleteQuotation, convertQuotationToBooking } from '@/lib/quotation-actions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,6 +72,7 @@ export function QuotationList({ quotations }: QuotationListProps) {
     const [search, setSearch] = useState('');
     const [updating, setUpdating] = useState<string | null>(null);
     const [deleting, setDeleting] = useState<string | null>(null);
+    const [converting, setConverting] = useState<string | null>(null);
 
     const filtered = quotations.filter(
         (q) =>
@@ -99,6 +99,20 @@ export function QuotationList({ quotations }: QuotationListProps) {
         }
         setDeleting(null);
         router.refresh();
+    };
+
+    const handleConvertToBooking = async (id: string) => {
+        if (!confirm('Are you sure you want to convert this quotation into a confirmed booking?')) return;
+        setConverting(id);
+        const result = await convertQuotationToBooking(id);
+        if (!result.success) {
+            alert(result.error || 'Failed to convert quotation to booking');
+        } else {
+            alert('Booking successfully created!');
+            // Pre-fresh the bookings page data by just router pushing there.
+            router.push('/bookings');
+        }
+        setConverting(null);
     };
 
     const fmt = formatCurrency;
@@ -208,10 +222,23 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => handleStatusUpdate(q.id, NEXT_STATUS[q.status])}
-                                                        disabled={updating === q.id}
+                                                        disabled={updating === q.id || converting === q.id}
                                                         title={`Mark as ${NEXT_STATUS[q.status]}`}
                                                     >
                                                         <ArrowRight className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+
+                                                {q.status !== 'ACCEPTED' && q.status !== 'EXPIRED' && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleConvertToBooking(q.id)}
+                                                        disabled={converting === q.id || updating === q.id}
+                                                        title="Convert to Booking"
+                                                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                    >
+                                                        <ArrowRightLeft className="h-4 w-4" />
                                                     </Button>
                                                 )}
 

@@ -13,6 +13,8 @@ type TourScheduleWithItems = {
     days: number;
     basePricePerPerson: number;
     vehicleCategory: string;
+    excessKmRate: number | null;
+    extraHourRate: number | null;
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -41,6 +43,8 @@ export async function createTourSchedule(
         days: number;
         basePricePerPerson?: number;
         vehicleCategory?: string;
+        excessKmRate?: number;
+        extraHourRate?: number;
         items: {
             dayNumber: number;
             title: string;
@@ -69,6 +73,8 @@ export async function createTourSchedule(
                     days: validated.days,
                     basePricePerPerson: validated.basePricePerPerson,
                     vehicleCategory: validated.vehicleCategory,
+                    excessKmRate: validated.excessKmRate,
+                    extraHourRate: validated.extraHourRate,
                     isActive: validated.isActive,
                     items: {
                         create: validated.items.map((item) => ({
@@ -169,6 +175,8 @@ export async function updateTourSchedule(
         days: number;
         basePricePerPerson?: number;
         vehicleCategory?: string;
+        excessKmRate?: number;
+        extraHourRate?: number;
         items: {
             dayNumber: number;
             title: string;
@@ -199,6 +207,8 @@ export async function updateTourSchedule(
                     days: validated.days,
                     basePricePerPerson: validated.basePricePerPerson,
                     vehicleCategory: validated.vehicleCategory,
+                    excessKmRate: validated.excessKmRate,
+                    extraHourRate: validated.extraHourRate,
                 },
             });
 

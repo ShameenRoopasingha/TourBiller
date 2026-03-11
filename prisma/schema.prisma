@@ -142,6 +142,8 @@ model TourSchedule {
   days               Int
   basePricePerPerson Float    @default(0)
   vehicleCategory    String   @default("CAR")
+  excessKmRate       Float?   // Optional predefined charge per extra km
+  extraHourRate      Float?   // Optional predefined charge per extra hour
   isActive           Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -179,9 +181,14 @@ model Quotation {
   vehicleNo          String?
   numberOfPersons    Int       @default(1)
   startDate          DateTime?
+  endDate            DateTime?
+  pickupLocation     String?
+  dropLocation       String?
   hireRatePerDay     Float     @default(0)    // snapshot of vehicle rate/day
   kmPerDay           Float     @default(0)    // snapshot of km allowance/day
-  totalDistance       Float     @default(0)
+  excessKmRate       Float     @default(0)    // snapshot of charge per extra km
+  extraHourRate      Float     @default(0)    // snapshot of charge per extra hour
+  totalDistance      Float     @default(0)
   transportCost      Float     @default(0)
   accommodationTotal Float     @default(0)
   mealsTotal         Float     @default(0)

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, FileCheck, Calculator } from 'lucide-react';
 
@@ -48,6 +48,8 @@ interface ScheduleOption {
         activities: number;
         otherCosts: number;
     }[];
+    excessKmRate?: number | null;
+    extraHourRate?: number | null;
 }
 
 interface CustomerOption {
@@ -87,6 +89,8 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
     const [selectedVehicle, setSelectedVehicle] = useState<VehicleOption | null>(null);
     const handleEnterKey = useEnterNavigation();
 
+    const [initialValidUntil] = useState(() => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as unknown as Date);
+
     const form = useForm<QuotationFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(QuotationSchema) as any,
@@ -95,21 +99,43 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
             customerName: '',
             customerEmail: '',
             customerPhone: '',
+            pickupLocation: '',
+            dropLocation: '',
             vehicleNo: '',
             numberOfPersons: 1,
+            startDate: '' as unknown as Date,
+            endDate: '' as unknown as Date,
             hireRatePerDay: '' as unknown as number,
             kmPerDay: '' as unknown as number,
+            excessKmRate: '' as unknown as number,
+            extraHourRate: '' as unknown as number,
             markup: '' as unknown as number,
             discount: '' as unknown as number,
             driverCostPerDay: '' as unknown as number,
             advanceAmount: '' as unknown as number,
             excludedItems: 'Highway / expressway charges\nParking fees',
             notes: '',
-            validUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as unknown as Date,
+            validUntil: initialValidUntil,
         },
     });
 
-    const [watchedHireRate, watchedKmPerDay, watchedMarkup, watchedDiscount, watchedDriverCost] = form.watch(['hireRatePerDay', 'kmPerDay', 'markup', 'discount', 'driverCostPerDay']);
+    const [watchedHireRate, watchedKmPerDay, watchedMarkup, watchedDiscount, watchedDriverCost, watchedExcessKmRate, watchedExtraHourRate, watchedStartDate] = useWatch({
+        control: form.control,
+        name: ['hireRatePerDay', 'kmPerDay', 'markup', 'discount', 'driverCostPerDay', 'excessKmRate', 'extraHourRate', 'startDate'],
+    });
+
+    // Auto-calculate end date when start date or schedule changes
+    useMemo(() => {
+        if (selectedSchedule && watchedStartDate) {
+            const start = new Date(watchedStartDate);
+            // End date = start date + (days - 1)
+            const end = new Date(start);
+            end.setDate(start.getDate() + (selectedSchedule.days - 1));
+            form.setValue('endDate', end.toISOString().split('T')[0] as unknown as Date);
+        } else {
+            form.setValue('endDate', '' as unknown as Date);
+        }
+    }, [watchedStartDate, selectedSchedule, form]);
 
     // Filter vehicles by selected schedule's vehicle category
     const filteredVehicles = useMemo(() => {
@@ -141,6 +167,9 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
             form.setValue('vehicleNo', vehicle.vehicleNo);
             form.setValue('hireRatePerDay', vehicle.ratePerDay);
             form.setValue('kmPerDay', vehicle.kmPerDay);
+            // Pre-fill extra rates: first from schedule (if defined), then fallback to vehicle
+            form.setValue('excessKmRate', selectedSchedule?.excessKmRate || vehicle.excessKmRate || 0);
+            form.setValue('extraHourRate', selectedSchedule?.extraHourRate || vehicle.extraHourRate || 0);
             setSelectedVehicle(vehicle);
         } else {
             setSelectedVehicle(null);
@@ -420,6 +449,35 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 {...form.register('startDate')}
                             />
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="endDate" className="text-muted-foreground">Tour End Date (Auto-calculated)</Label>
+                            <Input
+                                id="endDate"
+                                type="date"
+                                {...form.register('endDate')}
+                                readOnly
+                                className="bg-muted cursor-not-allowed"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="pickupLocation">Pickup Location</Label>
+                            <Input
+                                id="pickupLocation"
+                                placeholder="e.g. BIA / Colombo"
+                                {...form.register('pickupLocation')}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="dropLocation">Drop-off Location</Label>
+                            <Input
+                                id="dropLocation"
+                                placeholder="e.g. Hotel in Kandy"
+                                {...form.register('dropLocation')}
+                            />
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -450,6 +508,24 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 type="number"
                                 step="0.01"
                                 {...form.register('kmPerDay')}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="excessKmRate">Extra Km Rate (Rs.)</Label>
+                            <Input
+                                id="excessKmRate"
+                                type="number"
+                                step="0.01"
+                                {...form.register('excessKmRate')}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="extraHourRate">Extra Hour Rate (Rs.)</Label>
+                            <Input
+                                id="extraHourRate"
+                                type="number"
+                                step="0.01"
+                                {...form.register('extraHourRate')}
                             />
                         </div>
                         <div className="space-y-2">
@@ -535,14 +611,14 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                     <p className="font-semibold text-primary text-sm">
                                         💰 Van Hire: {selectedSchedule?.days} days : {fmt(calculatedTotals.transportCost)} for {calculatedTotals.includedKm.toFixed(0)} km
                                     </p>
-                                    {selectedVehicle && selectedVehicle.excessKmRate > 0 && (
+                                    {watchedExcessKmRate > 0 && (
                                         <p className="text-xs text-muted-foreground mt-1">
-                                            Any distance exceeding {calculatedTotals.includedKm.toFixed(0)} km will be charged at Rs. {selectedVehicle.excessKmRate} per additional km.
+                                            Any distance exceeding {calculatedTotals.includedKm.toFixed(0)} km will be charged at Rs. {watchedExcessKmRate} per additional km.
                                         </p>
                                     )}
-                                    {selectedVehicle && selectedVehicle.extraHourRate > 0 && (
+                                    {watchedExtraHourRate > 0 && (
                                         <p className="text-xs text-muted-foreground mt-0.5">
-                                            Extra hours will be charged at Rs. {selectedVehicle.extraHourRate} per hour.
+                                            Extra hours will be charged at Rs. {watchedExtraHourRate} per hour.
                                         </p>
                                     )}
                                 </div>

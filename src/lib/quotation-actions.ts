@@ -16,8 +16,13 @@ type QuotationWithSchedule = {
     vehicleNo: string | null;
     numberOfPersons: number;
     startDate: Date | null;
+    endDate: Date | null;
+    pickupLocation: string | null;
+    dropLocation: string | null;
     hireRatePerDay: number;
     kmPerDay: number;
+    excessKmRate: number;
+    extraHourRate: number;
     totalDistance: number;
     transportCost: number;
     accommodationTotal: number;
@@ -68,8 +73,13 @@ export async function generateQuotation(
         vehicleNo?: string;
         numberOfPersons?: number;
         startDate?: string | Date;
+        endDate?: string | Date;
+        pickupLocation?: string;
+        dropLocation?: string;
         hireRatePerDay?: number;
         kmPerDay?: number;
+        excessKmRate?: number;
+        extraHourRate?: number;
         markup?: number;
         discount?: number;
         driverCostPerDay?: number;
@@ -125,8 +135,13 @@ export async function generateQuotation(
                     vehicleNo: validated.vehicleNo || null,
                     numberOfPersons: validated.numberOfPersons || 1,
                     startDate: validated.startDate || null,
+                    endDate: validated.endDate || null,
+                    pickupLocation: validated.pickupLocation || null,
+                    dropLocation: validated.dropLocation || null,
                     hireRatePerDay: validated.hireRatePerDay || 0,
                     kmPerDay: validated.kmPerDay || 0,
+                    excessKmRate: validated.excessKmRate || 0,
+                    extraHourRate: validated.extraHourRate || 0,
                     totalDistance: itemTotals.distance,
                     transportCost,
                     accommodationTotal: itemTotals.accommodation,
@@ -142,7 +157,8 @@ export async function generateQuotation(
                     notes: validated.notes || null,
                     validUntil: validated.validUntil || null,
                     status: 'DRAFT',
-                },
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any,
             });
         });
 
@@ -184,7 +200,7 @@ export async function getQuotations(
             orderBy: { createdAt: 'desc' },
         });
 
-        return { success: true, data: quotations as QuotationWithSchedule[] };
+        return { success: true, data: quotations as unknown as QuotationWithSchedule[] };
     } catch (error) {
         console.error('Error fetching quotations:', error);
         return { success: false, error: 'Failed to fetch quotations' };
@@ -211,7 +227,7 @@ export async function getQuotationById(
             return { success: false, error: 'Quotation not found' };
         }
 
-        return { success: true, data: quotation as QuotationWithSchedule };
+        return { success: true, data: quotation as unknown as QuotationWithSchedule };
     } catch (error) {
         console.error('Error fetching quotation:', error);
         return { success: false, error: 'Failed to fetch quotation' };
@@ -263,5 +279,75 @@ export async function deleteQuotation(id: string): Promise<ActionResult<void>> {
     } catch (error) {
         console.error('Error deleting quotation:', error);
         return { success: false, error: 'Failed to delete quotation' };
+    }
+}
+
+/**
+ * Convert a quotation into a booking
+ */
+export async function convertQuotationToBooking(quotationId: string): Promise<ActionResult<string>> {
+    try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const newBookingId = await prisma.$transaction(async (tx) => {
+            const quotation = await tx.quotation.findUnique({
+                where: { id: quotationId },
+            });
+
+            if (!quotation) {
+                throw new Error('Quotation not found');
+            }
+            if (!quotation.startDate) {
+                throw new Error('Quotation must have a start date to become a booking');
+            }
+            if (!quotation.vehicleNo) {
+                throw new Error('Quotation must have a vehicle assigned to become a booking');
+            }
+            if (quotation.status === 'ACCEPTED') {
+                throw new Error('Quotation is already accepted');
+            }
+
+            // Create booking
+            let destination = 'Various locations (Tour)';
+            const q = quotation as Record<string, unknown>; // Bypass stale IDE Prisma type cache
+            if (q.pickupLocation || q.dropLocation) {
+                destination = `${(q.pickupLocation as string) || 'Not specified'} to ${(q.dropLocation as string) || 'Not specified'}`;
+            }
+
+            const booking = await tx.booking.create({
+                data: {
+                    vehicleNo: quotation.vehicleNo!,
+                    customerName: quotation.customerName,
+                    startDate: quotation.startDate!,
+                    endDate: q.endDate as Date | null,
+                    destination: destination,
+                    notes: `Autogenerated from Quotation #${quotation.quotationNumber}. ${quotation.notes || ''}`.trim(),
+                    advanceAmount: quotation.advanceAmount,
+                    status: 'CONFIRMED',
+                },
+            });
+
+            // Update quotation status
+            await tx.quotation.update({
+                where: { id: quotationId },
+                data: { status: 'ACCEPTED' },
+            });
+
+            return booking.id;
+        });
+
+        revalidateFor('booking');
+        revalidateFor('quotation');
+
+        return { success: true, data: newBookingId };
+    } catch (error) {
+        console.error('Error converting quotation to booking:', error);
+        if (error instanceof Error) {
+            return { success: false, error: error.message };
+        }
+        return { success: false, error: 'Failed to convert quotation to booking' };
     }
 }

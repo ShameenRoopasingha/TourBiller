@@ -13,9 +13,14 @@ interface QuotationData {
     vehicleNo: string | null;
     numberOfPersons: number;
     startDate: Date | null;
+    endDate: Date | null;
+    pickupLocation: string | null;
+    dropLocation: string | null;
     hireRatePerDay: number;
     kmPerDay: number;
     totalDistance: number;
+    excessKmRate: number;
+    extraHourRate: number;
     transportCost: number;
     accommodationTotal: number;
     mealsTotal: number;
@@ -88,6 +93,9 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
     const email = businessProfile?.email || '';
 
     const fmt = formatCurrency;
+
+    const finalExcessKmRate = quotation.excessKmRate || quotation.vehicleExcessKmRate || 0;
+    const finalExtraHourRate = quotation.extraHourRate || quotation.vehicleExtraHourRate || 0;
 
     const subtotal =
         quotation.transportCost +
@@ -200,8 +208,20 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                             <span>{quotation.vehicleNo || '—'} ({quotation.tourSchedule.vehicleCategory})</span>
                             {quotation.startDate && (
                                 <>
-                                    <span className="font-semibold text-gray-500">Start:</span>
-                                    <span>{new Date(quotation.startDate).toLocaleDateString('en-GB')}</span>
+                                    <span className="font-semibold text-gray-500">Period:</span>
+                                    <span>
+                                        {new Date(quotation.startDate).toLocaleDateString('en-GB')}
+                                        {quotation.endDate ? ` - ${new Date(quotation.endDate).toLocaleDateString('en-GB')}` : ''}
+                                    </span>
+                                </>
+                            )}
+                            {(quotation.pickupLocation || quotation.dropLocation) && (
+                                <>
+                                    <span className="font-semibold text-gray-500">Routing:</span>
+                                    <span>
+                                        {quotation.pickupLocation || 'Not specified'} 
+                                        {quotation.dropLocation ? ` to ${quotation.dropLocation}` : ''}
+                                    </span>
                                 </>
                             )}
                         </div>
@@ -232,8 +252,8 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                             {quotation.vehicleInsuranceCoverage && (
                                 <div className="col-span-2"><span className="text-gray-500">Insurance:</span> <span className="font-semibold">{quotation.vehicleInsuranceCoverage}</span></div>
                             )}
-                            {quotation.vehicleExcessKmRate != null && quotation.vehicleExcessKmRate > 0 && (
-                                <div><span className="text-gray-500">Excess Km Rate:</span> <span className="font-semibold">{fmt(quotation.vehicleExcessKmRate)}/km</span></div>
+                            {finalExcessKmRate > 0 && (
+                                <div><span className="text-gray-500">Excess Km Rate:</span> <span className="font-semibold">{fmt(finalExcessKmRate)}/km</span></div>
                             )}
                         </div>
                     </div>
@@ -289,14 +309,14 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                                 <span className="text-gray-600">Van Hire ({quotation.tourSchedule.days} days × {fmt(quotation.hireRatePerDay)}/day for {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km)</span>
                                 <span className="text-right">{fmt(quotation.transportCost)}</span>
                             </div>
-                            {quotation.vehicleExcessKmRate != null && quotation.vehicleExcessKmRate > 0 && (
+                            {finalExcessKmRate > 0 && (
                                 <div className="text-[9px] text-gray-500 italic py-0.5">
-                                    Any km exceeding {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km charged at {fmt(quotation.vehicleExcessKmRate)}/km
+                                    Any km exceeding {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km charged at {fmt(finalExcessKmRate)}/km
                                 </div>
                             )}
-                            {quotation.vehicleExtraHourRate != null && quotation.vehicleExtraHourRate > 0 && (
+                            {finalExtraHourRate > 0 && (
                                 <div className="text-[9px] text-gray-500 italic py-0.5">
-                                    Extra hours charged at {fmt(quotation.vehicleExtraHourRate)}/hr
+                                    Extra hours charged at {fmt(finalExtraHourRate)}/hr
                                 </div>
                             )}
                             <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">

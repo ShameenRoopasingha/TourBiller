@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, Trash2, MapPin } from 'lucide-react';
 
@@ -34,6 +34,8 @@ interface TourScheduleFormProps {
         days: number;
         basePricePerPerson: number;
         vehicleCategory: string;
+        excessKmRate: number | null;
+        extraHourRate: number | null;
         items: {
             dayNumber: number;
             title: string;
@@ -87,6 +89,8 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
             days: initialData?.days || 1,
             basePricePerPerson: initialData?.basePricePerPerson || ('' as unknown as number),
             vehicleCategory: initialData?.vehicleCategory || 'CAR',
+            excessKmRate: initialData?.excessKmRate || ('' as unknown as number),
+            extraHourRate: initialData?.extraHourRate || ('' as unknown as number),
             isActive: true,
             items: defaultItems,
         },
@@ -97,7 +101,10 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
         name: 'items',
     });
 
-    const watchedItems = form.watch('items');
+    const watchedItems = useWatch({
+        control: form.control,
+        name: 'items',
+    });
 
     // Calculate totals from day items
     const totals = watchedItems?.reduce(
@@ -221,14 +228,38 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
                             {...form.register('description')}
                         />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="basePricePerPerson">Base Price Per Person (Rs.)</Label>
-                        <Input
-                            id="basePricePerPerson"
-                            type="number"
-                            step="0.01"
-                            {...form.register('basePricePerPerson')}
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="basePricePerPerson">Base Price Per Person (Rs.)</Label>
+                            <Input
+                                id="basePricePerPerson"
+                                type="number"
+                                step="0.01"
+                                {...form.register('basePricePerPerson')}
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="excessKmRate">Extra Km Rate (Rs.)</Label>
+                            <Input
+                                id="excessKmRate"
+                                type="number"
+                                step="0.01"
+                                placeholder="Optional global extra km rate"
+                                {...form.register('excessKmRate')}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="extraHourRate">Extra Hour Rate (Rs.)</Label>
+                            <Input
+                                id="extraHourRate"
+                                type="number"
+                                step="0.01"
+                                placeholder="Optional global extra hour rate"
+                                {...form.register('extraHourRate')}
+                            />
+                        </div>
                     </div>
                 </CardContent>
             </Card>
