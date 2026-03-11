@@ -14,7 +14,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, CalendarX, Clock } from 'lucide-react';
+import { Plus, CalendarX, Clock, Eye } from 'lucide-react';
 import { SearchInput } from '@/components/SearchInput';
 
 function EndTourDialog({ vehicleNo, customerName, bookingId }: { vehicleNo: string, customerName: string, bookingId: string }) {
@@ -127,6 +127,12 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                                                 </Button>
                                             </form>
                                         )}
+                                        <Button variant="outline" size="sm" asChild>
+                                            <Link href={`/bookings/${booking.id}`}>
+                                                <Eye className="w-4 h-4 mr-2" />
+                                                View
+                                            </Link>
+                                        </Button>
                                     </div>
                                 </div>
                             </Card>

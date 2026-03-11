@@ -49,7 +49,6 @@ async function PrintQuotation({ id }: { id: string }) {
         <QuotationTemplate
             quotation={{ ...quotation, ...vehicleSpecs }}
             businessProfile={profileResult.success ? profileResult.data : undefined}
-            autoPrint={true}
         />
     );
 }

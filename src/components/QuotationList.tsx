@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Eye } from 'lucide-react';
+import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
 import { updateQuotationStatus, deleteQuotation, convertQuotationToBooking } from '@/lib/quotation-actions';
 
@@ -217,14 +217,8 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
-                                                <Link href={`/quotations/${q.id}`}>
-                                                    <Button variant="ghost" size="sm" title="View Quotation">
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
-                                                </Link>
-                                                
                                                 <Link href={`/quotations/${q.id}/print`}>
-                                                    <Button variant="ghost" size="sm" title="Print Quotation">
+                                                    <Button variant="ghost" size="sm" title="Print">
                                                         <Printer className="h-4 w-4" />
                                                     </Button>
                                                 </Link>
