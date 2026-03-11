@@ -77,15 +77,17 @@ interface BusinessProfileData {
 interface QuotationTemplateProps {
     quotation: QuotationData;
     businessProfile?: BusinessProfileData;
+    autoPrint?: boolean;
 }
 
-export function QuotationTemplate({ quotation, businessProfile }: QuotationTemplateProps) {
+export function QuotationTemplate({ quotation, businessProfile, autoPrint = false }: QuotationTemplateProps) {
     useEffect(() => {
+        if (!autoPrint) return;
         const timer = setTimeout(() => {
             window.print();
         }, 500);
         return () => clearTimeout(timer);
-    }, []);
+    }, [autoPrint]);
 
     const companyName = businessProfile?.companyName || 'TourBiller Transport';
     const address = businessProfile?.address || '';
@@ -435,9 +437,11 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
             </div>
 
             {/* Print Button - Below content, matching width */}
-            <div className="w-[190mm] mt-6 mb-8 print:hidden">
-                <PrintButton />
-            </div>
+            {!autoPrint && (
+                <div className="w-[190mm] mt-6 mb-8 print:hidden">
+                    <PrintButton />
+                </div>
+            )}
         </div>
     );
 }
