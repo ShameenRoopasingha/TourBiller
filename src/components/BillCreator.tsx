@@ -87,8 +87,8 @@ export function BillCreator({
             currency: 'LKR',
             exchangeRate: 1,
             paymentMethod: 'CASH',
-            startDate: new Date().toISOString().split('T')[0] as unknown as Date,
-            endDate: new Date().toISOString().split('T')[0] as unknown as Date,
+            startDate: new Date().toISOString().slice(0, 16) as unknown as Date,
+            endDate: new Date().toISOString().slice(0, 16) as unknown as Date,
             extraHours: 0,
             extraHourRate: 0,
         },
@@ -122,10 +122,10 @@ export function BillCreator({
                         form.setValue('route', bResult.data.destination);
                     }
                     if (bResult.data.startDate) {
-                        form.setValue('startDate', new Date(bResult.data.startDate).toISOString().split('T')[0] as unknown as Date);
+                        form.setValue('startDate', new Date(bResult.data.startDate).toISOString().slice(0, 16) as unknown as Date);
                     }
                     if (bResult.data.endDate) {
-                        form.setValue('endDate', new Date(bResult.data.endDate).toISOString().split('T')[0] as unknown as Date);
+                        form.setValue('endDate', new Date(bResult.data.endDate).toISOString().slice(0, 16) as unknown as Date);
                     }
                 }
             }
@@ -159,6 +159,36 @@ export function BillCreator({
             }
         }
     }, [initialVehicleNo, vehicles, form, updateField]);
+
+    // Automatically calculate extra hours
+    const watchDates = form.watch(['startDate', 'endDate']);
+    const startDateValue = watchDates[0];
+    const endDateValue = watchDates[1];
+
+    useEffect(() => {
+        const start = new Date(startDateValue);
+        const end = new Date(endDateValue);
+        
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
+            const diffMs = end.getTime() - start.getTime();
+            const totalHours = diffMs / (1000 * 60 * 60);
+            const fullDays = Math.floor(totalHours / 24);
+            
+            // If total hours is exactly a multiple of 24, extra hours is 0
+            // Otherwise, everything beyond full days is extra hours
+            let extra = 0;
+            if (totalHours > 0) {
+                // Determine days (at least 1 day usually in this business)
+                const daysForExtra = Math.max(1, fullDays);
+                extra = Math.max(0, totalHours - (daysForExtra * 24));
+            }
+            
+            // Round to 1 decimal place
+            const roundedExtra = Math.round(extra * 10) / 10;
+            form.setValue('extraHours', roundedExtra);
+            updateField('extraHours', roundedExtra);
+        }
+    }, [startDateValue, endDateValue, form, updateField]);
 
 
 
@@ -423,7 +453,7 @@ export function BillCreator({
                                                 <FormItem>
                                                     <FormLabel>Start Date</FormLabel>
                                                     <FormControl>
-                                                        <Input type="date" {...field} value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
+                                                        <Input type="datetime-local" {...field} value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -436,7 +466,7 @@ export function BillCreator({
                                                 <FormItem>
                                                     <FormLabel>End Date</FormLabel>
                                                     <FormControl>
-                                                        <Input type="date" {...field} value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
+                                                        <Input type="datetime-local" {...field} value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
