@@ -17,6 +17,10 @@ export const BillSchema = z.object({
   currency: z.string().default("LKR"),
   exchangeRate: z.coerce.number().min(0).default(1),
   paymentMethod: z.enum(["CASH", "CREDIT"]).default("CASH"),
+  startDate: z.coerce.date().default(() => new Date()),
+  endDate: z.coerce.date().default(() => new Date()),
+  extraHours: z.coerce.number().min(0).default(0),
+  extraHourRate: z.coerce.number().min(0).default(0),
 }).refine(data => data.endMeter > data.startMeter, {
   message: "End meter must be greater than start meter",
   path: ["endMeter"]

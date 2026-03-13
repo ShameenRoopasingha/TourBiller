@@ -28,6 +28,8 @@ interface CalculationFields {
   gatePass: number;
   packageCharge: number;
   allowedKm: number;
+  extraHours: number;
+  extraHourRate: number;
 }
 
 const initialFields: CalculationFields = {
@@ -38,6 +40,8 @@ const initialFields: CalculationFields = {
   gatePass: 0,
   packageCharge: 0,
   allowedKm: 0,
+  extraHours: 0,
+  extraHourRate: 0,
 };
 
 export function useCalculationEngine(initialValues?: Partial<CalculationFields>): UseCalculationEngineReturn {
@@ -63,8 +67,8 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
   );
 
   const extraCharges = useMemo(() =>
-    calculateExtraCharges(fields.waitingCharge, fields.gatePass, fields.packageCharge),
-    [fields.waitingCharge, fields.gatePass, fields.packageCharge]
+    calculateExtraCharges(fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate),
+    [fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate]
   );
 
   const totalAmount = useMemo(() =>
@@ -75,9 +79,11 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
       fields.waitingCharge,
       fields.gatePass,
       fields.packageCharge,
-      fields.allowedKm
+      fields.allowedKm,
+      fields.extraHours,
+      fields.extraHourRate
     ),
-    [fields.startMeter, fields.endMeter, fields.hireRate, fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.allowedKm]
+    [fields.startMeter, fields.endMeter, fields.hireRate, fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.allowedKm, fields.extraHours, fields.extraHourRate]
   );
 
   // Formatted values

@@ -87,6 +87,10 @@ export function BillCreator({
             currency: 'LKR',
             exchangeRate: 1,
             paymentMethod: 'CASH',
+            startDate: new Date().toISOString().split('T')[0] as unknown as Date,
+            endDate: new Date().toISOString().split('T')[0] as unknown as Date,
+            extraHours: 0,
+            extraHourRate: 0,
         },
     });
 
@@ -117,6 +121,12 @@ export function BillCreator({
                     if (bResult.data.destination) {
                         form.setValue('route', bResult.data.destination);
                     }
+                    if (bResult.data.startDate) {
+                        form.setValue('startDate', new Date(bResult.data.startDate).toISOString().split('T')[0] as unknown as Date);
+                    }
+                    if (bResult.data.endDate) {
+                        form.setValue('endDate', new Date(bResult.data.endDate).toISOString().split('T')[0] as unknown as Date);
+                    }
                 }
             }
         };
@@ -137,12 +147,15 @@ export function BillCreator({
                 const rate = selectedVehicle.excessKmRate ?? 0;
                 const allowedKm = selectedVehicle.kmPerDay ?? 0;
                 const packageCharge = selectedVehicle.ratePerDay ?? 0;
+                const extraHourRate = selectedVehicle.extraHourRate ?? 0;
                 form.setValue('hireRate', rate);
                 form.setValue('allowedKm', allowedKm);
                 form.setValue('packageCharge', packageCharge);
+                form.setValue('extraHourRate', extraHourRate);
                 updateField('hireRate', rate);
                 updateField('allowedKm', allowedKm);
                 updateField('packageCharge', packageCharge);
+                updateField('extraHourRate', extraHourRate);
             }
         }
     }, [initialVehicleNo, vehicles, form, updateField]);
@@ -209,12 +222,15 @@ export function BillCreator({
             const rate = selectedVehicle.excessKmRate ?? 0;
             const allowedKm = selectedVehicle.kmPerDay ?? 0;
             const packageCharge = selectedVehicle.ratePerDay ?? 0;
+            const extraHourRate = selectedVehicle.extraHourRate ?? 0;
             form.setValue('hireRate', rate);
             form.setValue('allowedKm', allowedKm);
             form.setValue('packageCharge', packageCharge);
+            form.setValue('extraHourRate', extraHourRate);
             updateField('hireRate', rate);
             updateField('allowedKm', allowedKm);
             updateField('packageCharge', packageCharge);
+            updateField('extraHourRate', extraHourRate);
         }
     };
 
@@ -399,6 +415,34 @@ export function BillCreator({
                                             )}
                                         />
                                     </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="startDate"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Start Date</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="date" {...field} value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="endDate"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>End Date</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="date" {...field} value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 </CardContent>
                             </Card>
 
@@ -491,6 +535,35 @@ export function BillCreator({
                                     <div className="grid grid-cols-2 gap-4">
                                         <FormField
                                             control={form.control}
+                                            name="extraHours"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Extra Hours</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" step="0.5" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraHours')} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="extraHourRate"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Extra Hour Rate</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraHourRate')} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
                                             name="advanceAmount"
                                             render={({ field }) => (
                                                 <FormItem>
@@ -564,7 +637,7 @@ export function BillCreator({
                                         {/* Cost Breakdown */}
                                         <div className="space-y-2">
                                             <div className="flex justify-between text-sm">
-                                                <span>{watchedAllowedKm > 0 ? "Extra Mileage" : "Base Charge"}</span>
+                                                <span>Base Charge</span>
                                                 <span>{formattedBaseCharge}</span>
                                             </div>
                                             <div className="flex justify-between text-sm">

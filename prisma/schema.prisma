@@ -30,6 +30,10 @@ model Bill {
   exchangeRate   Float    @default(1.0)
   totalAmountLKR Float    @default(0)
   paymentMethod  String   @default("CASH") // CASH, CREDIT
+  startDate      DateTime @default(now())
+  endDate        DateTime @default(now())
+  extraHours     Float    @default(0)
+  extraHourRate  Float    @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

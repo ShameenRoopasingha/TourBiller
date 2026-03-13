@@ -24,7 +24,9 @@ export function calculateTotalAmount(
   waitingCharge: number = 0,
   gatePass: number = 0,
   packageCharge: number = 0,
-  allowedKm: number = 0
+  allowedKm: number = 0,
+  extraHours: number = 0,
+  extraHourRate: number = 0
 ): number {
   const distance = calculateDistance(startMeter, endMeter);
 
@@ -38,7 +40,7 @@ export function calculateTotalAmount(
     baseCharge = distance * hireRate;
   }
 
-  const extraCharges = waitingCharge + gatePass + packageCharge;
+  const extraCharges = waitingCharge + gatePass + packageCharge + (extraHours * extraHourRate);
 
   return baseCharge + extraCharges;
 }
@@ -60,9 +62,11 @@ export function formatCurrency(amount: number): string {
 export function calculateExtraCharges(
   waitingCharge: number = 0,
   gatePass: number = 0,
-  packageCharge: number = 0
+  packageCharge: number = 0,
+  extraHours: number = 0,
+  extraHourRate: number = 0
 ): number {
-  return waitingCharge + gatePass + packageCharge;
+  return waitingCharge + gatePass + packageCharge + (extraHours * extraHourRate);
 }
 
 /**
