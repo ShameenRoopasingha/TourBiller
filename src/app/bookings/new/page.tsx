@@ -1,291 +1,42 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
-import { BookingSchema, type BookingFormData, type Vehicle, type Customer } from '@/lib/validations';
-import { createBooking } from '@/lib/booking-actions';
+import { Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
 import { getVehicles } from '@/lib/vehicle-actions';
 import { getCustomers } from '@/lib/customer-actions';
 import { getTourSchedules } from '@/lib/tour-schedule-actions';
-import { useEnterNavigation } from '@/hooks/useEnterNavigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { DateTimePicker } from '@/components/ui/datetime-picker';
-import { Loader2, CalendarPlus } from 'lucide-react';
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from '@/components/ui/form';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BookingCreator } from '@/components/BookingCreator';
 
-export default function NewBookingPage() {
-    const router = useRouter();
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-    const [customers, setCustomers] = useState<Customer[]>([]);
-    const [schedules, setSchedules] = useState<{ id: string; name: string }[]>([]);
-    const handleEnterKey = useEnterNavigation();
+async function NewBookingForm() {
+    // Fetch all needed data in parallel on server
+    const [vResult, cResult, sResult] = await Promise.all([
+        getVehicles(),
+        getCustomers(),
+        getTourSchedules()
+    ]);
 
-    useEffect(() => {
-        const loadData = async () => {
-            const [vResult, cResult, sResult] = await Promise.all([
-                getVehicles(),
-                getCustomers(),
-                getTourSchedules()
-            ]);
-            if (vResult.success && vResult.data) setVehicles(vResult.data);
-            if (cResult.success && cResult.data) setCustomers(cResult.data);
-            if (sResult.success && sResult.data) setSchedules(sResult.data);
-        };
-        loadData();
-    }, []);
-
-    const form = useForm<BookingFormData>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(BookingSchema) as any,
-        defaultValues: {
-            vehicleNo: '',
-            customerName: '',
-            status: 'CONFIRMED',
-            destination: '',
-            advanceAmount: '' as unknown as number,
-            notes: '',
-        },
-    });
-
-    const onSubmit = async (data: BookingFormData) => {
-        setIsSubmitting(true);
-        setError(null);
-
-        const formData = new FormData();
-        Object.entries(data).forEach(([key, value]) => {
-            if (value instanceof Date) {
-                formData.append(key, value.toISOString());
-            } else if (value !== undefined && value !== null) {
-                formData.append(key, value.toString());
-            }
-        });
-
-        const result = await createBooking(formData);
-
-        if (result.success) {
-            router.push('/bookings');
-            router.refresh();
-        } else {
-            setError(result.error || 'Failed to create booking');
-        }
-
-        setIsSubmitting(false);
-    };
+    const vehicles = vResult.success && vResult.data ? vResult.data : [];
+    const customers = cResult.success && cResult.data ? cResult.data : [];
+    const schedules = sResult.success && sResult.data ? sResult.data.map(s => ({ id: s.id, name: s.name })) : [];
 
     return (
         <div className="container mx-auto py-10 max-w-2xl">
             <h1 className="text-3xl font-bold mb-8">New Booking</h1>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Booking Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {error && (
-                        <Alert variant="destructive" className="mb-6">
-                            <AlertTitle>Error</AlertTitle>
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={handleEnterKey}>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="vehicleNo"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Vehicle</FormLabel>
-                                            <FormControl>
-                                                <div className="relative">
-                                                    <Input
-                                                        placeholder="Select Vehicle..."
-                                                        {...field}
-                                                        list="vehicle-list"
-                                                        autoComplete="off"
-                                                    />
-                                                    <datalist id="vehicle-list">
-                                                        {vehicles.map((v) => (
-                                                            <option key={v.id} value={v.vehicleNo}>
-                                                                {v.model ? `${v.vehicleNo} - ${v.model}` : v.vehicleNo}
-                                                            </option>
-                                                        ))}
-                                                    </datalist>
-                                                </div>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="customerName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Customer</FormLabel>
-                                            <FormControl>
-                                                <div className="relative">
-                                                    <Input
-                                                        placeholder="Select Customer..."
-                                                        {...field}
-                                                        list="customer-list"
-                                                        autoComplete="off"
-                                                    />
-                                                    <datalist id="customer-list">
-                                                        {customers.map((c) => (
-                                                            <option key={c.id} value={c.name}>
-                                                                {c.mobile ? `${c.name} (${c.mobile})` : c.name}
-                                                            </option>
-                                                        ))}
-                                                    </datalist>
-                                                </div>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="startDate"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                            <FormLabel>Start Date & Time</FormLabel>
-                                            <FormControl>
-                                                <DateTimePicker
-                                                    date={field.value}
-                                                    setDate={(date) => field.onChange(date)}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="endDate"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                            <FormLabel>End Date & Time (Optional)</FormLabel>
-                                            <FormControl>
-                                                <DateTimePicker
-                                                    date={field.value}
-                                                    setDate={(date) => field.onChange(date)}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="destination"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Destination / Tour</FormLabel>
-                                            <FormControl>
-                                                <div className="relative">
-                                                    <Input
-                                                        placeholder="Select or type a destination..."
-                                                        {...field}
-                                                        list="schedule-list"
-                                                        autoComplete="off"
-                                                    />
-                                                    <datalist id="schedule-list">
-                                                        {schedules.map((s) => (
-                                                            <option key={s.id} value={s.name}>
-                                                                {s.name}
-                                                            </option>
-                                                        ))}
-                                                    </datalist>
-                                                </div>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="advanceAmount"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Advance Payment (Rs)</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    placeholder="0.00"
-                                                    {...field}
-                                                    onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            <FormField
-                                control={form.control}
-                                name="notes"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Notes</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Additional details..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <div className="flex justify-end gap-2">
-                                <Button variant="outline" type="button" onClick={() => router.back()}>
-                                    Cancel
-                                </Button>
-                                <Button type="submit" disabled={isSubmitting}>
-                                    {isSubmitting ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Booking...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <CalendarPlus className="mr-2 h-4 w-4" />
-                                            Create Booking
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
+            <BookingCreator 
+                vehicles={vehicles} 
+                customers={customers} 
+                schedules={schedules} 
+            />
         </div>
+    );
+}
+
+export default function NewBookingPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        }>
+            <NewBookingForm />
+        </Suspense>
     );
 }

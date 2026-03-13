@@ -9,8 +9,6 @@ import { Loader2, Printer } from 'lucide-react';
 import { BillSchema, type BillFormData, type Vehicle, type Customer } from '@/lib/validations';
 import { createBill } from '@/lib/actions';
 import { getBookingById } from '@/lib/booking-actions';
-import { getVehicles } from '@/lib/vehicle-actions';
-import { getCustomers } from '@/lib/customer-actions';
 
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
@@ -41,18 +39,20 @@ import { useRouter } from 'next/navigation';
 export function BillCreator({
     initialVehicleNo,
     initialCustomerName,
-    initialBookingId
+    initialBookingId,
+    vehicles,
+    customers
 }: {
     initialVehicleNo?: string;
     initialCustomerName?: string;
     initialBookingId?: string;
+    vehicles: Vehicle[];
+    customers: Customer[];
 }) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successId, setSuccessId] = useState<string | null>(null);
-    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-    const [customers, setCustomers] = useState<Customer[]>([]);
 
 
 
@@ -95,20 +95,12 @@ export function BillCreator({
     });
 
     useEffect(() => {
-        const loadData = async () => {
-            const [vResult, cResult] = await Promise.all([
-                getVehicles(),
-                getCustomers()
-            ]);
-            if (vResult.success && vResult.data) setVehicles(vResult.data);
-            if (cResult.success && cResult.data) {
-                setCustomers(cResult.data);
-                // Auto-fill customer address from pre-filled customer name
-                if (initialCustomerName) {
-                    const customer = cResult.data.find(c => c.name === initialCustomerName);
-                    if (customer?.address) {
-                        form.setValue('customerAddress', customer.address);
-                    }
+        const loadExtraData = async () => {
+            // Auto-fill customer address from pre-filled customer name
+            if (initialCustomerName) {
+                const customer = customers.find(c => c.name === initialCustomerName);
+                if (customer?.address) {
+                    form.setValue('customerAddress', customer.address);
                 }
             }
 
@@ -130,8 +122,8 @@ export function BillCreator({
                 }
             }
         };
-        loadData();
-    }, [form, initialBookingId, initialCustomerName]);
+        loadExtraData();
+    }, [form, initialBookingId, initialCustomerName, customers]);
 
     const watchedAllowedKm = useWatch({
         control: form.control,

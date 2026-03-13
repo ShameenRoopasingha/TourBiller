@@ -239,6 +239,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
 
             if (result.success) {
                 setSuccess(true);
+                router.refresh();
                 // Intentionally keeping isSubmitting true during the transition
                 setTimeout(() => router.push('/quotations'), 1000);
             } else {
