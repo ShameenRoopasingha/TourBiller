@@ -29,6 +29,9 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
     const email = businessProfile?.email ? `Email: ${businessProfile.email}` : '';
 
     const fmt = formatCurrency;
+    const distance = bill.endMeter - bill.startMeter;
+    const isPackageMode = bill.allowedKm > 0 && bill.packageCharge > 0;
+    const excessKm = Math.max(0, distance - bill.allowedKm);
 
     // --- 58mm THERMAL RECEIPT LAYOUT (FOR DRIVERS) ---
     if (userRole === 'DRIVER') {
@@ -86,10 +89,17 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                             <span>AMT</span>
                         </div>
                         
-                        <div className="flex justify-between items-start mb-0.5">
-                            <span className="w-[65%] leading-tight">Mileage ({bill.endMeter}-{bill.startMeter}km)</span>
-                            <span className="w-[35%] text-right">{fmt((bill.endMeter - bill.startMeter) * bill.hireRate)}</span>
-                        </div>
+                        {!isPackageMode ? (
+                            <div className="flex justify-between items-start mb-0.5">
+                                <span className="w-[65%] leading-tight">Mileage ({bill.endMeter}-{bill.startMeter}km)</span>
+                                <span className="w-[35%] text-right">{fmt(distance * bill.hireRate)}</span>
+                            </div>
+                        ) : excessKm > 0 ? (
+                            <div className="flex justify-between items-start mb-0.5">
+                                <span className="w-[65%] leading-tight">Extra Mileage ({excessKm.toFixed(1)}km @ {bill.hireRate})</span>
+                                <span className="w-[35%] text-right">{fmt(excessKm * bill.hireRate)}</span>
+                            </div>
+                        ) : null}
                         {bill.waitingCharge > 0 && (
                             <div className="flex justify-between">
                                 <span>Waiting Charge</span>
@@ -252,16 +262,32 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <div className="col-span-4 text-right">Amount</div>
                             </div>
 
-                            {/* Mileage */}
-                            <div className="col-span-8 flex justify-between pr-2">
-                                <span>Mileage Cost</span>
-                                <span className="text-[10px] text-gray-500">
-                                    ({bill.endMeter} - {bill.startMeter} = {(bill.endMeter - bill.startMeter).toFixed(1)} km @ {fmt(bill.hireRate)})
-                                </span>
-                            </div>
-                            <div className="col-span-4 text-right font-medium">
-                                {fmt((bill.endMeter - bill.startMeter) * bill.hireRate)}
-                            </div>
+                            {/* Mileage / Extra Mileage */}
+                            {!isPackageMode ? (
+                                <>
+                                    <div className="col-span-8 flex justify-between pr-2">
+                                        <span>Mileage Cost</span>
+                                        <span className="text-[10px] text-gray-500">
+                                            ({bill.endMeter} - {bill.startMeter} = {distance.toFixed(1)} km @ {fmt(bill.hireRate)})
+                                        </span>
+                                    </div>
+                                    <div className="col-span-4 text-right font-medium">
+                                        {fmt(distance * bill.hireRate)}
+                                    </div>
+                                </>
+                            ) : excessKm > 0 ? (
+                                <>
+                                    <div className="col-span-8 flex justify-between pr-2">
+                                        <span>Extra Mileage</span>
+                                        <span className="text-[10px] text-gray-500">
+                                            ({distance.toFixed(1)}km - {bill.allowedKm}km = {excessKm.toFixed(1)} km @ {fmt(bill.hireRate)})
+                                        </span>
+                                    </div>
+                                    <div className="col-span-4 text-right font-medium">
+                                        {fmt(excessKm * bill.hireRate)}
+                                    </div>
+                                </>
+                            ) : null}
 
                             {/* Extra Charges */}
                             <div className="col-span-8">Waiting Charges</div>
