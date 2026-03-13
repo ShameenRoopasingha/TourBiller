@@ -61,7 +61,7 @@ export async function getBookings(searchQuery?: string): Promise<ActionResult<Bo
                     { destination: { contains: searchQuery, mode: 'insensitive' } },
                 ],
             } : undefined,
-            orderBy: { startDate: 'asc' },
+            orderBy: { createdAt: 'desc' },
         });
 
         return { success: true, data: bookings as Booking[] };
