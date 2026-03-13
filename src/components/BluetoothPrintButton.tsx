@@ -75,7 +75,7 @@ export function BluetoothPrintButton({ bill, companyName }: BluetoothPrintButton
             let receipt = INIT + CENTER + BOLD_ON + companyName + BOLD_OFF + NL;
             receipt += "CASH RECEIPT" + NL + NL;
             receipt += LEFT;
-            receipt += `BILL NO : #${bill.billNumber}` + NL;
+            receipt += `BILL NO : ${bill.billNumber}` + NL;
             receipt += `DATE    : ${new Date(bill.createdAt).toLocaleString('en-GB', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}` + NL;
             receipt += `CUST    : ${bill.customerName}` + NL;
             receipt += `VEHICLE : ${bill.vehicleNo}` + NL;

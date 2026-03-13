@@ -159,7 +159,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                             QUOTATION
                         </div>
                         <div className="text-base font-bold mt-0.5">
-                            #{quotation.quotationNumber}
+                            QUOTATION NO: {quotation.quotationNumber}
                         </div>
                         <div className="text-[10px] text-gray-500 mt-0.5">
                             Date: {new Date(quotation.createdAt).toLocaleDateString('en-GB')}
