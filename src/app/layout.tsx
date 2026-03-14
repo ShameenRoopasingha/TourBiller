@@ -12,8 +12,8 @@ import { PageTransition } from '@/components/PageTransition';
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'VIRGIL',
-  description: 'Smart Travel Management.',
+  title: 'VIRGIL | Smart Travel Management System',
+  description: 'The professional solution for vehicle hire billing and travel management. Automate invoices, manage bookings, and streamline your operations with VIRGIL.',
 }
 
 export default async function RootLayout({

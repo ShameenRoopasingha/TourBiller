@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Grainient from '@/components/Grainient';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -46,8 +47,22 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-muted/20 p-3 sm:p-4">
-            <Card className="w-full max-w-md shadow-2xl">
+        <div className="relative min-h-screen flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+            {/* Animated Background */}
+            <div className="absolute inset-0 z-0 scale-110">
+                <Grainient 
+                    color1="#001845" // Deep Navy
+                    color2="#00b4d8" // Cyan/Bright Blue
+                    color3="#023e8a" // Royal Blue
+                    zoom={0.8}
+                    timeSpeed={0.15}
+                    noiseScale={1.5}
+                    grainAmount={0.05}
+                    className="opacity-50 dark:opacity-40"
+                />
+            </div>
+
+            <Card className="relative w-full max-w-md shadow-2xl z-10 bg-white/60 dark:bg-black/40 backdrop-blur-2xl border border-white/30 dark:border-white/10 overflow-hidden">
                 <CardHeader className="text-center space-y-3 pb-2 pt-8">
                     <div className="mx-auto flex flex-col items-center justify-center gap-3">
                         <Image src="/virgil-logo.png" alt="VIRGIL" width={96} height={96} className="h-24 w-auto drop-shadow-md" priority />
