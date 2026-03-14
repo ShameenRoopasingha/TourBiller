@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { VehicleSchema, type VehicleFormData, type Vehicle } from '@/lib/validations';
 import { createVehicle, updateVehicle } from '@/lib/vehicle-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -186,16 +187,18 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 <FormItem>
                                     <FormLabel>Category</FormLabel>
                                     <FormControl>
-                                        <select
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                            {...field}
-                                        >
-                                            <option value="CAR">Car</option>
-                                            <option value="VAN">Van</option>
-                                            <option value="SUV">SUV</option>
-                                            <option value="BUS">Bus</option>
-                                            <option value="LORRY">Lorry</option>
-                                        </select>
+                                        <ComboboxField
+                                            options={[
+                                                { label: 'Car', value: 'CAR' },
+                                                { label: 'Van', value: 'VAN' },
+                                                { label: 'SUV', value: 'SUV' },
+                                                { label: 'Bus', value: 'BUS' },
+                                                { label: 'Lorry', value: 'LORRY' },
+                                            ]}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select category..."
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -209,14 +212,16 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 <FormItem>
                                     <FormLabel>Status</FormLabel>
                                     <FormControl>
-                                        <select
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                            {...field}
-                                        >
-                                            <option value="ACTIVE">Active</option>
-                                            <option value="MAINTENANCE">Maintenance</option>
-                                            <option value="RETIRED">Retired</option>
-                                        </select>
+                                        <ComboboxField
+                                            options={[
+                                                { label: 'Active', value: 'ACTIVE' },
+                                                { label: 'Maintenance', value: 'MAINTENANCE' },
+                                                { label: 'Retired', value: 'RETIRED' },
+                                            ]}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select status..."
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -249,16 +254,17 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                     <FormItem>
                                         <FormLabel>AC Type</FormLabel>
                                         <FormControl>
-                                            <select
-                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                {...field}
-                                            >
-                                                <option value="">Select AC type...</option>
-                                                <option value="No AC">No AC</option>
-                                                <option value="Line AC">Line AC</option>
-                                                <option value="Dual AC">Dual AC</option>
-                                                <option value="Roof AC">Roof AC</option>
-                                            </select>
+                                            <ComboboxField
+                                                options={[
+                                                    { label: 'No AC', value: 'No AC' },
+                                                    { label: 'Line AC', value: 'Line AC' },
+                                                    { label: 'Dual AC', value: 'Dual AC' },
+                                                    { label: 'Roof AC', value: 'Roof AC' },
+                                                ]}
+                                                value={field.value || ''}
+                                                onChange={field.onChange}
+                                                placeholder="Select AC type..."
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

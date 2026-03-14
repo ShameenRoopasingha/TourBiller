@@ -48,9 +48,10 @@ interface TourScheduleFormProps {
             otherCosts: number;
         }[];
     };
+    existingSchedules?: { name: string }[];
 }
 
-export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
+export function TourScheduleForm({ initialData, existingSchedules = [] }: TourScheduleFormProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -204,7 +205,7 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
                                 name="name"
                                 render={({ field }) => (
                                     <ComboboxField
-                                        options={[]} // No pre-defined options for existing tour names yet
+                                        options={existingSchedules.map(s => ({ label: s.name, value: s.name }))}
                                         value={field.value}
                                         onChange={field.onChange}
                                         placeholder="e.g. 5-Day Cultural Triangle Tour"
@@ -218,15 +219,21 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="vehicleCategory">Vehicle Category</Label>
-                            <select
-                                id="vehicleCategory"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                {...form.register('vehicleCategory')}
-                            >
-                                {VEHICLE_CATEGORIES.map((cat) => (
-                                    <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>
-                                ))}
-                            </select>
+                                <Controller
+                                    control={form.control}
+                                    name="vehicleCategory"
+                                    render={({ field }) => (
+                                        <ComboboxField
+                                            options={VEHICLE_CATEGORIES.map((cat) => ({
+                                                label: cat.replace('_', ' '),
+                                                value: cat
+                                            }))}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select category..."
+                                        />
+                                    )}
+                                />
                         </div>
                     </div>
                     <div className="space-y-2">
