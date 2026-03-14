@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Edit, Trash2, Map, Calendar } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Map, Calendar, Eye } from 'lucide-react';
 
 import { deleteTourSchedule } from '@/lib/tour-schedule-actions';
 
@@ -182,8 +182,13 @@ export function TourScheduleList({ schedules }: TourScheduleListProps) {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
+                                                <Link href={`/tour-schedules/${schedule.id}`}>
+                                                    <Button variant="ghost" size="sm" title="View Details">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
                                                 <Link href={`/tour-schedules/${schedule.id}/edit`}>
-                                                    <Button variant="ghost" size="sm">
+                                                    <Button variant="ghost" size="sm" title="Edit Schedule">
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
                                                 </Link>
