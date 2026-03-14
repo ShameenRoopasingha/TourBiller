@@ -49,9 +49,9 @@ export default function LoginPage() {
             <Card className="w-full max-w-md shadow-2xl">
                 <CardHeader className="text-center space-y-3 pb-2">
                     <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-                        <span className="text-2xl font-bold text-primary-foreground">TB</span>
+                        <span className="text-2xl font-bold text-primary-foreground">VG</span>
                     </div>
-                    <CardTitle className="text-2xl font-bold">Tour Biller</CardTitle>
+                    <CardTitle className="text-2xl font-bold">VIGIL</CardTitle>
                     <CardDescription>
                         Sign in to your account
                     </CardDescription>

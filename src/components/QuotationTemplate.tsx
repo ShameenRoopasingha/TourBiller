@@ -87,7 +87,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
         return () => clearTimeout(timer);
     }, []);
 
-    const companyName = businessProfile?.companyName || 'TourBiller Transport';
+    const companyName = businessProfile?.companyName || 'VIGIL Transport';
     const address = businessProfile?.address || '';
     const phone = businessProfile?.phone || '';
     const email = businessProfile?.email || '';

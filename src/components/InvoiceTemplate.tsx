@@ -23,7 +23,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
         return () => clearTimeout(timer);
     }, []);
 
-    const companyName = businessProfile?.companyName || 'TourBiller Transport';
+    const companyName = businessProfile?.companyName || 'VIGIL Transport';
     const address = businessProfile?.address || 'No. 123, Transport Lane, Cityville';
     const phone = businessProfile?.phone || '(555) 123-4567';
     const email = businessProfile?.email ? `Email: ${businessProfile.email}` : '';
@@ -136,7 +136,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         <br/><br/>
                         <div>.......................</div>
                         <div className="mt-3 font-semibold italic">Thank you!</div>
-                        <div className="mt-1 opacity-70">Powered By TourBiller</div>
+                        <div className="mt-1 opacity-70">Powered By VIGIL</div>
                     </div>
                 </div>
                 

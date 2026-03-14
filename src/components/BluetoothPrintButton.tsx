@@ -95,7 +95,7 @@ export function BluetoothPrintButton({ bill, companyName }: BluetoothPrintButton
             receipt += BOLD_ON + formatLine("BALANCE:", fmt(Math.max(0, bill.totalAmount - (bill.advanceAmount || 0)))) + BOLD_OFF + NL;
             receipt += "================================" + NL + NL;
             receipt += CENTER + "Customer Signature:" + NL + NL + NL + ".................." + NL;
-            receipt += "Thank You!" + NL + "Powered By TourBiller" + NL + NL + NL + NL; // Feed 4 lines
+            receipt += "Thank You!" + NL + "Powered By VIGIL" + NL + NL + NL + NL; // Feed 4 lines
 
             // Send in chunks of 512 bytes (BLE limitation)
             const data = encoder.encode(receipt);

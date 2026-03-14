@@ -11,7 +11,7 @@ import { PageTransition } from '@/components/PageTransition';
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Vehicle Hire Billing System',
+  title: 'VIGIL',
   description: 'Professional vehicle hire billing and invoice generation system',
 }
 
@@ -44,7 +44,7 @@ export default async function RootLayout({
                   <SidebarInset className="flex w-full flex-col bg-transparent">
                     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 print:hidden backdrop-blur-md bg-background/80 md:hidden z-50 sticky top-0">
                       <div className="font-bold text-xl tracking-tight flex items-center gap-2">
-                          <span className="text-primary">Tour</span>Biller
+                          VIGIL
                       </div>
                       <SidebarTrigger className="-mr-2" />
                     </header>

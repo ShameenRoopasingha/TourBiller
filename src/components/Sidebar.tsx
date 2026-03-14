@@ -54,7 +54,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
         <ShadcnSidebar className="border-r border-border/50 bg-card/40 backdrop-blur-xl">
             <div className="p-6 border-b border-border/50 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight">
-                    <span className="text-primary">Tour</span>Biller
+                    VIGIL
                 </Link>
             </div>
 
@@ -117,7 +117,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                 {/* Theme toggle + Settings */}
                 <div className="flex items-center justify-between">
                     <div className="text-xs text-muted-foreground">
-                        <span className="font-semibold">TourBiller</span> v0.1
+                        <span className="font-semibold">VIGIL</span> v0.1
                     </div>
                     <div className="flex items-center gap-1">
                         {mounted ? (
