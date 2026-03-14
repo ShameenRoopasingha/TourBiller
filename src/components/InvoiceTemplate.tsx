@@ -23,7 +23,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
         return () => clearTimeout(timer);
     }, []);
 
-    const companyName = businessProfile?.companyName || 'VIGIL Transport';
+    const companyName = businessProfile?.companyName || 'VIRGIL Transport';
     const address = businessProfile?.address || 'No. 123, Transport Lane, Cityville';
     const phone = businessProfile?.phone || '(555) 123-4567';
     const email = businessProfile?.email ? `Email: ${businessProfile.email}` : '';
@@ -70,7 +70,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
                     {/* Meta Info */}
                     <div className="px-1 text-[9px] mb-2 leading-snug">
-                        <div><span className="font-semibold">BILL NO: </span>#{bill.billNumber}</div>
+                        <div><span className="font-semibold">NO: </span>{bill.billNumber}</div>
                         <div><span className="font-semibold">DATE: </span>{new Date(bill.createdAt).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
                         <div><span className="font-semibold">CUSTOMER: </span>{bill.customerName}</div>
                         <div><span className="font-semibold">VEHICLE: </span>{bill.vehicleNo}</div>
@@ -136,7 +136,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         <br/><br/>
                         <div>.......................</div>
                         <div className="mt-3 font-semibold italic">Thank you!</div>
-                        <div className="mt-1 opacity-70">Powered By VIGIL</div>
+                        <div className="mt-1 opacity-70">Powered By VIRGIL</div>
                     </div>
                 </div>
                 
@@ -200,7 +200,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                     {/* Column 3: Invoice Details */}
                     <div className="text-right">
                         <div className="text-2xl font-bold text-red-600">INVOICE</div>
-                        <div className="text-base font-bold mt-0.5">BILL NO: {bill.billNumber}</div>
+                        <div className="text-base font-bold mt-0.5">NO: {bill.billNumber}</div>
                         <div className="text-xs">Date: {new Date(bill.createdAt).toLocaleDateString('en-GB')}</div>
                         <div className="mt-1">
                             <span className="font-bold border border-black px-2 py-0.5 text-[10px] uppercase">

@@ -87,7 +87,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
         return () => clearTimeout(timer);
     }, []);
 
-    const companyName = businessProfile?.companyName || 'VIGIL Transport';
+    const companyName = businessProfile?.companyName || 'VIRGIL Transport';
     const address = businessProfile?.address || '';
     const phone = businessProfile?.phone || '';
     const email = businessProfile?.email || '';
@@ -159,7 +159,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                             QUOTATION
                         </div>
                         <div className="text-base font-bold mt-0.5">
-                            QUOTATION NO: {quotation.quotationNumber}
+                            NO: {quotation.quotationNumber}
                         </div>
                         <div className="text-[10px] text-gray-500 mt-0.5">
                             Date: {new Date(quotation.createdAt).toLocaleDateString('en-GB')}

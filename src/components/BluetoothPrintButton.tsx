@@ -75,7 +75,7 @@ export function BluetoothPrintButton({ bill, companyName }: BluetoothPrintButton
             let receipt = INIT + CENTER + BOLD_ON + companyName + BOLD_OFF + NL;
             receipt += "CASH RECEIPT" + NL + NL;
             receipt += LEFT;
-            receipt += `BILL NO : ${bill.billNumber}` + NL;
+            receipt += `NO : ${bill.billNumber}` + NL;
             receipt += `DATE    : ${new Date(bill.createdAt).toLocaleString('en-GB', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}` + NL;
             receipt += `CUST    : ${bill.customerName}` + NL;
             receipt += `VEHICLE : ${bill.vehicleNo}` + NL;
@@ -95,7 +95,7 @@ export function BluetoothPrintButton({ bill, companyName }: BluetoothPrintButton
             receipt += BOLD_ON + formatLine("BALANCE:", fmt(Math.max(0, bill.totalAmount - (bill.advanceAmount || 0)))) + BOLD_OFF + NL;
             receipt += "================================" + NL + NL;
             receipt += CENTER + "Customer Signature:" + NL + NL + NL + ".................." + NL;
-            receipt += "Thank You!" + NL + "Powered By VIGIL" + NL + NL + NL + NL; // Feed 4 lines
+            receipt += "Thank You!" + NL + "Powered By VIRGIL" + NL + NL + NL + NL; // Feed 4 lines
 
             // Send in chunks of 512 bytes (BLE limitation)
             const data = encoder.encode(receipt);

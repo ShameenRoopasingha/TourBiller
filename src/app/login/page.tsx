@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -48,13 +48,14 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-muted/20 p-3 sm:p-4">
             <Card className="w-full max-w-md shadow-2xl">
-                <CardHeader className="text-center space-y-3 pb-2">
-                    <div className="mx-auto flex items-center justify-center">
-                        <Image src="/logo.png" alt="VIGIL" width={180} height={60} className="h-16 w-auto" priority />
+                <CardHeader className="text-center space-y-3 pb-2 pt-8">
+                    <div className="mx-auto flex flex-col items-center justify-center gap-3">
+                        <Image src="/virgil-logo.png" alt="VIRGIL" width={96} height={96} className="h-24 w-auto drop-shadow-md" priority />
+                        <div className="flex flex-col items-center mt-2">
+                            <CardTitle className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-1">VIRGIL</CardTitle>
+                            <span className="text-sm font-semibold tracking-wide text-muted-foreground uppercase leading-tight mt-1">Smart Travel Management.</span>
+                        </div>
                     </div>
-                    <CardDescription>
-                        Sign in to your account
-                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
