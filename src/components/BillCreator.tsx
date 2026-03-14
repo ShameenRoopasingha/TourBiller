@@ -384,9 +384,12 @@ export function BillCreator({
                                             <FormItem>
                                                 <FormLabel>Customer Address</FormLabel>
                                                 <FormControl>
-                                                    <Input
+                                                    <ComboboxField
+                                                        options={[]} // Suggested addresses from customer selection are handled by setValue
+                                                        value={field.value || ''}
+                                                        onChange={field.onChange}
                                                         placeholder="Customer Address"
-                                                        {...field}
+                                                        allowCustomValue={true}
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
@@ -401,7 +404,20 @@ export function BillCreator({
                                             <FormItem>
                                                 <FormLabel>Route / Description</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="e.g. Airport Drop or Kandy Tour" {...field} />
+                                                    <ComboboxField
+                                                        options={[
+                                                            { label: 'Airport Drop', value: 'Airport Drop' },
+                                                            { label: 'Airport Pickup', value: 'Airport Pickup' },
+                                                            { label: 'Kandy Tour', value: 'Kandy Tour' },
+                                                            { label: 'Galle Tour', value: 'Galle Tour' },
+                                                            { label: 'Sigiriya Tour', value: 'Sigiriya Tour' },
+                                                            { label: 'Colombo City Tour', value: 'Colombo City Tour' },
+                                                        ]}
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        placeholder="e.g. Airport Drop or Kandy Tour"
+                                                        allowCustomValue={true}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>

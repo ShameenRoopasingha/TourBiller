@@ -70,6 +70,7 @@ export function ComboboxField({
             placeholder={placeholder} 
             value={searchQuery}
             onValueChange={setSearchQuery}
+            autoComplete="off"
           />
           <CommandList>
             <CommandEmpty>
