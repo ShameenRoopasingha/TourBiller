@@ -55,7 +55,10 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                         <TableHead>Bill No.</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Customer</TableHead>
+                        <TableHead>Tour Name</TableHead>
                         <TableHead>Vehicle</TableHead>
+                        <TableHead>Start Date</TableHead>
+                        <TableHead>End Date</TableHead>
                         <TableHead>Payment</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -64,10 +67,17 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                 <TableBody>
                     {bills.map((bill) => (
                         <TableRow key={bill.id}>
-                            <TableCell className="font-medium">#{bill.billNumber}</TableCell>
-                            <TableCell>{new Date(bill.createdAt).toLocaleDateString('en-GB')}</TableCell>
+                            <TableCell className="font-medium whitespace-nowrap">#{bill.billNumber}</TableCell>
+                            <TableCell className="whitespace-nowrap">{new Date(bill.createdAt).toLocaleDateString('en-GB')}</TableCell>
                             <TableCell>{bill.customerName}</TableCell>
+                            <TableCell className="max-w-[200px] truncate" title={bill.route}>{bill.route}</TableCell>
                             <TableCell>{bill.vehicleNo}</TableCell>
+                            <TableCell className="whitespace-nowrap">
+                                {bill.startDate ? new Date(bill.startDate).toLocaleDateString('en-GB') : '-'}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                                {bill.endDate ? new Date(bill.endDate).toLocaleDateString('en-GB') : '-'}
+                            </TableCell>
                             <TableCell>
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${bill.paymentMethod === 'CASH'
                                     ? 'bg-green-500/10 text-green-600 dark:text-green-400'
@@ -80,13 +90,15 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                                 {formatCurrency(bill.totalAmount)}
                             </TableCell>
                             <TableCell className="text-right">
-                                <Button variant="ghost" size="sm" asChild>
-                                    <Link href={`/bills/${bill.id}/print`} title="Print Bill">
-                                        <Printer className="h-4 w-4" />
-                                        <span className="sr-only">Print</span>
-                                    </Link>
-                                </Button>
-                                {isAdmin && <DeleteBillButton billId={bill.id} billNumber={bill.billNumber} />}
+                                <div className="flex justify-end gap-1">
+                                    <Button variant="ghost" size="sm" asChild>
+                                        <Link href={`/bills/${bill.id}/print`} title="Print Bill">
+                                            <Printer className="h-4 w-4" />
+                                            <span className="sr-only">Print</span>
+                                        </Link>
+                                    </Button>
+                                    {isAdmin && <DeleteBillButton billId={bill.id} billNumber={bill.billNumber} />}
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}
@@ -107,7 +119,7 @@ export default async function BillsPage(
     const query = searchParams?.q || '';
 
     return (
-        <div className="container mx-auto py-10 max-w-5xl space-y-8">
+        <div className="container mx-auto py-10 max-w-7xl space-y-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Bills</h1>

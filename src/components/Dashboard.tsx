@@ -207,7 +207,10 @@ export function Dashboard() {
                                             <TableHead>Bill No.</TableHead>
                                             <TableHead>Date</TableHead>
                                             <TableHead>Customer</TableHead>
+                                            <TableHead>Tour Name</TableHead>
                                             <TableHead>Vehicle</TableHead>
+                                            <TableHead>Start Date</TableHead>
+                                            <TableHead>End Date</TableHead>
                                             <TableHead className="text-right">Amount</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
@@ -215,10 +218,17 @@ export function Dashboard() {
                                     <TableBody>
                                         {stats.recentBills.map((bill) => (
                                             <TableRow key={bill.id}>
-                                                <TableCell className="font-medium">#{bill.billNumber}</TableCell>
-                                                <TableCell>{new Date(bill.createdAt).toLocaleDateString('en-GB')}</TableCell>
+                                                <TableCell className="font-medium whitespace-nowrap">#{bill.billNumber}</TableCell>
+                                                <TableCell className="whitespace-nowrap">{new Date(bill.createdAt).toLocaleDateString('en-GB')}</TableCell>
                                                 <TableCell>{bill.customerName}</TableCell>
+                                                <TableCell className="max-w-[150px] truncate" title={bill.route}>{bill.route}</TableCell>
                                                 <TableCell>{bill.vehicleNo}</TableCell>
+                                                <TableCell className="whitespace-nowrap">
+                                                    {bill.startDate ? new Date(bill.startDate).toLocaleDateString('en-GB') : '-'}
+                                                </TableCell>
+                                                <TableCell className="whitespace-nowrap">
+                                                    {bill.endDate ? new Date(bill.endDate).toLocaleDateString('en-GB') : '-'}
+                                                </TableCell>
                                                 <TableCell className="text-right font-bold text-primary">
                                                     {formatCurrency(bill.totalAmount)}
                                                 </TableCell>
