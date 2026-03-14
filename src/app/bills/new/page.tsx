@@ -1,22 +1,43 @@
-'use client';
-
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+import { getVehicles } from '@/lib/vehicle-actions';
+import { getCustomers } from '@/lib/customer-actions';
 import { BillCreator } from '@/components/BillCreator';
 
-function BillCreatorWrapper() {
-    const searchParams = useSearchParams();
-    const vehicleNo = searchParams.get('vehicleNo') || undefined;
-    const customerName = searchParams.get('customerName') || undefined;
-    const bookingId = searchParams.get('bookingId') || undefined;
+async function NewBillForm({ searchParams }: { searchParams: Promise<{ vehicleNo?: string; customerName?: string; bookingId?: string }> }) {
+    const params = await searchParams;
+    const vehicleNo = params.vehicleNo || undefined;
+    const customerName = params.customerName || undefined;
+    const bookingId = params.bookingId || undefined;
 
-    return <BillCreator initialVehicleNo={vehicleNo} initialCustomerName={customerName} initialBookingId={bookingId} />;
+    // Fetch vehicles and customers on the server so dropdowns are instantly available
+    const [vResult, cResult] = await Promise.all([
+        getVehicles(),
+        getCustomers(),
+    ]);
+
+    const vehicles = vResult.success && vResult.data ? vResult.data : [];
+    const customers = cResult.success && cResult.data ? cResult.data : [];
+
+    return (
+        <BillCreator
+            initialVehicleNo={vehicleNo}
+            initialCustomerName={customerName}
+            initialBookingId={bookingId}
+            vehicles={vehicles}
+            customers={customers}
+        />
+    );
 }
 
-export default function NewBillPage() {
+export default function NewBillPage({ searchParams }: { searchParams: Promise<{ vehicleNo?: string; customerName?: string; bookingId?: string }> }) {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <BillCreatorWrapper />
+        <Suspense fallback={
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        }>
+            <NewBillForm searchParams={searchParams} />
         </Suspense>
     );
 }
