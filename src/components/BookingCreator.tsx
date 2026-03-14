@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { BookingSchema, type BookingFormData, type Vehicle, type Customer } from '@/lib/validations';
 import { createBooking } from '@/lib/booking-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -100,21 +101,15 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                         <FormItem>
                                             <FormLabel>Vehicle</FormLabel>
                                             <FormControl>
-                                                <div className="relative">
-                                                    <Input
-                                                        placeholder="Select Vehicle..."
-                                                        {...field}
-                                                        list="vehicle-list"
-                                                        autoComplete="off"
-                                                    />
-                                                    <datalist id="vehicle-list">
-                                                        {vehicles.map((v) => (
-                                                            <option key={v.id} value={v.vehicleNo}>
-                                                                {v.model ? `${v.vehicleNo} - ${v.model}` : v.vehicleNo}
-                                                            </option>
-                                                        ))}
-                                                    </datalist>
-                                                </div>
+                                                <ComboboxField
+                                                    options={vehicles.map(v => ({
+                                                        label: v.model ? `${v.vehicleNo} - ${v.model}` : v.vehicleNo,
+                                                        value: v.vehicleNo
+                                                    }))}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Select Vehicle..."
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -128,21 +123,16 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                         <FormItem>
                                             <FormLabel>Customer</FormLabel>
                                             <FormControl>
-                                                <div className="relative">
-                                                    <Input
-                                                        placeholder="Select Customer..."
-                                                        {...field}
-                                                        list="customer-list"
-                                                        autoComplete="off"
-                                                    />
-                                                    <datalist id="customer-list">
-                                                        {customers.map((c) => (
-                                                            <option key={c.id} value={c.name}>
-                                                                {c.mobile ? `${c.name} (${c.mobile})` : c.name}
-                                                            </option>
-                                                        ))}
-                                                    </datalist>
-                                                </div>
+                                                <ComboboxField
+                                                    options={customers.map(c => ({
+                                                        label: c.mobile ? `${c.name} (${c.mobile})` : c.name,
+                                                        value: c.name
+                                                    }))}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Select Customer..."
+                                                    allowCustomValue={true}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -194,21 +184,16 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                         <FormItem>
                                             <FormLabel>Destination / Tour</FormLabel>
                                             <FormControl>
-                                                <div className="relative">
-                                                    <Input
-                                                        placeholder="Select or type a destination..."
-                                                        {...field}
-                                                        list="schedule-list"
-                                                        autoComplete="off"
-                                                    />
-                                                    <datalist id="schedule-list">
-                                                        {schedules.map((s) => (
-                                                            <option key={s.id} value={s.name}>
-                                                                {s.name}
-                                                            </option>
-                                                        ))}
-                                                    </datalist>
-                                                </div>
+                                                <ComboboxField
+                                                    options={schedules.map(s => ({
+                                                        label: s.name,
+                                                        value: s.name
+                                                    }))}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Select or type a destination..."
+                                                    allowCustomValue={true}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

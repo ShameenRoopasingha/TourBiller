@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, Trash2, MapPin } from 'lucide-react';
 
 import { TourScheduleSchema, type TourScheduleFormData } from '@/lib/validations';
 import { createTourSchedule, updateTourSchedule } from '@/lib/tour-schedule-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { ComboboxField } from '@/components/ComboboxField';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -198,10 +199,18 @@ export function TourScheduleForm({ initialData }: TourScheduleFormProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="name">Tour Name *</Label>
-                            <Input
-                                id="name"
-                                placeholder="e.g. 5-Day Cultural Triangle Tour"
-                                {...form.register('name')}
+                            <Controller
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <ComboboxField
+                                        options={[]} // No pre-defined options for existing tour names yet
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="e.g. 5-Day Cultural Triangle Tour"
+                                        allowCustomValue={true}
+                                    />
+                                )}
                             />
                             {form.formState.errors.name && (
                                 <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>

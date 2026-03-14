@@ -9,6 +9,7 @@ import { QuotationSchema, type QuotationFormData } from '@/lib/validations';
 import { generateQuotation } from '@/lib/quotation-actions';
 import { formatCurrency } from '@/lib/calculations';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { ComboboxField } from '@/components/ComboboxField';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -282,19 +283,15 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                 <CardContent>
                     <div className="space-y-2">
                         <Label htmlFor="tourScheduleId">Tour Schedule *</Label>
-                        <select
-                            id="tourScheduleId"
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            onChange={(e) => handleScheduleChange(e.target.value)}
-                            defaultValue=""
-                        >
-                            <option value="" disabled>Select a tour schedule...</option>
-                            {schedules.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                    {s.name} ({s.days} days, {s.vehicleCategory})
-                                </option>
-                            ))}
-                        </select>
+                        <ComboboxField
+                            options={schedules.map((s) => ({
+                                label: `${s.name} (${s.days} days, ${s.vehicleCategory})`,
+                                value: s.id
+                            }))}
+                            value={form.getValues('tourScheduleId')}
+                            onChange={handleScheduleChange}
+                            placeholder="Select a tour schedule..."
+                        />
                         {form.formState.errors.tourScheduleId && (
                             <p className="text-sm text-destructive">{form.formState.errors.tourScheduleId.message}</p>
                         )}
@@ -349,33 +346,26 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Select Existing Customer</Label>
-                            <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                onChange={(e) => handleCustomerChange(e.target.value)}
-                                defaultValue=""
-                            >
-                                <option value="">-- Or type below --</option>
-                                {customers.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name} {c.mobile ? `(${c.mobile})` : ''}
-                                    </option>
-                                ))}
-                            </select>
+                            <ComboboxField
+                                options={customers.map((c) => ({
+                                    label: c.mobile ? `${c.name} (${c.mobile})` : c.name,
+                                    value: c.id
+                                }))}
+                                onChange={handleCustomerChange}
+                                placeholder="-- Or type below --"
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label>Select Vehicle</Label>
-                            <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                onChange={(e) => handleVehicleChange(e.target.value)}
-                                defaultValue=""
-                            >
-                                <option value="">-- Select vehicle --</option>
-                                {filteredVehicles.map((v) => (
-                                    <option key={v.id} value={v.id}>
-                                        {v.vehicleNo} {v.model ? `- ${v.model}` : ''} ({v.category})
-                                    </option>
-                                ))}
-                            </select>
+                            <ComboboxField
+                                options={filteredVehicles.map((v) => ({
+                                    label: `${v.vehicleNo} ${v.model ? `- ${v.model}` : ''} (${v.category})`,
+                                    value: v.id
+                                }))}
+                                value={vehicles.find(v => v.vehicleNo === form.getValues('vehicleNo'))?.id || ''}
+                                onChange={handleVehicleChange}
+                                placeholder="-- Select vehicle --"
+                            />
                         </div>
                     </div>
 
@@ -395,10 +385,16 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="customerName">Customer Name *</Label>
-                            <Input
-                                id="customerName"
+                            <ComboboxField
+                                options={customers.map(c => ({ label: c.name, value: c.name }))}
+                                value={form.getValues('customerName')}
+                                onChange={(val) => {
+                                    form.setValue('customerName', val);
+                                    const c = customers.find(cust => cust.name === val);
+                                    if (c) handleCustomerChange(c.id);
+                                }}
+                                allowCustomValue={true}
                                 placeholder="Customer name"
-                                {...form.register('customerName')}
                             />
                             {form.formState.errors.customerName && (
                                 <p className="text-sm text-destructive">{form.formState.errors.customerName.message}</p>

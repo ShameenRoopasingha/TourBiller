@@ -12,6 +12,7 @@ import { getBookingById } from '@/lib/booking-actions';
 
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -241,10 +242,9 @@ export function BillCreator({
     };
 
     const handleVehicleChange = (
-        e: React.ChangeEvent<HTMLInputElement>,
+        value: string,
         fieldChange: (value: string) => void
     ) => {
-        const value = e.target.value;
         fieldChange(value);
 
         const selectedVehicle = vehicles.find(v => v.vehicleNo === value);
@@ -330,21 +330,16 @@ export function BillCreator({
                                                 <FormItem>
                                                     <FormLabel>Vehicle Number</FormLabel>
                                                     <FormControl>
-                                                        <Input
+                                                        <ComboboxField
+                                                            options={vehicles.map(v => ({
+                                                                label: v.model ? `${v.vehicleNo} - ${v.model}` : v.vehicleNo,
+                                                                value: v.vehicleNo
+                                                            }))}
+                                                            value={field.value}
+                                                            onChange={(value) => handleVehicleChange(value, field.onChange)}
                                                             placeholder="Select Vehicle..."
-                                                            {...field}
-                                                            list="vehicle-list"
-                                                            autoComplete="off"
-                                                            onChange={(e) => handleVehicleChange(e, field.onChange)}
                                                         />
                                                     </FormControl>
-                                                    <datalist id="vehicle-list">
-                                                        {vehicles.map((v) => (
-                                                            <option key={v.id} value={v.vehicleNo}>
-                                                                {v.model ? `${v.vehicleNo} - ${v.model}` : v.vehicleNo}
-                                                            </option>
-                                                        ))}
-                                                    </datalist>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -357,29 +352,25 @@ export function BillCreator({
                                                 <FormItem>
                                                     <FormLabel>Customer Name</FormLabel>
                                                     <FormControl>
-                                                        <Input
-                                                            placeholder="Select Customer..."
-                                                            {...field}
-                                                            list="customer-list"
-                                                            autoComplete="off"
-                                                            onChange={(e) => {
-                                                                field.onChange(e);
-                                                                const selected = customers.find(c => c.name === e.target.value);
+                                                        <ComboboxField
+                                                            options={customers.map(c => ({
+                                                                label: c.mobile ? `${c.name} (${c.mobile})` : c.name,
+                                                                value: c.name
+                                                            }))}
+                                                            value={field.value}
+                                                            onChange={(value) => {
+                                                                field.onChange(value);
+                                                                const selected = customers.find(c => c.name === value);
                                                                 if (selected && selected.address) {
                                                                     form.setValue('customerAddress', selected.address);
                                                                 } else {
                                                                     form.setValue('customerAddress', '');
                                                                 }
                                                             }}
+                                                            placeholder="Select Customer..."
+                                                            allowCustomValue={true}
                                                         />
                                                     </FormControl>
-                                                    <datalist id="customer-list">
-                                                        {customers.map((c) => (
-                                                            <option key={c.id} value={c.name}>
-                                                                {c.mobile ? `${c.name} (${c.mobile})` : c.name}
-                                                            </option>
-                                                        ))}
-                                                    </datalist>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
