@@ -158,7 +158,10 @@ export function BillCreator({
     }, [initialVehicleNo, vehicles, form, updateField]);
 
     // Automatically calculate extra hours
-    const watchDates = form.watch(['startDate', 'endDate']);
+    const watchDates = useWatch({
+        control: form.control,
+        name: ['startDate', 'endDate'],
+    });
     const startDateValue = watchDates[0];
     const endDateValue = watchDates[1];
 
