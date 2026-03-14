@@ -5,10 +5,11 @@ import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, LogIn } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -48,10 +49,9 @@ export default function LoginPage() {
         <div className="min-h-screen flex items-center justify-center bg-muted/20 p-3 sm:p-4">
             <Card className="w-full max-w-md shadow-2xl">
                 <CardHeader className="text-center space-y-3 pb-2">
-                    <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-                        <span className="text-2xl font-bold text-primary-foreground">VG</span>
+                    <div className="mx-auto flex items-center justify-center">
+                        <Image src="/logo.png" alt="VIGIL" width={180} height={60} className="h-16 w-auto" priority />
                     </div>
-                    <CardTitle className="text-2xl font-bold">VIGIL</CardTitle>
                     <CardDescription>
                         Sign in to your account
                     </CardDescription>

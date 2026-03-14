@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import Image from 'next/image'
 import { Sidebar } from '@/components/Sidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -44,7 +45,7 @@ export default async function RootLayout({
                   <SidebarInset className="flex w-full flex-col bg-transparent">
                     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 print:hidden backdrop-blur-md bg-background/80 md:hidden z-50 sticky top-0">
                       <div className="font-bold text-xl tracking-tight flex items-center gap-2">
-                          VIGIL
+                          <Image src="/logo.png" alt="VIGIL" width={120} height={40} className="h-8 w-auto" priority />
                       </div>
                       <SidebarTrigger className="-mr-2" />
                     </header>

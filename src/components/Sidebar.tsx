@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, Sun, Moon, LogOut, UserCog } from 'lucide-react';
@@ -52,9 +53,9 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
 
     return (
         <ShadcnSidebar className="border-r border-border/50 bg-card/40 backdrop-blur-xl">
-            <div className="p-6 border-b border-border/50 flex items-center justify-between">
-                <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight">
-                    VIGIL
+            <div className="p-4 border-b border-border/50 flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-2">
+                    <Image src="/logo.png" alt="VIGIL" width={140} height={50} className="h-10 w-auto" priority />
                 </Link>
             </div>
 
