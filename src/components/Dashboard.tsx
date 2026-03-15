@@ -200,7 +200,7 @@ export function Dashboard() {
                                 <p className="text-sm">Create a new bill to get started.</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
                                 {/* Mobile View (Card-based) */}
                                 <div className="grid gap-3 md:hidden">
                                     {stats.recentBills.map((bill) => (
