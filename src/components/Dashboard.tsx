@@ -200,48 +200,90 @@ export function Dashboard() {
                                 <p className="text-sm">Create a new bill to get started.</p>
                             </div>
                         ) : (
-                            <div className="rounded-md border overflow-x-auto">
-                                <Table className="min-w-[500px]">
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Bill No.</TableHead>
-                                            <TableHead>Customer</TableHead>
-                                            <TableHead>Tour Name</TableHead>
-                                            <TableHead>Vehicle</TableHead>
-                                            <TableHead>Start Date</TableHead>
-                                            <TableHead>End Date</TableHead>
-                                            <TableHead className="text-right">Amount</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {stats.recentBills.map((bill) => (
-                                            <TableRow key={bill.id}>
-                                                <TableCell className="font-medium whitespace-nowrap">#{bill.billNumber}</TableCell>
-                                                <TableCell>{bill.customerName}</TableCell>
-                                                <TableCell className="max-w-[150px] truncate" title={bill.route}>{bill.route}</TableCell>
-                                                <TableCell>{bill.vehicleNo}</TableCell>
-                                                <TableCell className="whitespace-nowrap">
-                                                    {bill.startDate ? new Date(bill.startDate).toLocaleDateString('en-GB') : '-'}
-                                                </TableCell>
-                                                <TableCell className="whitespace-nowrap">
-                                                    {bill.endDate ? new Date(bill.endDate).toLocaleDateString('en-GB') : '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right font-bold text-primary">
-                                                    {formatCurrency(bill.totalAmount)}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="ghost" size="sm" asChild>
-                                                        <a href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer">
-                                                            <Printer className="h-4 w-4" />
-                                                            <span className="sr-only">Print</span>
-                                                        </a>
-                                                    </Button>
-                                                </TableCell>
+                            <div className="space-y-4">
+                                {/* Mobile View (Card-based) */}
+                                <div className="grid gap-3 md:hidden">
+                                    {stats.recentBills.map((bill) => (
+                                        <div key={bill.id} className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm space-y-3">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <div className="font-bold text-primary">#{bill.billNumber}</div>
+                                                    <div className="text-xs text-muted-foreground">{new Date(bill.createdAt).toLocaleDateString('en-GB')}</div>
+                                                </div>
+                                                <div className="font-bold text-primary">{formatCurrency(bill.totalAmount)}</div>
+                                            </div>
+                                            
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-muted-foreground">Customer:</span>
+                                                    <span className="font-medium">{bill.customerName}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-muted-foreground">Tour:</span>
+                                                    <span className="font-medium truncate max-w-[150px]">{bill.route}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-muted-foreground">Vehicle:</span>
+                                                    <span className="font-medium font-mono">{bill.vehicleNo}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-end pt-2 border-t border-dashed">
+                                                <Button variant="ghost" size="sm" asChild className="h-8">
+                                                    <a href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer">
+                                                        <Printer className="h-4 w-4 mr-2" />
+                                                        Print Bill
+                                                    </a>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Desktop View (Table-based) */}
+                                <div className="hidden md:block rounded-md border overflow-x-auto">
+                                    <Table className="min-w-[600px]">
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Bill No.</TableHead>
+                                                <TableHead>Customer</TableHead>
+                                                <TableHead>Tour Name</TableHead>
+                                                <TableHead>Vehicle</TableHead>
+                                                <TableHead>Start Date</TableHead>
+                                                <TableHead>End Date</TableHead>
+                                                <TableHead className="text-right">Amount</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {stats.recentBills.map((bill) => (
+                                                <TableRow key={bill.id}>
+                                                    <TableCell className="font-medium whitespace-nowrap">#{bill.billNumber}</TableCell>
+                                                    <TableCell>{bill.customerName}</TableCell>
+                                                    <TableCell className="max-w-[150px] truncate" title={bill.route}>{bill.route}</TableCell>
+                                                    <TableCell>{bill.vehicleNo}</TableCell>
+                                                    <TableCell className="whitespace-nowrap">
+                                                        {bill.startDate ? new Date(bill.startDate).toLocaleDateString('en-GB') : '-'}
+                                                    </TableCell>
+                                                    <TableCell className="whitespace-nowrap">
+                                                        {bill.endDate ? new Date(bill.endDate).toLocaleDateString('en-GB') : '-'}
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-bold text-primary">
+                                                        {formatCurrency(bill.totalAmount)}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button variant="ghost" size="sm" asChild>
+                                                            <a href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer">
+                                                                <Printer className="h-4 w-4" />
+                                                                <span className="sr-only">Print</span>
+                                                            </a>
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             </div>
                         )}
                     </CardContent>
