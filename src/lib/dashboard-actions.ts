@@ -60,6 +60,9 @@ export async function getDashboardStats() {
                     vehicleNo: true,
                     totalAmount: true,
                     createdAt: true,
+                    route: true,
+                    startDate: true,
+                    endDate: true,
                 },
             }),
             prisma.booking.findMany({
