@@ -53,7 +53,6 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                 <TableHeader>
                     <TableRow>
                         <TableHead>Bill No.</TableHead>
-                        <TableHead>Date</TableHead>
                         <TableHead>Customer</TableHead>
                         <TableHead>Tour Name</TableHead>
                         <TableHead>Vehicle</TableHead>
@@ -68,7 +67,6 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                     {bills.map((bill) => (
                         <TableRow key={bill.id}>
                             <TableCell className="font-medium whitespace-nowrap">#{bill.billNumber}</TableCell>
-                            <TableCell className="whitespace-nowrap">{new Date(bill.createdAt).toLocaleDateString('en-GB')}</TableCell>
                             <TableCell>{bill.customerName}</TableCell>
                             <TableCell className="max-w-[200px] truncate" title={bill.route}>{bill.route}</TableCell>
                             <TableCell>{bill.vehicleNo}</TableCell>

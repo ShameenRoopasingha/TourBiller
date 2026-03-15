@@ -205,7 +205,6 @@ export function Dashboard() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Bill No.</TableHead>
-                                            <TableHead>Date</TableHead>
                                             <TableHead>Customer</TableHead>
                                             <TableHead>Tour Name</TableHead>
                                             <TableHead>Vehicle</TableHead>
@@ -219,7 +218,6 @@ export function Dashboard() {
                                         {stats.recentBills.map((bill) => (
                                             <TableRow key={bill.id}>
                                                 <TableCell className="font-medium whitespace-nowrap">#{bill.billNumber}</TableCell>
-                                                <TableCell className="whitespace-nowrap">{new Date(bill.createdAt).toLocaleDateString('en-GB')}</TableCell>
                                                 <TableCell>{bill.customerName}</TableCell>
                                                 <TableCell className="max-w-[150px] truncate" title={bill.route}>{bill.route}</TableCell>
                                                 <TableCell>{bill.vehicleNo}</TableCell>
