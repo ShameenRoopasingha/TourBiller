@@ -158,6 +158,7 @@ export function TourScheduleForm({ initialData, existingSchedules = [] }: TourSc
 
             if (result.success) {
                 setSuccess(true);
+                router.refresh();
                 // Keep isSubmitting true during transition
                 setTimeout(() => router.push('/tour-schedules'), 1000);
             } else {

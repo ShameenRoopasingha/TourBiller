@@ -198,8 +198,8 @@ export const QuotationSchema = z.object({
   pickupLocation: z.string().optional(),
   dropLocation: z.string().optional(),
   numberOfPersons: z.coerce.number().min(1).default(1),
-  startDate: z.coerce.date().optional(),
-  endDate: z.coerce.date().optional(),
+  startDate: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().optional()),
+  endDate: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().optional()),
   hireRatePerDay: z.coerce.number().min(0).default(0),
   kmPerDay: z.coerce.number().min(0).default(0),
   excessKmRate: z.coerce.number().min(0).default(0),
@@ -210,7 +210,7 @@ export const QuotationSchema = z.object({
   advanceAmount: z.coerce.number().min(0).default(0),
   excludedItems: z.string().optional(),
   notes: z.string().optional(),
-  validUntil: z.coerce.date().optional(),
+  validUntil: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().optional()),
 });
 
 export type QuotationFormData = z.infer<typeof QuotationSchema>;

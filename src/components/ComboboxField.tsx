@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -65,7 +65,7 @@ export function ComboboxField({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command shouldFilter={!allowCustomValue}>
+        <Command>
           <CommandInput 
             placeholder={placeholder} 
             value={searchQuery}
@@ -73,24 +73,22 @@ export function ComboboxField({
             autoComplete="off"
           />
           <CommandList>
-            <CommandEmpty>
-              {allowCustomValue && searchQuery ? (
-                <button
-                  type="button"
-                  className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => {
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandGroup>
+              {allowCustomValue && searchQuery && !options.some(o => o.label.toLowerCase() === searchQuery.toLowerCase()) && (
+                <CommandItem
+                  value={searchQuery}
+                  onSelect={() => {
                     onChange(searchQuery);
                     setOpen(false);
                     setSearchQuery("");
                   }}
+                  className="font-medium text-primary"
                 >
+                  <Plus className="mr-2 h-4 w-4" />
                   Use &quot;{searchQuery}&quot;
-                </button>
-              ) : (
-                emptyMessage
+                </CommandItem>
               )}
-            </CommandEmpty>
-            <CommandGroup>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, FileCheck, Calculator } from 'lucide-react';
@@ -120,19 +120,38 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
         },
     });
 
-    const [watchedHireRate, watchedKmPerDay, watchedMarkup, watchedDiscount, watchedDriverCost, watchedExcessKmRate, watchedExtraHourRate, watchedStartDate] = useWatch({
+    const watchedFields = useWatch({
         control: form.control,
-        name: ['hireRatePerDay', 'kmPerDay', 'markup', 'discount', 'driverCostPerDay', 'excessKmRate', 'extraHourRate', 'startDate'],
     });
 
+    const {
+        hireRatePerDay: watchedHireRate,
+        kmPerDay: watchedKmPerDay,
+        markup: watchedMarkup,
+        discount: watchedDiscount,
+        driverCostPerDay: watchedDriverCost,
+        excessKmRate: watchedExcessKmRate,
+        extraHourRate: watchedExtraHourRate,
+        startDate: watchedStartDate,
+        tourScheduleId: watchedTourScheduleId,
+        customerName: watchedCustomerName,
+        vehicleNo: watchedVehicleNo,
+    } = watchedFields;
+
     // Auto-calculate end date when start date or schedule changes
-    useMemo(() => {
+    React.useEffect(() => {
         if (selectedSchedule && watchedStartDate) {
-            const start = new Date(watchedStartDate);
-            // End date = start date + (days - 1)
-            const end = new Date(start);
-            end.setDate(start.getDate() + (selectedSchedule.days - 1));
-            form.setValue('endDate', end.toISOString().split('T')[0] as unknown as Date);
+            try {
+                const start = new Date(watchedStartDate);
+                if (!isNaN(start.getTime())) {
+                    // End date = start date + (days - 1)
+                    const end = new Date(start);
+                    end.setDate(start.getDate() + (selectedSchedule.days - 1));
+                    form.setValue('endDate', end.toISOString().split('T')[0] as unknown as Date);
+                }
+            } catch (e) {
+                console.error("Error calculating end date", e);
+            }
         } else {
             form.setValue('endDate', '' as unknown as Date);
         }
@@ -151,15 +170,6 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
         setSelectedSchedule(schedule || null);
     };
 
-    // When customer selection changes
-    const handleCustomerChange = (customerId: string) => {
-        const customer = customers.find((c) => c.id === customerId);
-        if (customer) {
-            form.setValue('customerName', customer.name);
-            form.setValue('customerEmail', customer.email || '');
-            form.setValue('customerPhone', customer.mobile || '');
-        }
-    };
 
     // When vehicle selection changes
     const handleVehicleChange = (vehicleId: string) => {
@@ -240,6 +250,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
 
             if (result.success) {
                 setSuccess(true);
+                router.refresh();
                 // Intentionally keeping isSubmitting true during the transition
                 setTimeout(() => router.push('/quotations'), 1000);
             } else {
@@ -288,12 +299,12 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 label: `${s.name} (${s.days} days, ${s.vehicleCategory})`,
                                 value: s.id
                             }))}
-                            value={form.getValues('tourScheduleId')}
+                            value={watchedTourScheduleId}
                             onChange={handleScheduleChange}
                             placeholder="Select a tour schedule..."
                         />
                         {form.formState.errors.tourScheduleId && (
-                            <p className="text-sm text-destructive">{form.formState.errors.tourScheduleId.message}</p>
+                            <p className="text-sm text-destructive font-medium">{form.formState.errors.tourScheduleId.message}</p>
                         )}
                     </div>
 
@@ -345,27 +356,45 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Select Existing Customer</Label>
+                            <Label htmlFor="customerName">Customer Name *</Label>
                             <ComboboxField
-                                options={customers.map((c) => ({
-                                    label: c.mobile ? `${c.name} (${c.mobile})` : c.name,
-                                    value: c.id
+                                options={customers.map(c => ({ 
+                                    label: c.mobile ? `${c.name} (${c.mobile})` : c.name, 
+                                    value: c.id 
                                 }))}
-                                onChange={handleCustomerChange}
-                                placeholder="-- Or type below --"
+                                value={customers.find(c => c.name === watchedCustomerName)?.id || watchedCustomerName}
+                                onChange={(val) => {
+                                    const customer = customers.find(c => c.id === val);
+                                    if (customer) {
+                                        form.setValue('customerName', customer.name);
+                                        form.setValue('customerEmail', customer.email || '');
+                                        form.setValue('customerPhone', customer.mobile || '');
+                                    } else {
+                                        // Case where custom value is typed
+                                        form.setValue('customerName', val);
+                                    }
+                                }}
+                                allowCustomValue={true}
+                                placeholder="Select or type customer name..."
                             />
+                            {form.formState.errors.customerName && (
+                                <p className="text-sm text-destructive font-medium">{form.formState.errors.customerName.message}</p>
+                            )}
                         </div>
                         <div className="space-y-2">
-                            <Label>Select Vehicle</Label>
-                            <ComboboxField
+                            <Label>Select Vehicle *</Label>
+                             <ComboboxField
                                 options={filteredVehicles.map((v) => ({
                                     label: `${v.vehicleNo} ${v.model ? `- ${v.model}` : ''} (${v.category})`,
                                     value: v.id
                                 }))}
-                                value={vehicles.find(v => v.vehicleNo === form.getValues('vehicleNo'))?.id || ''}
+                                value={vehicles.find(v => v.vehicleNo === watchedVehicleNo)?.id || ''}
                                 onChange={handleVehicleChange}
                                 placeholder="-- Select vehicle --"
                             />
+                            {form.formState.errors.vehicleNo && (
+                                <p className="text-sm text-destructive font-medium">{form.formState.errors.vehicleNo.message}</p>
+                            )}
                         </div>
                     </div>
 
@@ -382,24 +411,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="customerName">Customer Name *</Label>
-                            <ComboboxField
-                                options={customers.map(c => ({ label: c.name, value: c.name }))}
-                                value={form.getValues('customerName')}
-                                onChange={(val) => {
-                                    form.setValue('customerName', val);
-                                    const c = customers.find(cust => cust.name === val);
-                                    if (c) handleCustomerChange(c.id);
-                                }}
-                                allowCustomValue={true}
-                                placeholder="Customer name"
-                            />
-                            {form.formState.errors.customerName && (
-                                <p className="text-sm text-destructive">{form.formState.errors.customerName.message}</p>
-                            )}
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="customerEmail">Email</Label>
                             <Input
@@ -408,6 +420,9 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 placeholder="email@example.com"
                                 {...form.register('customerEmail')}
                             />
+                            {form.formState.errors.customerEmail && (
+                                <p className="text-sm text-destructive font-medium">{form.formState.errors.customerEmail.message}</p>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="customerPhone">Phone</Label>
@@ -416,18 +431,13 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 placeholder="Phone number"
                                 {...form.register('customerPhone')}
                             />
+                            {form.formState.errors.customerPhone && (
+                                <p className="text-sm text-destructive font-medium">{form.formState.errors.customerPhone.message}</p>
+                            )}
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="vehicleNo">Vehicle Number</Label>
-                            <Input
-                                id="vehicleNo"
-                                placeholder="e.g. ABC-1234"
-                                {...form.register('vehicleNo')}
-                            />
-                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="numberOfPersons">Number of Guests</Label>
                             <Input
@@ -437,20 +447,23 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 {...form.register('numberOfPersons')}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="startDate">Tour Start Date</Label>
+                         <div className="space-y-2">
+                            <Label htmlFor="startDate">Tour Start Date *</Label>
                             <Input
                                 id="startDate"
                                 type="date"
                                 {...form.register('startDate')}
                             />
+                            {form.formState.errors.startDate && (
+                                <p className="text-sm text-destructive font-medium">{form.formState.errors.startDate.message}</p>
+                            )}
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="endDate" className="text-muted-foreground">Tour End Date (Auto-calculated)</Label>
+                            <Label htmlFor="endDate" className="text-muted-foreground">Tour End Date (Auto)</Label>
                             <Input
                                 id="endDate"
                                 type="date"
-                                {...form.register('endDate')}
+                                value={watchedFields.endDate ? (watchedFields.endDate instanceof Date ? watchedFields.endDate.toISOString().split('T')[0] : watchedFields.endDate) : ''}
                                 readOnly
                                 className="bg-muted cursor-not-allowed"
                             />
@@ -490,12 +503,15 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="hireRatePerDay">Vehicle Rate Per Day (Rs.)</Label>
-                            <Input
+                             <Input
                                 id="hireRatePerDay"
                                 type="number"
                                 step="0.01"
                                 {...form.register('hireRatePerDay')}
                             />
+                            {form.formState.errors.hireRatePerDay && (
+                                <p className="text-sm text-destructive font-medium">{form.formState.errors.hireRatePerDay.message}</p>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="kmPerDay">Included Km Per Day</Label>
@@ -517,12 +533,15 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="extraHourRate">Extra Hour Rate (Rs.)</Label>
-                            <Input
+                             <Input
                                 id="extraHourRate"
                                 type="number"
                                 step="0.01"
                                 {...form.register('extraHourRate')}
                             />
+                            {form.formState.errors.extraHourRate && (
+                                <p className="text-sm text-destructive font-medium">{form.formState.errors.extraHourRate.message}</p>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="markup">Commission (%)</Label>
@@ -607,12 +626,12 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                     <p className="font-semibold text-primary text-sm">
                                         💰 Van Hire: {selectedSchedule?.days} days : {fmt(calculatedTotals.transportCost)} for {calculatedTotals.includedKm.toFixed(0)} km
                                     </p>
-                                    {watchedExcessKmRate > 0 && (
+                                    {(Number(watchedExcessKmRate) || 0) > 0 && (
                                         <p className="text-xs text-muted-foreground mt-1">
                                             Any distance exceeding {calculatedTotals.includedKm.toFixed(0)} km will be charged at Rs. {watchedExcessKmRate} per additional km.
                                         </p>
                                     )}
-                                    {watchedExtraHourRate > 0 && (
+                                    {(Number(watchedExtraHourRate) || 0) > 0 && (
                                         <p className="text-xs text-muted-foreground mt-0.5">
                                             Extra hours will be charged at Rs. {watchedExtraHourRate} per hour.
                                         </p>
