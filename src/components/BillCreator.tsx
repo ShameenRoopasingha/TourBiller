@@ -66,6 +66,7 @@ export function BillCreator({
         distance,
         updateField,
         resetCalculations,
+        days,
     } = useCalculationEngine();
 
     const handleEnterKey = useEnterNavigation();
@@ -154,6 +155,8 @@ export function BillCreator({
                 updateField('allowedKm', allowedKm);
                 updateField('packageCharge', packageCharge);
                 updateField('extraHourRate', extraHourRate);
+                updateField('startDate', form.getValues('startDate'));
+                updateField('endDate', form.getValues('endDate'));
             }
         }
     }, [initialVehicleNo, vehicles, form, updateField]);
@@ -165,6 +168,11 @@ export function BillCreator({
     });
     const startDateValue = watchDates[0];
     const endDateValue = watchDates[1];
+
+    useEffect(() => {
+        if (startDateValue) updateField('startDate', new Date(startDateValue));
+        if (endDateValue) updateField('endDate', new Date(endDateValue));
+    }, [startDateValue, endDateValue, updateField]);
 
     useEffect(() => {
         const start = new Date(startDateValue);
@@ -514,12 +522,12 @@ export function BillCreator({
                                                 name="allowedKm"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Included Km</FormLabel>
+                                                        <FormLabel>Included Km (Per Day)</FormLabel>
                                                         <FormControl>
                                                             <Input type="number" step="1" {...field} onChange={e => handleNumericChange(e, field.onChange, 'allowedKm')} />
                                                         </FormControl>
                                                         <FormMessage />
-                                                        {form.getValues('allowedKm') > 0 && <p className="text-[10px] text-muted-foreground">Standard distance</p>}
+                                                        {form.getValues('allowedKm') > 0 && <p className="text-[10px] text-muted-foreground">Standard distance per day</p>}
                                                     </FormItem>
                                                 )}
                                             />
@@ -655,18 +663,14 @@ export function BillCreator({
                                                 <span className="text-muted-foreground">Total Distance</span>
                                                 <span className="font-medium">{distance.toFixed(1)} km</span>
                                             </div>
-                                            {watchedAllowedKm > 0 && (
-                                                <>
-                                                    <div className="flex justify-between text-xs text-muted-foreground pl-2 border-l-2 border-primary/20">
-                                                        <span>Included</span>
-                                                        <span>{watchedAllowedKm} km</span>
-                                                    </div>
-                                                    <div className="flex justify-between text-xs text-muted-foreground pl-2 border-l-2 border-primary/20">
-                                                        <span>Excess</span>
-                                                        <span>{Math.max(0, distance - watchedAllowedKm).toFixed(1)} km</span>
-                                                    </div>
-                                                </>
-                                            )}
+                                        {watchedAllowedKm > 0 && (
+                                            <div className="space-y-1 mt-2">
+                                                <div className="flex justify-between text-xs text-muted-foreground pl-2 border-l-2 border-primary/20">
+                                                    <span>Included ({watchedAllowedKm} km × {days} {days === 1 ? 'day' : 'days'})</span>
+                                                    <span>{watchedAllowedKm * days} km</span>
+                                                </div>
+                                            </div>
+                                        )}
                                         </div>
 
                                         <div className="border-t border-dashed border-primary/20 my-2"></div>

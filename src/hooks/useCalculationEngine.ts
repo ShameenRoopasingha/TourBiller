@@ -15,9 +15,10 @@ export interface UseCalculationEngineReturn {
   formattedTotalAmount: string;
   formattedBaseCharge: string;
   formattedExtraCharges: string;
-  updateField: (field: string, value: number) => void;
+  updateField: (field: string, value: number | Date | undefined) => void;
   resetCalculations: () => void;
   fields: CalculationFields;
+  days: number;
 }
 
 interface CalculationFields {
@@ -30,6 +31,8 @@ interface CalculationFields {
   allowedKm: number;
   extraHours: number;
   extraHourRate: number;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 const initialFields: CalculationFields = {
@@ -42,6 +45,8 @@ const initialFields: CalculationFields = {
   allowedKm: 0,
   extraHours: 0,
   extraHourRate: 0,
+  startDate: undefined,
+  endDate: undefined,
 };
 
 export function useCalculationEngine(initialValues?: Partial<CalculationFields>): UseCalculationEngineReturn {
@@ -50,15 +55,29 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
     ...initialValues,
   });
 
+  // Calculate days for calculations
+  const days = useMemo(() => {
+    if (!fields.startDate || !fields.endDate) return 1;
+    const start = new Date(fields.startDate);
+    const end = new Date(fields.endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return 1;
+    
+    const diffMs = end.getTime() - start.getTime();
+    const totalHours = diffMs / (1000 * 60 * 60);
+    // Standard practice: total hours / 24, at least 1 day
+    return Math.max(1, Math.ceil(totalHours / 24));
+  }, [fields.startDate, fields.endDate]);
+
   // Calculate derived values
   const baseCharge = useMemo(() => {
     const distance = calculateDistance(fields.startMeter, fields.endMeter);
     if (fields.allowedKm > 0 && fields.packageCharge > 0) {
-      const excessKm = Math.max(0, distance - fields.allowedKm);
+      const totalAllowedKm = fields.allowedKm * days;
+      const excessKm = Math.max(0, distance - totalAllowedKm);
       return excessKm * fields.hireRate;
     }
     return calculateBaseCharge(distance, fields.hireRate);
-  }, [fields.startMeter, fields.endMeter, fields.hireRate, fields.allowedKm, fields.packageCharge]);
+  }, [fields.startMeter, fields.endMeter, fields.hireRate, fields.allowedKm, fields.packageCharge, days]);
 
   // Calculate derived values
   const distance = useMemo(() =>
@@ -81,9 +100,10 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
       fields.packageCharge,
       fields.allowedKm,
       fields.extraHours,
-      fields.extraHourRate
+      fields.extraHourRate,
+      days
     ),
-    [fields.startMeter, fields.endMeter, fields.hireRate, fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.allowedKm, fields.extraHours, fields.extraHourRate]
+    [fields.startMeter, fields.endMeter, fields.hireRate, fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.allowedKm, fields.extraHours, fields.extraHourRate, days]
   );
 
   // Formatted values
@@ -92,12 +112,12 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
   const formattedExtraCharges = useMemo(() => formatCurrency(extraCharges), [extraCharges]);
 
   // Update field function
-  const updateField = useCallback((field: string, value: number) => {
+  const updateField = useCallback((field: string, value: any) => {
     // Check if the field is a valid calculation field using the static initial object
     if (Object.prototype.hasOwnProperty.call(initialFields, field)) {
       setFields(prev => ({
         ...prev,
-        [field]: Math.max(0, value), // Ensure non-negative values
+        [field]: field.toLowerCase().includes('date') ? value : Math.max(0, value), // Ensure non-negative for numbers
       }));
     }
   }, []);
@@ -118,5 +138,6 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
     updateField,
     resetCalculations,
     fields,
+    days,
   };
 }

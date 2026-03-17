@@ -276,6 +276,7 @@ export function TourScheduleForm({
                                 id="basePricePerPerson"
                                 type="number"
                                 step="0.01"
+                                placeholder="0.00"
                                 {...form.register('basePricePerPerson')}
                             />
                         </div>
@@ -373,6 +374,7 @@ export function TourScheduleForm({
                                     <Input
                                         type="number"
                                         step="0.1"
+                                        placeholder="0.0"
                                         {...form.register(`items.${index}.distanceKm`)}
                                     />
                                 </div>
@@ -381,6 +383,7 @@ export function TourScheduleForm({
                                     <Input
                                         type="number"
                                         step="0.01"
+                                        placeholder="0.00"
                                         {...form.register(`items.${index}.accommodation`)}
                                     />
                                 </div>
@@ -389,6 +392,7 @@ export function TourScheduleForm({
                                     <Input
                                         type="number"
                                         step="0.01"
+                                        placeholder="0.00"
                                         {...form.register(`items.${index}.meals`)}
                                     />
                                 </div>
@@ -397,6 +401,7 @@ export function TourScheduleForm({
                                     <Input
                                         type="number"
                                         step="0.01"
+                                        placeholder="0.00"
                                         {...form.register(`items.${index}.activities`)}
                                     />
                                 </div>
@@ -405,6 +410,7 @@ export function TourScheduleForm({
                                     <Input
                                         type="number"
                                         step="0.01"
+                                        placeholder="0.00"
                                         {...form.register(`items.${index}.otherCosts`)}
                                     />
                                 </div>

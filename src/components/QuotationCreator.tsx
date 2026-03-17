@@ -498,6 +498,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 id="numberOfPersons"
                                 type="number"
                                 min="1"
+                                placeholder="1"
                                 {...form.register('numberOfPersons')}
                             />
                         </div>
@@ -561,6 +562,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 id="hireRatePerDay"
                                 type="number"
                                 step="0.01"
+                                placeholder="0.00"
                                 {...form.register('hireRatePerDay')}
                             />
                             {form.formState.errors.hireRatePerDay && (
@@ -573,6 +575,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 id="kmPerDay"
                                 type="number"
                                 step="0.01"
+                                placeholder="0.00"
                                 {...form.register('kmPerDay')}
                             />
                         </div>
@@ -582,6 +585,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 id="excessKmRate"
                                 type="number"
                                 step="0.01"
+                                placeholder="0.00"
                                 {...form.register('excessKmRate')}
                             />
                         </div>
@@ -591,6 +595,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 id="extraHourRate"
                                 type="number"
                                 step="0.01"
+                                placeholder="0.00"
                                 {...form.register('extraHourRate')}
                             />
                             {form.formState.errors.extraHourRate && (
@@ -603,6 +608,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 id="markup"
                                 type="number"
                                 step="0.01"
+                                placeholder="0.00"
                                 {...form.register('markup')}
                             />
                         </div>
@@ -612,6 +618,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                                 id="discount"
                                 type="number"
                                 step="0.01"
+                                placeholder="0.00"
                                 {...form.register('discount')}
                             />
                         </div>

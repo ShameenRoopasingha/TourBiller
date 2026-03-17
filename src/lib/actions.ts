@@ -43,16 +43,30 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
     // Validate the data
     const validatedData = BillSchema.parse(rawData);
 
+    // Calculate days for bill
+    let days = 1;
+    if (validatedData.startDate && validatedData.endDate) {
+      const start = new Date(validatedData.startDate);
+      const end = new Date(validatedData.endDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
+        const diffMs = end.getTime() - start.getTime();
+        const totalHours = diffMs / (1000 * 60 * 60);
+        days = Math.max(1, Math.ceil(totalHours / 24));
+      }
+    }
+
     // Calculate total amount
     const totalAmount = calculateTotalAmount(
       validatedData.startMeter,
       validatedData.endMeter,
       validatedData.hireRate,
       validatedData.waitingCharge,
+      validatedData.gatePass,
       validatedData.packageCharge,
       validatedData.allowedKm,
       validatedData.extraHours,
-      validatedData.extraHourRate
+      validatedData.extraHourRate,
+      days
     );
 
     // Save to database (use transaction to ensure bill + booking update are atomic)
