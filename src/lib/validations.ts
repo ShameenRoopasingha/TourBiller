@@ -163,7 +163,7 @@ export const TourScheduleSchema = z.object({
   name: z.string().min(1, "Tour name is required"),
   description: z.string().optional(),
   days: z.coerce.number().min(1, "Must have at least 1 day"),
-  basePricePerPerson: z.coerce.number().min(0).default(0),
+  basePricePerPerson: z.coerce.number().min(0).optional().or(z.literal('')).transform(v => v === '' ? undefined : v).default(0),
   vehicleCategory: z.string().default("CAR"),
   excessKmRate: z.coerce.number().min(0).optional().or(z.literal('')).transform(v => v === '' ? undefined : v),
   extraHourRate: z.coerce.number().min(0).optional().or(z.literal('')).transform(v => v === '' ? undefined : v),
