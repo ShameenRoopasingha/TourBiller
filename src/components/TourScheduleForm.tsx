@@ -117,6 +117,15 @@ export function TourScheduleForm({
         name: 'items',
     });
 
+    const watchedName = useWatch({
+        control: form.control,
+        name: 'name',
+    });
+
+    const isNameDuplicate = watchedName && existingSchedules.some(
+        s => s.name.toLowerCase() === watchedName.trim().toLowerCase()
+    );
+
     // Calculate totals from day items
     const totals = watchedItems?.reduce(
         (acc, item) => ({
@@ -157,6 +166,10 @@ export function TourScheduleForm({
     };
 
     const onSubmit = async (data: TourScheduleFormData) => {
+        if (isNameDuplicate) {
+            setError('This tour name already exists. Please use a unique name.');
+            return;
+        }
         setIsSubmitting(true);
         setError(null);
 
@@ -216,19 +229,15 @@ export function TourScheduleForm({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="name">Tour Name *</Label>
-                            <Controller
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <ComboboxField
-                                        options={existingSchedules.map(s => ({ label: s.name, value: s.name }))}
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        placeholder="e.g. 5-Day Cultural Triangle Tour"
-                                        allowCustomValue={true}
-                                    />
-                                )}
+                            <Input
+                                id="name"
+                                placeholder="e.g. 5-Day Cultural Triangle Tour"
+                                {...form.register('name')}
+                                className={isNameDuplicate ? 'border-destructive' : ''}
                             />
+                            {isNameDuplicate && (
+                                <p className="text-sm text-destructive font-medium">This name cannot be used, it already exists</p>
+                            )}
                             {form.formState.errors.name && (
                                 <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
                             )}
@@ -453,7 +462,7 @@ export function TourScheduleForm({
                 >
                     Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
+                <Button type="submit" disabled={isSubmitting || !!isNameDuplicate} className="min-w-[140px]">
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {isEditing ? 'Update Schedule' : 'Create Schedule'}
                 </Button>
