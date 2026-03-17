@@ -24,6 +24,10 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
             kmPerDay: parseFloat(formData.get('kmPerDay') as string) || 0,
             excessKmRate: parseFloat(formData.get('excessKmRate') as string) || 0,
             extraHourRate: parseFloat(formData.get('extraHourRate') as string) || 0,
+            seats: formData.get('seats') ? parseInt(formData.get('seats') as string) : undefined,
+            acType: (formData.get('acType') as string) || undefined,
+            features: (formData.get('features') as string) || undefined,
+            insuranceCoverage: (formData.get('insuranceCoverage') as string) || undefined,
         };
 
         const validatedData = VehicleSchema.parse(rawData);
@@ -88,6 +92,10 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
             kmPerDay: parseFloat(formData.get('kmPerDay') as string) || 0,
             excessKmRate: parseFloat(formData.get('excessKmRate') as string) || 0,
             extraHourRate: parseFloat(formData.get('extraHourRate') as string) || 0,
+            seats: formData.get('seats') ? parseInt(formData.get('seats') as string) : undefined,
+            acType: (formData.get('acType') as string) || undefined,
+            features: (formData.get('features') as string) || undefined,
+            insuranceCoverage: (formData.get('insuranceCoverage') as string) || undefined,
         };
 
         const validatedData = VehicleSchema.parse(rawData);
