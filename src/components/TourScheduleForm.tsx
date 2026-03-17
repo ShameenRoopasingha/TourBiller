@@ -49,9 +49,18 @@ interface TourScheduleFormProps {
         }[];
     };
     existingSchedules?: { name: string }[];
+    onSuccess?: (id: string) => void;
+    onCancel?: () => void;
+    hideHeader?: boolean;
 }
 
-export function TourScheduleForm({ initialData, existingSchedules = [] }: TourScheduleFormProps) {
+export function TourScheduleForm({ 
+    initialData, 
+    existingSchedules = [], 
+    onSuccess, 
+    onCancel,
+    hideHeader = false
+}: TourScheduleFormProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -159,8 +168,12 @@ export function TourScheduleForm({ initialData, existingSchedules = [] }: TourSc
             if (result.success) {
                 setSuccess(true);
                 router.refresh();
-                // Keep isSubmitting true during transition
-                setTimeout(() => router.push('/tour-schedules'), 1000);
+                if (onSuccess) {
+                    onSuccess(result.data!);
+                } else {
+                    // Keep isSubmitting true during transition
+                    setTimeout(() => router.push('/tour-schedules'), 1000);
+                }
             } else {
                 setError(result.error || 'An error occurred');
                 setIsSubmitting(false);
@@ -188,15 +201,17 @@ export function TourScheduleForm({ initialData, existingSchedules = [] }: TourSc
 
             {/* Schedule Details */}
             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <MapPin className="h-5 w-5" />
-                        Tour Details
-                    </CardTitle>
-                    <CardDescription>
-                        Basic information about the tour schedule
-                    </CardDescription>
-                </CardHeader>
+                {!hideHeader && (
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <MapPin className="h-5 w-5" />
+                            Tour Details
+                        </CardTitle>
+                        <CardDescription>
+                            Basic information about the tour schedule
+                        </CardDescription>
+                    </CardHeader>
+                )}
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -434,7 +449,7 @@ export function TourScheduleForm({ initialData, existingSchedules = [] }: TourSc
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={() => router.push('/tour-schedules')}
+                    onClick={() => onCancel ? onCancel() : router.push('/tour-schedules')}
                 >
                     Cancel
                 </Button>

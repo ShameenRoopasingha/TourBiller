@@ -3,13 +3,21 @@
 import React, { useState, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, FileCheck, Calculator } from 'lucide-react';
+import { Loader2, FileCheck, Calculator, Plus } from 'lucide-react';
 
 import { QuotationSchema, type QuotationFormData } from '@/lib/validations';
 import { generateQuotation } from '@/lib/quotation-actions';
 import { formatCurrency } from '@/lib/calculations';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
+import { TourScheduleForm } from '@/components/TourScheduleForm';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,6 +96,8 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
     const [success, setSuccess] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState<ScheduleOption | null>(null);
     const [selectedVehicle, setSelectedVehicle] = useState<VehicleOption | null>(null);
+    const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [justCreatedScheduleId, setJustCreatedScheduleId] = useState<string | null>(null);
     const handleEnterKey = useEnterNavigation();
 
     const [initialValidUntil] = useState(() => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as unknown as Date);
@@ -156,6 +166,24 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
             form.setValue('endDate', '' as unknown as Date);
         }
     }, [watchedStartDate, selectedSchedule, form]);
+    
+    // When schedule selection changes
+    const handleScheduleChange = React.useCallback((scheduleId: string) => {
+        form.setValue('tourScheduleId', scheduleId);
+        const schedule = schedules.find((s) => s.id === scheduleId);
+        setSelectedSchedule(schedule || null);
+    }, [form, schedules]);
+
+    // Auto-select newly created schedule
+    React.useEffect(() => {
+        if (justCreatedScheduleId) {
+            const schedule = schedules.find(s => s.id === justCreatedScheduleId);
+            if (schedule) {
+                handleScheduleChange(schedule.id);
+                setJustCreatedScheduleId(null);
+            }
+        }
+    }, [schedules, justCreatedScheduleId, handleScheduleChange]);
 
     // Filter vehicles by selected schedule's vehicle category
     const filteredVehicles = useMemo(() => {
@@ -163,12 +191,6 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
         return vehicles.filter(v => v.category === selectedSchedule.vehicleCategory);
     }, [vehicles, selectedSchedule]);
 
-    // When schedule selection changes
-    const handleScheduleChange = (scheduleId: string) => {
-        form.setValue('tourScheduleId', scheduleId);
-        const schedule = schedules.find((s) => s.id === scheduleId);
-        setSelectedSchedule(schedule || null);
-    };
 
 
     // When vehicle selection changes
@@ -293,7 +315,19 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-2">
-                        <Label htmlFor="tourScheduleId">Tour Schedule *</Label>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="tourScheduleId">Tour Schedule *</Label>
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-8 px-2 flex items-center gap-1"
+                                onClick={() => setIsScheduleModalOpen(true)}
+                            >
+                                <Plus className="h-4 w-4" />
+                                New
+                            </Button>
+                        </div>
                         <ComboboxField
                             options={schedules.map((s) => ({
                                 label: `${s.name} (${s.days} days, ${s.vehicleCategory})`,
@@ -307,6 +341,26 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             <p className="text-sm text-destructive font-medium">{form.formState.errors.tourScheduleId.message}</p>
                         )}
                     </div>
+
+                    <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                                <DialogTitle>Create New Tour Schedule</DialogTitle>
+                                <DialogDescription>
+                                    Add a new tour itinerary. It will be available for selection once saved.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <TourScheduleForm 
+                                existingSchedules={schedules}
+                                hideHeader={true}
+                                onSuccess={(id) => {
+                                    setJustCreatedScheduleId(id);
+                                    setIsScheduleModalOpen(false);
+                                }}
+                                onCancel={() => setIsScheduleModalOpen(false)}
+                            />
+                        </DialogContent>
+                    </Dialog>
 
                     {/* Day-by-day preview */}
                     {selectedSchedule && (
