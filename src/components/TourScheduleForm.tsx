@@ -48,16 +48,16 @@ interface TourScheduleFormProps {
             otherCosts: number;
         }[];
     };
-    existingSchedules?: { name: string }[];
+    existingSchedules?: { id: string; name: string }[];
     onSuccess?: (data: { id: string; name: string }) => void;
     onCancel?: () => void;
     hideHeader?: boolean;
 }
 
-export function TourScheduleForm({ 
-    initialData, 
-    existingSchedules = [], 
-    onSuccess, 
+export function TourScheduleForm({
+    initialData,
+    existingSchedules = [],
+    onSuccess,
     onCancel,
     hideHeader = false
 }: TourScheduleFormProps) {
@@ -122,8 +122,9 @@ export function TourScheduleForm({
         name: 'name',
     });
 
+    // Check for duplicate names, excluding current record when editing
     const isNameDuplicate = watchedName && existingSchedules.some(
-        s => s.name.toLowerCase() === watchedName.trim().toLowerCase()
+        s => s.id !== initialData?.id && s.name.toLowerCase() === watchedName.trim().toLowerCase()
     );
 
     // Calculate totals from day items
@@ -244,21 +245,21 @@ export function TourScheduleForm({
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="vehicleCategory">Vehicle Category</Label>
-                                <Controller
-                                    control={form.control}
-                                    name="vehicleCategory"
-                                    render={({ field }) => (
-                                        <ComboboxField
-                                            options={VEHICLE_CATEGORIES.map((cat) => ({
-                                                label: cat.replace('_', ' '),
-                                                value: cat
-                                            }))}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Select category..."
-                                        />
-                                    )}
-                                />
+                            <Controller
+                                control={form.control}
+                                name="vehicleCategory"
+                                render={({ field }) => (
+                                    <ComboboxField
+                                        options={VEHICLE_CATEGORIES.map((cat) => ({
+                                            label: cat.replace('_', ' '),
+                                            value: cat
+                                        }))}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Select category..."
+                                    />
+                                )}
+                            />
                         </div>
                     </div>
                     <div className="space-y-2">
