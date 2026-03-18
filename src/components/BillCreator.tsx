@@ -695,7 +695,7 @@ export function BillCreator({
                         </div>
 
                         {/* RIGHT COLUMN: STICKY SUMMARY */}
-                        <div className="lg:col-span-1">
+                        <div className="lg:col-span-1 h-full">
                             <div className="sticky top-8 space-y-6">
                                 <Card className="bg-primary/5 border-primary/20 shadow-lg">
                                     <CardHeader className="bg-primary/10 border-b border-primary/10 pb-4">
