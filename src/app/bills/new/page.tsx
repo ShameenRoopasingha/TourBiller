@@ -20,7 +20,14 @@ async function NewBillForm({ searchParams }: { searchParams: Promise<{ vehicleNo
 
     const vehicles = vResult.success && vResult.data ? vResult.data : [];
     const customers = cResult.success && cResult.data ? cResult.data : [];
-    const schedules = sResult.success && sResult.data ? sResult.data.map(s => ({ id: s.id, name: s.name })) : [];
+    const schedules = sResult.success && sResult.data ? sResult.data.map(s => ({ 
+        id: s.id, 
+        name: s.name, 
+        days: s.days,
+        excessKmRate: s.excessKmRate,
+        extraHourRate: s.extraHourRate,
+        items: s.items.map(item => ({ distanceKm: item.distanceKm }))
+    })) : [];
 
     return (
         <BillCreator

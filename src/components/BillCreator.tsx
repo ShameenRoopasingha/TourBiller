@@ -60,7 +60,14 @@ export function BillCreator({
     initialBookingId?: string;
     vehicles: Vehicle[];
     customers: Customer[];
-    schedules: { id: string; name: string }[];
+    schedules: { 
+        id: string; 
+        name: string; 
+        days: number;
+        excessKmRate?: number | null;
+        extraHourRate?: number | null;
+        items: { distanceKm: number }[];
+    }[];
 }) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -179,17 +186,47 @@ export function BillCreator({
     }, [initialVehicleNo, vehicles, form, updateField]);
 
     // Automatically calculate extra hours
-    const watchDates = useWatch({
+    const watchedCalcDates = useWatch({
         control: form.control,
-        name: ['startDate', 'endDate'],
+        name: ['startDate', 'endDate', 'route'],
     });
-    const startDateValue = watchDates[0];
-    const endDateValue = watchDates[1];
+    const startDateValue = watchedCalcDates[0];
+    const endDateValue = watchedCalcDates[1];
+    const routeValue = watchedCalcDates[2];
 
     useEffect(() => {
         if (startDateValue) updateField('startDate', new Date(startDateValue));
         if (endDateValue) updateField('endDate', new Date(endDateValue));
     }, [startDateValue, endDateValue, updateField]);
+
+    // Auto-fill rates and included km when route changes
+    useEffect(() => {
+        if (!routeValue) return;
+        
+        const selectedSchedule = schedules.find(s => s.name === routeValue);
+        if (selectedSchedule) {
+            // Calculate total tour distance from items
+            const totalTourDistance = selectedSchedule.items.reduce((sum, item) => sum + (item.distanceKm || 0), 0);
+            
+            // Calculate included km per day (total distance / days)
+            const includedKmPerDay = Math.ceil(totalTourDistance / selectedSchedule.days);
+            
+            // Update form fields only if they are empty or were zero (avoid over-writing manual edits)
+            // But usually for tour selection, we want to override with the tour's specifics
+            form.setValue('allowedKm', includedKmPerDay);
+            updateField('allowedKm', includedKmPerDay);
+
+            if (selectedSchedule.excessKmRate !== null && selectedSchedule.excessKmRate !== undefined) {
+                form.setValue('hireRate', selectedSchedule.excessKmRate);
+                updateField('hireRate', selectedSchedule.excessKmRate);
+            }
+
+            if (selectedSchedule.extraHourRate !== null && selectedSchedule.extraHourRate !== undefined) {
+                form.setValue('extraHourRate', selectedSchedule.extraHourRate);
+                updateField('extraHourRate', selectedSchedule.extraHourRate);
+            }
+        }
+    }, [routeValue, schedules, form, updateField]);
 
     useEffect(() => {
         const start = new Date(startDateValue);
@@ -198,23 +235,20 @@ export function BillCreator({
         if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
             const diffMs = end.getTime() - start.getTime();
             const totalHours = diffMs / (1000 * 60 * 60);
-            const fullDays = Math.floor(totalHours / 24);
             
-            // If total hours is exactly a multiple of 24, extra hours is 0
-            // Otherwise, everything beyond full days is extra hours
-            let extra = 0;
-            if (totalHours > 0) {
-                // Determine days (at least 1 day usually in this business)
-                const daysForExtra = Math.max(1, fullDays);
-                extra = Math.max(0, totalHours - (daysForExtra * 24));
-            }
+            // Use predefined tour days from selected schedule, or fall back to calculated days
+            const selectedSchedule = schedules.find(s => s.name === routeValue);
+            const scheduledDays = selectedSchedule ? selectedSchedule.days : Math.max(1, Math.floor(totalHours / 24));
+            
+            // Extra hours = total hours beyond the scheduled tour days
+            const extra = Math.max(0, totalHours - (scheduledDays * 24));
             
             // Round to 1 decimal place
             const roundedExtra = Math.round(extra * 10) / 10;
             form.setValue('extraHours', roundedExtra);
             updateField('extraHours', roundedExtra);
         }
-    }, [startDateValue, endDateValue, form, updateField]);
+    }, [startDateValue, endDateValue, routeValue, form, updateField, schedules]);
 
 
 
