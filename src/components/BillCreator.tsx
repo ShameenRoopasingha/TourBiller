@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Printer } from 'lucide-react';
+import { Loader2, Printer, Plus } from 'lucide-react';
 import { BillSchema, type BillFormData, type Vehicle, type Customer } from '@/lib/validations';
 import { createBill } from '@/lib/actions';
 import { getBookingById } from '@/lib/booking-actions';
@@ -13,6 +13,14 @@ import { getBookingById } from '@/lib/booking-actions';
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
+import { TourScheduleForm } from '@/components/TourScheduleForm';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -43,21 +51,24 @@ export function BillCreator({
     initialBookingId,
     vehicles: serverVehicles,
     customers: serverCustomers,
+    schedules: serverSchedules,
 }: {
     initialVehicleNo?: string;
     initialCustomerName?: string;
     initialBookingId?: string;
     vehicles: Vehicle[];
     customers: Customer[];
+    schedules: { id: string; name: string }[];
 }) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successId, setSuccessId] = useState<string | null>(null);
+    const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [justCreatedScheduleId, setJustCreatedScheduleId] = useState<string | null>(null);
     const vehicles = serverVehicles;
     const customers = serverCustomers;
-
-
+    const schedules = serverSchedules;
 
     const {
         formattedTotalAmount,
@@ -97,6 +108,17 @@ export function BillCreator({
             extraHourRate: 0,
         },
     });
+
+    // Auto-select newly created schedule when the schedules array updates
+    useEffect(() => {
+        if (justCreatedScheduleId) {
+            const schedule = schedules.find(s => s.id === justCreatedScheduleId);
+            if (schedule) {
+                form.setValue('route', schedule.name);
+                setJustCreatedScheduleId(null);
+            }
+        }
+    }, [schedules, justCreatedScheduleId, form]);
 
     // Auto-fill customer address from pre-filled customer name
     useEffect(() => {
@@ -405,32 +427,62 @@ export function BillCreator({
                                         )}
                                     />
 
-                                    <FormField
-                                        control={form.control}
-                                        name="route"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Route / Description</FormLabel>
-                                                <FormControl>
-                                                    <ComboboxField
-                                                        options={[
-                                                            { label: 'Airport Drop', value: 'Airport Drop' },
-                                                            { label: 'Airport Pickup', value: 'Airport Pickup' },
-                                                            { label: 'Kandy Tour', value: 'Kandy Tour' },
-                                                            { label: 'Galle Tour', value: 'Galle Tour' },
-                                                            { label: 'Sigiriya Tour', value: 'Sigiriya Tour' },
-                                                            { label: 'Colombo City Tour', value: 'Colombo City Tour' },
-                                                        ]}
-                                                        value={field.value}
-                                                        onChange={field.onChange}
-                                                        placeholder="e.g. Airport Drop or Kandy Tour"
-                                                        allowCustomValue={true}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <FormLabel>Route / Description</FormLabel>
+                                            <Button 
+                                                type="button" 
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="h-8 px-2 flex items-center gap-1"
+                                                onClick={() => setIsScheduleModalOpen(true)}
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                                New
+                                            </Button>
+                                        </div>
+                                        <FormField
+                                            control={form.control}
+                                            name="route"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <ComboboxField
+                                                            options={schedules.map(s => ({
+                                                                label: s.name,
+                                                                value: s.name
+                                                            }))}
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            placeholder="e.g. Airport Drop or Kandy Tour"
+                                                            allowCustomValue={true}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
+                                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                            <DialogHeader>
+                                                <DialogTitle>Create New Tour Schedule</DialogTitle>
+                                                <DialogDescription>
+                                                    Add a new tour itinerary. It will be available for selection once saved.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <TourScheduleForm 
+                                                existingSchedules={schedules}
+                                                hideHeader={true}
+                                                onSuccess={(id) => {
+                                                    setJustCreatedScheduleId(id);
+                                                    setIsScheduleModalOpen(false);
+                                                }}
+                                                onCancel={() => setIsScheduleModalOpen(false)}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <FormField

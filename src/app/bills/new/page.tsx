@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import { getVehicles } from '@/lib/vehicle-actions';
 import { getCustomers } from '@/lib/customer-actions';
+import { getTourSchedules } from '@/lib/tour-schedule-actions';
 import { BillCreator } from '@/components/BillCreator';
 
 async function NewBillForm({ searchParams }: { searchParams: Promise<{ vehicleNo?: string; customerName?: string; bookingId?: string }> }) {
@@ -10,14 +11,16 @@ async function NewBillForm({ searchParams }: { searchParams: Promise<{ vehicleNo
     const customerName = params.customerName || undefined;
     const bookingId = params.bookingId || undefined;
 
-    // Fetch vehicles and customers on the server so dropdowns are instantly available
-    const [vResult, cResult] = await Promise.all([
+    // Fetch vehicles, customers, and schedules on the server so dropdowns are instantly available
+    const [vResult, cResult, sResult] = await Promise.all([
         getVehicles(),
         getCustomers(),
+        getTourSchedules(),
     ]);
 
     const vehicles = vResult.success && vResult.data ? vResult.data : [];
     const customers = cResult.success && cResult.data ? cResult.data : [];
+    const schedules = sResult.success && sResult.data ? sResult.data.map(s => ({ id: s.id, name: s.name })) : [];
 
     return (
         <BillCreator
@@ -26,6 +29,7 @@ async function NewBillForm({ searchParams }: { searchParams: Promise<{ vehicleNo
             initialBookingId={bookingId}
             vehicles={vehicles}
             customers={customers}
+            schedules={schedules}
         />
     );
 }
