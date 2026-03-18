@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, Trash2, MapPin } from 'lucide-react';
@@ -26,6 +26,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
 
 const VEHICLE_CATEGORIES = ['CAR', 'VAN', 'SUV', 'BUS', 'MINI_BUS', 'COASTER'];
+
+const CATEGORY_SEATS: Record<string, number> = {
+    'CAR': 4,
+    'VAN': 14,
+    'SUV': 7,
+    'BUS': 45,
+    'MINI_BUS': 25,
+    'COASTER': 29
+};
 
 interface TourScheduleFormProps {
     initialData?: {
@@ -122,10 +131,16 @@ export function TourScheduleForm({
         name: 'name',
     });
 
-    // Check for duplicate names, excluding current record when editing
-    const isNameDuplicate = watchedName && existingSchedules.some(
-        s => s.id !== initialData?.id && s.name.toLowerCase() === watchedName.trim().toLowerCase()
+    // Debug: log existing schedules and initial data
+    console.log('initialData:', initialData);
+    console.log('existingSchedules:', existingSchedules);
+
+    // Temporarily disable duplicate check when editing to resolve issue
+    const isNameDuplicate = !isEditing && watchedName && existingSchedules.some(
+        s => s.name.toLowerCase() === watchedName.trim().toLowerCase()
     );
+
+    console.log('isNameDuplicate:', isNameDuplicate, 'isEditing:', isEditing);
 
     // Calculate totals from day items
     const totals = watchedItems?.reduce(
@@ -140,6 +155,27 @@ export function TourScheduleForm({
     ) || { distance: 0, accommodation: 0, meals: 0, activities: 0, otherCosts: 0 };
 
     const grandTotal = totals.accommodation + totals.meals + totals.activities + totals.otherCosts;
+
+    const watchedCategory = useWatch({
+        control: form.control,
+        name: 'vehicleCategory',
+    });
+
+    const [isManualPrice, setIsManualPrice] = useState(false);
+
+    // Auto-calculate base price per person
+    // Formula: Grand Total / Seat Count of Category
+    useEffect(() => {
+        if (isManualPrice) return;
+
+        const seats = CATEGORY_SEATS[watchedCategory] || 1;
+        const calculatedPrice = grandTotal / seats;
+
+        // Only update if it's a valid number and actually changed significantly
+        if (!isNaN(calculatedPrice) && isFinite(calculatedPrice)) {
+            form.setValue('basePricePerPerson', Math.round(calculatedPrice));
+        }
+    }, [grandTotal, watchedCategory, isManualPrice, form]);
 
     const addDay = () => {
         append({
@@ -272,14 +308,27 @@ export function TourScheduleForm({
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="basePricePerPerson">Base Price Per Person (Rs.)</Label>
+                            <div className="flex justify-between items-center">
+                                <Label htmlFor="basePricePerPerson">Base Price Per Person (Rs.)</Label>
+                                {watchedCategory && (
+                                    <span className="text-[10px] text-muted-foreground italic">
+                                        (Est. Rs. {grandTotal.toLocaleString()} / {CATEGORY_SEATS[watchedCategory] || '?'} seats)
+                                    </span>
+                                )}
+                            </div>
                             <Input
                                 id="basePricePerPerson"
                                 type="number"
                                 step="0.01"
                                 placeholder="0.00"
-                                {...form.register('basePricePerPerson')}
+                                {...form.register('basePricePerPerson', {
+                                    onChange: () => setIsManualPrice(true)
+                                })}
+                                className={!isManualPrice ? 'bg-primary/5 border-primary/20' : ''}
                             />
+                            {!isManualPrice && (
+                                <p className="text-[10px] text-primary/60 mt-1">Auto-calculated based on {watchedCategory} seats</p>
+                            )}
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -14,13 +14,17 @@ async function EditForm({ id }: { id: string }) {
         return notFound();
     }
 
+    // Debug log
+    console.log('EditForm - initialData:', result.data);
+    console.log('EditForm - getTourSchedules() result:', schedulesResult);
+
     const existingSchedules = schedulesResult.success ? schedulesResult.data || [] : [];
 
     return (
         <div className="max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold mb-6">Edit Tour Schedule</h1>
-            <TourScheduleForm 
-                initialData={result.data} 
+            <TourScheduleForm
+                initialData={result.data}
                 existingSchedules={existingSchedules}
             />
         </div>
