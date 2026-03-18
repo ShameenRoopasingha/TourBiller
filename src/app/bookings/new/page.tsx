@@ -18,11 +18,17 @@ async function NewBookingForm() {
     const schedules = sResult.success && sResult.data ? sResult.data : [];
 
     return (
-        <BookingCreator
-            vehicles={vehicles}
-            customers={customers}
-            schedules={schedules}
-        />
+        <div className="max-w-4xl mx-auto space-y-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">New Booking</h1>
+                <p className="text-muted-foreground">Reserve a vehicle for a future trip.</p>
+            </div>
+            <BookingCreator
+                vehicles={vehicles}
+                customers={customers}
+                schedules={schedules}
+            />
+        </div>
     );
 }
 

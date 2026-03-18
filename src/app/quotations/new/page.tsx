@@ -42,8 +42,11 @@ async function NewQuotationForm() {
         }));
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Generate Quotation</h1>
+        <div className="max-w-4xl mx-auto space-y-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">Generate Quotation</h1>
+                <p className="text-muted-foreground">Create a detailed price estimate for a potential tour.</p>
+            </div>
             <QuotationCreator
                 schedules={schedules}
                 customers={customers}

@@ -6,8 +6,11 @@ export default async function NewTourSchedulePage() {
     const existingSchedules = schedulesResult.success ? schedulesResult.data || [] : [];
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Create Tour Schedule</h1>
+        <div className="max-w-4xl mx-auto space-y-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">Create Tour Schedule</h1>
+                <p className="text-muted-foreground">Define a reusable itinerary with day-by-day details.</p>
+            </div>
             <TourScheduleForm existingSchedules={existingSchedules} />
         </div>
     );
