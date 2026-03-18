@@ -112,12 +112,12 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
   const formattedExtraCharges = useMemo(() => formatCurrency(extraCharges), [extraCharges]);
 
   // Update field function
-  const updateField = useCallback((field: string, value: any) => {
+  const updateField = useCallback((field: string, value: number | Date | undefined) => {
     // Check if the field is a valid calculation field using the static initial object
     if (Object.prototype.hasOwnProperty.call(initialFields, field)) {
       setFields(prev => ({
         ...prev,
-        [field]: field.toLowerCase().includes('date') ? value : Math.max(0, value), // Ensure non-negative for numbers
+        [field]: field.toLowerCase().includes('date') ? value : Math.max(0, typeof value === 'number' ? value : 0),
       }));
     }
   }, []);

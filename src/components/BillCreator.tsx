@@ -40,6 +40,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { DateTimePicker } from '@/components/ui/datetime-picker';
 
 import { useRouter } from 'next/navigation';
 
@@ -102,8 +103,8 @@ export function BillCreator({
             currency: 'LKR',
             exchangeRate: 1,
             paymentMethod: 'CASH',
-            startDate: new Date().toISOString().slice(0, 16) as unknown as Date,
-            endDate: new Date().toISOString().slice(0, 16) as unknown as Date,
+            startDate: new Date() as unknown as Date,
+            endDate: new Date() as unknown as Date,
             extraHours: 0,
             extraHourRate: 0,
         },
@@ -143,10 +144,10 @@ export function BillCreator({
                         form.setValue('route', bResult.data.destination);
                     }
                     if (bResult.data.startDate) {
-                        form.setValue('startDate', new Date(bResult.data.startDate).toISOString().slice(0, 16) as unknown as Date);
+                        form.setValue('startDate', new Date(bResult.data.startDate) as unknown as Date);
                     }
                     if (bResult.data.endDate) {
-                        form.setValue('endDate', new Date(bResult.data.endDate).toISOString().slice(0, 16) as unknown as Date);
+                        form.setValue('endDate', new Date(bResult.data.endDate) as unknown as Date);
                     }
                 }
             };
@@ -506,16 +507,17 @@ export function BillCreator({
                                             )}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField
                                             control={form.control}
                                             name="startDate"
                                             render={({ field }) => (
-                                                <FormItem>
+                                                <FormItem className="flex flex-col">
                                                     <FormLabel>Start Date</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="datetime-local" {...field} value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''} />
-                                                    </FormControl>
+                                                    <DateTimePicker
+                                                        date={field.value ? new Date(field.value) : undefined}
+                                                        setDate={(date) => field.onChange(date)}
+                                                    />
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -524,11 +526,12 @@ export function BillCreator({
                                             control={form.control}
                                             name="endDate"
                                             render={({ field }) => (
-                                                <FormItem>
+                                                <FormItem className="flex flex-col">
                                                     <FormLabel>End Date</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="datetime-local" {...field} value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''} />
-                                                    </FormControl>
+                                                    <DateTimePicker
+                                                        date={field.value ? new Date(field.value) : undefined}
+                                                        setDate={(date) => field.onChange(date)}
+                                                    />
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
