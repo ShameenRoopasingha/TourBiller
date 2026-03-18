@@ -38,6 +38,7 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
       endDate: formData.get('endDate') ? new Date(formData.get('endDate') as string) : undefined,
       extraHours: parseFloat(formData.get('extraHours') as string) || 0,
       extraHourRate: parseFloat(formData.get('extraHourRate') as string) || 0,
+      extraKm: parseFloat(formData.get('extraKm') as string) || 0,
     };
 
     // Validate the data
@@ -66,7 +67,8 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
       validatedData.allowedKm,
       validatedData.extraHours,
       validatedData.extraHourRate,
-      days
+      days,
+      validatedData.extraKm
     );
 
     // Save to database (use transaction to ensure bill + booking update are atomic)

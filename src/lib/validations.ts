@@ -21,6 +21,7 @@ export const BillSchema = z.object({
   endDate: z.coerce.date().default(() => new Date()),
   extraHours: z.coerce.number().min(0).default(0),
   extraHourRate: z.coerce.number().min(0).default(0),
+  extraKm: z.coerce.number().min(0).default(0),
 }).refine(data => data.endMeter > data.startMeter, {
   message: "End meter must be greater than start meter",
   path: ["endMeter"]

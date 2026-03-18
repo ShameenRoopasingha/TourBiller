@@ -114,6 +114,7 @@ export function BillCreator({
             endDate: new Date() as unknown as Date,
             extraHours: 0,
             extraHourRate: 0,
+            extraKm: 0,
         },
     });
 
@@ -186,13 +187,17 @@ export function BillCreator({
     }, [initialVehicleNo, vehicles, form, updateField]);
 
     // Automatically calculate extra hours
-    const watchedCalcDates = useWatch({
+    // Automatically calculate extra hours and km
+    const watchedCalcFields = useWatch({
         control: form.control,
-        name: ['startDate', 'endDate', 'route'],
+        name: ['startDate', 'endDate', 'route', 'startMeter', 'endMeter', 'allowedKm'],
     });
-    const startDateValue = watchedCalcDates[0];
-    const endDateValue = watchedCalcDates[1];
-    const routeValue = watchedCalcDates[2];
+    const startDateValue = watchedCalcFields[0];
+    const endDateValue = watchedCalcFields[1];
+    const routeValue = watchedCalcFields[2];
+    const startMeterValue = Number(watchedCalcFields[3]) || 0;
+    const endMeterValue = Number(watchedCalcFields[4]) || 0;
+    const allowedKmValue = Number(watchedCalcFields[5]) || 0;
 
     useEffect(() => {
         if (startDateValue) updateField('startDate', new Date(startDateValue));
@@ -249,6 +254,20 @@ export function BillCreator({
             updateField('extraHours', roundedExtra);
         }
     }, [startDateValue, endDateValue, routeValue, form, updateField, schedules]);
+
+    // Automatically calculate extra km based on meters and allowance
+    useEffect(() => {
+        if (endMeterValue > startMeterValue) {
+            const totalDistance = endMeterValue - startMeterValue;
+            const totalAllowedKm = allowedKmValue * days;
+            const extraKm = Math.max(0, totalDistance - totalAllowedKm);
+            
+            // Round to 1 decimal place
+            const roundedExtraKm = Math.round(extraKm * 10) / 10;
+            form.setValue('extraKm', roundedExtraKm);
+            updateField('extraKm', roundedExtraKm);
+        }
+    }, [startMeterValue, endMeterValue, allowedKmValue, days, form, updateField]);
 
 
 
@@ -660,7 +679,20 @@ export function BillCreator({
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="extraKm"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Extra Km</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" step="0.1" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraKm')} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                         <FormField
                                             control={form.control}
                                             name="extraHours"
@@ -668,7 +700,7 @@ export function BillCreator({
                                                 <FormItem>
                                                     <FormLabel>Extra Hours</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" step="0.5" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraHours')} />
+                                                        <Input type="number" step="0.1" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraHours')} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>

@@ -29,6 +29,7 @@ interface CalculationFields {
   gatePass: number;
   packageCharge: number;
   allowedKm: number;
+  extraKm?: number;
   extraHours: number;
   extraHourRate: number;
   startDate?: Date;
@@ -43,6 +44,7 @@ const initialFields: CalculationFields = {
   gatePass: 0,
   packageCharge: 0,
   allowedKm: 0,
+  extraKm: 0,
   extraHours: 0,
   extraHourRate: 0,
   startDate: undefined,
@@ -73,11 +75,11 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
     const distance = calculateDistance(fields.startMeter, fields.endMeter);
     if (fields.allowedKm > 0 && fields.packageCharge > 0) {
       const totalAllowedKm = fields.allowedKm * days;
-      const excessKm = Math.max(0, distance - totalAllowedKm);
+      const excessKm = fields.extraKm !== undefined && fields.extraKm !== 0 ? fields.extraKm : Math.max(0, distance - totalAllowedKm);
       return excessKm * fields.hireRate;
     }
     return calculateBaseCharge(distance, fields.hireRate);
-  }, [fields.startMeter, fields.endMeter, fields.hireRate, fields.allowedKm, fields.packageCharge, days]);
+  }, [fields.startMeter, fields.endMeter, fields.hireRate, fields.allowedKm, fields.packageCharge, days, fields.extraKm]);
 
   // Calculate derived values
   const distance = useMemo(() =>
@@ -101,9 +103,10 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
       fields.allowedKm,
       fields.extraHours,
       fields.extraHourRate,
-      days
+      days,
+      fields.extraKm
     ),
-    [fields.startMeter, fields.endMeter, fields.hireRate, fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.allowedKm, fields.extraHours, fields.extraHourRate, days]
+    [fields.startMeter, fields.endMeter, fields.hireRate, fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.allowedKm, fields.extraHours, fields.extraHourRate, days, fields.extraKm]
   );
 
   // Formatted values

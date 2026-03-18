@@ -34,6 +34,7 @@ model Bill {
   endDate        DateTime @default(now())
   extraHours     Float    @default(0)
   extraHourRate  Float    @default(0)
+  extraKm        Float    @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

@@ -27,7 +27,8 @@ export function calculateTotalAmount(
   allowedKm: number = 0,
   extraHours: number = 0,
   extraHourRate: number = 0,
-  days: number = 1
+  days: number = 1,
+  extraKm?: number
 ): number {
   const distance = calculateDistance(startMeter, endMeter);
 
@@ -35,7 +36,7 @@ export function calculateTotalAmount(
   if (allowedKm > 0 && packageCharge > 0) {
     // Package Mode: Only charge for Excess Km
     const totalAllowedKm = allowedKm * Math.max(1, days);
-    const excessKm = Math.max(0, distance - totalAllowedKm);
+    const excessKm = extraKm !== undefined ? extraKm : Math.max(0, distance - totalAllowedKm);
     baseCharge = excessKm * hireRate;
   } else {
     // Standard Mode: Charge for all Km (Taxi style)
