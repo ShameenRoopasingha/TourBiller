@@ -353,8 +353,8 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             <TourScheduleForm 
                                 existingSchedules={schedules}
                                 hideHeader={true}
-                                onSuccess={(id) => {
-                                    setJustCreatedScheduleId(id);
+                                onSuccess={(data) => {
+                                    setJustCreatedScheduleId(data.id);
                                     setIsScheduleModalOpen(false);
                                 }}
                                 onCancel={() => setIsScheduleModalOpen(false)}

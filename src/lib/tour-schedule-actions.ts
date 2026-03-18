@@ -56,7 +56,7 @@ export async function createTourSchedule(
             otherCosts?: number;
         }[];
     }
-): Promise<ActionResult<string>> {
+): Promise<ActionResult<{ id: string, name: string }>> {
     try {
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
@@ -94,7 +94,7 @@ export async function createTourSchedule(
         });
 
         revalidateFor('tourSchedule');
-        return { success: true, data: schedule.id };
+        return { success: true, data: { id: schedule.id, name: schedule.name } };
     } catch (error) {
         console.error('Error creating tour schedule:', error);
         if (error instanceof Error) {
@@ -188,7 +188,7 @@ export async function updateTourSchedule(
             otherCosts?: number;
         }[];
     }
-): Promise<ActionResult<string>> {
+): Promise<ActionResult<{ id: string, name: string }>> {
     try {
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
@@ -233,7 +233,7 @@ export async function updateTourSchedule(
         });
 
         revalidateFor('tourSchedule');
-        return { success: true, data: id };
+        return { success: true, data: { id: id, name: validated.name } };
     } catch (error) {
         console.error('Error updating tour schedule:', error);
         if (error instanceof Error) {

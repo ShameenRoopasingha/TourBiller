@@ -9,6 +9,7 @@ import { Loader2, Printer, Plus } from 'lucide-react';
 import { BillSchema, type BillFormData, type Vehicle, type Customer } from '@/lib/validations';
 import { createBill } from '@/lib/actions';
 import { getBookingById } from '@/lib/booking-actions';
+import { formatCurrency } from '@/lib/calculations';
 
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
@@ -65,7 +66,6 @@ export function BillCreator({
     const [error, setError] = useState<string | null>(null);
     const [successId, setSuccessId] = useState<string | null>(null);
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-    const [justCreatedScheduleId, setJustCreatedScheduleId] = useState<string | null>(null);
     const vehicles = serverVehicles;
     const customers = serverCustomers;
     const schedules = serverSchedules;
@@ -73,7 +73,7 @@ export function BillCreator({
     const {
         formattedTotalAmount,
         formattedBaseCharge,
-        formattedExtraCharges,
+        baseCharge,
         distance,
         updateField,
         resetCalculations,
@@ -109,16 +109,16 @@ export function BillCreator({
         },
     });
 
-    // Auto-select newly created schedule when the schedules array updates
-    useEffect(() => {
-        if (justCreatedScheduleId) {
-            const schedule = schedules.find(s => s.id === justCreatedScheduleId);
-            if (schedule) {
-                form.setValue('route', schedule.name);
-                setJustCreatedScheduleId(null);
-            }
-        }
-    }, [schedules, justCreatedScheduleId, form]);
+    const watchedFields = useWatch({
+        control: form.control,
+    });
+
+    const watchedAllowedKm = Number(watchedFields.allowedKm) || 0;
+    const watchedPackageCharge = Number(watchedFields.packageCharge) || 0;
+    const watchedExtraHours = Number(watchedFields.extraHours) || 0;
+    const watchedExtraHourRate = Number(watchedFields.extraHourRate) || 0;
+    const watchedWaitingCharge = Number(watchedFields.waitingCharge) || 0;
+    const watchedGatePass = Number(watchedFields.gatePass) || 0;
 
     // Auto-fill customer address from pre-filled customer name
     useEffect(() => {
@@ -153,12 +153,6 @@ export function BillCreator({
             loadBooking();
         }
     }, [form, initialBookingId]);
-
-    const watchedAllowedKm = useWatch({
-        control: form.control,
-        name: 'allowedKm',
-        defaultValue: 0
-    });
 
     // Effect to check if vehicle selection needs to trigger rate update
     useEffect(() => {
@@ -338,7 +332,7 @@ export function BillCreator({
                     className="space-y-6"
                     onKeyDown={handleEnterKey}
                 >
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                         {/* LEFT COLUMN: INPUTS */}
                         <div className="lg:col-span-2 space-y-6">
@@ -475,8 +469,8 @@ export function BillCreator({
                                             <TourScheduleForm 
                                                 existingSchedules={schedules}
                                                 hideHeader={true}
-                                                onSuccess={(id) => {
-                                                    setJustCreatedScheduleId(id);
+                                                onSuccess={(data) => {
+                                                    form.setValue('route', data.name);
                                                     setIsScheduleModalOpen(false);
                                                 }}
                                                 onCancel={() => setIsScheduleModalOpen(false)}
@@ -729,14 +723,53 @@ export function BillCreator({
 
                                         {/* Cost Breakdown */}
                                         <div className="space-y-2">
-                                            <div className="flex justify-between text-sm">
-                                                <span>Base Charge</span>
-                                                <span>{formattedBaseCharge}</span>
-                                            </div>
-                                            <div className="flex justify-between text-sm">
-                                                <span>Extra Charges</span>
-                                                <span>{formattedExtraCharges}</span>
-                                            </div>
+                                            {/* Taxi Mode Base Charge */}
+                                            {watchedAllowedKm === 0 && watchedPackageCharge === 0 && (
+                                                <div className="flex justify-between text-sm">
+                                                    <span>Base Charge</span>
+                                                    <span>{formattedBaseCharge}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Package Charge */}
+                                            {watchedPackageCharge > 0 && (
+                                                <div className="flex justify-between text-sm">
+                                                    <span>Package Charge</span>
+                                                    <span>{formatCurrency(watchedPackageCharge)}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Extra Km Charge */}
+                                            {watchedAllowedKm > 0 && watchedPackageCharge > 0 && baseCharge > 0 && (
+                                                <div className="flex justify-between text-sm text-destructive">
+                                                    <span>Extra Km Charge</span>
+                                                    <span>{formatCurrency(baseCharge)}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Extra Hours */}
+                                            {watchedExtraHours > 0 && (
+                                                <div className="flex justify-between text-sm">
+                                                    <span>Extra Hours ({watchedExtraHours}h &times; {watchedExtraHourRate})</span>
+                                                    <span>{formatCurrency(watchedExtraHours * watchedExtraHourRate)}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Waiting Charge */}
+                                            {watchedWaitingCharge > 0 && (
+                                                <div className="flex justify-between text-sm">
+                                                    <span>Waiting Charge</span>
+                                                    <span>{formatCurrency(watchedWaitingCharge)}</span>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Gate Pass / Parking */}
+                                            {watchedGatePass > 0 && (
+                                                <div className="flex justify-between text-sm">
+                                                    <span>Gate Pass / Parking</span>
+                                                    <span>{formatCurrency(watchedGatePass)}</span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="border-t border-primary/20 my-4"></div>

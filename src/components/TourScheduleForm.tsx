@@ -49,7 +49,7 @@ interface TourScheduleFormProps {
         }[];
     };
     existingSchedules?: { name: string }[];
-    onSuccess?: (id: string) => void;
+    onSuccess?: (data: { id: string; name: string }) => void;
     onCancel?: () => void;
     hideHeader?: boolean;
 }
