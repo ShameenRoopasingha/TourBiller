@@ -118,6 +118,10 @@ export function BillCreator({
             extraHours: 0,
             extraHourRate: 0,
             extraKm: 0,
+            accommodationCharge: '' as unknown as number,
+            mealsCharge: '' as unknown as number,
+            activitiesCharge: '' as unknown as number,
+            otherCostsCharge: '' as unknown as number,
         },
     });
 
@@ -298,18 +302,54 @@ export function BillCreator({
     }, [startDateValue, endDateValue, routeValue, form, updateField, schedules]);
 
     // Automatically calculate extra km based on meters and allowance
+    // Uses scheduled days (matching extra hours) to be consistent
     useEffect(() => {
         if (endMeterValue > startMeterValue) {
             const totalDistance = endMeterValue - startMeterValue;
-            const totalAllowedKm = allowedKmValue * days;
+
+            // Derive scheduled days the same way extra hours does
+            const start = new Date(startDateValue);
+            const end = new Date(endDateValue);
+            let scheduledDays = days; // fallback to engine days
+            let autoPackageCharge = 0;
+
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
+                const diffMs = end.getTime() - start.getTime();
+                const totalHours = diffMs / (1000 * 60 * 60);
+                const actualDays = Math.max(1, Math.ceil(totalHours / 24));
+                const selectedSchedule = schedules.find(s => s.name === routeValue);
+                if (selectedSchedule) {
+                    // If they return early, only charge/allocate for the actual days driven.
+                    // If they return late, cap the package days at the schedule's limit (so extra hours apply).
+                    scheduledDays = Math.min(selectedSchedule.days, actualDays);
+                    autoPackageCharge = selectedSchedule.ratePerDay * scheduledDays;
+                } else {
+                    scheduledDays = actualDays;
+                    // Try to get vehicle rate
+                    const selectedVehicle = vehicles.find(v => v.vehicleNo === form.getValues('vehicleNo'));
+                    if (selectedVehicle && selectedVehicle.ratePerDay > 0) {
+                        autoPackageCharge = selectedVehicle.ratePerDay * scheduledDays;
+                    }
+                }
+            }
+
+            const totalAllowedKm = allowedKmValue * scheduledDays;
             const extraKm = Math.max(0, totalDistance - totalAllowedKm);
             
             // Round to 1 decimal place
             const roundedExtraKm = Math.round(extraKm * 10) / 10;
             form.setValue('extraKm', roundedExtraKm);
+            form.setValue('scheduledDays', scheduledDays);
+            
+            // Auto-update package charge if it makes sense (only if autoPackageCharge > 0)
+            if (autoPackageCharge > 0) {
+                form.setValue('packageCharge', autoPackageCharge);
+                updateField('packageCharge', autoPackageCharge);
+            }
+            
             updateField('extraKm', roundedExtraKm);
         }
-    }, [startMeterValue, endMeterValue, allowedKmValue, days, form, updateField]);
+    }, [startMeterValue, endMeterValue, allowedKmValue, days, startDateValue, endDateValue, routeValue, schedules, vehicles, form, updateField]);
 
 
 
@@ -761,6 +801,62 @@ export function BillCreator({
                                                     <FormLabel>Extra Hour Rate</FormLabel>
                                                     <FormControl>
                                                         <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraHourRate')} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    {/* Additional Package Costs */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="accommodationCharge"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Accommodation</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'accommodationCharge')} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="mealsCharge"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Meals</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'mealsCharge')} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="activitiesCharge"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Activities</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'activitiesCharge')} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="otherCostsCharge"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Other Costs</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'otherCostsCharge')} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>

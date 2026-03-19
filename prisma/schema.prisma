@@ -35,6 +35,11 @@ model Bill {
   extraHours     Float    @default(0)
   extraHourRate  Float    @default(0)
   extraKm        Float    @default(0)
+  scheduledDays  Float    @default(1)
+  accommodationCharge Float @default(0)
+  mealsCharge    Float    @default(0)
+  activitiesCharge Float  @default(0)
+  otherCostsCharge Float  @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

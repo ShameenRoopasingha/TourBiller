@@ -30,6 +30,22 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
     const fmt = formatCurrency;
 
+    // Derive scheduled days consistently:
+    // First, try to use the explicitly saved scheduledDays from the DB (this handles early returns perfectly).
+    // If not available (e.g. old bills), fallback to the calculation based on time duration.
+    const diffMs = new Date(bill.endDate).getTime() - new Date(bill.startDate).getTime();
+    const totalHours = Math.max(0, diffMs / (1000 * 60 * 60));
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const billAny = bill as any; // Cast to bypass strict type checking temporarily if Prisma client hasn't caught up
+    const scheduledDays = billAny.scheduledDays !== undefined 
+        ? billAny.scheduledDays 
+        : (bill.extraHours > 0
+            ? Math.max(1, Math.floor(totalHours / 24))
+            : Math.max(1, Math.ceil(totalHours / 24)));
+            
+    const expectedKm = bill.allowedKm * scheduledDays;
+
     // --- 58mm THERMAL RECEIPT LAYOUT (FOR DRIVERS) ---
     if (userRole === 'DRIVER') {
         return (
@@ -49,7 +65,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         }
                     }
                 `}</style>
-                
+
                 {/* Fixed physical 58mm width wrapper for Thermal Printers */}
                 <div className="w-[58mm] max-w-[58mm] print-thermal text-[10px] font-mono break-words bg-white border border-gray-200 print:border-none my-4 print:my-0 pb-10">
                     {/* Header */}
@@ -75,6 +91,11 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         <div><span className="font-semibold">CUSTOMER: </span>{bill.customerName}</div>
                         <div><span className="font-semibold">VEHICLE: </span>{bill.vehicleNo}</div>
                         <div><span className="font-semibold">ROUTE: </span>{bill.route}</div>
+                        <div className="mt-1 border-t border-dotted border-gray-400 pt-1">
+                            <div>Start: {new Date(bill.startDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                            <div>End:&nbsp;&nbsp; {new Date(bill.endDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                            <div className="font-semibold">Duration: {scheduledDays}d{bill.extraHours > 0 ? ` + ${bill.extraHours}h` : ''}</div>
+                        </div>
                     </div>
 
                     <div className="border-t border-black border-dashed my-1"></div>
@@ -85,20 +106,38 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                             <span>DESC</span>
                             <span>AMT</span>
                         </div>
-                        
+
+                        {/* Expected Mileage */}
                         <div className="flex justify-between items-start mb-0.5">
-                            <span className="w-[65%] leading-tight">Mileage ({bill.allowedKm * Math.ceil((new Date(bill.endDate).getTime() - new Date(bill.startDate).getTime()) / (1000 * 60 * 60 * 24))}km)</span>
+                            <span className="w-[65%] leading-tight">Expected Mileage
+                                <br /><span className="text-[8px]">({bill.allowedKm}km/d × {scheduledDays}d = {expectedKm}km)</span>
+                            </span>
                             <span className="w-[35%] text-right">{fmt(bill.packageCharge)}</span>
                         </div>
+
+                        {/* Extra Mileage Cost */}
                         {bill.extraKm > 0 && (
                             <div className="flex justify-between items-start mb-0.5">
-                                <span className="w-[65%] leading-tight">Extra Km ({bill.extraKm}km)</span>
+                                <span className="w-[65%] leading-tight">Extra Mileage Cost
+                                    <br /><span className="text-[8px]">({bill.extraKm}km × {fmt(bill.hireRate)}/km)</span>
+                                </span>
                                 <span className="w-[35%] text-right">{fmt(bill.extraKm * bill.hireRate)}</span>
                             </div>
                         )}
+
+                        {/* Extra Hours */}
+                        {bill.extraHours > 0 && (
+                            <div className="flex justify-between items-start mb-0.5">
+                                <span className="w-[65%] leading-tight">Extra Hours
+                                    <br /><span className="text-[8px]">({bill.extraHours}h @ {fmt(bill.extraHourRate)})</span>
+                                </span>
+                                <span className="w-[35%] text-right">{fmt(bill.extraHours * bill.extraHourRate)}</span>
+                            </div>
+                        )}
+
                         {bill.waitingCharge > 0 && (
                             <div className="flex justify-between">
-                                <span>Waiting Charge</span>
+                                <span>Waiting Charges</span>
                                 <span>{fmt(bill.waitingCharge)}</span>
                             </div>
                         )}
@@ -108,10 +147,28 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <span>{fmt(bill.gatePass)}</span>
                             </div>
                         )}
-                        {bill.packageCharge > 0 && (
+                        {(bill.accommodationCharge || 0) > 0 && (
                             <div className="flex justify-between">
-                                <span>Package Chg</span>
-                                <span>{fmt(bill.packageCharge)}</span>
+                                <span>Accommodation</span>
+                                <span>{fmt(bill.accommodationCharge || 0)}</span>
+                            </div>
+                        )}
+                        {(bill.mealsCharge || 0) > 0 && (
+                            <div className="flex justify-between">
+                                <span>Meals</span>
+                                <span>{fmt(bill.mealsCharge || 0)}</span>
+                            </div>
+                        )}
+                        {(bill.activitiesCharge || 0) > 0 && (
+                            <div className="flex justify-between">
+                                <span>Activities</span>
+                                <span>{fmt(bill.activitiesCharge || 0)}</span>
+                            </div>
+                        )}
+                        {(bill.otherCostsCharge || 0) > 0 && (
+                            <div className="flex justify-between">
+                                <span>Other Costs</span>
+                                <span>{fmt(bill.otherCostsCharge || 0)}</span>
                             </div>
                         )}
                     </div>
@@ -139,13 +196,13 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                     {/* Footer */}
                     <div className="text-center text-[8px] mt-4 pt-1 border-t border-black border-dashed">
                         <div>Customer Signature:</div>
-                        <br/><br/>
+                        <br /><br />
                         <div>.......................</div>
                         <div className="mt-3 font-semibold italic">Thank you!</div>
                         <div className="mt-1 opacity-70">Powered By VIRGIL</div>
                     </div>
                 </div>
-                
+
                 {/* Connect/Print Actions Panel (Hidden on Print) */}
                 <div className="w-[58mm] mb-8 print:hidden flex flex-col gap-2">
                     <PrintButton />
@@ -245,6 +302,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                             <div className="flex flex-col gap-1">
                                 <span>Start: {new Date(bill.startDate).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                                 <span>End:&nbsp;&nbsp;&nbsp;{new Date(bill.endDate).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                <span className="font-semibold mt-1">Duration: {scheduledDays} days{bill.extraHours > 0 ? ` + ${bill.extraHours} hrs` : ''}</span>
                             </div>
                         </div>
                     </div>
@@ -258,28 +316,31 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <div className="col-span-4 text-right">Amount</div>
                             </div>
 
-                            {/* Mileage */}
+                            {/* Expected Mileage (covered by package charge) */}
                             <div className="col-span-8 flex justify-between pr-2">
-                                <span>Mileage Cost</span>
+                                <span>Expected Mileage</span>
                                 <span className="text-[10px] text-gray-500">
-                                    (Expected: {bill.allowedKm * Math.max(1, Math.ceil((new Date(bill.endDate).getTime() - new Date(bill.startDate).getTime()) / (1000 * 60 * 60 * 24)))}km | Extra: {bill.extraKm || 0}km @ {fmt(bill.hireRate)})
+                                    ({bill.allowedKm}km/day × {scheduledDays} days = {expectedKm}km{scheduledDays > 1 ? ` | ${fmt(bill.packageCharge / scheduledDays)}/day` : ''})
                                 </span>
                             </div>
                             <div className="col-span-4 text-right font-medium">
-                                {fmt((bill.extraKm || 0) * bill.hireRate)}
+                                {fmt(bill.packageCharge)}
                             </div>
 
-                            {/* Time / Hours */}
-                            <div className="col-span-8 flex justify-between pr-2">
-                                <span>Time Duration</span>
-                                <span className="text-[10px] text-gray-500">
-                                    (Expected: {Math.max(1, Math.ceil((new Date(bill.endDate).getTime() - new Date(bill.startDate).getTime()) / (1000 * 60 * 60 * 24)))} days)
-                                </span>
-                            </div>
-                            <div className="col-span-4 text-right font-medium">
-                                Trip Days
-                            </div>
-
+                            {/* Extra Mileage Cost */}
+                            {(bill.extraKm || 0) > 0 && (
+                                <>
+                                    <div className="col-span-8 flex justify-between pr-2">
+                                        <span>Extra Mileage Cost</span>
+                                        <span className="text-[10px] text-gray-500">
+                                            ({bill.extraKm}km × {fmt(bill.hireRate)}/km)
+                                        </span>
+                                    </div>
+                                    <div className="col-span-4 text-right font-medium">
+                                        {fmt((bill.extraKm || 0) * bill.hireRate)}
+                                    </div>
+                                </>
+                            )}
                             {bill.extraHours > 0 && (
                                 <>
                                     <div className="col-span-8 flex justify-between pr-2">
@@ -294,15 +355,50 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 </>
                             )}
 
+
+
                             {/* Extra Charges */}
-                            <div className="col-span-8">Waiting Charges</div>
-                            <div className="col-span-4 text-right font-medium">{fmt(bill.waitingCharge)}</div>
+                            {bill.waitingCharge > 0 && (
+                                <>
+                                    <div className="col-span-8">Waiting Charges</div>
+                                    <div className="col-span-4 text-right font-medium">{fmt(bill.waitingCharge)}</div>
+                                </>
+                            )}
 
-                            <div className="col-span-8">Gate Pass</div>
-                            <div className="col-span-4 text-right font-medium">{fmt(bill.gatePass)}</div>
+                            {bill.gatePass > 0 && (
+                                <>
+                                    <div className="col-span-8">Gate Pass</div>
+                                    <div className="col-span-4 text-right font-medium">{fmt(bill.gatePass)}</div>
+                                </>
+                            )}
 
-                            <div className="col-span-8">Package Charge</div>
-                            <div className="col-span-4 text-right font-medium">{fmt(bill.packageCharge)}</div>
+                            {(bill.accommodationCharge || 0) > 0 && (
+                                <>
+                                    <div className="col-span-8">Accommodation</div>
+                                    <div className="col-span-4 text-right font-medium">{fmt(bill.accommodationCharge || 0)}</div>
+                                </>
+                            )}
+                            
+                            {(bill.mealsCharge || 0) > 0 && (
+                                <>
+                                    <div className="col-span-8">Meals</div>
+                                    <div className="col-span-4 text-right font-medium">{fmt(bill.mealsCharge || 0)}</div>
+                                </>
+                            )}
+
+                            {(bill.activitiesCharge || 0) > 0 && (
+                                <>
+                                    <div className="col-span-8">Activities</div>
+                                    <div className="col-span-4 text-right font-medium">{fmt(bill.activitiesCharge || 0)}</div>
+                                </>
+                            )}
+
+                            {(bill.otherCostsCharge || 0) > 0 && (
+                                <>
+                                    <div className="col-span-8">Other Costs</div>
+                                    <div className="col-span-4 text-right font-medium">{fmt(bill.otherCostsCharge || 0)}</div>
+                                </>
+                            )}
 
                             {/* Totals */}
                             <div className="col-span-12 border-t-2 border-black mt-2 pt-1"></div>

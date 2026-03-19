@@ -34,6 +34,10 @@ interface CalculationFields {
   startDate?: Date;
   endDate?: Date;
   totalTourDistance?: number;
+  accommodationCharge: number;
+  mealsCharge: number;
+  activitiesCharge: number;
+  otherCostsCharge: number;
 }
 
 const initialFields: CalculationFields = {
@@ -50,6 +54,10 @@ const initialFields: CalculationFields = {
   startDate: undefined,
   endDate: undefined,
   totalTourDistance: 0,
+  accommodationCharge: 0,
+  mealsCharge: 0,
+  activitiesCharge: 0,
+  otherCostsCharge: 0,
 };
 
 export function useCalculationEngine(initialValues?: Partial<CalculationFields>): UseCalculationEngineReturn {
@@ -99,8 +107,8 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
   );
 
   const extraCharges = useMemo(() =>
-    calculateExtraCharges(fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate),
-    [fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate]
+    calculateExtraCharges(fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate, fields.accommodationCharge, fields.mealsCharge, fields.activitiesCharge, fields.otherCostsCharge),
+    [fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate, fields.accommodationCharge, fields.mealsCharge, fields.activitiesCharge, fields.otherCostsCharge]
   );
 
   const totalAmount = useMemo(() => {
@@ -109,9 +117,9 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
     // in calculations.ts has its own logic. To keep them in sync, we can pass extraKm 
     // if we want to override.
     
-    const extraCharges = calculateExtraCharges(fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate);
+    const extraCharges = calculateExtraCharges(fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate, fields.accommodationCharge, fields.mealsCharge, fields.activitiesCharge, fields.otherCostsCharge);
     return currentBaseCharge + extraCharges;
-  }, [baseCharge, fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate]);
+  }, [baseCharge, fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate, fields.accommodationCharge, fields.mealsCharge, fields.activitiesCharge, fields.otherCostsCharge]);
 
   // Formatted values
   const formattedTotalAmount = useMemo(() => formatCurrency(totalAmount), [totalAmount]);

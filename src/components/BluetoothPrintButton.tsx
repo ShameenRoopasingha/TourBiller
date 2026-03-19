@@ -84,10 +84,33 @@ export function BluetoothPrintButton({ bill, companyName }: BluetoothPrintButton
             receipt += formatLine('DESC', 'AMT') + NL;
             receipt += "--------------------------------" + NL;
             
-            receipt += formatLine(`Mileage`, fmt((bill.endMeter - bill.startMeter) * bill.hireRate)) + NL;
-            if (bill.waitingCharge > 0) receipt += formatLine("Waiting", fmt(bill.waitingCharge)) + NL;
+            const expectedKm = bill.allowedKm * (bill.scheduledDays || 1);
+
+            if (bill.packageCharge > 0 && expectedKm > 0) {
+                receipt += formatLine("Expected Mileage", fmt(bill.packageCharge)) + NL;
+                receipt += `  (${bill.allowedKm}km/d x ${bill.scheduledDays || 1}d = ${expectedKm}km)` + NL;
+            } else if (bill.packageCharge === 0) {
+                // Standard mode
+                receipt += formatLine("Total Mileage", fmt((bill.endMeter - bill.startMeter) * bill.hireRate)) + NL;
+            }
+
+            if ((bill.extraKm || 0) > 0) {
+                receipt += formatLine("Extra Mileage", fmt((bill.extraKm || 0) * bill.hireRate)) + NL;
+                receipt += `  (${(bill.extraKm || 0)}km x Rs. ${bill.hireRate})` + NL;
+            }
+
+            if ((bill.extraHours || 0) > 0) {
+                receipt += formatLine("Extra Hours", fmt((bill.extraHours || 0) * bill.extraHourRate)) + NL;
+                receipt += `  (${(bill.extraHours || 0)}h x Rs. ${bill.extraHourRate})` + NL;
+            }
+
+            if (bill.waitingCharge > 0) receipt += formatLine("Waiting Charge", fmt(bill.waitingCharge)) + NL;
             if (bill.gatePass > 0) receipt += formatLine("Gate Pass", fmt(bill.gatePass)) + NL;
-            if (bill.packageCharge > 0) receipt += formatLine("Package Charges", fmt(bill.packageCharge)) + NL;
+            
+            if ((bill.accommodationCharge || 0) > 0) receipt += formatLine("Accommodation", fmt(bill.accommodationCharge || 0)) + NL;
+            if ((bill.mealsCharge || 0) > 0) receipt += formatLine("Meals", fmt(bill.mealsCharge || 0)) + NL;
+            if ((bill.activitiesCharge || 0) > 0) receipt += formatLine("Activities", fmt(bill.activitiesCharge || 0)) + NL;
+            if ((bill.otherCostsCharge || 0) > 0) receipt += formatLine("Other Costs", fmt(bill.otherCostsCharge || 0)) + NL;
             
             receipt += "--------------------------------" + NL;
             receipt += BOLD_ON + formatLine("TOTAL:", fmt(bill.totalAmount)) + BOLD_OFF + NL;

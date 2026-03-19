@@ -28,7 +28,11 @@ export function calculateTotalAmount(
   extraHours: number = 0,
   extraHourRate: number = 0,
   days: number = 1,
-  extraKm?: number
+  extraKm?: number,
+  accommodationCharge: number = 0,
+  mealsCharge: number = 0,
+  activitiesCharge: number = 0,
+  otherCostsCharge: number = 0
 ): number {
   const distance = calculateDistance(startMeter, endMeter);
 
@@ -43,7 +47,8 @@ export function calculateTotalAmount(
     baseCharge = distance * hireRate;
   }
 
-  const extraCharges = waitingCharge + gatePass + packageCharge + (extraHours * extraHourRate);
+  const extraCharges = waitingCharge + gatePass + packageCharge + (extraHours * extraHourRate) +
+    accommodationCharge + mealsCharge + activitiesCharge + otherCostsCharge;
 
   return baseCharge + extraCharges;
 }
@@ -67,9 +72,14 @@ export function calculateExtraCharges(
   gatePass: number = 0,
   packageCharge: number = 0,
   extraHours: number = 0,
-  extraHourRate: number = 0
+  extraHourRate: number = 0,
+  accommodationCharge: number = 0,
+  mealsCharge: number = 0,
+  activitiesCharge: number = 0,
+  otherCostsCharge: number = 0
 ): number {
-  return waitingCharge + gatePass + packageCharge + (extraHours * extraHourRate);
+  return waitingCharge + gatePass + packageCharge + (extraHours * extraHourRate) +
+    accommodationCharge + mealsCharge + activitiesCharge + otherCostsCharge;
 }
 
 /**
