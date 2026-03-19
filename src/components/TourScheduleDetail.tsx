@@ -99,7 +99,7 @@ export function TourScheduleDetail({ schedule }: TourScheduleDetailProps) {
                 <Card className="bg-primary/10 border-primary/20">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-xs font-semibold uppercase text-primary/70 flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-full border border-primary/30 text-primary text-[10px] font-bold">Base Price</span>
+                            <span className="px-2 py-0.5 rounded-full border border-primary/30 text-primary text-[10px] font-bold uppercase tracking-wider">Charge Per Person</span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>

@@ -407,7 +407,7 @@ export function TourScheduleForm({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
-                                <Label htmlFor="basePricePerPerson">Base Price Per Person (Rs.)</Label>
+                                <Label htmlFor="basePricePerPerson">Charge Per Person (Rs.)</Label>
                                 {(watchedSeats || watchedCategory) && (
                                     <span className="text-[10px] text-muted-foreground italic">
                                         (Est. Rs. {grandTotal.toLocaleString()} / {watchedSeats || CATEGORY_SEATS[watchedCategory] || '?'} seats)
