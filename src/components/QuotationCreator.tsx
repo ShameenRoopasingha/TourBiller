@@ -59,6 +59,9 @@ interface ScheduleOption {
     }[];
     excessKmRate?: number | null;
     extraHourRate?: number | null;
+    vehicleNo?: string | null;
+    ratePerDay: number;
+    kmPerDay: number;
 }
 
 interface CustomerOption {
@@ -172,7 +175,29 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
         form.setValue('tourScheduleId', scheduleId);
         const schedule = schedules.find((s) => s.id === scheduleId);
         setSelectedSchedule(schedule || null);
-    }, [form, schedules]);
+        
+        if (schedule) {
+            // Autofill rates from schedule if they exist
+            if (schedule.ratePerDay > 0) form.setValue('hireRatePerDay', schedule.ratePerDay);
+            if (schedule.kmPerDay > 0) form.setValue('kmPerDay', schedule.kmPerDay);
+            if (schedule.excessKmRate) form.setValue('excessKmRate', schedule.excessKmRate);
+            if (schedule.extraHourRate) form.setValue('extraHourRate', schedule.extraHourRate);
+            
+            // If schedule has a vehicle, try to select it
+            if (schedule.vehicleNo) {
+                const vehicle = vehicles.find(v => v.vehicleNo === schedule.vehicleNo);
+                if (vehicle) {
+                    form.setValue('vehicleNo', vehicle.vehicleNo);
+                    setSelectedVehicle(vehicle);
+                    // Also ensure rates are filled if not already set by schedule
+                    if (!(schedule.ratePerDay > 0)) form.setValue('hireRatePerDay', vehicle.ratePerDay);
+                    if (!(schedule.kmPerDay > 0)) form.setValue('kmPerDay', vehicle.kmPerDay);
+                    if (!schedule.excessKmRate) form.setValue('excessKmRate', vehicle.excessKmRate);
+                    if (!schedule.extraHourRate) form.setValue('extraHourRate', vehicle.extraHourRate);
+                }
+            }
+        }
+    }, [form, schedules, vehicles]);
 
     // Auto-select newly created schedule
     React.useEffect(() => {
@@ -198,11 +223,17 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
         const vehicle = vehicles.find((v) => v.id === vehicleId);
         if (vehicle) {
             form.setValue('vehicleNo', vehicle.vehicleNo);
-            form.setValue('hireRatePerDay', vehicle.ratePerDay);
-            form.setValue('kmPerDay', vehicle.kmPerDay);
-            // Pre-fill extra rates: first from schedule (if defined), then fallback to vehicle
-            form.setValue('excessKmRate', selectedSchedule?.excessKmRate || vehicle.excessKmRate || 0);
-            form.setValue('extraHourRate', selectedSchedule?.extraHourRate || vehicle.extraHourRate || 0);
+            
+            // Prioritize schedule rates if they are set (non-zero)
+            const rate = (selectedSchedule && selectedSchedule.ratePerDay > 0) ? selectedSchedule.ratePerDay : vehicle.ratePerDay;
+            const km = (selectedSchedule && selectedSchedule.kmPerDay > 0) ? selectedSchedule.kmPerDay : vehicle.kmPerDay;
+            const excess = (selectedSchedule && selectedSchedule.excessKmRate) || vehicle.excessKmRate || 0;
+            const extraHour = (selectedSchedule && selectedSchedule.extraHourRate) || vehicle.extraHourRate || 0;
+
+            form.setValue('hireRatePerDay', rate);
+            form.setValue('kmPerDay', km);
+            form.setValue('excessKmRate', excess);
+            form.setValue('extraHourRate', extraHour);
             setSelectedVehicle(vehicle);
         } else {
             setSelectedVehicle(null);

@@ -13,6 +13,10 @@ type TourScheduleWithItems = {
     days: number;
     basePricePerPerson: number;
     vehicleCategory: string;
+    vehicleNo: string | null;
+    ratePerDay: number;
+    kmPerDay: number;
+    seats: number;
     excessKmRate: number | null;
     extraHourRate: number | null;
     isActive: boolean;
@@ -43,6 +47,10 @@ export async function createTourSchedule(
         days: number;
         basePricePerPerson?: number;
         vehicleCategory?: string;
+        vehicleNo?: string;
+        ratePerDay?: number;
+        kmPerDay?: number;
+        seats?: number;
         excessKmRate?: number;
         extraHourRate?: number;
         items: {
@@ -73,6 +81,10 @@ export async function createTourSchedule(
                     days: validated.days,
                     basePricePerPerson: validated.basePricePerPerson,
                     vehicleCategory: validated.vehicleCategory,
+                    vehicleNo: validated.vehicleNo,
+                    ratePerDay: validated.ratePerDay,
+                    kmPerDay: validated.kmPerDay,
+                    seats: validated.seats,
                     excessKmRate: validated.excessKmRate,
                     extraHourRate: validated.extraHourRate,
                     isActive: validated.isActive,
@@ -175,6 +187,10 @@ export async function updateTourSchedule(
         days: number;
         basePricePerPerson?: number;
         vehicleCategory?: string;
+        vehicleNo?: string;
+        ratePerDay?: number;
+        kmPerDay?: number;
+        seats?: number;
         excessKmRate?: number;
         extraHourRate?: number;
         items: {
@@ -207,6 +223,10 @@ export async function updateTourSchedule(
                     days: validated.days,
                     basePricePerPerson: validated.basePricePerPerson,
                     vehicleCategory: validated.vehicleCategory,
+                    vehicleNo: validated.vehicleNo,
+                    ratePerDay: validated.ratePerDay,
+                    kmPerDay: validated.kmPerDay,
+                    seats: validated.seats,
                     excessKmRate: validated.excessKmRate,
                     extraHourRate: validated.extraHourRate,
                 },

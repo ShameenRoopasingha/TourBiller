@@ -147,6 +147,10 @@ model TourSchedule {
   days               Int
   basePricePerPerson Float    @default(0)
   vehicleCategory    String   @default("CAR")
+  vehicleNo          String?   // Template vehicle
+  ratePerDay         Float    @default(0)
+  kmPerDay           Float    @default(0)
+  seats              Int      @default(0)
   excessKmRate       Float?   // Optional predefined charge per extra km
   extraHourRate      Float?   // Optional predefined charge per extra hour
   isActive           Boolean  @default(true)

@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
 import {
-  calculateTotalAmount,
   calculateDistance,
   calculateBaseCharge,
   calculateExtraCharges,
@@ -34,6 +33,7 @@ interface CalculationFields {
   extraHourRate: number;
   startDate?: Date;
   endDate?: Date;
+  totalTourDistance?: number;
 }
 
 const initialFields: CalculationFields = {
@@ -49,6 +49,7 @@ const initialFields: CalculationFields = {
   extraHourRate: 0,
   startDate: undefined,
   endDate: undefined,
+  totalTourDistance: 0,
 };
 
 export function useCalculationEngine(initialValues?: Partial<CalculationFields>): UseCalculationEngineReturn {
@@ -73,13 +74,23 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
   // Calculate derived values
   const baseCharge = useMemo(() => {
     const distance = calculateDistance(fields.startMeter, fields.endMeter);
+    
+    // Priority 1: Use totalTourDistance if provided (Specific requirement for total tour mileage)
+    if (fields.totalTourDistance && fields.totalTourDistance > 0) {
+      const excessKm = fields.extraKm !== undefined && fields.extraKm !== 0 ? fields.extraKm : Math.max(0, distance - fields.totalTourDistance);
+      return excessKm * fields.hireRate;
+    }
+
+    // Priority 2: Use allowedKm * days (Standard package mode)
     if (fields.allowedKm > 0 && fields.packageCharge > 0) {
       const totalAllowedKm = fields.allowedKm * days;
       const excessKm = fields.extraKm !== undefined && fields.extraKm !== 0 ? fields.extraKm : Math.max(0, distance - totalAllowedKm);
       return excessKm * fields.hireRate;
     }
+    
+    // Priority 3: Standard taxi mode (total distance * rate)
     return calculateBaseCharge(distance, fields.hireRate);
-  }, [fields.startMeter, fields.endMeter, fields.hireRate, fields.allowedKm, fields.packageCharge, days, fields.extraKm]);
+  }, [fields.startMeter, fields.endMeter, fields.hireRate, fields.allowedKm, fields.packageCharge, fields.totalTourDistance, days, fields.extraKm]);
 
   // Calculate derived values
   const distance = useMemo(() =>
@@ -92,22 +103,15 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
     [fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate]
   );
 
-  const totalAmount = useMemo(() =>
-    calculateTotalAmount(
-      fields.startMeter,
-      fields.endMeter,
-      fields.hireRate,
-      fields.waitingCharge,
-      fields.gatePass,
-      fields.packageCharge,
-      fields.allowedKm,
-      fields.extraHours,
-      fields.extraHourRate,
-      days,
-      fields.extraKm
-    ),
-    [fields.startMeter, fields.endMeter, fields.hireRate, fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.allowedKm, fields.extraHours, fields.extraHourRate, days, fields.extraKm]
-  );
+  const totalAmount = useMemo(() => {
+    const currentBaseCharge = baseCharge;
+    // We already calculated baseCharge in its own useMemo, but calculateTotalAmount 
+    // in calculations.ts has its own logic. To keep them in sync, we can pass extraKm 
+    // if we want to override.
+    
+    const extraCharges = calculateExtraCharges(fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate);
+    return currentBaseCharge + extraCharges;
+  }, [baseCharge, fields.waitingCharge, fields.gatePass, fields.packageCharge, fields.extraHours, fields.extraHourRate]);
 
   // Formatted values
   const formattedTotalAmount = useMemo(() => formatCurrency(totalAmount), [totalAmount]);

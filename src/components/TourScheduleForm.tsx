@@ -5,8 +5,9 @@ import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, Trash2, MapPin } from 'lucide-react';
 
-import { TourScheduleSchema, type TourScheduleFormData } from '@/lib/validations';
+import { TourScheduleSchema, type TourScheduleFormData, type Vehicle } from '@/lib/validations';
 import { createTourSchedule, updateTourSchedule } from '@/lib/tour-schedule-actions';
+import { getVehicles } from '@/lib/vehicle-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 
@@ -46,6 +47,10 @@ interface TourScheduleFormProps {
         vehicleCategory: string;
         excessKmRate: number | null;
         extraHourRate: number | null;
+        vehicleNo: string | null;
+        ratePerDay: number;
+        kmPerDay: number;
+        seats: number;
         items: {
             dayNumber: number;
             title: string;
@@ -109,6 +114,10 @@ export function TourScheduleForm({
             days: initialData?.days || 1,
             basePricePerPerson: initialData?.basePricePerPerson || ('' as unknown as number),
             vehicleCategory: initialData?.vehicleCategory || 'CAR',
+            vehicleNo: initialData?.vehicleNo || '',
+            ratePerDay: initialData?.ratePerDay || 0,
+            kmPerDay: initialData?.kmPerDay || 0,
+            seats: initialData?.seats || 0,
             excessKmRate: initialData?.excessKmRate || ('' as unknown as number),
             extraHourRate: initialData?.extraHourRate || ('' as unknown as number),
             isActive: true,
@@ -156,26 +165,56 @@ export function TourScheduleForm({
 
     const grandTotal = totals.accommodation + totals.meals + totals.activities + totals.otherCosts;
 
+    const [isManualPrice, setIsManualPrice] = useState(false);
+    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+
+    // Fetch vehicles
+    useEffect(() => {
+        async function fetchVehicles() {
+            const result = await getVehicles();
+            if (result.success) {
+                setVehicles(result.data || []);
+            }
+        }
+        fetchVehicles();
+    }, []);
+
     const watchedCategory = useWatch({
         control: form.control,
         name: 'vehicleCategory',
     });
 
-    const [isManualPrice, setIsManualPrice] = useState(false);
+    const watchedSeats = useWatch({
+        control: form.control,
+        name: 'seats',
+    });
+
+    const handleVehicleChange = (vehicleNo: string) => {
+        const vehicle = vehicles.find(v => v.vehicleNo === vehicleNo);
+        if (vehicle) {
+            form.setValue('vehicleNo', vehicle.vehicleNo);
+            form.setValue('vehicleCategory', vehicle.category);
+            form.setValue('ratePerDay', vehicle.ratePerDay);
+            form.setValue('kmPerDay', vehicle.kmPerDay);
+            form.setValue('excessKmRate', vehicle.excessKmRate);
+            form.setValue('extraHourRate', vehicle.extraHourRate);
+            form.setValue('seats', vehicle.seats || 0);
+        }
+    };
 
     // Auto-calculate base price per person
-    // Formula: Grand Total / Seat Count of Category
+    // Formula: Grand Total / Seat Count
     useEffect(() => {
         if (isManualPrice) return;
 
-        const seats = CATEGORY_SEATS[watchedCategory] || 1;
+        const seats = watchedSeats || CATEGORY_SEATS[watchedCategory] || 1;
         const calculatedPrice = grandTotal / seats;
 
         // Only update if it's a valid number and actually changed significantly
         if (!isNaN(calculatedPrice) && isFinite(calculatedPrice)) {
             form.setValue('basePricePerPerson', Math.round(calculatedPrice));
         }
-    }, [grandTotal, watchedCategory, isManualPrice, form]);
+    }, [grandTotal, watchedCategory, watchedSeats, isManualPrice, form]);
 
     const addDay = () => {
         append({
@@ -280,6 +319,29 @@ export function TourScheduleForm({
                             )}
                         </div>
                         <div className="space-y-2">
+                            <Label htmlFor="vehicleNo">Vehicle *</Label>
+                            <Controller
+                                control={form.control}
+                                name="vehicleNo"
+                                render={({ field }) => (
+                                    <ComboboxField
+                                        options={vehicles.map((v) => ({
+                                            label: `${v.vehicleNo} - ${v.model || ''} (${v.category})`,
+                                            value: v.vehicleNo
+                                        }))}
+                                        value={field.value || ''}
+                                        onChange={(val) => {
+                                            field.onChange(val);
+                                            handleVehicleChange(val);
+                                        }}
+                                        placeholder="Select vehicle..."
+                                    />
+                                )}
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
                             <Label htmlFor="vehicleCategory">Vehicle Category</Label>
                             <Controller
                                 control={form.control}
@@ -293,8 +355,19 @@ export function TourScheduleForm({
                                         value={field.value}
                                         onChange={field.onChange}
                                         placeholder="Select category..."
+                                        disabled // Disabled as it's auto-filled from vehicle
                                     />
                                 )}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="seats">Seats</Label>
+                            <Input
+                                id="seats"
+                                type="number"
+                                {...form.register('seats')}
+                                readOnly
+                                className="bg-muted"
                             />
                         </div>
                     </div>
@@ -310,9 +383,9 @@ export function TourScheduleForm({
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
                                 <Label htmlFor="basePricePerPerson">Base Price Per Person (Rs.)</Label>
-                                {watchedCategory && (
+                                {(watchedSeats || watchedCategory) && (
                                     <span className="text-[10px] text-muted-foreground italic">
-                                        (Est. Rs. {grandTotal.toLocaleString()} / {CATEGORY_SEATS[watchedCategory] || '?'} seats)
+                                        (Est. Rs. {grandTotal.toLocaleString()} / {watchedSeats || CATEGORY_SEATS[watchedCategory] || '?'} seats)
                                     </span>
                                 )}
                             </div>
@@ -331,14 +404,33 @@ export function TourScheduleForm({
                             )}
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="ratePerDay">Rate Per Day (Rs.)</Label>
+                            <Input
+                                id="ratePerDay"
+                                type="number"
+                                step="0.01"
+                                placeholder="0.00"
+                                {...form.register('ratePerDay')}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="kmPerDay">Km Per Day</Label>
+                            <Input
+                                id="kmPerDay"
+                                type="number"
+                                placeholder="0.00"
+                                {...form.register('kmPerDay')}
+                            />
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="excessKmRate">Extra Km Rate (Rs.)</Label>
                             <Input
                                 id="excessKmRate"
                                 type="number"
                                 step="0.01"
-                                placeholder="Optional global extra km rate"
+                                placeholder="0.00"
                                 {...form.register('excessKmRate')}
                             />
                         </div>
@@ -348,7 +440,7 @@ export function TourScheduleForm({
                                 id="extraHourRate"
                                 type="number"
                                 step="0.01"
-                                placeholder="Optional global extra hour rate"
+                                placeholder="0.00"
                                 {...form.register('extraHourRate')}
                             />
                         </div>

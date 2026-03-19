@@ -24,6 +24,9 @@ async function NewBillForm({ searchParams }: { searchParams: Promise<{ vehicleNo
         id: s.id, 
         name: s.name, 
         days: s.days,
+        vehicleNo: s.vehicleNo,
+        ratePerDay: s.ratePerDay,
+        kmPerDay: s.kmPerDay,
         excessKmRate: s.excessKmRate,
         extraHourRate: s.extraHourRate,
         items: s.items.map(item => ({ distanceKm: item.distanceKm }))

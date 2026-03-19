@@ -31,6 +31,7 @@ interface ComboboxFieldProps {
   emptyMessage?: string;
   allowCustomValue?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
 export function ComboboxField({
@@ -41,6 +42,7 @@ export function ComboboxField({
   emptyMessage = "No option found.",
   allowCustomValue = false,
   className,
+  disabled = false,
 }: ComboboxFieldProps) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -53,12 +55,13 @@ export function ComboboxField({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild disabled={disabled}>
         <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
           className={cn("w-full justify-between font-normal overflow-hidden min-w-0", !value && "text-muted-foreground", className)}
+          disabled={disabled}
         >
           <span className="truncate flex-1 text-left min-w-0">{selectedLabel || placeholder}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

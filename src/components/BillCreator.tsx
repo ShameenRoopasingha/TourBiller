@@ -64,6 +64,9 @@ export function BillCreator({
         id: string; 
         name: string; 
         days: number;
+        vehicleNo?: string | null;
+        ratePerDay: number;
+        kmPerDay: number;
         excessKmRate?: number | null;
         extraHourRate?: number | null;
         items: { distanceKm: number }[];
@@ -206,20 +209,34 @@ export function BillCreator({
 
     // Auto-fill rates and included km when route changes
     useEffect(() => {
-        if (!routeValue) return;
+        if (!routeValue) {
+            updateField('totalTourDistance', 0);
+            return;
+        }
         
         const selectedSchedule = schedules.find(s => s.name === routeValue);
         if (selectedSchedule) {
             // Calculate total tour distance from items
             const totalTourDistance = selectedSchedule.items.reduce((sum, item) => sum + (item.distanceKm || 0), 0);
             
-            // Calculate included km per day (total distance / days)
-            const includedKmPerDay = Math.ceil(totalTourDistance / selectedSchedule.days);
+            // Update calculation engine with expected tour distance
+            updateField('totalTourDistance', totalTourDistance);
             
-            // Update form fields only if they are empty or were zero (avoid over-writing manual edits)
-            // But usually for tour selection, we want to override with the tour's specifics
-            form.setValue('allowedKm', includedKmPerDay);
-            updateField('allowedKm', includedKmPerDay);
+            // Prioritize schedule rates
+            if (selectedSchedule.kmPerDay > 0) {
+                form.setValue('allowedKm', selectedSchedule.kmPerDay);
+                updateField('allowedKm', selectedSchedule.kmPerDay);
+            } else {
+                // Fallback to calculation from distance if no per-day km is set
+                const includedKmPerDay = Math.ceil(totalTourDistance / selectedSchedule.days);
+                form.setValue('allowedKm', includedKmPerDay);
+                updateField('allowedKm', includedKmPerDay);
+            }
+
+            if (selectedSchedule.ratePerDay > 0) {
+                form.setValue('packageCharge', selectedSchedule.ratePerDay);
+                updateField('packageCharge', selectedSchedule.ratePerDay);
+            }
 
             if (selectedSchedule.excessKmRate !== null && selectedSchedule.excessKmRate !== undefined) {
                 form.setValue('hireRate', selectedSchedule.excessKmRate);
@@ -230,8 +247,33 @@ export function BillCreator({
                 form.setValue('extraHourRate', selectedSchedule.extraHourRate);
                 updateField('extraHourRate', selectedSchedule.extraHourRate);
             }
+
+            // If schedule has a vehicle, try to select it
+            if (selectedSchedule.vehicleNo && !form.getValues('vehicleNo')) {
+                form.setValue('vehicleNo', selectedSchedule.vehicleNo);
+                const selectedVehicle = vehicles.find(v => v.vehicleNo === selectedSchedule.vehicleNo);
+                if (selectedVehicle) {
+                    // Update rates that aren't set by schedule
+                    if (!(selectedSchedule.ratePerDay > 0)) {
+                        form.setValue('packageCharge', selectedVehicle.ratePerDay);
+                        updateField('packageCharge', selectedVehicle.ratePerDay);
+                    }
+                    if (!(selectedSchedule.kmPerDay > 0)) {
+                        form.setValue('allowedKm', selectedVehicle.kmPerDay);
+                        updateField('allowedKm', selectedVehicle.kmPerDay);
+                    }
+                    if (selectedSchedule.excessKmRate === null || selectedSchedule.excessKmRate === undefined) {
+                        form.setValue('hireRate', selectedVehicle.excessKmRate);
+                        updateField('hireRate', selectedVehicle.excessKmRate);
+                    }
+                    if (selectedSchedule.extraHourRate === null || selectedSchedule.extraHourRate === undefined) {
+                        form.setValue('extraHourRate', selectedVehicle.extraHourRate);
+                        updateField('extraHourRate', selectedVehicle.extraHourRate);
+                    }
+                }
+            }
         }
-    }, [routeValue, schedules, form, updateField]);
+    }, [routeValue, schedules, form, updateField, vehicles]);
 
     useEffect(() => {
         const start = new Date(startDateValue);
@@ -326,16 +368,21 @@ export function BillCreator({
         fieldChange(value);
 
         const selectedVehicle = vehicles.find(v => v.vehicleNo === value);
+        const selectedSchedule = routeValue ? schedules.find(s => s.name === routeValue) : null;
+
         if (selectedVehicle) {
-            const rate = selectedVehicle.excessKmRate ?? 0;
-            const allowedKm = selectedVehicle.kmPerDay ?? 0;
-            const packageCharge = selectedVehicle.ratePerDay ?? 0;
-            const extraHourRate = selectedVehicle.extraHourRate ?? 0;
-            form.setValue('hireRate', rate);
+            // Prioritize schedule rates
+            const packageCharge = (selectedSchedule && selectedSchedule.ratePerDay > 0) ? selectedSchedule.ratePerDay : (selectedVehicle.ratePerDay ?? 0);
+            const allowedKm = (selectedSchedule && selectedSchedule.kmPerDay > 0) ? selectedSchedule.kmPerDay : (selectedVehicle.kmPerDay ?? 0);
+            const hireRate = (selectedSchedule && (selectedSchedule.excessKmRate !== null && selectedSchedule.excessKmRate !== undefined)) ? selectedSchedule.excessKmRate : (selectedVehicle.excessKmRate ?? 0);
+            const extraHourRate = (selectedSchedule && (selectedSchedule.extraHourRate !== null && selectedSchedule.extraHourRate !== undefined)) ? selectedSchedule.extraHourRate : (selectedVehicle.extraHourRate ?? 0);
+
+            form.setValue('hireRate', hireRate);
             form.setValue('allowedKm', allowedKm);
             form.setValue('packageCharge', packageCharge);
             form.setValue('extraHourRate', extraHourRate);
-            updateField('hireRate', rate);
+            
+            updateField('hireRate', hireRate);
             updateField('allowedKm', allowedKm);
             updateField('packageCharge', packageCharge);
             updateField('extraHourRate', extraHourRate);
