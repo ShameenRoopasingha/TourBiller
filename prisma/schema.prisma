@@ -158,6 +158,8 @@ model TourSchedule {
   seats              Int      @default(0)
   excessKmRate       Float?   // Optional predefined charge per extra km
   extraHourRate      Float?   // Optional predefined charge per extra hour
+  waitingCharge      Float    @default(0)
+  gatePass           Float    @default(0)
   isActive           Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

@@ -177,6 +177,8 @@ export const TourScheduleSchema = z.object({
   seats: z.coerce.number().min(0).default(0),
   excessKmRate: z.coerce.number().min(0).optional().or(z.literal('')).transform(v => v === '' ? undefined : v),
   extraHourRate: z.coerce.number().min(0).optional().or(z.literal('')).transform(v => v === '' ? undefined : v),
+  waitingCharge: z.coerce.number().min(0).default(0),
+  gatePass: z.coerce.number().min(0).default(0),
   isActive: z.boolean().default(true),
   items: z.array(TourScheduleDayItemSchema).min(1, "At least one day item is required"),
 });

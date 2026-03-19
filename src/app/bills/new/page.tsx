@@ -29,7 +29,15 @@ async function NewBillForm({ searchParams }: { searchParams: Promise<{ vehicleNo
         kmPerDay: s.kmPerDay,
         excessKmRate: s.excessKmRate,
         extraHourRate: s.extraHourRate,
-        items: s.items.map(item => ({ distanceKm: item.distanceKm }))
+        waitingCharge: s.waitingCharge,
+        gatePass: s.gatePass,
+        items: s.items.map(item => ({ 
+            distanceKm: item.distanceKm,
+            accommodation: item.accommodation,
+            meals: item.meals,
+            activities: item.activities,
+            otherCosts: item.otherCosts
+        }))
     })) : [];
 
     return (

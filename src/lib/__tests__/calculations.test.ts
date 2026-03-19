@@ -47,7 +47,7 @@ describe('calculateTotalAmount', () => {
   describe('Standard Mode (no package)', () => {
     it('calculates total with distance * rate + extras', () => {
       // 100km * Rs.50/km + Rs.500 waiting + Rs.200 gate + Rs.0 package
-      const total = calculateTotalAmount(100, 200, 50, 500, 200, 0, 0);
+      const total = calculateTotalAmount(100, 200, 50, 500, 200, 0, 0, 0, 0, 1, undefined, 0, 0, 0, 0);
       expect(total).toBe(5700); // 5000 + 500 + 200
     });
 
@@ -65,24 +65,24 @@ describe('calculateTotalAmount', () => {
   describe('Package Mode (allowedKm + packageCharge)', () => {
     it('charges only excess km beyond allowedKm', () => {
       // 150km total, 100km allowed, Rs.40/excess-km, Rs.5000 package
-      const total = calculateTotalAmount(0, 150, 40, 0, 0, 5000, 100);
+      const total = calculateTotalAmount(0, 150, 40, 0, 0, 5000, 100, 0, 0, 1, undefined, 0, 0, 0, 0);
       // Excess = 50km * 40 = 2000 + package 5000 = 7000
       expect(total).toBe(7000);
     });
 
     it('charges only package when within allowedKm', () => {
       // 80km total, 100km allowed → no excess
-      const total = calculateTotalAmount(0, 80, 40, 0, 0, 5000, 100);
+      const total = calculateTotalAmount(0, 80, 40, 0, 0, 5000, 100, 0, 0, 1, undefined, 0, 0, 0, 0);
       expect(total).toBe(5000); // Just the package charge
     });
 
     it('charges only package when exactly at allowedKm', () => {
-      const total = calculateTotalAmount(0, 100, 40, 0, 0, 5000, 100);
+      const total = calculateTotalAmount(0, 100, 40, 0, 0, 5000, 100, 0, 0, 1, undefined, 0, 0, 0, 0);
       expect(total).toBe(5000);
     });
 
     it('includes waiting and gate pass on top of package', () => {
-      const total = calculateTotalAmount(0, 150, 40, 300, 200, 5000, 100);
+      const total = calculateTotalAmount(0, 150, 40, 300, 200, 5000, 100, 0, 0, 1, undefined, 0, 0, 0, 0);
       // Excess: 50*40 = 2000. Extras: 300+200+5000 = 5500. Total: 7500
       expect(total).toBe(7500);
     });
@@ -109,7 +109,7 @@ describe('formatCurrency', () => {
 
 describe('calculateExtraCharges', () => {
   it('sums all extra charges', () => {
-    expect(calculateExtraCharges(500, 200, 3000)).toBe(3700);
+    expect(calculateExtraCharges(500, 200, 3000, 0, 0, 0, 0, 0, 0)).toBe(3700);
   });
 
   it('returns 0 with no charges', () => {

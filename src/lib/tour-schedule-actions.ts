@@ -19,6 +19,8 @@ type TourScheduleWithItems = {
     seats: number;
     excessKmRate: number | null;
     extraHourRate: number | null;
+    waitingCharge: number;
+    gatePass: number;
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -53,6 +55,8 @@ export async function createTourSchedule(
         seats?: number;
         excessKmRate?: number;
         extraHourRate?: number;
+        waitingCharge?: number;
+        gatePass?: number;
         items: {
             dayNumber: number;
             title: string;
@@ -87,6 +91,8 @@ export async function createTourSchedule(
                     seats: validated.seats,
                     excessKmRate: validated.excessKmRate,
                     extraHourRate: validated.extraHourRate,
+                    waitingCharge: validated.waitingCharge,
+                    gatePass: validated.gatePass,
                     isActive: validated.isActive,
                     items: {
                         create: validated.items.map((item) => ({
@@ -193,6 +199,8 @@ export async function updateTourSchedule(
         seats?: number;
         excessKmRate?: number;
         extraHourRate?: number;
+        waitingCharge?: number;
+        gatePass?: number;
         items: {
             dayNumber: number;
             title: string;
@@ -229,6 +237,8 @@ export async function updateTourSchedule(
                     seats: validated.seats,
                     excessKmRate: validated.excessKmRate,
                     extraHourRate: validated.extraHourRate,
+                    waitingCharge: validated.waitingCharge,
+                    gatePass: validated.gatePass,
                 },
             });
 

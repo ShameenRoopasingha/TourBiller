@@ -69,7 +69,15 @@ export function BillCreator({
         kmPerDay: number;
         excessKmRate?: number | null;
         extraHourRate?: number | null;
-        items: { distanceKm: number }[];
+        waitingCharge: number;
+        gatePass: number;
+        items: { 
+            distanceKm: number;
+            accommodation: number;
+            meals: number;
+            activities: number;
+            otherCosts: number;
+        }[];
     }[];
 }) {
     const router = useRouter();
@@ -251,6 +259,26 @@ export function BillCreator({
                 form.setValue('extraHourRate', selectedSchedule.extraHourRate);
                 updateField('extraHourRate', selectedSchedule.extraHourRate);
             }
+
+            // Sum and set itinerary costs from schedule items
+            const totalAccommodation = selectedSchedule.items.reduce((sum, item) => sum + (item.accommodation || 0), 0);
+            const totalMeals = selectedSchedule.items.reduce((sum, item) => sum + (item.meals || 0), 0);
+            const totalActivities = selectedSchedule.items.reduce((sum, item) => sum + (item.activities || 0), 0);
+            const totalOtherCosts = selectedSchedule.items.reduce((sum, item) => sum + (item.otherCosts || 0), 0);
+
+            form.setValue('accommodationCharge', totalAccommodation);
+            form.setValue('mealsCharge', totalMeals);
+            form.setValue('activitiesCharge', totalActivities);
+            form.setValue('otherCostsCharge', totalOtherCosts);
+            form.setValue('waitingCharge', selectedSchedule.waitingCharge);
+            form.setValue('gatePass', selectedSchedule.gatePass);
+
+            updateField('accommodationCharge', totalAccommodation);
+            updateField('mealsCharge', totalMeals);
+            updateField('activitiesCharge', totalActivities);
+            updateField('otherCostsCharge', totalOtherCosts);
+            updateField('waitingCharge', selectedSchedule.waitingCharge);
+            updateField('gatePass', selectedSchedule.gatePass);
 
             // If schedule has a vehicle, try to select it
             if (selectedSchedule.vehicleNo && !form.getValues('vehicleNo')) {

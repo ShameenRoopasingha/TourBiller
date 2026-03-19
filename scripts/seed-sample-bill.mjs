@@ -41,10 +41,28 @@ async function seed() {
             kmPerDay: 100,
             excessKmRate: 80,
             extraHourRate: 500,
+            waitingCharge: 1500,
+            gatePass: 500,
             items: {
                 create: [
-                    { dayNumber: 1, title: 'Colombo to Kandy', distanceKm: 120 },
-                    { dayNumber: 2, title: 'Kandy to Colombo', distanceKm: 120 },
+                    { 
+                        dayNumber: 1, 
+                        title: 'Colombo to Kandy', 
+                        distanceKm: 120,
+                        accommodation: 8000,
+                        meals: 3000,
+                        activities: 2000,
+                        otherCosts: 500
+                    },
+                    { 
+                        dayNumber: 2, 
+                        title: 'Kandy to Colombo', 
+                        distanceKm: 120,
+                        accommodation: 4000,
+                        meals: 2500,
+                        activities: 1000,
+                        otherCosts: 500
+                    },
                 ]
             }
         }
