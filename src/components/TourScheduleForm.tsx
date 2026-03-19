@@ -51,6 +51,8 @@ interface TourScheduleFormProps {
         ratePerDay: number;
         kmPerDay: number;
         seats: number;
+        waitingCharge: number;
+        gatePass: number;
         items: {
             dayNumber: number;
             title: string;
@@ -120,6 +122,8 @@ export function TourScheduleForm({
             seats: initialData?.seats || 0,
             excessKmRate: initialData?.excessKmRate || ('' as unknown as number),
             extraHourRate: initialData?.extraHourRate || ('' as unknown as number),
+            waitingCharge: initialData?.waitingCharge || 0,
+            gatePass: initialData?.gatePass || 0,
             isActive: true,
             items: defaultItems,
         },
@@ -138,6 +142,26 @@ export function TourScheduleForm({
     const watchedName = useWatch({
         control: form.control,
         name: 'name',
+    });
+
+    const watchedDays = useWatch({
+        control: form.control,
+        name: 'days',
+    });
+
+    const watchedRatePerDay = useWatch({
+        control: form.control,
+        name: 'ratePerDay',
+    });
+
+    const watchedWaitingCharge = useWatch({
+        control: form.control,
+        name: 'waitingCharge',
+    });
+
+    const watchedGatePass = useWatch({
+        control: form.control,
+        name: 'gatePass',
     });
 
     // Debug: log existing schedules and initial data
@@ -163,7 +187,10 @@ export function TourScheduleForm({
         { distance: 0, accommodation: 0, meals: 0, activities: 0, otherCosts: 0 }
     ) || { distance: 0, accommodation: 0, meals: 0, activities: 0, otherCosts: 0 };
 
-    const grandTotal = totals.accommodation + totals.meals + totals.activities + totals.otherCosts;
+    const hireTotal = (Number(watchedRatePerDay) || 0) * (Number(watchedDays) || 1);
+    const itineraryTotal = totals.accommodation + totals.meals + totals.activities + totals.otherCosts;
+    const additionalTotal = (Number(watchedWaitingCharge) || 0) + (Number(watchedGatePass) || 0);
+    const grandTotal = hireTotal + itineraryTotal + additionalTotal;
 
     const [isManualPrice, setIsManualPrice] = useState(false);
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -202,12 +229,10 @@ export function TourScheduleForm({
         }
     };
 
-    // Auto-calculate base price per person
-    // Formula: Grand Total / Seat Count
     useEffect(() => {
         if (isManualPrice) return;
 
-        const seats = watchedSeats || CATEGORY_SEATS[watchedCategory] || 1;
+        const seats = Number(watchedSeats) || CATEGORY_SEATS[watchedCategory] || 1;
         const calculatedPrice = grandTotal / seats;
 
         // Only update if it's a valid number and actually changed significantly
@@ -442,6 +467,26 @@ export function TourScheduleForm({
                                 step="0.01"
                                 placeholder="0.00"
                                 {...form.register('extraHourRate')}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="waitingCharge">Waiting Charge (Rs.)</Label>
+                            <Input
+                                id="waitingCharge"
+                                type="number"
+                                step="0.01"
+                                placeholder="0.00"
+                                {...form.register('waitingCharge')}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="gatePass">Gate Pass (Rs.)</Label>
+                            <Input
+                                id="gatePass"
+                                type="number"
+                                step="0.01"
+                                placeholder="0.00"
+                                {...form.register('gatePass')}
                             />
                         </div>
                     </div>

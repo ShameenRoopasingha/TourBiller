@@ -32,8 +32,42 @@ async function seed() {
     });
 
     // 3. Create a Tour Schedule (Route)
-    const schedule = await prisma.tourSchedule.create({
-        data: {
+    const schedule = await prisma.tourSchedule.upsert({
+        where: { name: '2-Day Kandy Tour (Sample)' },
+        update: {
+            days: 2,
+            vehicleCategory: 'CAR',
+            ratePerDay: 15000,
+            kmPerDay: 100,
+            excessKmRate: 80,
+            extraHourRate: 500,
+            waitingCharge: 1500,
+            gatePass: 500,
+            items: {
+                deleteMany: {},
+                create: [
+                    { 
+                        dayNumber: 1, 
+                        title: 'Colombo to Kandy', 
+                        distanceKm: 120,
+                        accommodation: 8000,
+                        meals: 3000,
+                        activities: 2000,
+                        otherCosts: 500
+                    },
+                    { 
+                        dayNumber: 2, 
+                        title: 'Kandy to Colombo', 
+                        distanceKm: 120,
+                        accommodation: 4000,
+                        meals: 2500,
+                        activities: 1000,
+                        otherCosts: 500
+                    },
+                ]
+            }
+        },
+        create: {
             name: '2-Day Kandy Tour (Sample)',
             days: 2,
             vehicleCategory: 'CAR',
@@ -98,8 +132,14 @@ async function seed() {
     const extraHourRate = 500;
     const extraKm = 150;        // 350 total - (100 * 2 scheduled days)
 
-    // Total = excessKm * hireRate + packageCharge + extraHours * extraHourRate
-    const totalAmount = (extraKm * hireRate) + packageCharge + (extraHours * extraHourRate);
+    const accommodationCharge = 12000;
+    const mealsCharge = 5500;
+    const activitiesCharge = 3000;
+    const otherCostsCharge = 1000;
+
+    // Total = excessKm * hireRate + packageCharge + extraHours * extraHourRate + itinerary costs
+    const totalAmount = (extraKm * hireRate) + packageCharge + (extraHours * extraHourRate) + 
+                       accommodationCharge + mealsCharge + activitiesCharge + otherCostsCharge;
 
     const bill = await prisma.bill.create({
         data: {
