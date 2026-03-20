@@ -14,6 +14,11 @@ interface TourScheduleDetailProps {
         days: number;
         basePricePerPerson: number;
         vehicleCategory: string;
+        ratePerDay: number;
+        kmPerDay: number;
+        waitingCharge: number;
+        gatePass: number;
+        seats: number;
         excessKmRate: number | null;
         extraHourRate: number | null;
         updatedAt: Date;
@@ -36,6 +41,10 @@ export function TourScheduleDetail({ schedule }: TourScheduleDetailProps) {
         (sum, item) => sum + item.accommodation + item.meals + item.activities + item.otherCosts,
         0
     );
+
+    const hireTotal = (schedule.ratePerDay || 0) * (schedule.days || 1);
+    const additionalTotal = (schedule.waitingCharge || 0) + (schedule.gatePass || 0);
+    const grandTotal = hireTotal + totalItineraryCost + additionalTotal;
 
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
@@ -62,7 +71,7 @@ export function TourScheduleDetail({ schedule }: TourScheduleDetailProps) {
             </div>
 
             {/* Overview Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <Card className="bg-primary/5 border-primary/10">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-2">
@@ -70,7 +79,7 @@ export function TourScheduleDetail({ schedule }: TourScheduleDetailProps) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{schedule.days} Days</div>
+                        <div className="text-xl font-bold">{schedule.days} Days</div>
                     </CardContent>
                 </Card>
 
@@ -81,7 +90,7 @@ export function TourScheduleDetail({ schedule }: TourScheduleDetailProps) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{totalDistance} km</div>
+                        <div className="text-xl font-bold">{totalDistance} km</div>
                     </CardContent>
                 </Card>
 
@@ -92,20 +101,35 @@ export function TourScheduleDetail({ schedule }: TourScheduleDetailProps) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold capitalize">{schedule.vehicleCategory.toLowerCase().replace('_', ' ')}</div>
+                        <div className="text-xl font-bold capitalize">{schedule.vehicleCategory.toLowerCase().replace('_', ' ')}</div>
                     </CardContent>
                 </Card>
 
                 <Card className="bg-primary/10 border-primary/20">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-xs font-semibold uppercase text-primary/70 flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-full border border-primary/30 text-primary text-[10px] font-bold uppercase tracking-wider">Charge Per Person</span>
+                            <span className="px-2 py-0.5 rounded-full border border-primary/30 text-primary text-[9px] font-bold uppercase tracking-wider">Charge Per Person</span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-primary">{formatCurrency(schedule.basePricePerPerson)}</div>
+                        <div className="text-lg font-bold text-primary leading-none">{formatCurrency(schedule.basePricePerPerson)}</div>
                     </CardContent>
                 </Card>
+                <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 border-none shadow-lg shadow-indigo-500/20 text-white overflow-hidden relative group">
+                    <div className="absolute -right-2 -top-2 opacity-10 group-hover:scale-110 transition-transform">
+                        <Clock className="h-16 w-16 rotate-12" />
+                    </div>
+                    <CardHeader className="pb-1 relative z-10">
+                        <CardTitle className="text-[9px] font-bold uppercase tracking-widest text-white/80 flex items-center gap-2">
+                            Estimated Total
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="relative z-10">
+                        <div className="text-lg font-black tracking-tight leading-none">{formatCurrency(grandTotal)}</div>
+                        <div className="text-[9px] text-white/60 mt-1 italic font-medium">Full tour amount</div>
+                    </CardContent>
+                </Card>
+
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -137,7 +161,7 @@ export function TourScheduleDetail({ schedule }: TourScheduleDetailProps) {
                                                 &quot;{item.description}&quot;
                                             </p>
                                         )}
-                                        
+
                                         <div className="pl-11 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                                             <div className="flex flex-col">
                                                 <span className="text-muted-foreground mb-1 uppercase tracking-tight">Accommodation</span>
@@ -204,13 +228,19 @@ export function TourScheduleDetail({ schedule }: TourScheduleDetailProps) {
                                     <span>{formatCurrency(totalItineraryCost)}</span>
                                 </div>
                                 <div className="flex justify-between text-primary-foreground/80">
-                                    <span>Base Personnel Rate</span>
-                                    <span>{formatCurrency(schedule.basePricePerPerson)}</span>
+                                    <span>Hire ({schedule.days} days)</span>
+                                    <span>{formatCurrency(hireTotal)}</span>
                                 </div>
+                                {(schedule.waitingCharge > 0 || schedule.gatePass > 0) && (
+                                    <div className="flex justify-between text-primary-foreground/80">
+                                        <span>Waiting & Gate Pass</span>
+                                        <span>{formatCurrency(additionalTotal)}</span>
+                                    </div>
+                                )}
                                 <Separator className="bg-primary-foreground/20" />
                                 <div className="flex justify-between text-xl font-bold">
                                     <span>Estimated Total</span>
-                                    <span>{formatCurrency(totalItineraryCost + (schedule.basePricePerPerson || 0))}</span>
+                                    <span>{formatCurrency(grandTotal)}</span>
                                 </div>
                                 <p className="text-[10px] text-primary-foreground/60 leading-tight mt-2 italic">
                                     Note: This is a system estimate. Final quote may vary based on vehicle availability and seasonal taxes.
