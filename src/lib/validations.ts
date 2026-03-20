@@ -4,7 +4,7 @@ import { z } from "zod";
 export const BillSchema = z.object({
   vehicleNo: z.string().min(1, "Vehicle number is required"),
   customerName: z.string().min(1, "Customer name is required"),
-  customerAddress: z.string().optional(),
+  customerAddress: z.string().nullish(),
   route: z.string().min(1, "Route is required"),
   startMeter: z.coerce.number().min(0, "Start meter must be positive"),
   endMeter: z.coerce.number().min(0, "End meter must be positive"),
@@ -57,17 +57,17 @@ export type ActionResult<T> = {
 // Vehicle validation schema
 export const VehicleSchema = z.object({
   vehicleNo: z.string().min(1, "Vehicle number is required"),
-  model: z.string().optional(),
+  model: z.string().nullish(),
   category: z.string().default("CAR"),
   status: z.string().default("ACTIVE"),
   ratePerDay: z.coerce.number().min(0).default(0),
   kmPerDay: z.coerce.number().min(0).default(0),
   excessKmRate: z.coerce.number().min(0).default(0),
   extraHourRate: z.coerce.number().min(0).default(0),
-  seats: z.coerce.number().min(0).optional(),
-  acType: z.string().optional(),
-  features: z.string().optional(),
-  insuranceCoverage: z.string().optional(),
+  seats: z.coerce.number().min(0).nullish(),
+  acType: z.string().nullish(),
+  features: z.string().nullish(),
+  insuranceCoverage: z.string().nullish(),
   currentMileage: z.coerce.number().min(0).default(0),
   oilChangeInterval: z.coerce.number().min(0).default(5000),
   lastOilChangeMileage: z.coerce.number().min(0).default(0),
@@ -91,16 +91,16 @@ export type Vehicle = z.infer<typeof VehicleDbSchema>;
 // Business Profile validation schema
 export const BusinessProfileSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
-  address: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email("Invalid email").optional().or(z.literal('')),
-  website: z.string().optional(),
-  logoUrl: z.string().optional().or(z.literal('')),
+  address: z.string().nullish(),
+  phone: z.string().nullish(),
+  email: z.string().email("Invalid email").nullish().or(z.literal('')),
+  website: z.string().nullish(),
+  logoUrl: z.string().nullish().or(z.literal('')),
   usdRate: z.coerce.number().min(0).default(300),
-  bankName: z.string().optional(),
-  bankBranch: z.string().optional(),
-  bankAccountNo: z.string().optional(),
-  bankAccountName: z.string().optional(),
+  bankName: z.string().nullish(),
+  bankBranch: z.string().nullish(),
+  bankAccountNo: z.string().nullish(),
+  bankAccountName: z.string().nullish(),
 });
 
 export type BusinessProfileFormData = z.infer<typeof BusinessProfileSchema>;
@@ -116,9 +116,9 @@ export type BusinessProfile = z.infer<typeof BusinessProfileDbSchema>;
 // Customer validation schema
 export const CustomerSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  mobile: z.string().min(1, "Mobile number is required"),
-  email: z.string().email("Invalid email").optional().or(z.literal('')),
-  address: z.string().optional(),
+  mobile: z.string().min(1, "Mobile number is required").nullish(),
+  email: z.string().email("Invalid email").nullish().or(z.literal('')),
+  address: z.string().nullish(),
 });
 
 export type CustomerFormData = z.infer<typeof CustomerSchema>;
@@ -136,11 +136,11 @@ export const BookingSchema = z.object({
   vehicleNo: z.string().min(1, "Vehicle number is required"),
   customerName: z.string().min(1, "Customer name is required"),
   startDate: z.coerce.date(),
-  endDate: z.coerce.date().optional(),
-  destination: z.string().optional(),
+  endDate: z.coerce.date().nullish(),
+  destination: z.string().nullish(),
   status: z.string().default("CONFIRMED"),
   advanceAmount: z.coerce.number().min(0).default(0),
-  notes: z.string().optional(),
+  notes: z.string().nullish(),
 }).refine(data => !data.endDate || data.endDate >= data.startDate, {
   message: "End date must be after or equal to start date",
   path: ["endDate"]
@@ -161,7 +161,7 @@ export type Booking = z.infer<typeof BookingDbSchema>;
 export const TourScheduleDayItemSchema = z.object({
   dayNumber: z.coerce.number().min(1, "Day number must be at least 1"),
   title: z.string().min(1, "Day title is required"),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   distanceKm: z.coerce.number().min(0).default(0),
   accommodation: z.coerce.number().min(0).default(0),
   meals: z.coerce.number().min(0).default(0),
@@ -174,16 +174,16 @@ export type TourScheduleDayItemFormData = z.infer<typeof TourScheduleDayItemSche
 // Tour Schedule validation schema
 export const TourScheduleSchema = z.object({
   name: z.string().min(1, "Tour name is required"),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   days: z.coerce.number().min(1, "Must have at least 1 day"),
-  basePricePerPerson: z.coerce.number().min(0).optional().or(z.literal('')).transform(v => v === '' ? undefined : v).default(0),
+  basePricePerPerson: z.coerce.number().min(0).nullish().or(z.literal('')).transform(v => v === '' ? undefined : v).default(0),
   vehicleCategory: z.string().default("CAR"),
-  vehicleNo: z.string().optional().or(z.literal('')).transform(v => v === '' ? undefined : v),
+  vehicleNo: z.string().nullish().or(z.literal('')).transform(v => v === '' ? undefined : v),
   ratePerDay: z.coerce.number().min(0).default(0),
   kmPerDay: z.coerce.number().min(0).default(0),
   seats: z.coerce.number().min(0).default(0),
-  excessKmRate: z.coerce.number().min(0).optional().or(z.literal('')).transform(v => v === '' ? undefined : v),
-  extraHourRate: z.coerce.number().min(0).optional().or(z.literal('')).transform(v => v === '' ? undefined : v),
+  excessKmRate: z.coerce.number().min(0).nullish().or(z.literal('')).transform(v => v === '' ? undefined : v),
+  extraHourRate: z.coerce.number().min(0).nullish().or(z.literal('')).transform(v => v === '' ? undefined : v),
   waitingCharge: z.coerce.number().min(0).default(0),
   gatePass: z.coerce.number().min(0).default(0),
   isActive: z.boolean().default(true),
@@ -217,8 +217,8 @@ export const QuotationSchema = z.object({
   pickupLocation: z.string().nullish(),
   dropLocation: z.string().nullish(),
   numberOfPersons: z.coerce.number().min(1).default(1),
-  startDate: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().nullish()),
-  endDate: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().nullish()),
+  startDate: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().nullable()).optional(),
+  endDate: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().nullable()).optional(),
   hireRatePerDay: z.coerce.number().min(0).default(0),
   kmPerDay: z.coerce.number().min(0).default(0),
   excessKmRate: z.coerce.number().min(0).default(0),
@@ -229,7 +229,7 @@ export const QuotationSchema = z.object({
   advanceAmount: z.coerce.number().min(0).default(0),
   excludedItems: z.string().nullish(),
   notes: z.string().nullish(),
-  validUntil: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().nullish()),
+  validUntil: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().nullable()).optional(),
 });
 
 export type QuotationFormData = z.infer<typeof QuotationSchema>;
@@ -256,3 +256,23 @@ export type QuotationWithSchedule = Quotation & {
     items: TourScheduleDayItem[];
   };
 };
+
+// Vehicle Expense validation schema
+export const VehicleExpenseSchema = z.object({
+  vehicleNo: z.string().min(1, "Vehicle number is required"),
+  amount: z.coerce.number().min(0, "Amount must be positive"),
+  category: z.enum(['REPAIR', 'BREAKDOWN', 'FUEL', 'SERVICE', 'OIL_CHANGE', 'FILTER_CHANGE', 'BODY_WASH', 'OTHER']),
+  description: z.string().nullish(),
+  date: z.coerce.date().default(() => new Date()),
+  bookingId: z.string().nullish(),
+});
+
+export type VehicleExpenseFormData = z.infer<typeof VehicleExpenseSchema>;
+
+export const VehicleExpenseDbSchema = VehicleExpenseSchema.extend({
+  id: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type VehicleExpense = z.infer<typeof VehicleExpenseDbSchema>;
