@@ -1,22 +1,21 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { 
-    Loader2, 
-    Plus, 
-    Trash2, 
-    Wrench, 
-    Zap, 
-    Fuel, 
-    Settings, 
+import {
+    Loader2,
+    Plus,
+    Trash2,
+    Wrench,
+    Zap,
+    Fuel,
+    Settings,
     MoreHorizontal,
-    Calendar as CalendarIcon,
     AlertCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { 
-    addVehicleExpense, 
-    getVehicleExpenses, 
+import {
+    addVehicleExpense,
+    getVehicleExpenses,
     deleteVehicleExpense,
     type VehicleExpense,
     type VehicleExpenseCategory
@@ -41,13 +40,13 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
+
 
 interface VehicleExpenseManagerProps {
     vehicleNo: string;
 }
 
-const CATEGORIES: { label: string; value: VehicleExpenseCategory; icon: React.ComponentType<any> }[] = [
+const CATEGORIES: { label: string; value: VehicleExpenseCategory; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }[] = [
     { label: 'Repair', value: 'REPAIR', icon: Wrench },
     { label: 'Breakdown', value: 'BREAKDOWN', icon: Zap },
     { label: 'Fuel', value: 'FUEL', icon: Fuel },
@@ -82,8 +81,29 @@ export function VehicleExpenseManager({ vehicleNo }: VehicleExpenseManagerProps)
     }, [vehicleNo]);
 
     useEffect(() => {
-        fetchExpenses();
-    }, [fetchExpenses]);
+        let isMounted = true;
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const result = await getVehicleExpenses(vehicleNo);
+                if (isMounted) {
+                    if (result.success && result.data) {
+                        setExpenses(result.data);
+                    } else {
+                        setError(result.error || 'Failed to fetch expenses');
+                    }
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+        fetchData();
+        return () => {
+            isMounted = false;
+        };
+    }, [vehicleNo]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -101,6 +121,7 @@ export function VehicleExpenseManager({ vehicleNo }: VehicleExpenseManagerProps)
             category,
             description,
             date: new Date(date),
+            bookingId: '',
         });
 
         if (result.success) {
@@ -244,13 +265,12 @@ export function VehicleExpenseManager({ vehicleNo }: VehicleExpenseManagerProps)
                                                 {format(new Date(exp.date), 'dd MMM yyyy')}
                                             </TableCell>
                                             <TableCell>
-                                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                                                    exp.category === 'REPAIR' ? 'bg-orange-100 text-orange-700' :
+                                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${exp.category === 'REPAIR' ? 'bg-orange-100 text-orange-700' :
                                                     exp.category === 'BREAKDOWN' ? 'bg-red-100 text-red-700' :
-                                                    exp.category === 'FUEL' ? 'bg-blue-100 text-blue-700' :
-                                                    exp.category === 'SERVICE' ? 'bg-purple-100 text-purple-700' :
-                                                    'bg-gray-100 text-gray-700'
-                                                }`}>
+                                                        exp.category === 'FUEL' ? 'bg-blue-100 text-blue-700' :
+                                                            exp.category === 'SERVICE' ? 'bg-purple-100 text-purple-700' :
+                                                                'bg-gray-100 text-gray-700'
+                                                    }`}>
                                                     {exp.category}
                                                 </span>
                                             </TableCell>
@@ -261,9 +281,9 @@ export function VehicleExpenseManager({ vehicleNo }: VehicleExpenseManagerProps)
                                                 Rs. {exp.amount.toLocaleString()}
                                             </TableCell>
                                             <TableCell>
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
                                                     className="h-8 w-8 text-muted-foreground hover:text-red-600"
                                                     onClick={() => handleDelete(exp.id)}
                                                 >

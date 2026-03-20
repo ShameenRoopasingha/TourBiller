@@ -18,6 +18,29 @@ async function PrintQuotation({ id }: { id: string }) {
 
     const quotation = quotationResult.data;
 
+    // Ensure nullable fields are null instead of undefined to match QuotationData type
+    const fixedQuotation = {
+        ...quotation,
+        customerEmail: quotation.customerEmail ?? null,
+        customerPhone: quotation.customerPhone ?? null,
+        vehicleNo: quotation.vehicleNo ?? null,
+        pickupLocation: quotation.pickupLocation ?? null,
+        dropLocation: quotation.dropLocation ?? null,
+        excludedItems: quotation.excludedItems ?? null,
+        notes: quotation.notes ?? null,
+        startDate: quotation.startDate ?? null,
+        endDate: quotation.endDate ?? null,
+        validUntil: quotation.validUntil ?? null,
+        tourSchedule: {
+            ...quotation.tourSchedule,
+            description: quotation.tourSchedule.description ?? null,
+            items: quotation.tourSchedule.items.map(item => ({
+                ...item,
+                description: item.description ?? null,
+            })),
+        },
+    };
+
     // Fetch vehicle specs if quotation has a vehicle
     let vehicleSpecs: {
         vehicleSeats?: number | null;
@@ -34,12 +57,12 @@ async function PrintQuotation({ id }: { id: string }) {
             const vehicle = vehiclesResult.data.find(v => v.vehicleNo === quotation.vehicleNo);
             if (vehicle) {
                 vehicleSpecs = {
-                    vehicleSeats: vehicle.seats,
-                    vehicleAcType: vehicle.acType,
-                    vehicleFeatures: vehicle.features,
-                    vehicleInsuranceCoverage: vehicle.insuranceCoverage,
-                    vehicleExcessKmRate: vehicle.excessKmRate,
-                    vehicleExtraHourRate: vehicle.extraHourRate,
+                    vehicleSeats: vehicle.seats ?? null,
+                    vehicleAcType: vehicle.acType ?? null,
+                    vehicleFeatures: vehicle.features ?? null,
+                    vehicleInsuranceCoverage: vehicle.insuranceCoverage ?? null,
+                    vehicleExcessKmRate: vehicle.excessKmRate ?? null,
+                    vehicleExtraHourRate: vehicle.extraHourRate ?? null,
                 };
             }
         }
@@ -47,7 +70,7 @@ async function PrintQuotation({ id }: { id: string }) {
 
     return (
         <QuotationTemplate
-            quotation={{ ...quotation, ...vehicleSpecs } as any}
+            quotation={{ ...fixedQuotation, ...vehicleSpecs }}
             businessProfile={profileResult.success ? profileResult.data : undefined}
         />
     );
