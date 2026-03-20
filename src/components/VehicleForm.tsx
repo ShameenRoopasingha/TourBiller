@@ -5,7 +5,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { VehicleSchema, type VehicleFormData, type Vehicle } from '@/lib/validations';
+import { VehicleFormSchema, type VehicleFormInput, type Vehicle } from '@/lib/validations';
+
+// For backward compatibility - alias the type
+export type VehicleFormData = VehicleFormInput;
 import { createVehicle, updateVehicle } from '@/lib/vehicle-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
@@ -31,29 +34,29 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
     const router = useRouter();
     const handleEnterKey = useEnterNavigation();
 
-    const form = useForm<VehicleFormData>({
+    const form = useForm<VehicleFormInput>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(VehicleSchema) as any,
+        resolver: zodResolver(VehicleFormSchema) as any,
         defaultValues: {
             vehicleNo: vehicle?.vehicleNo || '',
             model: vehicle?.model || '',
             category: vehicle?.category || 'CAR',
             status: vehicle?.status || 'ACTIVE',
-            ratePerDay: vehicle?.ratePerDay || ('' as unknown as number),
-            kmPerDay: vehicle?.kmPerDay || ('' as unknown as number),
-            excessKmRate: vehicle?.excessKmRate || ('' as unknown as number),
-            extraHourRate: vehicle?.extraHourRate || ('' as unknown as number),
-            seats: vehicle?.seats || undefined,
+            ratePerDay: vehicle?.ratePerDay ?? 0,
+            kmPerDay: vehicle?.kmPerDay ?? 0,
+            excessKmRate: vehicle?.excessKmRate ?? 0,
+            extraHourRate: vehicle?.extraHourRate ?? 0,
+            seats: vehicle?.seats ?? 0,
             acType: vehicle?.acType || '',
             features: vehicle?.features || '',
             insuranceCoverage: vehicle?.insuranceCoverage || '',
-            currentMileage: vehicle?.currentMileage || 0,
-            oilChangeInterval: vehicle?.oilChangeInterval || 5000,
-            lastOilChangeMileage: vehicle?.lastOilChangeMileage || 0,
-            filterChangeInterval: vehicle?.filterChangeInterval || 10000,
-            lastFilterChangeMileage: vehicle?.lastFilterChangeMileage || 0,
-            washInterval: vehicle?.washInterval || 1000,
-            lastWashMileage: vehicle?.lastWashMileage || 0,
+            currentMileage: vehicle?.currentMileage ?? 0,
+            oilChangeInterval: vehicle?.oilChangeInterval ?? 5000,
+            lastOilChangeMileage: vehicle?.lastOilChangeMileage ?? 0,
+            filterChangeInterval: vehicle?.filterChangeInterval ?? 10000,
+            lastFilterChangeMileage: vehicle?.lastFilterChangeMileage ?? 0,
+            washInterval: vehicle?.washInterval ?? 1000,
+            lastWashMileage: vehicle?.lastWashMileage ?? 0,
         },
     });
 
@@ -64,6 +67,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 formData.append(key, (value as any) instanceof Date ? (value as any).toISOString() : String(value));
             }
         });
@@ -117,9 +121,9 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Model (Optional)</FormLabel>
-                                     <FormControl>
-                                         <Input placeholder="e.g. Toyota Prius" {...field} value={field.value || ""} />
-                                     </FormControl>
+                                    <FormControl>
+                                        <Input placeholder="e.g. Toyota Prius" {...field} value={field.value || ""} />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -246,9 +250,9 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Number of Seats</FormLabel>
-                                         <FormControl>
-                                             <Input type="number" min="1" placeholder="e.g. 14" {...field} value={field.value || ""} />
-                                         </FormControl>
+                                        <FormControl>
+                                            <Input type="number" min="1" placeholder="e.g. 14" {...field} value={field.value || ""} />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -286,9 +290,9 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Insurance Coverage</FormLabel>
-                                         <FormControl>
-                                             <Input placeholder="e.g. Rs. 500,000 per passenger" {...field} value={field.value || ""} />
-                                         </FormControl>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Rs. 500,000 per passenger" {...field} value={field.value || ""} />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -300,9 +304,9 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Features / Amenities</FormLabel>
-                                         <FormControl>
-                                             <Input placeholder="e.g. TV, Sound system, Original seats" {...field} value={field.value || ""} />
-                                         </FormControl>
+                                        <FormControl>
+                                            <Input placeholder="e.g. TV, Sound system, Original seats" {...field} value={field.value || ""} />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -313,7 +317,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                     {/* Maintenance Tracking */}
                     <div className="border-t pt-4 mt-6">
                         <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Maintenance Tracking</h3>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <FormField
                                 control={form.control}
@@ -339,7 +343,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                         <FormItem>
                                             <FormLabel>Oil Change Interval (KM)</FormLabel>
                                             <FormControl>
-                                            <Input type="number" {...field} value={field.value ?? ""} />
+                                                <Input type="number" {...field} value={field.value ?? ""} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

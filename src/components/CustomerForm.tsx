@@ -5,7 +5,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { CustomerSchema, type CustomerFormData, type Customer } from '@/lib/validations';
+import { CustomerFormSchema, type CustomerFormInput, type Customer } from '@/lib/validations';
+
+// For backward compatibility - alias the type
+export type CustomerFormData = CustomerFormInput;
 import { createCustomer, updateCustomer } from '@/lib/customer-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { Button } from '@/components/ui/button';
@@ -30,8 +33,9 @@ export function CustomerForm({ customer }: CustomerFormProps) {
     const router = useRouter();
     const handleEnterKey = useEnterNavigation();
 
-    const form = useForm<CustomerFormData>({
-        resolver: zodResolver(CustomerSchema),
+    const form = useForm<CustomerFormInput>({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(CustomerFormSchema) as any,
         defaultValues: {
             name: customer?.name || '',
             mobile: customer?.mobile || '',
@@ -47,6 +51,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 formData.append(key, (value as any) instanceof Date ? (value as any).toISOString() : String(value));
             }
         });

@@ -5,7 +5,10 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, FileCheck, Calculator, Plus } from 'lucide-react';
 
-import { QuotationSchema, type QuotationFormData, type QuotationWithSchedule } from '@/lib/validations';
+import { QuotationFormSchema, type QuotationFormInput, type QuotationWithSchedule, type VehicleAvailabilityConflict } from '@/lib/validations';
+
+// For backward compatibility
+export type QuotationFormData = QuotationFormInput;
 import { generateQuotation, updateQuotation } from '@/lib/quotation-actions';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { formatCurrency } from '@/lib/calculations';
@@ -107,13 +110,13 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
     );
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
     const [justCreatedScheduleId, setJustCreatedScheduleId] = useState<string | null>(null);
-    const [availabilityConflict, setAvailabilityConflict] = useState<any | null>(null);
+    const [availabilityConflict, setAvailabilityConflict] = useState<VehicleAvailabilityConflict | null>(null);
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const handleEnterKey = useEnterNavigation();
 
-    const form = useForm<QuotationFormData>({
-        // @ts-expect-error Zod schema output type mismatch with RHF
-        resolver: zodResolver(QuotationSchema),
+    const form = useForm<QuotationFormInput>({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(QuotationFormSchema) as any,
         defaultValues: initialData ? {
             customerName: initialData.customerName,
             customerEmail: initialData.customerEmail || '',
@@ -135,7 +138,8 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
             excludedItems: initialData.excludedItems || 'Highway charges, Parking fees',
             notes: initialData.notes || '',
             tourScheduleId: initialData.tourScheduleId,
-            status: initialData.status as any || 'DRAFT',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            status: (initialData.status as any) || 'DRAFT',
             validUntil: initialData.validUntil ? new Date(initialData.validUntil).toISOString().split('T')[0] as unknown as Date : undefined,
         } : {
             customerName: '',
@@ -212,7 +216,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                         'Quotation'
                     );
                     if (result.success && !result.data?.available) {
-                        setAvailabilityConflict(result.data?.conflicts[0]);
+                        setAvailabilityConflict(result.data?.conflicts[0] || null);
                     }
                 } catch (e) {
                     console.error("Availability check failed", e);
@@ -227,20 +231,20 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
         const timer = setTimeout(checkAvailability, 500);
         return () => clearTimeout(timer);
     }, [watchedVehicleNo, watchedStartDate, watchedFields.endDate, initialData?.id]);
-    
+
     // When schedule selection changes
     const handleScheduleChange = React.useCallback((scheduleId: string) => {
         form.setValue('tourScheduleId', scheduleId);
         const schedule = schedules.find((s) => s.id === scheduleId);
         setSelectedSchedule(schedule || null);
-        
+
         if (schedule) {
             // Autofill rates from schedule if they exist
             if (schedule.ratePerDay > 0) form.setValue('hireRatePerDay', schedule.ratePerDay);
             if (schedule.kmPerDay > 0) form.setValue('kmPerDay', schedule.kmPerDay);
             if (schedule.excessKmRate) form.setValue('excessKmRate', schedule.excessKmRate);
             if (schedule.extraHourRate) form.setValue('extraHourRate', schedule.extraHourRate);
-            
+
             // If schedule has a vehicle, try to select it
             if (schedule.vehicleNo) {
                 const vehicle = vehicles.find(v => v.vehicleNo === schedule.vehicleNo);
@@ -280,7 +284,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
         const vehicle = vehicles.find((v) => v.id === vehicleId);
         if (vehicle) {
             form.setValue('vehicleNo', vehicle.vehicleNo);
-            
+
             // Prioritize schedule rates if they are set (non-zero)
             const rate = (selectedSchedule && selectedSchedule.ratePerDay > 0) ? selectedSchedule.ratePerDay : vehicle.ratePerDay;
             const km = (selectedSchedule && selectedSchedule.kmPerDay > 0) ? selectedSchedule.kmPerDay : vehicle.kmPerDay;
@@ -363,10 +367,10 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                 }
             });
 
-            const result = initialData 
+            const result = initialData
                 ? await updateQuotation(initialData.id, data.tourScheduleId, formData)
                 : await generateQuotation(data.tourScheduleId, formData);
-                
+
             if (result.success) {
                 setSuccess(true);
                 router.refresh();
@@ -387,6 +391,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
     const fmt = formatCurrency;
 
     return (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6" onKeyDown={handleEnterKey}>
             <div className="mb-6">
                 <h1 className="text-3xl font-bold tracking-tight">
@@ -425,10 +430,10 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <Label htmlFor="tourScheduleId">Tour Schedule *</Label>
-                            <Button 
-                                type="button" 
-                                variant="outline" 
-                                size="sm" 
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
                                 className="h-8 px-2 flex items-center gap-1"
                                 onClick={() => setIsScheduleModalOpen(true)}
                             >
@@ -458,7 +463,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                                     Add a new tour itinerary. It will be available for selection once saved.
                                 </DialogDescription>
                             </DialogHeader>
-                            <TourScheduleForm 
+                            <TourScheduleForm
                                 existingSchedules={schedules}
                                 hideHeader={true}
                                 onSuccess={(data) => {
@@ -476,31 +481,31 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                             <h4 className="text-sm font-medium mb-2">Itinerary Preview</h4>
                             <div className="rounded-md border overflow-x-auto">
                                 <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[60px]">Day</TableHead>
-                                        <TableHead>Route</TableHead>
-                                        <TableHead className="text-right">Km</TableHead>
-                                        <TableHead className="text-right">Accommodation</TableHead>
-                                        <TableHead className="text-right">Meals</TableHead>
-                                        <TableHead className="text-right">Activities</TableHead>
-                                        <TableHead className="text-right">Other</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {selectedSchedule.items.map((item) => (
-                                        <TableRow key={item.dayNumber}>
-                                            <TableCell className="font-medium">Day {item.dayNumber}</TableCell>
-                                            <TableCell>{item.title}</TableCell>
-                                            <TableCell className="text-right">{item.distanceKm}</TableCell>
-                                            <TableCell className="text-right">{fmt(item.accommodation)}</TableCell>
-                                            <TableCell className="text-right">{fmt(item.meals)}</TableCell>
-                                            <TableCell className="text-right">{fmt(item.activities)}</TableCell>
-                                            <TableCell className="text-right">{fmt(item.otherCosts)}</TableCell>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[60px]">Day</TableHead>
+                                            <TableHead>Route</TableHead>
+                                            <TableHead className="text-right">Km</TableHead>
+                                            <TableHead className="text-right">Accommodation</TableHead>
+                                            <TableHead className="text-right">Meals</TableHead>
+                                            <TableHead className="text-right">Activities</TableHead>
+                                            <TableHead className="text-right">Other</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {selectedSchedule.items.map((item) => (
+                                            <TableRow key={item.dayNumber}>
+                                                <TableCell className="font-medium">Day {item.dayNumber}</TableCell>
+                                                <TableCell>{item.title}</TableCell>
+                                                <TableCell className="text-right">{item.distanceKm}</TableCell>
+                                                <TableCell className="text-right">{fmt(item.accommodation)}</TableCell>
+                                                <TableCell className="text-right">{fmt(item.meals)}</TableCell>
+                                                <TableCell className="text-right">{fmt(item.activities)}</TableCell>
+                                                <TableCell className="text-right">{fmt(item.otherCosts)}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             </div>
                         </div>
                     )}
@@ -520,9 +525,9 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                         <div className="space-y-2">
                             <Label htmlFor="customerName">Customer Name *</Label>
                             <ComboboxField
-                                options={customers.map(c => ({ 
-                                    label: c.mobile ? `${c.name} (${c.mobile})` : c.name, 
-                                    value: c.id 
+                                options={customers.map(c => ({
+                                    label: c.mobile ? `${c.name} (${c.mobile})` : c.name,
+                                    value: c.id
                                 }))}
                                 value={customers.find(c => c.name === watchedCustomerName)?.id || watchedCustomerName}
                                 onChange={(val) => {
@@ -547,7 +552,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                             <div className="flex items-center justify-between mb-1">
                                 <Label>Select Vehicle *</Label>
                             </div>
-                             <ComboboxField
+                            <ComboboxField
                                 options={filteredVehicles.map((v) => ({
                                     label: `${v.vehicleNo} ${v.model ? `- ${v.model}` : ''} (${v.category})`,
                                     value: v.id
@@ -582,7 +587,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                                 <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-primary/70">Vehicle Configuration</h4>
                             </div>
-                            
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {selectedVehicle.seats && (
                                     <div className="flex items-start gap-2.5">
@@ -595,11 +600,11 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {selectedVehicle.seats && (
                                     <div className="flex items-start gap-2.5">
                                         <div className="p-1.5 bg-white dark:bg-slate-900 rounded-md border border-primary/10 shadow-sm text-primary">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                                         </div>
                                         <div>
                                             <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">Capacity</p>
@@ -611,7 +616,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                                 {selectedVehicle.features && (
                                     <div className="flex items-start gap-2.5 sm:col-span-2 lg:col-span-1">
                                         <div className="p-1.5 bg-white dark:bg-slate-900 rounded-md border border-primary/10 shadow-sm text-primary">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
                                         </div>
                                         <div>
                                             <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">Key Features</p>
@@ -624,7 +629,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                             {selectedVehicle.insuranceCoverage && (
                                 <div className="mt-2 pt-3 border-t border-primary/10 flex items-center gap-2">
                                     <div className="p-1 rounded bg-green-500/10 text-green-600 dark:text-green-400">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" /></svg>
                                     </div>
                                     <p className="text-xs font-medium text-muted-foreground">
                                         <span className="text-foreground font-bold">Insurance:</span> {selectedVehicle.insuranceCoverage}
@@ -671,7 +676,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                                 {...form.register('numberOfPersons')}
                             />
                         </div>
-                         <div className="space-y-2">
+                        <div className="space-y-2">
                             <Label htmlFor="startDate">Tour Start Date *</Label>
                             <Input
                                 id="startDate"
@@ -727,7 +732,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="hireRatePerDay">Vehicle Rate Per Day (Rs.)</Label>
-                             <Input
+                            <Input
                                 id="hireRatePerDay"
                                 type="number"
                                 step="0.01"
@@ -760,7 +765,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="extraHourRate">Extra Hour Rate (Rs.)</Label>
-                             <Input
+                            <Input
                                 id="extraHourRate"
                                 type="number"
                                 step="0.01"

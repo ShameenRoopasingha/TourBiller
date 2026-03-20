@@ -6,7 +6,10 @@ import { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Printer, Plus } from 'lucide-react';
-import { BillSchema, type BillFormData, type Vehicle, type Customer } from '@/lib/validations';
+import { BillFormSchema, type BillFormInput, type Vehicle, type Customer } from '@/lib/validations';
+
+// For backward compatibility
+export type BillFormData = BillFormInput;
 import { createBill } from '@/lib/actions';
 import { getBookingById } from '@/lib/booking-actions';
 import { formatCurrency } from '@/lib/calculations';
@@ -60,9 +63,9 @@ export function BillCreator({
     initialBookingId?: string;
     vehicles: Vehicle[];
     customers: Customer[];
-    schedules: { 
-        id: string; 
-        name: string; 
+    schedules: {
+        id: string;
+        name: string;
         days: number;
         vehicleNo?: string | null;
         ratePerDay: number;
@@ -71,7 +74,7 @@ export function BillCreator({
         extraHourRate?: number | null;
         waitingCharge: number;
         gatePass: number;
-        items: { 
+        items: {
             distanceKm: number;
             accommodation: number;
             meals: number;
@@ -103,7 +106,7 @@ export function BillCreator({
 
     const form = useForm<BillFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(BillSchema) as any,
+        resolver: zodResolver(BillFormSchema) as any,
         defaultValues: {
             vehicleNo: initialVehicleNo || '',
             customerName: initialCustomerName || '',
@@ -225,15 +228,15 @@ export function BillCreator({
             updateField('totalTourDistance', 0);
             return;
         }
-        
+
         const selectedSchedule = schedules.find(s => s.name === routeValue);
         if (selectedSchedule) {
             // Calculate total tour distance from items
             const totalTourDistance = selectedSchedule.items.reduce((sum, item) => sum + (item.distanceKm || 0), 0);
-            
+
             // Update calculation engine with expected tour distance
             updateField('totalTourDistance', totalTourDistance);
-            
+
             // Prioritize schedule rates
             if (selectedSchedule.kmPerDay > 0) {
                 form.setValue('allowedKm', selectedSchedule.kmPerDay);
@@ -310,18 +313,18 @@ export function BillCreator({
     useEffect(() => {
         const start = new Date(startDateValue);
         const end = new Date(endDateValue);
-        
+
         if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
             const diffMs = end.getTime() - start.getTime();
             const totalHours = diffMs / (1000 * 60 * 60);
-            
+
             // Use predefined tour days from selected schedule, or fall back to calculated days
             const selectedSchedule = schedules.find(s => s.name === routeValue);
             const scheduledDays = selectedSchedule ? selectedSchedule.days : Math.max(1, Math.floor(totalHours / 24));
-            
+
             // Extra hours = total hours beyond the scheduled tour days
             const extra = Math.max(0, totalHours - (scheduledDays * 24));
-            
+
             // Round to 1 decimal place
             const roundedExtra = Math.round(extra * 10) / 10;
             form.setValue('extraHours', roundedExtra);
@@ -363,18 +366,18 @@ export function BillCreator({
 
             const totalAllowedKm = allowedKmValue * scheduledDays;
             const extraKm = Math.max(0, totalDistance - totalAllowedKm);
-            
+
             // Round to 1 decimal place
             const roundedExtraKm = Math.round(extraKm * 10) / 10;
             form.setValue('extraKm', roundedExtraKm);
             form.setValue('scheduledDays', scheduledDays);
-            
+
             // Auto-update package charge if it makes sense (only if autoPackageCharge > 0)
             if (autoPackageCharge > 0) {
                 form.setValue('packageCharge', autoPackageCharge);
                 updateField('packageCharge', autoPackageCharge);
             }
-            
+
             updateField('extraKm', roundedExtraKm);
         }
     }, [startMeterValue, endMeterValue, allowedKmValue, days, startDateValue, endDateValue, routeValue, schedules, vehicles, form, updateField]);
@@ -451,7 +454,7 @@ export function BillCreator({
             form.setValue('allowedKm', allowedKm);
             form.setValue('packageCharge', packageCharge);
             form.setValue('extraHourRate', extraHourRate);
-            
+
             updateField('hireRate', hireRate);
             updateField('allowedKm', allowedKm);
             updateField('packageCharge', packageCharge);
@@ -595,10 +598,10 @@ export function BillCreator({
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <FormLabel>Route / Description</FormLabel>
-                                            <Button 
-                                                type="button" 
-                                                variant="outline" 
-                                                size="sm" 
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
                                                 className="h-8 px-2 flex items-center gap-1"
                                                 onClick={() => setIsScheduleModalOpen(true)}
                                             >
@@ -637,7 +640,7 @@ export function BillCreator({
                                                     Add a new tour itinerary. It will be available for selection once saved.
                                                 </DialogDescription>
                                             </DialogHeader>
-                                            <TourScheduleForm 
+                                            <TourScheduleForm
                                                 existingSchedules={schedules}
                                                 hideHeader={true}
                                                 onSuccess={(data) => {
@@ -951,14 +954,14 @@ export function BillCreator({
                                                 <span className="text-muted-foreground">Total Distance</span>
                                                 <span className="font-medium">{distance.toFixed(1)} km</span>
                                             </div>
-                                        {watchedAllowedKm > 0 && (
-                                            <div className="space-y-1 mt-2">
-                                                <div className="flex justify-between text-xs text-muted-foreground pl-2 border-l-2 border-primary/20">
-                                                    <span>Included ({watchedAllowedKm} km × {days} {days === 1 ? 'day' : 'days'})</span>
-                                                    <span>{watchedAllowedKm * days} km</span>
+                                            {watchedAllowedKm > 0 && (
+                                                <div className="space-y-1 mt-2">
+                                                    <div className="flex justify-between text-xs text-muted-foreground pl-2 border-l-2 border-primary/20">
+                                                        <span>Included ({watchedAllowedKm} km × {days} {days === 1 ? 'day' : 'days'})</span>
+                                                        <span>{watchedAllowedKm * days} km</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
                                         </div>
 
                                         <div className="border-t border-dashed border-primary/20 my-2"></div>
@@ -1004,7 +1007,7 @@ export function BillCreator({
                                                     <span>{formatCurrency(watchedWaitingCharge)}</span>
                                                 </div>
                                             )}
-                                            
+
                                             {/* Gate Pass / Parking */}
                                             {watchedGatePass > 0 && (
                                                 <div className="flex justify-between text-sm">

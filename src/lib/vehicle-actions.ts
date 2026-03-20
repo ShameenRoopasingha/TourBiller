@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { VehicleSchema, type ActionResult, type Vehicle } from '@/lib/validations';
+import { VehicleSchema, type ActionResult, type Vehicle, type VehicleAvailabilityConflict } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin } from '@/lib/auth-guard';
 
@@ -150,7 +150,7 @@ export async function checkVehicleAvailability(
     endDate: Date | string,
     currentId?: string, // Optional: exclude current record (Bill/Booking/Quotation) from check
     currentType?: 'Bill' | 'Booking' | 'Quotation'
-): Promise<ActionResult<{ available: boolean; conflicts: any[] }>> {
+): Promise<ActionResult<{ available: boolean; conflicts: VehicleAvailabilityConflict[] }>> {
     try {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -231,9 +231,9 @@ export async function checkVehicleAvailability(
             }
         });
 
-        const conflicts = [
+        const conflicts: VehicleAvailabilityConflict[] = [
             ...billConflicts.map(b => ({ 
-                type: 'Bill', 
+                type: 'Bill' as const, 
                 id: b.id, 
                 reference: `#${b.billNumber}`,
                 customer: b.customerName,
@@ -241,7 +241,7 @@ export async function checkVehicleAvailability(
                 end: b.endDate
             })),
             ...bookingConflicts.map(b => ({ 
-                type: 'Booking', 
+                type: 'Booking' as const, 
                 id: b.id, 
                 reference: 'Confirmed Booking',
                 customer: b.customerName,
@@ -249,7 +249,7 @@ export async function checkVehicleAvailability(
                 end: b.endDate || b.startDate
             })),
             ...quotationConflicts.map(q => ({
-                type: 'Quotation',
+                type: 'Quotation' as const,
                 id: q.id,
                 reference: `Quote #${q.quotationNumber}`,
                 customer: q.customerName,

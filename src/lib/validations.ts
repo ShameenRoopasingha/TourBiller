@@ -1,5 +1,204 @@
 import { z } from "zod";
 
+// ============================================
+// React Hook Form Compatible Form Schemas
+// These schemas avoid .nullish() which produces T | null | undefined
+// and handle dates to avoid unknown type issues
+// ============================================
+
+// ============================================
+// Shared Types and Interfaces
+// ============================================
+
+export interface VehicleAvailabilityConflict {
+  type: 'Bill' | 'Booking' | 'Quotation';
+  id: string;
+  reference: string;
+  customer: string;
+  start: Date;
+  end: Date;
+}
+
+// Customer form schema - RHF compatible
+export const CustomerFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  mobile: z.string().default(''),
+  email: z.string().email("Invalid email").or(z.literal('')).default(''),
+  address: z.string().default(''),
+});
+
+export type CustomerFormInput = z.infer<typeof CustomerFormSchema>;
+
+// Vehicle form schema - RHF compatible
+export const VehicleFormSchema = z.object({
+  vehicleNo: z.string().min(1, "Vehicle number is required"),
+  model: z.string().default(''),
+  category: z.string().default("CAR"),
+  status: z.string().default("ACTIVE"),
+  ratePerDay: z.coerce.number().min(0).default(0),
+  kmPerDay: z.coerce.number().min(0).default(0),
+  excessKmRate: z.coerce.number().min(0).default(0),
+  extraHourRate: z.coerce.number().min(0).default(0),
+  seats: z.coerce.number().min(0).default(0),
+  acType: z.string().default(''),
+  features: z.string().default(''),
+  insuranceCoverage: z.string().default(''),
+  currentMileage: z.coerce.number().min(0).default(0),
+  oilChangeInterval: z.coerce.number().min(0).default(5000),
+  lastOilChangeMileage: z.coerce.number().min(0).default(0),
+  filterChangeInterval: z.coerce.number().min(0).default(10000),
+  lastFilterChangeMileage: z.coerce.number().min(0).default(0),
+  washInterval: z.coerce.number().min(0).default(1000),
+  lastWashMileage: z.coerce.number().min(0).default(0),
+});
+
+export type VehicleFormInput = z.infer<typeof VehicleFormSchema>;
+
+// Bill form schema - RHF compatible
+export const BillFormSchema = z.object({
+  vehicleNo: z.string().min(1, "Vehicle number is required"),
+  customerName: z.string().min(1, "Customer name is required"),
+  customerAddress: z.string().optional().default(''),
+  route: z.string().min(1, "Route is required"),
+  startMeter: z.coerce.number().min(0, "Start meter must be positive"),
+  endMeter: z.coerce.number().min(0, "End meter must be positive"),
+  hireRate: z.coerce.number().min(0, "Hire rate must be positive"),
+  allowedKm: z.coerce.number().min(0, "Allowed Km must be positive").default(0),
+  waitingCharge: z.coerce.number().min(0, "Waiting charge must be positive").default(0),
+  gatePass: z.coerce.number().min(0, "Gate pass must be positive").default(0),
+  packageCharge: z.coerce.number().min(0, "Package charge must be positive").default(0),
+  advanceAmount: z.coerce.number().min(0, "Advance amount must be positive").default(0),
+  currency: z.string().default("LKR"),
+  exchangeRate: z.coerce.number().min(0).default(1),
+  paymentMethod: z.enum(["CASH", "CREDIT"]).default("CASH"),
+  startDate: z.coerce.date().default(() => new Date()),
+  endDate: z.coerce.date().default(() => new Date()),
+  extraHours: z.coerce.number().min(0).default(0),
+  extraHourRate: z.coerce.number().min(0).default(0),
+  extraKm: z.coerce.number().min(0).default(0),
+  scheduledDays: z.coerce.number().min(1).default(1),
+  accommodationCharge: z.coerce.number().min(0).default(0),
+  mealsCharge: z.coerce.number().min(0).default(0),
+  activitiesCharge: z.coerce.number().min(0).default(0),
+  otherCostsCharge: z.coerce.number().min(0).default(0),
+}).refine(data => data.endMeter > data.startMeter, {
+  message: "End meter must be greater than start meter",
+  path: ["endDate"]
+});
+
+export type BillFormInput = z.infer<typeof BillFormSchema>;
+
+// Booking form schema - RHF compatible
+export const BookingFormSchema = z.object({
+  vehicleNo: z.string().min(1, "Vehicle number is required"),
+  customerName: z.string().min(1, "Customer name is required"),
+  startDate: z.coerce.date().default(() => new Date()),
+  endDate: z.coerce.date().optional(),
+  destination: z.string().default(''),
+  status: z.string().default("CONFIRMED"),
+  advanceAmount: z.coerce.number().min(0).default(0),
+  notes: z.string().optional().default(''),
+}).refine(data => !data.endDate || data.endDate >= data.startDate, {
+  message: "End date must be after or equal to start date",
+  path: ["endDate"]
+});
+
+export type BookingFormInput = z.infer<typeof BookingFormSchema>;
+
+// Tour Schedule form schema - RHF compatible
+// Note: items schema is defined inline to avoid forward reference issues
+const TourScheduleDayItemFormSchema = z.object({
+  dayNumber: z.coerce.number().min(1, "Day number must be at least 1"),
+  title: z.string().min(1, "Day title is required"),
+  description: z.string().default(''),
+  distanceKm: z.coerce.number().min(0).default(0),
+  accommodation: z.coerce.number().min(0).default(0),
+  meals: z.coerce.number().min(0).default(0),
+  activities: z.coerce.number().min(0).default(0),
+  otherCosts: z.coerce.number().min(0).default(0),
+});
+
+export const TourScheduleFormSchema = z.object({
+  name: z.string().min(1, "Tour name is required"),
+  description: z.string().default(''),
+  days: z.coerce.number().min(1, "Must have at least 1 day"),
+  basePricePerPerson: z.coerce.number().min(0).default(0),
+  vehicleCategory: z.string().default("CAR"),
+  vehicleNo: z.string().default(''),
+  ratePerDay: z.coerce.number().min(0).default(0),
+  kmPerDay: z.coerce.number().min(0).default(0),
+  seats: z.coerce.number().min(0).default(0),
+  excessKmRate: z.coerce.number().min(0).optional(),
+  extraHourRate: z.coerce.number().min(0).optional(),
+  waitingCharge: z.coerce.number().min(0).default(0),
+  gatePass: z.coerce.number().min(0).default(0),
+  isActive: z.boolean().default(true),
+  items: z.array(TourScheduleDayItemFormSchema).min(1, "At least one day item is required"),
+});
+
+export type TourScheduleFormInput = z.infer<typeof TourScheduleFormSchema>;
+
+// Quotation form schema - RHF compatible
+export const QuotationFormSchema = z.object({
+  tourScheduleId: z.string().min(1, "Tour schedule is required"),
+  customerName: z.string().min(1, "Customer name is required"),
+  customerEmail: z.string().email("Invalid email").or(z.literal('')).default(''),
+  customerPhone: z.string().default(''),
+  vehicleNo: z.string().default(''),
+  pickupLocation: z.string().default(''),
+  dropLocation: z.string().default(''),
+  numberOfPersons: z.coerce.number().min(1).default(1),
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional(),
+  hireRatePerDay: z.coerce.number().min(0).default(0),
+  kmPerDay: z.coerce.number().min(0).default(0),
+  excessKmRate: z.coerce.number().min(0).default(0),
+  extraHourRate: z.coerce.number().min(0).default(0),
+  markup: z.coerce.number().min(0).default(0),
+  discount: z.coerce.number().min(0).default(0),
+  driverCostPerDay: z.coerce.number().min(0).default(0),
+  advanceAmount: z.coerce.number().min(0).default(0),
+  excludedItems: z.string().default(''),
+  notes: z.string().default(''),
+  validUntil: z.coerce.date().optional(),
+  status: z.string().default('DRAFT'),
+});
+
+export type QuotationFormInput = z.infer<typeof QuotationFormSchema>;
+
+// Vehicle Expense form schema - RHF compatible
+export const VehicleExpenseFormSchema = z.object({
+  vehicleNo: z.string().min(1, "Vehicle number is required"),
+  amount: z.coerce.number().min(0, "Amount must be positive"),
+  category: z.enum(['REPAIR', 'BREAKDOWN', 'FUEL', 'SERVICE', 'OIL_CHANGE', 'FILTER_CHANGE', 'BODY_WASH', 'OTHER']),
+  description: z.string().default(''),
+  date: z.coerce.date().default(() => new Date()),
+  bookingId: z.string().default(''),
+});
+
+export type VehicleExpenseFormInput = z.infer<typeof VehicleExpenseFormSchema>;
+
+// Business Profile form schema - RHF compatible
+export const BusinessProfileFormSchema = z.object({
+  companyName: z.string().min(1, "Company name is required"),
+  address: z.string().default(''),
+  phone: z.string().default(''),
+  email: z.string().email("Invalid email").or(z.literal('')).default(''),
+  website: z.string().default(''),
+  logoUrl: z.string().default(''),
+  usdRate: z.coerce.number().min(0).default(300),
+  bankName: z.string().default(''),
+  bankBranch: z.string().default(''),
+  bankAccountNo: z.string().default(''),
+  bankAccountName: z.string().default(''),
+});
+
+export type BusinessProfileFormInput = z.infer<typeof BusinessProfileFormSchema>;
+
+// ============================================
+// Original Database/Server Validation Schemas
+// ============================================
+
 // Bill validation schema
 export const BillSchema = z.object({
   vehicleNo: z.string().min(1, "Vehicle number is required"),

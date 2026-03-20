@@ -4,7 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { BookingSchema, type BookingFormData, type Vehicle, type Customer } from '@/lib/validations';
+import { BookingFormSchema, type BookingFormInput, type Vehicle, type Customer, type VehicleAvailabilityConflict } from '@/lib/validations';
+
+// For backward compatibility
+export type BookingFormData = BookingFormInput;
 import { createBooking } from '@/lib/booking-actions';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
@@ -36,18 +39,18 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
-    const [availabilityConflict, setAvailabilityConflict] = useState<any | null>(null);
+    const [availabilityConflict, setAvailabilityConflict] = useState<VehicleAvailabilityConflict | null>(null);
     const handleEnterKey = useEnterNavigation();
 
-    const form = useForm<BookingFormData>({
+    const form = useForm<BookingFormInput>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(BookingSchema) as any,
+        resolver: zodResolver(BookingFormSchema) as any,
         defaultValues: {
             vehicleNo: '',
             customerName: '',
             status: 'CONFIRMED',
             destination: '',
-            advanceAmount: '' as unknown as number,
+            advanceAmount: 0,
             notes: '',
         },
     });
@@ -144,7 +147,7 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                                         label: v.model ? `${v.vehicleNo} - ${v.model}` : v.vehicleNo,
                                                         value: v.vehicleNo
                                                     }))}
-                                                    value={field.value}
+                                                    value={field.value || ''}
                                                     onChange={field.onChange}
                                                     placeholder="Select Vehicle..."
                                                 />
@@ -180,7 +183,7 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                                         label: c.mobile ? `${c.name} (${c.mobile})` : c.name,
                                                         value: c.name
                                                     }))}
-                                                    value={field.value}
+                                                    value={field.value || ''}
                                                     onChange={field.onChange}
                                                     placeholder="Select Customer..."
                                                     allowCustomValue={true}
@@ -201,7 +204,7 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                             <FormLabel>Start Date & Time</FormLabel>
                                             <FormControl>
                                                 <DateTimePicker
-                                                    date={field.value}
+                                                    date={field.value || undefined}
                                                     setDate={(date) => field.onChange(date)}
                                                 />
                                             </FormControl>
@@ -218,7 +221,7 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                             <FormLabel>End Date & Time (Optional)</FormLabel>
                                             <FormControl>
                                                 <DateTimePicker
-                                                    date={field.value}
+                                                    date={field.value || undefined}
                                                     setDate={(date) => field.onChange(date)}
                                                 />
                                             </FormControl>
@@ -241,7 +244,7 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                                         label: s.name,
                                                         value: s.name
                                                     }))}
-                                                    value={field.value}
+                                                    value={field.value || ''}
                                                     onChange={field.onChange}
                                                     placeholder="Select or type a destination..."
                                                     allowCustomValue={true}
@@ -280,7 +283,7 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                     <FormItem>
                                         <FormLabel>Notes</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Additional details..." {...field} />
+                                            <Textarea placeholder="Additional details..." {...field} value={field.value || ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

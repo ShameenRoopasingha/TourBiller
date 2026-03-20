@@ -5,7 +5,10 @@ import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, Trash2, MapPin } from 'lucide-react';
 
-import { TourScheduleSchema, type TourScheduleFormData, type Vehicle } from '@/lib/validations';
+import { TourScheduleFormSchema, type TourScheduleFormInput, type Vehicle } from '@/lib/validations';
+
+// For backward compatibility
+export type TourScheduleFormData = TourScheduleFormInput;
 import { createTourSchedule, updateTourSchedule } from '@/lib/tour-schedule-actions';
 import { getVehicles } from '@/lib/vehicle-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
@@ -109,7 +112,7 @@ export function TourScheduleForm({
 
     const form = useForm<TourScheduleFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(TourScheduleSchema) as any,
+        resolver: zodResolver(TourScheduleFormSchema) as any,
         defaultValues: {
             name: initialData?.name || '',
             description: initialData?.description || '',

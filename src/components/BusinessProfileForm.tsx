@@ -5,7 +5,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Save } from 'lucide-react';
 import { updateBusinessProfile } from '@/lib/actions';
-import { BusinessProfileSchema, type BusinessProfileFormData, type BusinessProfile } from '@/lib/validations';
+import { BusinessProfileFormSchema, type BusinessProfileFormInput, type BusinessProfile } from '@/lib/validations';
+
+// For backward compatibility
+export type BusinessProfileFormData = BusinessProfileFormInput;
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,9 +34,9 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
     const [error, setError] = useState<string | null>(null);
     const handleEnterKey = useEnterNavigation();
 
-    const form = useForm<BusinessProfileFormData>({
+    const form = useForm<BusinessProfileFormInput>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(BusinessProfileSchema) as any,
+        resolver: zodResolver(BusinessProfileFormSchema) as any,
         defaultValues: {
             companyName: initialData?.companyName || 'My Transport Company',
             address: initialData?.address || '',
