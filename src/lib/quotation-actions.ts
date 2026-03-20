@@ -1,93 +1,21 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { QuotationSchema, type ActionResult } from '@/lib/validations';
+import { QuotationSchema, type ActionResult, type QuotationWithSchedule } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
-import { requireAdmin } from '@/lib/auth-guard';
+import { requireAdmin, requireAuth } from '@/lib/auth-guard';
+import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 
 // Types for server responses
-type QuotationWithSchedule = {
-    id: string;
-    quotationNumber: number;
-    tourScheduleId: string;
-    customerName: string;
-    customerEmail: string | null;
-    customerPhone: string | null;
-    vehicleNo: string | null;
-    numberOfPersons: number;
-    startDate: Date | null;
-    endDate: Date | null;
-    pickupLocation: string | null;
-    dropLocation: string | null;
-    hireRatePerDay: number;
-    kmPerDay: number;
-    excessKmRate: number;
-    extraHourRate: number;
-    totalDistance: number;
-    transportCost: number;
-    accommodationTotal: number;
-    mealsTotal: number;
-    activitiesTotal: number;
-    otherCostsTotal: number;
-    markup: number;
-    discount: number;
-    driverCostPerDay: number;
-    advanceAmount: number;
-    excludedItems: string | null;
-    totalAmount: number;
-    notes: string | null;
-    validUntil: Date | null;
-    status: string;
-    createdAt: Date;
-    updatedAt: Date;
-    tourSchedule: {
-        id: string;
-        name: string;
-        description: string | null;
-        days: number;
-        vehicleCategory: string;
-        items: {
-            id: string;
-            dayNumber: number;
-            title: string;
-            description: string | null;
-            distanceKm: number;
-            accommodation: number;
-            meals: number;
-            activities: number;
-            otherCosts: number;
-        }[];
-    };
-};
+
 
 /**
- * Generate a new quotation from a tour schedule.
+ * Generate a quotation from tour schedule and customer data
  * Auto-calculates totals from the schedule's day items.
  */
 export async function generateQuotation(
-    data: {
-        tourScheduleId: string;
-        customerName: string;
-        customerEmail?: string;
-        customerPhone?: string;
-        vehicleNo?: string;
-        numberOfPersons?: number;
-        startDate?: string | Date;
-        endDate?: string | Date;
-        pickupLocation?: string;
-        dropLocation?: string;
-        hireRatePerDay?: number;
-        kmPerDay?: number;
-        excessKmRate?: number;
-        extraHourRate?: number;
-        markup?: number;
-        discount?: number;
-        driverCostPerDay?: number;
-        advanceAmount?: number;
-        excludedItems?: string;
-        notes?: string;
-        validUntil?: string | Date;
-    }
+    tourScheduleId: string,
+    formData: FormData
 ): Promise<ActionResult<string>> {
     try {
         const authCheck = await requireAdmin();
@@ -95,7 +23,32 @@ export async function generateQuotation(
             return { success: false, error: authCheck.error };
         }
 
-        const validated = QuotationSchema.parse(data);
+        const rawData = {
+            tourScheduleId,
+            customerName: formData.get('customerName') as string,
+            customerEmail: formData.get('customerEmail') as string || undefined,
+            customerPhone: formData.get('customerPhone') as string || undefined,
+            vehicleNo: formData.get('vehicleNo') as string || undefined,
+            numberOfPersons: parseInt(formData.get('numberOfPersons') as string) || 1,
+            startDate: formData.get('startDate') ? new Date(formData.get('startDate') as string) : undefined,
+            endDate: formData.get('endDate') ? new Date(formData.get('endDate') as string) : undefined,
+            pickupLocation: formData.get('pickupLocation') as string || undefined,
+            dropLocation: formData.get('dropLocation') as string || undefined,
+            hireRatePerDay: parseFloat(formData.get('hireRatePerDay') as string) || 0,
+            kmPerDay: parseFloat(formData.get('kmPerDay') as string) || 0,
+            excessKmRate: parseFloat(formData.get('excessKmRate') as string) || 0,
+            extraHourRate: parseFloat(formData.get('extraHourRate') as string) || 0,
+            markup: parseFloat(formData.get('markup') as string) || 0,
+            discount: parseFloat(formData.get('discount') as string) || 0,
+            driverCostPerDay: parseFloat(formData.get('driverCostPerDay') as string) || 0,
+            advanceAmount: parseFloat(formData.get('advanceAmount') as string) || 0,
+            excludedItems: formData.get('excludedItems') as string || undefined,
+            notes: formData.get('notes') as string || undefined,
+            status: formData.get('status') as string || 'DRAFT',
+            validUntil: formData.get('validUntil') ? new Date(formData.get('validUntil') as string) : undefined,
+        };
+
+        const validated = QuotationSchema.parse(rawData);
 
         const quotation = await prisma.$transaction(async (tx) => {
             // Fetch the tour schedule with items to calculate totals
@@ -106,6 +59,21 @@ export async function generateQuotation(
 
             if (!schedule) {
                 throw new Error('Tour schedule not found');
+            }
+
+            // Check vehicle availability if both vehicle and dates are provided
+            if (validated.vehicleNo && validated.startDate && validated.endDate) {
+                const availability = await checkVehicleAvailability(
+                    validated.vehicleNo,
+                    validated.startDate,
+                    validated.endDate!,
+                    undefined,
+                    'Quotation'
+                );
+                if (availability.success && availability.data && !availability.data.available) {
+                    const conflict = availability.data.conflicts[0];
+                    throw new Error(`Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) from ${new Date(conflict.start).toLocaleDateString()} to ${new Date(conflict.end).toLocaleDateString()}`);
+                }
             }
 
             // Calculate totals from day items in a single pass
@@ -235,6 +203,124 @@ export async function getQuotationById(
 }
 
 /**
+ * Update an existing quotation
+ */
+export async function updateQuotation(
+    id: string,
+    tourScheduleId: string,
+    formData: FormData
+): Promise<ActionResult<string>> {
+    try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const rawData = {
+            id,
+            tourScheduleId,
+            customerName: formData.get('customerName') as string,
+            customerEmail: formData.get('customerEmail') as string || undefined,
+            customerPhone: formData.get('customerPhone') as string || undefined,
+            vehicleNo: formData.get('vehicleNo') as string || undefined,
+            numberOfPersons: parseInt(formData.get('numberOfPersons') as string) || 1,
+            startDate: formData.get('startDate') ? new Date(formData.get('startDate') as string) : undefined,
+            endDate: formData.get('endDate') ? new Date(formData.get('endDate') as string) : undefined,
+            pickupLocation: formData.get('pickupLocation') as string || undefined,
+            dropLocation: formData.get('dropLocation') as string || undefined,
+            hireRatePerDay: parseFloat(formData.get('hireRatePerDay') as string) || 0,
+            kmPerDay: parseFloat(formData.get('kmPerDay') as string) || 0,
+            excessKmRate: parseFloat(formData.get('excessKmRate') as string) || 0,
+            extraHourRate: parseFloat(formData.get('extraHourRate') as string) || 0,
+            markup: parseFloat(formData.get('markup') as string) || 0,
+            discount: parseFloat(formData.get('discount') as string) || 0,
+            driverCostPerDay: parseFloat(formData.get('driverCostPerDay') as string) || 0,
+            advanceAmount: parseFloat(formData.get('advanceAmount') as string) || 0,
+            excludedItems: formData.get('excludedItems') as string || undefined,
+            notes: formData.get('notes') as string || undefined,
+            status: formData.get('status') as string || 'DRAFT',
+            validUntil: formData.get('validUntil') ? new Date(formData.get('validUntil') as string) : undefined,
+        };
+
+        const validated = QuotationSchema.parse(rawData);
+
+        // Check vehicle availability (excluding this quotation)
+        if (validated.vehicleNo && validated.startDate && validated.endDate) {
+            const availability = await checkVehicleAvailability(
+                validated.vehicleNo,
+                validated.startDate,
+                validated.endDate,
+                id,
+                'Quotation'
+            );
+            if (availability.success && availability.data && !availability.data.available) {
+                const conflict = availability.data.conflicts[0];
+                return { 
+                    success: false, 
+                    error: `Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString()}` 
+                };
+            }
+        }
+
+        // Get schedule details for calculations
+        const schedule = await prisma.tourSchedule.findUnique({
+            where: { id: tourScheduleId },
+            include: { items: true },
+        });
+
+        if (!schedule) {
+            return { success: false, error: 'Tour schedule not found' };
+        }
+
+        // Calculate totals
+        const itemTotals = schedule.items.reduce(
+            (acc, item) => ({
+                distance: acc.distance + item.distanceKm,
+                accommodation: acc.accommodation + item.accommodation,
+                meals: acc.meals + item.meals,
+                activities: acc.activities + item.activities,
+                other: acc.other + item.otherCosts,
+            }),
+            { distance: 0, accommodation: 0, meals: 0, activities: 0, other: 0 }
+        );
+
+        const transportCost = validated.hireRatePerDay * schedule.days;
+        const totalAmount =
+            transportCost +
+            itemTotals.accommodation +
+            itemTotals.meals +
+            itemTotals.activities +
+            itemTotals.other +
+            validated.markup -
+            validated.discount;
+
+        const quotation = await prisma.quotation.update({
+            where: { id },
+            data: {
+                ...validated,
+                tourScheduleId,
+                totalDistance: itemTotals.distance,
+                transportCost,
+                accommodationTotal: itemTotals.accommodation,
+                mealsTotal: itemTotals.meals,
+                activitiesTotal: itemTotals.activities,
+                otherCostsTotal: itemTotals.other,
+                totalAmount,
+            },
+        });
+
+        revalidateFor('quotation');
+        return { success: true, data: quotation.id };
+    } catch (error) {
+        console.error('Error updating quotation:', error);
+        if (error instanceof Error) {
+            return { success: false, error: error.message };
+        }
+        return { success: false, error: 'Failed to update quotation' };
+    }
+}
+
+/**
  * Update quotation status
  */
 export async function updateQuotationStatus(
@@ -245,6 +331,30 @@ export async function updateQuotationStatus(
         const validStatuses = ['DRAFT', 'SENT', 'ACCEPTED', 'EXPIRED'];
         if (!validStatuses.includes(status)) {
             return { success: false, error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` };
+        }
+
+        if (status === 'ACCEPTED') {
+            const quotation = await prisma.quotation.findUnique({
+                where: { id },
+                select: { vehicleNo: true, startDate: true, endDate: true }
+            });
+
+            if (quotation?.vehicleNo && quotation?.startDate && quotation?.endDate) {
+                const availability = await checkVehicleAvailability(
+                    quotation.vehicleNo,
+                    quotation.startDate,
+                    quotation.endDate,
+                    id, // Exclude current quotation
+                    'Quotation'
+                );
+                if (availability.success && availability.data && !availability.data.available) {
+                    const conflict = availability.data.conflicts[0];
+                    return { 
+                        success: false, 
+                        error: `Cannot accept quotation. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString()}` 
+                    };
+                }
+            }
         }
 
         await prisma.quotation.update({
@@ -308,6 +418,21 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
             }
             if (quotation.status === 'ACCEPTED') {
                 throw new Error('Quotation is already accepted');
+            }
+
+            // Check availability one last time before converting
+            if (quotation.vehicleNo && quotation.startDate && quotation.endDate) {
+                const availability = await checkVehicleAvailability(
+                    quotation.vehicleNo,
+                    quotation.startDate,
+                    quotation.endDate as Date,
+                    undefined, // This becomes a NEW booking, so no ID to exclude yet (or we could exclude the quotation)
+                    'Booking'
+                );
+                if (availability.success && availability.data && !availability.data.available) {
+                    const conflict = availability.data.conflicts[0];
+                    throw new Error(`Cannot convert to booking. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString()}`);
+                }
             }
 
             // Create booking

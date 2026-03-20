@@ -47,7 +47,7 @@ async function PrintQuotation({ id }: { id: string }) {
 
     return (
         <QuotationTemplate
-            quotation={{ ...quotation, ...vehicleSpecs }}
+            quotation={{ ...quotation, ...vehicleSpecs } as any}
             businessProfile={profileResult.success ? profileResult.data : undefined}
         />
     );

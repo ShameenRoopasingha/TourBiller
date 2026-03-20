@@ -239,21 +239,28 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 {(quotation.vehicleSeats || quotation.vehicleAcType || quotation.vehicleFeatures || quotation.vehicleInsuranceCoverage) && (
                     <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-sm">
                         <h3 className="text-[10px] font-bold uppercase text-blue-700 mb-1 tracking-wide">Vehicle Specifications</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-0.5 text-[10px]">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[10px]">
                             {quotation.vehicleSeats && (
                                 <div><span className="text-gray-500">Seats:</span> <span className="font-semibold">{quotation.vehicleSeats}</span></div>
                             )}
                             {quotation.vehicleAcType && (
                                 <div><span className="text-gray-500">AC Type:</span> <span className="font-semibold">{quotation.vehicleAcType}</span></div>
                             )}
-                            {quotation.vehicleFeatures && (
-                                <div className="col-span-2"><span className="text-gray-500">Features:</span> <span className="font-semibold">{quotation.vehicleFeatures}</span></div>
-                            )}
-                            {quotation.vehicleInsuranceCoverage && (
-                                <div className="col-span-2"><span className="text-gray-500">Insurance:</span> <span className="font-semibold">{quotation.vehicleInsuranceCoverage}</span></div>
-                            )}
                             {finalExcessKmRate > 0 && (
                                 <div><span className="text-gray-500">Excess Km Rate:</span> <span className="font-semibold">{fmt(finalExcessKmRate)}/km</span></div>
+                            )}
+                            {finalExtraHourRate > 0 && (
+                                <div><span className="text-gray-500">Extra Hour Rate:</span> <span className="font-semibold">{fmt(finalExtraHourRate)}/hr</span></div>
+                            )}
+                            {quotation.vehicleInsuranceCoverage && (
+                                <div className="col-span-2 border-t border-blue-100 pt-1 mt-0.5">
+                                    <span className="text-gray-500">Insurance:</span> <span className="font-semibold">{quotation.vehicleInsuranceCoverage}</span>
+                                </div>
+                            )}
+                            {quotation.vehicleFeatures && (
+                                <div className="col-span-2 border-t border-blue-100 pt-1 mt-0.5">
+                                    <span className="text-gray-500">Features:</span> <span className="font-semibold">{quotation.vehicleFeatures}</span>
+                                </div>
                             )}
                         </div>
                     </div>

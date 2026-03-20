@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState, useEffect } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { BookingSchema, type BookingFormData, type Vehicle, type Customer } from '@/lib/validations';
 import { createBooking } from '@/lib/booking-actions';
+import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,8 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+    const [availabilityConflict, setAvailabilityConflict] = useState<any | null>(null);
     const handleEnterKey = useEnterNavigation();
 
     const form = useForm<BookingFormData>({
@@ -48,6 +51,43 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
             notes: '',
         },
     });
+
+    const watchedVehicleNo = useWatch({ control: form.control, name: 'vehicleNo' });
+    const watchedStartDate = useWatch({ control: form.control, name: 'startDate' });
+    const watchedEndDate = useWatch({ control: form.control, name: 'endDate' });
+
+    // Check vehicle availability
+    useEffect(() => {
+        const checkAvailability = async () => {
+            if (watchedVehicleNo && watchedStartDate) {
+                setIsCheckingAvailability(true);
+                setAvailabilityConflict(null);
+                try {
+                    // Treat null endDate as single-day booking
+                    const end = watchedEndDate || watchedStartDate;
+                    const result = await checkVehicleAvailability(
+                        watchedVehicleNo,
+                        watchedStartDate,
+                        end,
+                        undefined,
+                        'Booking'
+                    );
+                    if (result.success && result.data && !result.data.available) {
+                        setAvailabilityConflict(result.data.conflicts[0]);
+                    }
+                } catch (e) {
+                    console.error("Availability check failed", e);
+                } finally {
+                    setIsCheckingAvailability(false);
+                }
+            } else {
+                setAvailabilityConflict(null);
+            }
+        };
+
+        const timer = setTimeout(checkAvailability, 500);
+        return () => clearTimeout(timer);
+    }, [watchedVehicleNo, watchedStartDate, watchedEndDate]);
 
     const onSubmit = async (data: BookingFormData) => {
         setIsSubmitting(true);
@@ -110,6 +150,20 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                                 />
                                             </FormControl>
                                             <FormMessage />
+                                            {availabilityConflict && (
+                                                <div className="mt-2 text-xs font-semibold text-destructive flex items-center gap-1.5 p-2 bg-destructive/10 rounded animate-in fade-in slide-in-from-top-1">
+                                                    <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                                                    <span>
+                                                        Vehicle is occupied by <span className="underline">{availabilityConflict.customer}</span> ({availabilityConflict.type}: {availabilityConflict.reference}) until {new Date(availabilityConflict.end).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {isCheckingAvailability && (
+                                                <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1.5">
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                    Checking availability...
+                                                </div>
+                                            )}
                                         </FormItem>
                                     )}
                                 />
@@ -237,7 +291,7 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                 <Button variant="outline" type="button" onClick={() => router.back()}>
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={isSubmitting}>
+                                <Button type="submit" disabled={isSubmitting || !!availabilityConflict}>
                                     {isSubmitting ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

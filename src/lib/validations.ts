@@ -68,6 +68,13 @@ export const VehicleSchema = z.object({
   acType: z.string().optional(),
   features: z.string().optional(),
   insuranceCoverage: z.string().optional(),
+  currentMileage: z.coerce.number().min(0).default(0),
+  oilChangeInterval: z.coerce.number().min(0).default(5000),
+  lastOilChangeMileage: z.coerce.number().min(0).default(0),
+  filterChangeInterval: z.coerce.number().min(0).default(10000),
+  lastFilterChangeMileage: z.coerce.number().min(0).default(0),
+  washInterval: z.coerce.number().min(0).default(1000),
+  lastWashMileage: z.coerce.number().min(0).default(0),
 });
 
 export type VehicleFormData = z.infer<typeof VehicleSchema>;
@@ -243,3 +250,9 @@ export const QuotationDbSchema = QuotationSchema.extend({
 });
 
 export type Quotation = z.infer<typeof QuotationDbSchema>;
+
+export type QuotationWithSchedule = Quotation & {
+  tourSchedule: TourSchedule & {
+    items: TourScheduleDayItem[];
+  };
+};

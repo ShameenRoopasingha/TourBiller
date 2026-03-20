@@ -5,8 +5,9 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, FileCheck, Calculator, Plus } from 'lucide-react';
 
-import { QuotationSchema, type QuotationFormData } from '@/lib/validations';
-import { generateQuotation } from '@/lib/quotation-actions';
+import { QuotationSchema, type QuotationFormData, type QuotationWithSchedule } from '@/lib/validations';
+import { generateQuotation, updateQuotation } from '@/lib/quotation-actions';
+import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { formatCurrency } from '@/lib/calculations';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
@@ -90,46 +91,71 @@ interface QuotationCreatorProps {
     schedules: ScheduleOption[];
     customers: CustomerOption[];
     vehicles: VehicleOption[];
+    initialData?: QuotationWithSchedule;
 }
 
-export function QuotationCreator({ schedules, customers, vehicles }: QuotationCreatorProps) {
+export function QuotationCreator({ schedules, customers, vehicles, initialData }: QuotationCreatorProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
-    const [selectedSchedule, setSelectedSchedule] = useState<ScheduleOption | null>(null);
-    const [selectedVehicle, setSelectedVehicle] = useState<VehicleOption | null>(null);
+    const [selectedSchedule, setSelectedSchedule] = useState<ScheduleOption | null>(
+        initialData ? schedules.find(s => s.id === initialData.tourScheduleId) || null : null
+    );
+    const [selectedVehicle, setSelectedVehicle] = useState<VehicleOption | null>(
+        initialData ? vehicles.find(v => v.vehicleNo === initialData.vehicleNo) || null : null
+    );
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
     const [justCreatedScheduleId, setJustCreatedScheduleId] = useState<string | null>(null);
+    const [availabilityConflict, setAvailabilityConflict] = useState<any | null>(null);
+    const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const handleEnterKey = useEnterNavigation();
 
-    const [initialValidUntil] = useState(() => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as unknown as Date);
-
     const form = useForm<QuotationFormData>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(QuotationSchema) as any,
-        defaultValues: {
-            tourScheduleId: '',
+        resolver: zodResolver(QuotationSchema),
+        defaultValues: initialData ? {
+            customerName: initialData.customerName,
+            customerEmail: initialData.customerEmail || '',
+            customerPhone: initialData.customerPhone || '',
+            vehicleNo: initialData.vehicleNo || '',
+            numberOfPersons: initialData.numberOfPersons,
+            startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] as unknown as Date : undefined,
+            endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] as unknown as Date : undefined,
+            pickupLocation: initialData.pickupLocation || '',
+            dropLocation: initialData.dropLocation || '',
+            hireRatePerDay: initialData.hireRatePerDay,
+            kmPerDay: initialData.kmPerDay,
+            excessKmRate: initialData.excessKmRate,
+            extraHourRate: initialData.extraHourRate,
+            markup: initialData.markup,
+            discount: initialData.discount,
+            driverCostPerDay: initialData.driverCostPerDay,
+            advanceAmount: initialData.advanceAmount,
+            excludedItems: initialData.excludedItems || 'Highway charges, Parking fees',
+            notes: initialData.notes || '',
+            tourScheduleId: initialData.tourScheduleId,
+            status: initialData.status as any || 'DRAFT',
+            validUntil: initialData.validUntil ? new Date(initialData.validUntil).toISOString().split('T')[0] as unknown as Date : undefined,
+        } : {
             customerName: '',
             customerEmail: '',
             customerPhone: '',
-            pickupLocation: '',
-            dropLocation: '',
             vehicleNo: '',
             numberOfPersons: 1,
-            startDate: '' as unknown as Date,
-            endDate: '' as unknown as Date,
-            hireRatePerDay: '' as unknown as number,
-            kmPerDay: '' as unknown as number,
-            excessKmRate: '' as unknown as number,
-            extraHourRate: '' as unknown as number,
-            markup: '' as unknown as number,
-            discount: '' as unknown as number,
-            driverCostPerDay: '' as unknown as number,
-            advanceAmount: '' as unknown as number,
+            pickupLocation: '',
+            dropLocation: '',
+            hireRatePerDay: 0,
+            kmPerDay: 0,
+            excessKmRate: 0,
+            extraHourRate: 0,
+            markup: 0,
+            discount: 0,
+            driverCostPerDay: 0,
+            advanceAmount: 0,
             excludedItems: 'Highway / expressway charges\nParking fees',
             notes: '',
-            validUntil: initialValidUntil,
+            validUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as unknown as Date,
+            status: 'DRAFT',
         },
     });
 
@@ -169,6 +195,37 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
             form.setValue('endDate', '' as unknown as Date);
         }
     }, [watchedStartDate, selectedSchedule, form]);
+
+    // Check vehicle availability
+    React.useEffect(() => {
+        const checkAvailability = async () => {
+            if (watchedVehicleNo && watchedStartDate && watchedFields.endDate) {
+                setIsCheckingAvailability(true);
+                setAvailabilityConflict(null);
+                try {
+                    const result = await checkVehicleAvailability(
+                        watchedVehicleNo,
+                        watchedStartDate,
+                        watchedFields.endDate,
+                        initialData?.id, // Pass current ID to exclude from conflict check
+                        'Quotation'
+                    );
+                    if (result.success && !result.data?.available) {
+                        setAvailabilityConflict(result.data?.conflicts[0]);
+                    }
+                } catch (e) {
+                    console.error("Availability check failed", e);
+                } finally {
+                    setIsCheckingAvailability(false);
+                }
+            } else {
+                setAvailabilityConflict(null);
+            }
+        };
+
+        const timer = setTimeout(checkAvailability, 500);
+        return () => clearTimeout(timer);
+    }, [watchedVehicleNo, watchedStartDate, watchedFields.endDate, initialData?.id]);
     
     // When schedule selection changes
     const handleScheduleChange = React.useCallback((scheduleId: string) => {
@@ -210,11 +267,10 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
         }
     }, [schedules, justCreatedScheduleId, handleScheduleChange]);
 
-    // Filter vehicles by selected schedule's vehicle category
+    // List all vehicles (category filtering removed based on user request)
     const filteredVehicles = useMemo(() => {
-        if (!selectedSchedule) return vehicles;
-        return vehicles.filter(v => v.category === selectedSchedule.vehicleCategory);
-    }, [vehicles, selectedSchedule]);
+        return vehicles;
+    }, [vehicles]);
 
 
 
@@ -299,19 +355,30 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
         setError(null);
 
         try {
-            const result = await generateQuotation(data);
+            const formData = new FormData();
+            Object.entries(data).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    formData.append(key, String(value));
+                }
+            });
 
+            const result = initialData 
+                ? await updateQuotation(initialData.id, data.tourScheduleId, formData)
+                : await generateQuotation(data.tourScheduleId, formData);
+                
             if (result.success) {
                 setSuccess(true);
                 router.refresh();
-                // Intentionally keeping isSubmitting true during the transition
-                setTimeout(() => router.push('/quotations'), 1000);
+                setTimeout(() => {
+                    router.push(`/quotations/${result.data}`);
+                }, 2000);
             } else {
-                setError(result.error || 'An error occurred');
-                setIsSubmitting(false);
+                setError(result.error || 'Failed to process quotation');
             }
-        } catch {
+        } catch (e) {
             setError('An unexpected error occurred');
+            console.error(e);
+        } finally {
             setIsSubmitting(false);
         }
     };
@@ -320,6 +387,15 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={handleEnterKey}>
+            <div className="mb-6">
+                <h1 className="text-3xl font-bold tracking-tight">
+                    {initialData ? `Edit Quotation Q-${String(initialData.quotationNumber).padStart(4, '0')}` : 'New Quotation'}
+                </h1>
+                <p className="text-muted-foreground">
+                    {initialData ? 'Update details for this quotation' : 'Generate a professional tour quotation for your customer'}
+                </p>
+            </div>
+
             {error && (
                 <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
@@ -467,7 +543,9 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             )}
                         </div>
                         <div className="space-y-2">
-                            <Label>Select Vehicle *</Label>
+                            <div className="flex items-center justify-between mb-1">
+                                <Label>Select Vehicle *</Label>
+                            </div>
                              <ComboboxField
                                 options={filteredVehicles.map((v) => ({
                                     label: `${v.vehicleNo} ${v.model ? `- ${v.model}` : ''} (${v.category})`,
@@ -480,19 +558,78 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                             {form.formState.errors.vehicleNo && (
                                 <p className="text-sm text-destructive font-medium">{form.formState.errors.vehicleNo.message}</p>
                             )}
+                            {availabilityConflict && (
+                                <div className="mt-2 text-xs font-semibold text-destructive flex items-center gap-1.5 p-2 bg-destructive/10 rounded animate-in fade-in slide-in-from-top-1">
+                                    <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                                    <span>
+                                        Vehicle is occupied by <span className="underline">{availabilityConflict.customer}</span> ({availabilityConflict.type}: {availabilityConflict.reference}) until {new Date(availabilityConflict.end).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            )}
+                            {isCheckingAvailability && (
+                                <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                                    <Loader2 className="h-3 w-3 animate-spin" /> Checking availability...
+                                </p>
+                            )}
                         </div>
                     </div>
 
                     {/* Vehicle Specifications Display */}
                     {selectedVehicle && (selectedVehicle.seats || selectedVehicle.acType || selectedVehicle.features || selectedVehicle.insuranceCoverage) && (
-                        <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 text-sm">
-                            <h4 className="font-semibold text-primary mb-1">Vehicle Specifications</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-muted-foreground">
-                                {selectedVehicle.seats && <span>Seats: {selectedVehicle.seats}</span>}
-                                {selectedVehicle.acType && <span>AC: {selectedVehicle.acType}</span>}
-                                {selectedVehicle.features && <span className="col-span-2">Features: {selectedVehicle.features}</span>}
-                                {selectedVehicle.insuranceCoverage && <span className="col-span-2">Insurance: {selectedVehicle.insuranceCoverage}</span>}
+                        <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                <h4 className="text-[11px] font-bold uppercase tracking-wider text-primary/70">Vehicle Configuration</h4>
                             </div>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {selectedVehicle.seats && (
+                                    <div className="flex items-start gap-2.5">
+                                        <div className="p-1.5 bg-white dark:bg-slate-900 rounded-md border border-primary/10 shadow-sm">
+                                            <span className="text-primary font-bold text-xs">A/C</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">Climate</p>
+                                            <p className="text-sm font-semibold">{selectedVehicle.acType || 'Non A/C'}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {selectedVehicle.seats && (
+                                    <div className="flex items-start gap-2.5">
+                                        <div className="p-1.5 bg-white dark:bg-slate-900 rounded-md border border-primary/10 shadow-sm text-primary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">Capacity</p>
+                                            <p className="text-sm font-semibold text-foreground">{selectedVehicle.seats} Passenger Seats</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {selectedVehicle.features && (
+                                    <div className="flex items-start gap-2.5 sm:col-span-2 lg:col-span-1">
+                                        <div className="p-1.5 bg-white dark:bg-slate-900 rounded-md border border-primary/10 shadow-sm text-primary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">Key Features</p>
+                                            <p className="text-sm font-medium leading-tight">{selectedVehicle.features}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {selectedVehicle.insuranceCoverage && (
+                                <div className="mt-2 pt-3 border-t border-primary/10 flex items-center gap-2">
+                                    <div className="p-1 rounded bg-green-500/10 text-green-600 dark:text-green-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                                    </div>
+                                    <p className="text-xs font-medium text-muted-foreground">
+                                        <span className="text-foreground font-bold">Insurance:</span> {selectedVehicle.insuranceCoverage}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -797,7 +934,7 @@ export function QuotationCreator({ schedules, customers, vehicles }: QuotationCr
                 >
                     Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting} className="min-w-[160px]">
+                <Button type="submit" disabled={isSubmitting || !!availabilityConflict} className="min-w-[160px]">
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Generate Quotation
                 </Button>

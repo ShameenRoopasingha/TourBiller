@@ -63,6 +63,13 @@ model Vehicle {
   acType            String?  // e.g. "Line AC", "Dual AC", "Roof AC", "No AC"
   features          String?  // Free-text specs: TV, sound system, seat type, etc.
   insuranceCoverage String?  // e.g. "Rs. 500,000 per passenger"
+  currentMileage          Float    @default(0)
+  oilChangeInterval       Float    @default(5000)
+  lastOilChangeMileage    Float    @default(0)
+  filterChangeInterval    Float    @default(10000)
+  lastFilterChangeMileage Float    @default(0)
+  washInterval            Float    @default(1000)
+  lastWashMileage         Float    @default(0)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -225,4 +232,20 @@ model Quotation {
   tourSchedule TourSchedule @relation(fields: [tourScheduleId], references: [id])
 
   @@map("quotations")
+}
+
+model VehicleExpense {
+  id          String   @id @default(cuid())
+  vehicleNo   String
+  amount      Float
+  category    String   // REPAIR, BREAKDOWN, FUEL, SERVICE, OTHER
+  description String?
+  date        DateTime @default(now())
+  bookingId   String?  // Optional: link to a booking/tour if it happened during one
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([vehicleNo])
+  @@index([date])
+  @@map("vehicle_expenses")
 }

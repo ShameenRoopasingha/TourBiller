@@ -91,6 +91,12 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
         },
       });
 
+      // Update vehicle mileage
+      await tx.vehicle.update({
+        where: { vehicleNo: createdBill.vehicleNo },
+        data: { currentMileage: createdBill.endMeter },
+      });
+
       // Auto-Close Booking within the same transaction
       if (bookingId) {
         await tx.booking.update({

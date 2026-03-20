@@ -47,6 +47,13 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
             acType: vehicle?.acType || '',
             features: vehicle?.features || '',
             insuranceCoverage: vehicle?.insuranceCoverage || '',
+            currentMileage: vehicle?.currentMileage || 0,
+            oilChangeInterval: vehicle?.oilChangeInterval || 5000,
+            lastOilChangeMileage: vehicle?.lastOilChangeMileage || 0,
+            filterChangeInterval: vehicle?.filterChangeInterval || 10000,
+            lastFilterChangeMileage: vehicle?.lastFilterChangeMileage || 0,
+            washInterval: vehicle?.washInterval || 1000,
+            lastWashMileage: vehicle?.lastWashMileage || 0,
         },
     });
 
@@ -295,6 +302,116 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                         <FormLabel>Features / Amenities</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g. TV, Sound system, Original seats" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Maintenance Tracking */}
+                    <div className="border-t pt-4 mt-6">
+                        <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Maintenance Tracking</h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <FormField
+                                control={form.control}
+                                name="currentMileage"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Current Mileage (KM)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" placeholder="e.g. 45000" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="oilChangeInterval"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Oil Change Interval (KM)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="lastOilChangeMileage"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Last Oil Change at (KM)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="filterChangeInterval"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Filter Change Interval (KM)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="lastFilterChangeMileage"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Last Filter Change at (KM)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <FormField
+                                control={form.control}
+                                name="washInterval"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Body Wash Interval (KM)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="lastWashMileage"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Last Body Wash at (KM)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

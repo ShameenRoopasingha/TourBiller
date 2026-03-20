@@ -6,7 +6,7 @@ import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin } from '@/lib/auth-guard';
 
 // Types for server responses
-type TourScheduleWithItems = {
+export type TourScheduleWithItems = {
     id: string;
     name: string;
     description: string | null;

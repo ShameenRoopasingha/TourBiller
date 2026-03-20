@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Loader2, Search, Car, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, Search, Car, Plus, Pencil, Trash2, Receipt, Droplets, Filter } from 'lucide-react';
 import { getVehicles, deleteVehicle } from '@/lib/vehicle-actions';
 import { type Vehicle } from '@/lib/validations';
+import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +30,8 @@ export function VehicleList() {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+    const [expenseSheetOpen, setExpenseSheetOpen] = useState(false);
 
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -137,7 +141,8 @@ export function VehicleList() {
                                         <TableHead className="text-right">Rate/Day</TableHead>
                                         <TableHead className="text-right">Km/Day</TableHead>
                                         <TableHead className="text-right">Extra Km</TableHead>
-                                        <TableHead className="text-right">Extra Hour</TableHead>
+                                        <TableHead>Extra Hour</TableHead>
+                                        <TableHead>Maintenance</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -154,6 +159,30 @@ export function VehicleList() {
                                             <TableCell className="text-right">{vehicle.excessKmRate ? `Rs. ${vehicle.excessKmRate.toLocaleString('en-US')}` : '-'}</TableCell>
                                             <TableCell className="text-right">{vehicle.extraHourRate ? `Rs. ${vehicle.extraHourRate.toLocaleString('en-US')}` : '-'}</TableCell>
                                             <TableCell>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {vehicle.currentMileage - vehicle.lastOilChangeMileage >= vehicle.oilChangeInterval && (
+                                                        <span title="Oil Change Due" className="text-red-500">
+                                                            <Droplets className="h-4 w-4" />
+                                                        </span>
+                                                    )}
+                                                    {vehicle.currentMileage - vehicle.lastFilterChangeMileage >= vehicle.filterChangeInterval && (
+                                                        <span title="Filter Change Due" className="text-orange-500">
+                                                            <Filter className="h-4 w-4" />
+                                                        </span>
+                                                    )}
+                                                    {vehicle.currentMileage - vehicle.lastWashMileage >= vehicle.washInterval && (
+                                                        <span title="Body Wash Due" className="text-blue-500">
+                                                            <Car className="h-4 w-4" />
+                                                        </span>
+                                                    )}
+                                                    {!(vehicle.currentMileage - vehicle.lastOilChangeMileage >= vehicle.oilChangeInterval) &&
+                                                     !(vehicle.currentMileage - vehicle.lastFilterChangeMileage >= vehicle.filterChangeInterval) &&
+                                                     !(vehicle.currentMileage - vehicle.lastWashMileage >= vehicle.washInterval) && (
+                                                        <span className="text-green-500 text-xs font-medium">Good</span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
                                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${vehicle.status === 'ACTIVE'
                                                     ? 'bg-green-100 text-green-700'
                                                     : 'bg-yellow-100 text-yellow-700'
@@ -162,6 +191,18 @@ export function VehicleList() {
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-right">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    className="mr-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                    onClick={() => {
+                                                        setSelectedVehicle(vehicle);
+                                                        setExpenseSheetOpen(true);
+                                                    }}
+                                                >
+                                                    <Receipt className="h-4 w-4" />
+                                                    <span className="sr-only">Expenses</span>
+                                                </Button>
                                                 <Button variant="ghost" size="sm" asChild className="mr-2">
                                                     <Link href={`/vehicles/${vehicle.id}`}>
                                                         <Pencil className="h-4 w-4" />
@@ -181,6 +222,21 @@ export function VehicleList() {
                     )}
                 </CardContent>
             </Card>
+            <Sheet open={expenseSheetOpen} onOpenChange={setExpenseSheetOpen}>
+                <SheetContent className="w-full sm:max-w-md md:max-w-xl overflow-y-auto pt-10">
+                    <SheetHeader>
+                        <SheetTitle>Vehicle Expenses</SheetTitle>
+                        <SheetDescription>
+                            Managing costs for {selectedVehicle?.vehicleNo}
+                        </SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-6">
+                        {selectedVehicle && (
+                            <VehicleExpenseManager vehicleNo={selectedVehicle.vehicleNo} />
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
