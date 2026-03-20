@@ -3,9 +3,9 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth-guard';
 import { revalidateFor } from '@/lib/revalidation';
-import { type ActionResult, VehicleExpenseSchema, type VehicleExpense, type VehicleExpenseFormData } from '@/lib/validations';
+import { type ActionResult, VehicleExpenseSchema, type VehicleExpense, type VehicleExpenseFormData, type VehicleExpenseCategory, type Vehicle } from '@/lib/validations';
 
-export type { VehicleExpense };
+export type { VehicleExpense, VehicleExpenseCategory };
 
 /**
  * Add a new vehicle expense
@@ -41,7 +41,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
             const mileage = validatedData.date ? undefined : (await tx.vehicle.findUnique({ where: { vehicleNo: validatedData.vehicleNo } }))?.currentMileage;
             
             if (mileage !== undefined) {
-                const updateData: any = {};
+                const updateData: Partial<Vehicle> = {};
                 if (validatedData.category === 'OIL_CHANGE') updateData.lastOilChangeMileage = mileage;
                 if (validatedData.category === 'FILTER_CHANGE') updateData.lastFilterChangeMileage = mileage;
                 if (validatedData.category === 'BODY_WASH') updateData.lastWashMileage = mileage;

@@ -167,16 +167,20 @@ export const QuotationFormSchema = z.object({
 export type QuotationFormInput = z.infer<typeof QuotationFormSchema>;
 
 // Vehicle Expense form schema - RHF compatible
+export const VehicleExpenseCategoryEnum = z.enum(['REPAIR', 'BREAKDOWN', 'FUEL', 'SERVICE', 'OIL_CHANGE', 'FILTER_CHANGE', 'BODY_WASH', 'OTHER']);
+export type VehicleExpenseCategory = z.infer<typeof VehicleExpenseCategoryEnum>;
+
 export const VehicleExpenseFormSchema = z.object({
   vehicleNo: z.string().min(1, "Vehicle number is required"),
   amount: z.coerce.number().min(0, "Amount must be positive"),
-  category: z.enum(['REPAIR', 'BREAKDOWN', 'FUEL', 'SERVICE', 'OIL_CHANGE', 'FILTER_CHANGE', 'BODY_WASH', 'OTHER']),
+  category: VehicleExpenseCategoryEnum,
   description: z.string().default(''),
   date: z.coerce.date().default(() => new Date()),
-  bookingId: z.string().default(''),
+  bookingId: z.string().optional().default(''),
 });
 
 export type VehicleExpenseFormInput = z.infer<typeof VehicleExpenseFormSchema>;
+export type VehicleExpenseFormData = VehicleExpenseFormInput; // Alias for backward compatibility
 
 // Business Profile form schema - RHF compatible
 export const BusinessProfileFormSchema = z.object({
@@ -458,16 +462,7 @@ export type QuotationWithSchedule = Quotation & {
 };
 
 // Vehicle Expense validation schema
-export const VehicleExpenseSchema = z.object({
-  vehicleNo: z.string().min(1, "Vehicle number is required"),
-  amount: z.coerce.number().min(0, "Amount must be positive"),
-  category: z.enum(['REPAIR', 'BREAKDOWN', 'FUEL', 'SERVICE', 'OIL_CHANGE', 'FILTER_CHANGE', 'BODY_WASH', 'OTHER']),
-  description: z.string().nullish(),
-  date: z.coerce.date().default(() => new Date()),
-  bookingId: z.string().nullish(),
-});
-
-export type VehicleExpenseFormData = z.infer<typeof VehicleExpenseSchema>;
+export const VehicleExpenseSchema = VehicleExpenseFormSchema;
 
 export const VehicleExpenseDbSchema = VehicleExpenseSchema.extend({
   id: z.string(),
