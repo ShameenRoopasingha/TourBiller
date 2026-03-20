@@ -40,11 +40,11 @@ interface QuotationRow {
     id: string;
     quotationNumber: number;
     customerName: string;
-    customerPhone: string | null;
+    customerPhone?: string | null;
     totalAmount: number;
     status: string;
-    startDate: Date | null;
-    validUntil: Date | null;
+    startDate?: Date | null;
+    validUntil?: Date | null;
     createdAt: Date;
     tourSchedule: {
         name: string;
