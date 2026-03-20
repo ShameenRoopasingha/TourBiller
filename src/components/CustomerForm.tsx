@@ -47,7 +47,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
-                formData.append(key, value.toString());
+                formData.append(key, (value as any) instanceof Date ? (value as any).toISOString() : String(value));
             }
         });
 
@@ -88,7 +88,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
                                 <FormItem>
                                     <FormLabel>Customer Name</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. John Doe" {...field} />
+                                        <Input placeholder="e.g. John Doe" {...field} value={field.value || ''} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -102,7 +102,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
                                 <FormItem>
                                     <FormLabel>Mobile Number</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. 0771234567" {...field} />
+                                        <Input placeholder="e.g. 0771234567" {...field} value={field.value || ''} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

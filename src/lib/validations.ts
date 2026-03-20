@@ -230,6 +230,7 @@ export const QuotationSchema = z.object({
   excludedItems: z.string().nullish(),
   notes: z.string().nullish(),
   validUntil: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().nullable()).optional(),
+  status: z.string().nullish().default('DRAFT'),
 });
 
 export type QuotationFormData = z.infer<typeof QuotationSchema>;

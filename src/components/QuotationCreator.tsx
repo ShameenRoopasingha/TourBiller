@@ -112,6 +112,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
     const handleEnterKey = useEnterNavigation();
 
     const form = useForm<QuotationFormData>({
+        // @ts-expect-error Zod schema output type mismatch with RHF
         resolver: zodResolver(QuotationSchema),
         defaultValues: initialData ? {
             customerName: initialData.customerName,
@@ -358,7 +359,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
             const formData = new FormData();
             Object.entries(data).forEach(([key, value]) => {
                 if (value !== undefined && value !== null) {
-                    formData.append(key, String(value));
+                    formData.append(key, value instanceof Date ? value.toISOString() : String(value));
                 }
             });
 
@@ -386,7 +387,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
     const fmt = formatCurrency;
 
     return (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={handleEnterKey}>
+        <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6" onKeyDown={handleEnterKey}>
             <div className="mb-6">
                 <h1 className="text-3xl font-bold tracking-tight">
                     {initialData ? `Edit Quotation Q-${String(initialData.quotationNumber).padStart(4, '0')}` : 'New Quotation'}

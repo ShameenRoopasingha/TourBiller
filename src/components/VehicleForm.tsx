@@ -64,7 +64,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
-                formData.append(key, value.toString());
+                formData.append(key, (value as any) instanceof Date ? (value as any).toISOString() : String(value));
             }
         });
 
@@ -117,9 +117,9 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Model (Optional)</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g. Toyota Prius" {...field} />
-                                    </FormControl>
+                                     <FormControl>
+                                         <Input placeholder="e.g. Toyota Prius" {...field} value={field.value || ""} />
+                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -134,7 +134,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 <FormItem>
                                     <FormLabel>Vehicle Rate Per Day (Rs.)</FormLabel>
                                     <FormControl>
-                                        <Input type="number" step="0.01" placeholder="e.g. 17000" {...field} />
+                                        <Input type="number" step="0.01" placeholder="e.g. 17000" {...field} value={field.value ?? ""} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -148,7 +148,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 <FormItem>
                                     <FormLabel>Included Km Per Day</FormLabel>
                                     <FormControl>
-                                        <Input type="number" step="0.01" placeholder="e.g. 100" {...field} />
+                                        <Input type="number" step="0.01" placeholder="e.g. 100" {...field} value={field.value ?? ""} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -164,7 +164,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 <FormItem>
                                     <FormLabel>Extra Km Charge (Rs.)</FormLabel>
                                     <FormControl>
-                                        <Input type="number" step="0.01" placeholder="e.g. 120" {...field} />
+                                        <Input type="number" step="0.01" placeholder="e.g. 120" {...field} value={field.value ?? ""} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -178,7 +178,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 <FormItem>
                                     <FormLabel>Extra Hour Charge (Rs.)</FormLabel>
                                     <FormControl>
-                                        <Input type="number" step="0.01" placeholder="e.g. 800" {...field} />
+                                        <Input type="number" step="0.01" placeholder="e.g. 800" {...field} value={field.value ?? ""} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -246,9 +246,9 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Number of Seats</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" min="1" placeholder="e.g. 14" {...field} />
-                                        </FormControl>
+                                         <FormControl>
+                                             <Input type="number" min="1" placeholder="e.g. 14" {...field} value={field.value || ""} />
+                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -286,9 +286,9 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Insurance Coverage</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g. Rs. 500,000 per passenger" {...field} />
-                                        </FormControl>
+                                         <FormControl>
+                                             <Input placeholder="e.g. Rs. 500,000 per passenger" {...field} value={field.value || ""} />
+                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -300,9 +300,9 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Features / Amenities</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g. TV, Sound system, Original seats" {...field} />
-                                        </FormControl>
+                                         <FormControl>
+                                             <Input placeholder="e.g. TV, Sound system, Original seats" {...field} value={field.value || ""} />
+                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -322,7 +322,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                     <FormItem>
                                         <FormLabel>Current Mileage (KM)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" placeholder="e.g. 45000" {...field} />
+                                            <Input type="number" placeholder="e.g. 45000" {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -339,7 +339,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                         <FormItem>
                                             <FormLabel>Oil Change Interval (KM)</FormLabel>
                                             <FormControl>
-                                                <Input type="number" {...field} />
+                                            <Input type="number" {...field} value={field.value ?? ""} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -352,7 +352,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                         <FormItem>
                                             <FormLabel>Last Oil Change at (KM)</FormLabel>
                                             <FormControl>
-                                                <Input type="number" {...field} />
+                                                <Input type="number" {...field} value={field.value ?? ""} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -368,7 +368,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                         <FormItem>
                                             <FormLabel>Filter Change Interval (KM)</FormLabel>
                                             <FormControl>
-                                                <Input type="number" {...field} />
+                                                <Input type="number" {...field} value={field.value ?? ""} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -381,7 +381,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                         <FormItem>
                                             <FormLabel>Last Filter Change at (KM)</FormLabel>
                                             <FormControl>
-                                                <Input type="number" {...field} />
+                                                <Input type="number" {...field} value={field.value ?? ""} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -398,7 +398,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                     <FormItem>
                                         <FormLabel>Body Wash Interval (KM)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" {...field} />
+                                            <Input type="number" {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -411,7 +411,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                     <FormItem>
                                         <FormLabel>Last Body Wash at (KM)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" {...field} />
+                                            <Input type="number" {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

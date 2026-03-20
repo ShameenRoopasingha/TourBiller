@@ -388,7 +388,9 @@ export function BillCreator({
 
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
-            formData.append(key, value.toString());
+            if (value !== null && value !== undefined) {
+                formData.append(key, value instanceof Date ? value.toISOString() : value.toString());
+            }
         });
 
         // Ensure address is sent
@@ -550,7 +552,7 @@ export function BillCreator({
                                                                 label: c.mobile ? `${c.name} (${c.mobile})` : c.name,
                                                                 value: c.name
                                                             }))}
-                                                            value={field.value}
+                                                            value={field.value || ''}
                                                             onChange={(value) => {
                                                                 field.onChange(value);
                                                                 const selected = customers.find(c => c.name === value);
@@ -615,7 +617,7 @@ export function BillCreator({
                                                                 label: s.name,
                                                                 value: s.name
                                                             }))}
-                                                            value={field.value}
+                                                            value={field.value || ''}
                                                             onChange={field.onChange}
                                                             placeholder="e.g. Airport Drop or Kandy Tour"
                                                             allowCustomValue={true}
@@ -655,7 +657,7 @@ export function BillCreator({
                                                 <FormItem>
                                                     <FormLabel>Start Meter</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" step="0.1" {...field} onChange={e => handleNumericChange(e, field.onChange, 'startMeter')} />
+                                                        <Input type="number" step="0.1" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'startMeter')} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -668,7 +670,7 @@ export function BillCreator({
                                                 <FormItem>
                                                     <FormLabel>End Meter</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" step="0.1" {...field} onChange={e => handleNumericChange(e, field.onChange, 'endMeter')} />
+                                                        <Input type="number" step="0.1" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'endMeter')} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -728,7 +730,7 @@ export function BillCreator({
                                                     <FormItem>
                                                         <FormLabel>Package Charge</FormLabel>
                                                         <FormControl>
-                                                            <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'packageCharge')} />
+                                                            <Input type="number" step="0.01" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'packageCharge')} />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
@@ -741,7 +743,7 @@ export function BillCreator({
                                                     <FormItem>
                                                         <FormLabel>Included Km (Per Day)</FormLabel>
                                                         <FormControl>
-                                                            <Input type="number" step="1" {...field} onChange={e => handleNumericChange(e, field.onChange, 'allowedKm')} />
+                                                            <Input type="number" step="1" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'allowedKm')} />
                                                         </FormControl>
                                                         <FormMessage />
                                                         {form.getValues('allowedKm') > 0 && <p className="text-[10px] text-muted-foreground">Standard distance per day</p>}
@@ -755,7 +757,7 @@ export function BillCreator({
                                                     <FormItem>
                                                         <FormLabel>{watchedAllowedKm > 0 ? "Excess Rate / km" : "Rate / km"}</FormLabel>
                                                         <FormControl>
-                                                            <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'hireRate')} />
+                                                            <Input type="number" step="0.01" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'hireRate')} />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
@@ -828,7 +830,7 @@ export function BillCreator({
                                                 <FormItem>
                                                     <FormLabel>Extra Hour Rate</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraHourRate')} />
+                                                        <Input type="number" step="0.01" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'extraHourRate')} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
