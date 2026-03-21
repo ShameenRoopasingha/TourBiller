@@ -23,7 +23,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 import Link from 'next/link';
 
 interface VehicleListProps {
