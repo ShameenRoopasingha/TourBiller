@@ -5,12 +5,13 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, FileCheck, Calculator, Plus } from 'lucide-react';
 
-import { QuotationFormSchema, type QuotationFormInput, type QuotationWithSchedule, type VehicleAvailabilityConflict } from '@/lib/validations';
+import { QuotationFormSchema, type QuotationFormInput, type QuotationWithSchedule, type VehicleAvailabilityConflict, type DriverAvailabilityConflict } from '@/lib/validations';
 
 // For backward compatibility
 export type QuotationFormData = QuotationFormInput;
 import { generateQuotation, updateQuotation } from '@/lib/quotation-actions';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
+import { checkDriverAvailability } from '@/lib/user-actions';
 import { formatCurrency } from '@/lib/calculations';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
@@ -121,6 +122,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
     const [justCreatedScheduleId, setJustCreatedScheduleId] = useState<string | null>(null);
     const [availabilityConflict, setAvailabilityConflict] = useState<VehicleAvailabilityConflict | null>(null);
+    const [driverAvailabilityConflict, setDriverAvailabilityConflict] = useState<DriverAvailabilityConflict | null>(null);
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const handleEnterKey = useEnterNavigation();
 
@@ -189,9 +191,11 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         excessKmRate: watchedExcessKmRate,
         extraHourRate: watchedExtraHourRate,
         startDate: watchedStartDate,
+        endDate: watchedEndDate,
         tourScheduleId: watchedTourScheduleId,
         customerName: watchedCustomerName,
         vehicleNo: watchedVehicleNo,
+        driverId: watchedDriverId,
     } = watchedFields;
 
     // Auto-calculate end date when start date or schedule changes
@@ -213,22 +217,55 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         }
     }, [watchedStartDate, selectedSchedule, form]);
 
-    // Check vehicle availability
+    // Check vehicle and driver availability
     React.useEffect(() => {
         const checkAvailability = async () => {
-            if (watchedVehicleNo && watchedStartDate && watchedFields.endDate) {
+            const hasVehicle = !!watchedVehicleNo;
+            const hasDriver = !!watchedDriverId;
+            const hasStartDate = !!watchedStartDate;
+            const hasEndDate = !!watchedEndDate;
+
+            if (hasStartDate && hasEndDate && (hasVehicle || hasDriver)) {
                 setIsCheckingAvailability(true);
-                setAvailabilityConflict(null);
+                // Reset conflicts before checking
+                if (hasVehicle) setAvailabilityConflict(null);
+                if (hasDriver) setDriverAvailabilityConflict(null);
+
                 try {
-                    const result = await checkVehicleAvailability(
-                        watchedVehicleNo,
-                        watchedStartDate,
-                        watchedFields.endDate,
-                        initialData?.id, // Pass current ID to exclude from conflict check
-                        'Quotation'
-                    );
-                    if (result.success && !result.data?.available) {
-                        setAvailabilityConflict(result.data?.conflicts[0] || null);
+                    const checks = [];
+                    if (hasVehicle) {
+                        checks.push(checkVehicleAvailability(
+                            watchedVehicleNo,
+                            watchedStartDate,
+                            watchedEndDate,
+                            initialData?.id,
+                            'Quotation'
+                        ));
+                    }
+                    if (hasDriver) {
+                        checks.push(checkDriverAvailability(
+                            watchedDriverId as string,
+                            watchedStartDate,
+                            watchedEndDate,
+                            initialData?.id,
+                            'Quotation'
+                        ));
+                    }
+
+                    const results = await Promise.all(checks);
+                    
+                    let resultIdx = 0;
+                    if (hasVehicle) {
+                        const vehicleResult = results[resultIdx++];
+                        if (vehicleResult.success && !vehicleResult.data?.available) {
+                            setAvailabilityConflict(vehicleResult.data?.conflicts[0] || null);
+                        }
+                    }
+                    if (hasDriver) {
+                        const driverResult = results[resultIdx++];
+                        if (driverResult.success && !driverResult.data?.available) {
+                            setDriverAvailabilityConflict(driverResult.data?.conflicts[0] || null);
+                        }
                     }
                 } catch (e) {
                     console.error("Availability check failed", e);
@@ -237,12 +274,13 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                 }
             } else {
                 setAvailabilityConflict(null);
+                setDriverAvailabilityConflict(null);
             }
         };
 
         const timer = setTimeout(checkAvailability, 500);
         return () => clearTimeout(timer);
-    }, [watchedVehicleNo, watchedStartDate, watchedFields.endDate, initialData?.id]);
+    }, [watchedVehicleNo, watchedDriverId, watchedStartDate, watchedEndDate, initialData?.id]);
 
     // When schedule selection changes
     const handleScheduleChange = React.useCallback((scheduleId: string) => {
@@ -698,6 +736,14 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                         />
                                     </FormControl>
                                     <FormMessage />
+                                    {driverAvailabilityConflict && (
+                                        <div className="mt-2 text-xs font-semibold text-destructive flex items-center gap-1.5 p-2 bg-destructive/10 rounded animate-in fade-in slide-in-from-top-1">
+                                            <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                                            <span>
+                                                Driver is occupied by <span className="underline">{driverAvailabilityConflict.customer}</span> ({driverAvailabilityConflict.type}: {driverAvailabilityConflict.reference}) until {new Date(driverAvailabilityConflict.end).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    )}
                                 </FormItem>
                             )}
                         />

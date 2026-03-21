@@ -3,8 +3,107 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
-import { type ActionResult } from '@/lib/validations';
+import { type ActionResult, type DriverAvailabilityConflict } from '@/lib/validations';
 import { revalidatePath } from 'next/cache';
+
+/**
+ * Check driver availability for a given date range.
+ * Checks against Confirmed Bookings and Accepted Quotations.
+ */
+export async function checkDriverAvailability(
+    driverId: string,
+    startDate: Date | string,
+    endDate: Date | string,
+    currentId?: string, // Optional: exclude current record (Booking/Quotation) from check
+    currentType?: 'Booking' | 'Quotation'
+): Promise<ActionResult<{ available: boolean; conflicts: DriverAvailabilityConflict[] }>> {
+    try {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return { success: false, error: 'Invalid dates provided' };
+        }
+
+        // 1. Check Bookings (Future confirmed usage)
+        const bookingConflicts = await prisma.booking.findMany({
+            where: {
+                driverId,
+                status: 'CONFIRMED',
+                id: (currentType === 'Booking' && currentId) ? { not: currentId } : undefined,
+                OR: [
+                    {
+                        startDate: { lte: end },
+                        endDate: { gte: start, not: null }
+                    },
+                    {
+                        endDate: null,
+                        startDate: { gte: start, lte: end }
+                    }
+                ]
+            },
+            select: { 
+                id: true, 
+                customerName: true, 
+                startDate: true, 
+                endDate: true, 
+                status: true 
+            }
+        });
+
+        // 2. Check Accepted Quotations
+        const quotationConflicts = await prisma.quotation.findMany({
+            where: {
+                driverId,
+                status: 'ACCEPTED',
+                id: (currentType === 'Quotation' && currentId) ? { not: currentId } : undefined,
+                OR: [
+                    {
+                        startDate: { lte: end, not: null },
+                        endDate: { gte: start, not: null }
+                    }
+                ]
+            },
+            select: {
+                id: true,
+                quotationNumber: true,
+                customerName: true,
+                startDate: true,
+                endDate: true
+            }
+        });
+
+        const conflicts: DriverAvailabilityConflict[] = [
+            ...bookingConflicts.map(b => ({ 
+                type: 'Booking' as const, 
+                id: b.id, 
+                reference: 'Confirmed Booking',
+                customer: b.customerName,
+                start: b.startDate,
+                end: b.endDate || b.startDate
+            })),
+            ...quotationConflicts.map(q => ({
+                type: 'Quotation' as const,
+                id: q.id,
+                reference: `Quote #${q.quotationNumber}`,
+                customer: q.customerName,
+                start: q.startDate!,
+                end: q.endDate!
+            }))
+        ];
+
+        return {
+            success: true,
+            data: {
+                available: conflicts.length === 0,
+                conflicts
+            }
+        };
+    } catch (error) {
+        console.error('Error checking driver availability:', error);
+        return { success: false, error: 'Failed to check driver availability' };
+    }
+}
 
 type UserData = {
     id: string;

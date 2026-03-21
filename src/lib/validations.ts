@@ -19,6 +19,15 @@ export interface VehicleAvailabilityConflict {
   end: Date;
 }
 
+export interface DriverAvailabilityConflict {
+  type: 'Booking' | 'Quotation';
+  id: string;
+  reference: string;
+  customer: string;
+  start: Date;
+  end: Date;
+}
+
 // Customer form schema - RHF compatible
 export const CustomerFormSchema = z.object({
   name: z.string().min(1, "Name is required"),

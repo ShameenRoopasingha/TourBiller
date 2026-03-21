@@ -4,12 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { BookingFormSchema, type BookingFormInput, type Vehicle, type Customer, type VehicleAvailabilityConflict } from '@/lib/validations';
+import { BookingFormSchema, type BookingFormInput, type Vehicle, type Customer, type VehicleAvailabilityConflict, type DriverAvailabilityConflict } from '@/lib/validations';
 
 // For backward compatibility
 export type BookingFormData = BookingFormInput;
 import { createBooking } from '@/lib/booking-actions';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
+import { checkDriverAvailability } from '@/lib/user-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
     const [error, setError] = useState<string | null>(null);
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const [availabilityConflict, setAvailabilityConflict] = useState<VehicleAvailabilityConflict | null>(null);
+    const [driverAvailabilityConflict, setDriverAvailabilityConflict] = useState<DriverAvailabilityConflict | null>(null);
     const handleEnterKey = useEnterNavigation();
 
     const form = useForm<BookingFormInput>({
@@ -57,27 +59,48 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
     });
 
     const watchedVehicleNo = useWatch({ control: form.control, name: 'vehicleNo' });
+    const watchedDriverId = useWatch({ control: form.control, name: 'driverId' });
     const watchedStartDate = useWatch({ control: form.control, name: 'startDate' });
     const watchedEndDate = useWatch({ control: form.control, name: 'endDate' });
 
-    // Check vehicle availability
+    // Check vehicle and driver availability
     useEffect(() => {
         const checkAvailability = async () => {
-            if (watchedVehicleNo && watchedStartDate) {
+            const hasVehicle = !!watchedVehicleNo;
+            const hasDriver = !!watchedDriverId;
+            const hasDates = !!watchedStartDate;
+
+            if (hasDates && (hasVehicle || hasDriver)) {
                 setIsCheckingAvailability(true);
-                setAvailabilityConflict(null);
+                // Reset conflicts before checking
+                if (hasVehicle) setAvailabilityConflict(null);
+                if (hasDriver) setDriverAvailabilityConflict(null);
+
                 try {
-                    // Treat null endDate as single-day booking
                     const end = watchedEndDate || watchedStartDate;
-                    const result = await checkVehicleAvailability(
-                        watchedVehicleNo,
-                        watchedStartDate,
-                        end,
-                        undefined,
-                        'Booking'
-                    );
-                    if (result.success && result.data && !result.data.available) {
-                        setAvailabilityConflict(result.data.conflicts[0]);
+                    
+                    const checks = [];
+                    if (hasVehicle) {
+                        checks.push(checkVehicleAvailability(watchedVehicleNo, watchedStartDate, end, undefined, 'Booking'));
+                    }
+                    if (hasDriver) {
+                        checks.push(checkDriverAvailability(watchedDriverId, watchedStartDate, end, undefined, 'Booking'));
+                    }
+
+                    const results = await Promise.all(checks);
+                    
+                    let resultIdx = 0;
+                    if (hasVehicle) {
+                        const vehicleResult = results[resultIdx++];
+                        if (vehicleResult.success && vehicleResult.data && !vehicleResult.data.available) {
+                            setAvailabilityConflict(vehicleResult.data.conflicts[0]);
+                        }
+                    }
+                    if (hasDriver) {
+                        const driverResult = results[resultIdx++];
+                        if (driverResult.success && driverResult.data && !driverResult.data.available) {
+                            setDriverAvailabilityConflict(driverResult.data.conflicts[0]);
+                        }
                     }
                 } catch (e) {
                     console.error("Availability check failed", e);
@@ -86,12 +109,13 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                 }
             } else {
                 setAvailabilityConflict(null);
+                setDriverAvailabilityConflict(null);
             }
         };
 
         const timer = setTimeout(checkAvailability, 500);
         return () => clearTimeout(timer);
-    }, [watchedVehicleNo, watchedStartDate, watchedEndDate]);
+    }, [watchedVehicleNo, watchedDriverId, watchedStartDate, watchedEndDate]);
 
     const onSubmit = async (data: BookingFormData) => {
         setIsSubmitting(true);
@@ -212,6 +236,14 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                                 />
                                             </FormControl>
                                             <FormMessage />
+                                            {driverAvailabilityConflict && (
+                                                <div className="mt-2 text-xs font-semibold text-destructive flex items-center gap-1.5 p-2 bg-destructive/10 rounded animate-in fade-in slide-in-from-top-1">
+                                                    <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                                                    <span>
+                                                        Driver is occupied by <span className="underline">{driverAvailabilityConflict.customer}</span> ({driverAvailabilityConflict.type}: {driverAvailabilityConflict.reference}) until {new Date(driverAvailabilityConflict.end).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </FormItem>
                                     )}
                                 />
