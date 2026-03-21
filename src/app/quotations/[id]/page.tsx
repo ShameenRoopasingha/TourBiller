@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
 import { getQuotationById } from '@/lib/quotation-actions';
 import { formatCurrency } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,13 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
 
     const q = result.data;
     const fmt = formatCurrency;
+
+    let vehicleContext = null;
+    if (q.vehicleNo) {
+        vehicleContext = await prisma.vehicle.findUnique({
+            where: { vehicleNo: q.vehicleNo }
+        });
+    }
 
     const statusColors: Record<string, string> = {
         DRAFT: 'bg-muted text-muted-foreground',
@@ -285,20 +293,24 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="flex items-center gap-2 p-2 rounded-md border bg-card">
                                         <Users className="h-4 w-4 text-blue-500" />
-                                        <span className="text-sm font-medium">7 Seats</span>
+                                        <span className="text-sm font-medium">{vehicleContext?.seats || '?'} Seats</span>
                                     </div>
                                     <div className="flex items-center gap-2 p-2 rounded-md border bg-card">
                                         <Wind className="h-4 w-4 text-cyan-500" />
-                                        <span className="text-sm font-medium">Dual AC</span>
+                                        <span className="text-sm font-medium">{vehicleContext?.acType || 'No AC'}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 p-2 rounded-md border bg-card">
-                                        <Star className="h-4 w-4 text-amber-500" />
-                                        <span className="text-sm font-medium">Premium</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 p-2 rounded-md border bg-card">
-                                        <ShieldCheck className="h-4 w-4 text-green-500" />
-                                        <span className="text-sm font-medium">Full Ins.</span>
-                                    </div>
+                                    {vehicleContext?.features && (
+                                        <div className="flex items-center gap-2 p-2 rounded-md border bg-card col-span-2">
+                                            <Star className="h-4 w-4 text-amber-500 shrink-0" />
+                                            <span className="text-sm font-medium truncate" title={vehicleContext.features}>{vehicleContext.features}</span>
+                                        </div>
+                                    )}
+                                    {vehicleContext?.insuranceCoverage && (
+                                        <div className="flex items-center gap-2 p-2 rounded-md border bg-card col-span-2">
+                                            <ShieldCheck className="h-4 w-4 text-green-500 shrink-0" />
+                                            <span className="text-sm font-medium truncate" title={vehicleContext.insuranceCoverage}>{vehicleContext.insuranceCoverage}</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2 pt-2 text-sm border-t">
