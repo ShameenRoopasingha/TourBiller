@@ -232,40 +232,28 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                 if (hasDriver) setDriverAvailabilityConflict(null);
 
                 try {
-                    const checks = [];
-                    if (hasVehicle) {
-                        checks.push(checkVehicleAvailability(
+                    const [vehicleRes, driverRes] = await Promise.all([
+                        hasVehicle ? checkVehicleAvailability(
                             watchedVehicleNo,
                             watchedStartDate,
                             watchedEndDate,
                             initialData?.id,
                             'Quotation'
-                        ));
-                    }
-                    if (hasDriver) {
-                        checks.push(checkDriverAvailability(
+                        ) : Promise.resolve(null),
+                        hasDriver ? checkDriverAvailability(
                             watchedDriverId as string,
                             watchedStartDate,
                             watchedEndDate,
                             initialData?.id,
                             'Quotation'
-                        ));
-                    }
+                        ) : Promise.resolve(null)
+                    ]);
 
-                    const results = await Promise.all(checks);
-                    
-                    let resultIdx = 0;
-                    if (hasVehicle) {
-                        const vehicleResult = results[resultIdx++];
-                        if (vehicleResult.success && !vehicleResult.data?.available) {
-                            setAvailabilityConflict(vehicleResult.data?.conflicts[0] || null);
-                        }
+                    if (vehicleRes?.success && !vehicleRes.data?.available) {
+                        setAvailabilityConflict(vehicleRes.data?.conflicts[0] || null);
                     }
-                    if (hasDriver) {
-                        const driverResult = results[resultIdx++];
-                        if (driverResult.success && !driverResult.data?.available) {
-                            setDriverAvailabilityConflict(driverResult.data?.conflicts[0] || null);
-                        }
+                    if (driverRes?.success && !driverRes.data?.available) {
+                        setDriverAvailabilityConflict(driverRes.data?.conflicts[0] || null);
                     }
                 } catch (e) {
                     console.error("Availability check failed", e);

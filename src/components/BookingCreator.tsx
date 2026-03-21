@@ -79,28 +79,16 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                 try {
                     const end = watchedEndDate || watchedStartDate;
                     
-                    const checks = [];
-                    if (hasVehicle) {
-                        checks.push(checkVehicleAvailability(watchedVehicleNo, watchedStartDate, end, undefined, 'Booking'));
-                    }
-                    if (hasDriver) {
-                        checks.push(checkDriverAvailability(watchedDriverId, watchedStartDate, end, undefined, 'Booking'));
-                    }
+                    const [vehicleRes, driverRes] = await Promise.all([
+                        hasVehicle ? checkVehicleAvailability(watchedVehicleNo, watchedStartDate, end, undefined, 'Booking') : Promise.resolve(null),
+                        hasDriver ? checkDriverAvailability(watchedDriverId, watchedStartDate, end, undefined, 'Booking') : Promise.resolve(null)
+                    ]);
 
-                    const results = await Promise.all(checks);
-                    
-                    let resultIdx = 0;
-                    if (hasVehicle) {
-                        const vehicleResult = results[resultIdx++];
-                        if (vehicleResult.success && vehicleResult.data && !vehicleResult.data.available) {
-                            setAvailabilityConflict(vehicleResult.data.conflicts[0]);
-                        }
+                    if (vehicleRes?.success && vehicleRes.data && !vehicleRes.data.available) {
+                        setAvailabilityConflict(vehicleRes.data.conflicts[0]);
                     }
-                    if (hasDriver) {
-                        const driverResult = results[resultIdx++];
-                        if (driverResult.success && driverResult.data && !driverResult.data.available) {
-                            setDriverAvailabilityConflict(driverResult.data.conflicts[0]);
-                        }
+                    if (driverRes?.success && driverRes.data && !driverRes.data.available) {
+                        setDriverAvailabilityConflict(driverRes.data.conflicts[0]);
                     }
                 } catch (e) {
                     console.error("Availability check failed", e);
