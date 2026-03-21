@@ -3,14 +3,16 @@ import { Loader2 } from 'lucide-react';
 import { getTourSchedules } from '@/lib/tour-schedule-actions';
 import { getCustomers } from '@/lib/customer-actions';
 import { getVehicles } from '@/lib/vehicle-actions';
+import { getDrivers } from '@/lib/user-actions';
 import { QuotationCreator } from '@/components/QuotationCreator';
 
 async function NewQuotationForm() {
     // Fetch all needed data in parallel
-    const [schedulesResult, customersResult, vehiclesResult] = await Promise.all([
+    const [schedulesResult, customersResult, vehiclesResult, driversResult] = await Promise.all([
         getTourSchedules(),
         getCustomers(),
         getVehicles(),
+        getDrivers(),
     ]);
 
     const schedules = schedulesResult.success && schedulesResult.data
@@ -40,6 +42,7 @@ async function NewQuotationForm() {
             features: v.features ?? null,
             insuranceCoverage: v.insuranceCoverage ?? null,
         }));
+    const drivers = driversResult.success && driversResult.data ? driversResult.data : [];
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -47,6 +50,7 @@ async function NewQuotationForm() {
                 schedules={schedules}
                 customers={customers}
                 vehicles={vehicles}
+                drivers={drivers}
             />
         </div>
     );

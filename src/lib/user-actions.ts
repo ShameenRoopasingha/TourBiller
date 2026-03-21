@@ -118,3 +118,22 @@ export async function deleteUser(id: string): Promise<ActionResult<void>> {
         return { success: false, error: 'Failed to delete user' };
     }
 }
+
+export type DriverOption = { id: string; name: string; email: string };
+
+/**
+ * Get all drivers (users with DRIVER role)
+ */
+export async function getDrivers(): Promise<ActionResult<DriverOption[]>> {
+    try {
+        const drivers = await prisma.user.findMany({
+            where: { role: 'DRIVER' },
+            select: { id: true, name: true, email: true },
+            orderBy: { name: 'asc' },
+        });
+        return { success: true, data: drivers };
+    } catch (error) {
+        console.error('Error fetching drivers:', error);
+        return { success: false, error: 'Failed to fetch drivers' };
+    }
+}

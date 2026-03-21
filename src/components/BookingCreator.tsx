@@ -32,9 +32,10 @@ interface BookingCreatorProps {
     vehicles: Vehicle[];
     customers: Customer[];
     schedules: { id: string; name: string }[];
+    drivers?: { id: string; name: string }[];
 }
 
-export function BookingCreator({ vehicles, customers, schedules }: BookingCreatorProps) {
+export function BookingCreator({ vehicles, customers, schedules, drivers = [] }: BookingCreatorProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -187,6 +188,27 @@ export function BookingCreator({ vehicles, customers, schedules }: BookingCreato
                                                     onChange={field.onChange}
                                                     placeholder="Select Customer..."
                                                     allowCustomValue={true}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="driverId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Driver (Optional)</FormLabel>
+                                            <FormControl>
+                                                <ComboboxField
+                                                    options={drivers.map(d => ({
+                                                        label: d.name,
+                                                        value: d.id
+                                                    }))}
+                                                    value={field.value || ''}
+                                                    onChange={field.onChange}
+                                                    placeholder="Select Driver..."
                                                 />
                                             </FormControl>
                                             <FormMessage />

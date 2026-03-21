@@ -46,6 +46,7 @@ export async function generateQuotation(
             notes: formData.get('notes') as string || undefined,
             status: formData.get('status') as string || 'DRAFT',
             validUntil: formData.get('validUntil') ? new Date(formData.get('validUntil') as string) : undefined,
+            driverId: (formData.get('driverId') as string) || undefined,
         };
 
         const validated = QuotationSchema.parse(rawData);
@@ -240,6 +241,7 @@ export async function updateQuotation(
             notes: formData.get('notes') as string || undefined,
             status: formData.get('status') as string || 'DRAFT',
             validUntil: formData.get('validUntil') ? new Date(formData.get('validUntil') as string) : undefined,
+            driverId: (formData.get('driverId') as string) || undefined,
         };
 
         const validated = QuotationSchema.parse(rawData);

@@ -98,6 +98,7 @@ export const BookingFormSchema = z.object({
   status: z.string().default("CONFIRMED"),
   advanceAmount: z.coerce.number().min(0).default(0),
   notes: z.string().optional().default(''),
+  driverId: z.string().optional().default(''),
 }).refine(data => !data.endDate || data.endDate >= data.startDate, {
   message: "End date must be after or equal to start date",
   path: ["endDate"]
@@ -162,6 +163,7 @@ export const QuotationFormSchema = z.object({
   notes: z.string().default(''),
   validUntil: z.coerce.date().optional(),
   status: z.string().default('DRAFT'),
+  driverId: z.string().optional().default(''),
 });
 
 export type QuotationFormInput = z.infer<typeof QuotationFormSchema>;
@@ -344,6 +346,7 @@ export const BookingSchema = z.object({
   status: z.string().default("CONFIRMED"),
   advanceAmount: z.coerce.number().min(0).default(0),
   notes: z.string().nullish().transform(v => v ?? undefined),
+  driverId: z.string().nullish().transform(v => v ?? undefined),
 }).refine(data => !data.endDate || data.endDate >= data.startDate, {
   message: "End date must be after or equal to start date",
   path: ["endDate"]
@@ -434,6 +437,7 @@ export const QuotationSchema = z.object({
   notes: z.string().nullish().transform(v => v ?? undefined),
   validUntil: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().nullable()).optional().transform(v => v ?? undefined),
   status: z.string().optional().default('DRAFT'),
+  driverId: z.string().nullish().transform(v => v ?? undefined),
 });
 
 export type QuotationFormData = z.infer<typeof QuotationSchema>;

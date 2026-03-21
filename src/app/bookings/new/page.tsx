@@ -3,19 +3,22 @@ import { Loader2 } from 'lucide-react';
 import { getVehicles } from '@/lib/vehicle-actions';
 import { getCustomers } from '@/lib/customer-actions';
 import { getTourSchedules } from '@/lib/tour-schedule-actions';
+import { getDrivers } from '@/lib/user-actions';
 import { BookingCreator } from '@/components/BookingCreator';
 
 async function NewBookingForm() {
     // Fetch all needed data on the server so dropdowns are instantly available
-    const [vResult, cResult, sResult] = await Promise.all([
+    const [vResult, cResult, sResult, dResult] = await Promise.all([
         getVehicles(),
         getCustomers(),
         getTourSchedules(),
+        getDrivers(),
     ]);
 
     const vehicles = vResult.success && vResult.data ? vResult.data : [];
     const customers = cResult.success && cResult.data ? cResult.data : [];
     const schedules = sResult.success && sResult.data ? sResult.data : [];
+    const drivers = dResult.success && dResult.data ? dResult.data : [];
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -27,6 +30,7 @@ async function NewBookingForm() {
                 vehicles={vehicles}
                 customers={customers}
                 schedules={schedules}
+                drivers={drivers}
             />
         </div>
     );

@@ -23,6 +23,15 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog';
 
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -94,10 +103,11 @@ interface QuotationCreatorProps {
     schedules: ScheduleOption[];
     customers: CustomerOption[];
     vehicles: VehicleOption[];
+    drivers?: { id: string; name: string }[];
     initialData?: QuotationWithSchedule;
 }
 
-export function QuotationCreator({ schedules, customers, vehicles, initialData }: QuotationCreatorProps) {
+export function QuotationCreator({ schedules, customers, vehicles, drivers = [], initialData }: QuotationCreatorProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -141,6 +151,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             status: (initialData.status as any) || 'DRAFT',
             validUntil: initialData.validUntil ? new Date(initialData.validUntil).toISOString().split('T')[0] as unknown as Date : undefined,
+            driverId: initialData.driverId || '',
         } : {
             customerName: '',
             customerEmail: '',
@@ -161,6 +172,7 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
             notes: '',
             validUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as unknown as Date,
             status: 'DRAFT',
+            driverId: '',
         },
     });
 
@@ -391,7 +403,8 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
     const fmt = formatCurrency;
 
     return (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        <Form {...form}>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6" onKeyDown={handleEnterKey}>
             <div className="mb-6">
                 <h1 className="text-3xl font-bold tracking-tight">
@@ -666,6 +679,28 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="driverId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Driver (Optional)</FormLabel>
+                                    <FormControl>
+                                        <ComboboxField
+                                            options={drivers.map(d => ({
+                                                label: d.name,
+                                                value: d.id
+                                            }))}
+                                            value={field.value || ''}
+                                            onChange={(value) => field.onChange(value)}
+                                            placeholder="Select Driver..."
+                                            allowCustomValue={false}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <div className="space-y-2">
                             <Label htmlFor="numberOfPersons">Number of Guests</Label>
                             <Input
@@ -946,5 +981,6 @@ export function QuotationCreator({ schedules, customers, vehicles, initialData }
                 </Button>
             </div>
         </form>
+        </Form>
     );
 }

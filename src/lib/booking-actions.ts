@@ -25,6 +25,7 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
             destination: (formData.get('destination') as string) || undefined,
             notes: (formData.get('notes') as string) || undefined,
             advanceAmount: parseFloat(formData.get('advanceAmount') as string) || 0,
+            driverId: (formData.get('driverId') as string) || undefined,
             status: 'CONFIRMED',
         };
 
