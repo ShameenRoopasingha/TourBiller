@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Loader2, Search, Car, Plus, Pencil, Trash2, Receipt, Droplets, Filter } from 'lucide-react';
-import { getVehicles, deleteVehicle } from '@/lib/vehicle-actions';
+import { Search, Car, Plus, Pencil, Trash2, Receipt, Droplets, Filter } from 'lucide-react';
+import { deleteVehicle } from '@/lib/vehicle-actions';
 import { type Vehicle } from '@/lib/validations';
 import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -26,10 +26,11 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
-export function VehicleList() {
-    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+interface VehicleListProps {
+    initialVehicles: Vehicle[];
+}
+
+export function VehicleList({ initialVehicles }: VehicleListProps) {
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
     const [expenseSheetOpen, setExpenseSheetOpen] = useState(false);
 
@@ -38,31 +39,7 @@ export function VehicleList() {
     const pathname = usePathname();
 
     const query = searchParams.get('q') || '';
-
-    const fetchVehicles = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const result = await getVehicles(query);
-
-            if (result.success && result.data) {
-                setVehicles(result.data);
-            } else {
-                setError(result.error || 'Failed to fetch vehicles');
-            }
-        } catch (e) {
-            console.error("Error fetching vehicles:", e);
-            setError("Server communication error. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    }, [query]);
-
-    useEffect(() => {
-        const timeoutId = setTimeout(fetchVehicles, 300);
-        return () => clearTimeout(timeoutId);
-    }, [fetchVehicles]);
+    const vehicles = initialVehicles;
 
     const handleSearch = (term: string) => {
         const params = new URLSearchParams(searchParams);
@@ -78,9 +55,7 @@ export function VehicleList() {
         if (!confirm('Are you sure you want to delete this vehicle?')) return;
 
         const result = await deleteVehicle(id);
-        if (result.success) {
-            fetchVehicles(); // Refresh list
-        } else {
+        if (!result.success) {
             alert(result.error || 'Failed to delete vehicle');
         }
     };
@@ -117,18 +92,7 @@ export function VehicleList() {
                         </div>
                     </div>
 
-                    {error && (
-                        <Alert variant="destructive" className="mb-6">
-                            <AlertTitle>Error</AlertTitle>
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    {loading ? (
-                        <div className="flex justify-center py-8">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    ) : vehicles.length === 0 ? (
+                    {vehicles.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
                             <Car className="mx-auto h-12 w-12 mb-3 text-muted-foreground/20" />
                             <p className="text-lg font-medium">No vehicles found</p>
