@@ -66,7 +66,11 @@ export async function getVehicles(searchQuery?: string): Promise<ActionResult<Ve
             orderBy: { updatedAt: 'desc' },
         });
 
-        return { success: true, data: vehicles as Vehicle[] };
+        // Convert Prisma objects to plain POJOs for Next.js Server Actions serialization
+        // This prevents 500 errors when Client Components call this action
+        const plainVehicles = JSON.parse(JSON.stringify(vehicles));
+
+        return { success: true, data: plainVehicles as Vehicle[] };
     } catch (error) {
         console.error('Error fetching vehicles:', error);
         return { success: false, error: 'Failed to fetch vehicles' };

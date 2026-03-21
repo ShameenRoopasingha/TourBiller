@@ -43,15 +43,20 @@ export function VehicleList() {
         setLoading(true);
         setError(null);
 
-        const result = await getVehicles(query);
+        try {
+            const result = await getVehicles(query);
 
-        if (result.success && result.data) {
-            setVehicles(result.data);
-        } else {
-            setError(result.error || 'Failed to fetch vehicles');
+            if (result.success && result.data) {
+                setVehicles(result.data);
+            } else {
+                setError(result.error || 'Failed to fetch vehicles');
+            }
+        } catch (e) {
+            console.error("Error fetching vehicles:", e);
+            setError("Server communication error. Please try again.");
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     }, [query]);
 
     useEffect(() => {

@@ -78,7 +78,8 @@ export async function getVehicleExpenses(vehicleNo?: string): Promise<ActionResu
             orderBy: { date: 'desc' },
         });
 
-        return { success: true, data: expenses as VehicleExpense[] };
+        const plainExpenses = JSON.parse(JSON.stringify(expenses));
+        return { success: true, data: plainExpenses as VehicleExpense[] };
     } catch (error) {
         console.error('Error fetching vehicle expenses:', error);
         return { success: false, error: 'Failed to fetch vehicle expenses' };
