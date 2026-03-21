@@ -24,7 +24,6 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
         }
 
         const expense = await prisma.$transaction(async (tx) => {
-            // @ts-expect-error - Prisma type sync
             const created = await tx.vehicleExpense.create({
                 data: {
                     vehicleNo: validatedData.vehicleNo,
@@ -37,7 +36,6 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
             });
 
             // Update vehicle last service mileage if applicable
-            // @ts-expect-error - Prisma currentMileage type
             const mileage = validatedData.date ? undefined : (await tx.vehicle.findUnique({ where: { vehicleNo: validatedData.vehicleNo } }))?.currentMileage;
             
             if (mileage !== undefined) {
@@ -75,7 +73,6 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
  */
 export async function getVehicleExpenses(vehicleNo?: string): Promise<ActionResult<VehicleExpense[]>> {
     try {
-        // @ts-expect-error - Prisma vehicleExpense type
         const expenses = await prisma.vehicleExpense.findMany({
             where: vehicleNo ? { vehicleNo } : undefined,
             orderBy: { date: 'desc' },
@@ -98,7 +95,6 @@ export async function deleteVehicleExpense(id: string): Promise<ActionResult<boo
             return { success: false, error: authCheck.error };
         }
 
-        // @ts-expect-error - Prisma vehicleExpense type
         await prisma.vehicleExpense.delete({
             where: { id },
         });
