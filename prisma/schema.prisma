@@ -118,8 +118,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  bookings   Booking[]
-  quotations Quotation[]
+  bookings         Booking[]
+  quotations       Quotation[]
+  vehicleExpenses  VehicleExpense[]
 
   @@map("users")
 }
@@ -250,8 +251,11 @@ model VehicleExpense {
   description String?
   date        DateTime @default(now())
   bookingId   String?  // Optional: link to a booking/tour if it happened during one
+  driverId    String?  // The driver who recorded the expense
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  driver      User?    @relation(fields: [driverId], references: [id])
 
   @@index([vehicleNo])
   @@index([date])

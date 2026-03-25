@@ -25,16 +25,18 @@ type NavItem = {
     href: string;
     icon: React.ElementType;
     adminOnly?: boolean;
+    driverOnly?: boolean;
 };
 
 const navItems: NavItem[] = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'My Active Tour', href: '/driver/active-tour', icon: Car, driverOnly: true },
     { name: 'Vehicles', href: '/vehicles', icon: Car, adminOnly: true },
     { name: 'Customers', href: '/customers', icon: Users, adminOnly: true },
-    { name: 'Bookings', href: '/bookings', icon: CalendarDays },
+    { name: 'Bookings', href: '/bookings', icon: CalendarDays, adminOnly: true },
     { name: 'Tour Schedules', href: '/tour-schedules', icon: Map, adminOnly: true },
     { name: 'Quotations', href: '/quotations', icon: FileCheck, adminOnly: true },
-    { name: 'Bills', href: '/bills', icon: FileText },
+    { name: 'Bills', href: '/bills', icon: FileText, adminOnly: true },
     { name: 'Users', href: '/users', icon: UserCog, adminOnly: true },
 ];
 
@@ -49,7 +51,11 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
     const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
     const isAdmin = userRole === 'ADMIN';
-    const visibleItems = navItems.filter(item => !item.adminOnly || isAdmin);
+    const isDriver = userRole === 'DRIVER';
+    const visibleItems = navItems.filter(item => 
+        (!item.adminOnly || isAdmin) && 
+        (!item.driverOnly || isDriver)
+    );
 
     return (
         <ShadcnSidebar className="border-r border-border/50 bg-card/40 backdrop-blur-xl">

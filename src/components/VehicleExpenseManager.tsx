@@ -44,6 +44,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface VehicleExpenseManagerProps {
     vehicleNo: string;
+    bookingId?: string;
+    userRole?: string;
 }
 
 const CATEGORIES: { label: string; value: VehicleExpenseCategory; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }[] = [
@@ -57,7 +59,7 @@ const CATEGORIES: { label: string; value: VehicleExpenseCategory; icon: React.Co
     { label: 'Other', value: 'OTHER', icon: MoreHorizontal },
 ];
 
-export function VehicleExpenseManager({ vehicleNo }: VehicleExpenseManagerProps) {
+export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN' }: VehicleExpenseManagerProps) {
     const [expenses, setExpenses] = useState<VehicleExpense[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -121,7 +123,8 @@ export function VehicleExpenseManager({ vehicleNo }: VehicleExpenseManagerProps)
             category,
             description,
             date: new Date(date),
-            bookingId: '',
+            bookingId: bookingId || '',
+            driverId: '',
         });
 
         if (result.success) {
@@ -281,14 +284,16 @@ export function VehicleExpenseManager({ vehicleNo }: VehicleExpenseManagerProps)
                                                 Rs. {exp.amount.toLocaleString()}
                                             </TableCell>
                                             <TableCell>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-muted-foreground hover:text-red-600"
-                                                    onClick={() => handleDelete(exp.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                {userRole !== 'DRIVER' && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                                                        onClick={() => handleDelete(exp.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}

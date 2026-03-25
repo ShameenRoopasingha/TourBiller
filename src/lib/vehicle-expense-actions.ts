@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth-guard';
+import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { revalidateFor } from '@/lib/revalidation';
 import { type ActionResult, VehicleExpenseSchema, type VehicleExpense, type VehicleExpenseFormData, type VehicleExpenseCategory, type Vehicle } from '@/lib/validations';
 
@@ -18,9 +18,38 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
     const validatedData = validated.data;
 
     try {
-        const authCheck = await requireAdmin();
+        const authCheck = await requireAuth();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
+        }
+
+        let finalBookingId = validatedData.bookingId || null;
+        let finalDriverId = validatedData.driverId || null;
+
+        if (authCheck.role === 'DRIVER') {
+            // Verify driver is assigned to this vehicle today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const activeBooking = await prisma.booking.findFirst({
+                where: {
+                    driverId: authCheck.userId,
+                    vehicleNo: validatedData.vehicleNo,
+                    status: 'CONFIRMED',
+                    startDate: { lte: new Date() },
+                    OR: [
+                        { endDate: null },
+                        { endDate: { gte: today } }
+                    ]
+                }
+            });
+
+            if (!activeBooking) {
+                return { success: false, error: 'Unauthorized: You are not currently assigned to this vehicle.' };
+            }
+
+            finalBookingId = activeBooking.id;
+            finalDriverId = authCheck.userId;
         }
 
         const expense = await prisma.$transaction(async (tx) => {
@@ -31,7 +60,8 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
                     category: validatedData.category,
                     description: validatedData.description || null,
                     date: validatedData.date || new Date(),
-                    bookingId: validatedData.bookingId || null,
+                    bookingId: finalBookingId,
+                    driverId: finalDriverId,
                 },
             });
 
