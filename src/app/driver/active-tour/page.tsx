@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth-guard';
 import { prisma } from '@/lib/prisma';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
-import { Car, MapPin, Calendar, Clock, Contact } from 'lucide-react';
+import { Car, MapPin, Calendar, ArrowRight } from 'lucide-react';
 
 export const metadata = {
     title: 'My Active Tour - VIRGIL',
@@ -43,13 +43,15 @@ export default async function DriverActiveTourPage() {
 
     if (!activeBooking) {
         return (
-            <div className="space-y-6">
-                <h2 className="text-2xl font-bold tracking-tight">My Active Tour</h2>
-                <Card>
+            <div className="px-1 py-4 max-w-lg mx-auto">
+                <h2 className="text-xl font-bold mb-4">My Active Tour</h2>
+                <Card className="border-dashed border-2">
                     <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                        <Car className="h-16 w-16 text-muted-foreground/30 mb-4" />
-                        <h3 className="text-xl font-medium">No Active Tour</h3>
-                        <p className="text-muted-foreground mt-2">
+                        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+                            <Car className="h-10 w-10 text-muted-foreground/40" />
+                        </div>
+                        <h3 className="text-lg font-semibold">No Active Tour</h3>
+                        <p className="text-sm text-muted-foreground mt-2 max-w-[280px]">
                             You are not currently assigned to any active tours. Check back later or contact your administrator.
                         </p>
                     </CardContent>
@@ -58,91 +60,66 @@ export default async function DriverActiveTourPage() {
         );
     }
 
+    const startDate = new Date(activeBooking.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    const endDate = activeBooking.endDate
+        ? new Date(activeBooking.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+        : 'Ongoing';
+
     return (
-        <div className="space-y-6 max-w-5xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">My Active Tour</h2>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="border-t-4 border-t-primary">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <MapPin className="h-5 w-5 text-primary" />
-                            Tour Details
-                        </CardTitle>
-                        <CardDescription>
-                            Current assignment information.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <span className="text-sm text-muted-foreground flex items-center gap-1"><Contact className="h-3 w-3" /> Customer</span>
-                                <p className="font-medium">{activeBooking.customerName}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <span className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> Destination</span>
-                                <p className="font-medium">{activeBooking.destination || 'N/A'}</p>
-                            </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                            <div className="space-y-1">
-                                <span className="text-sm text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" /> Start Date</span>
-                                <p className="font-medium">{new Date(activeBooking.startDate).toLocaleDateString()}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <span className="text-sm text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> End Date</span>
-                                <p className="font-medium">{activeBooking.endDate ? new Date(activeBooking.endDate).toLocaleDateString() : 'Ongoing'}</p>
-                            </div>
-                        </div>
+        <div className="px-1 py-4 max-w-lg mx-auto space-y-5">
+            {/* Compact Tour Status Banner */}
+            <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-primary/90 to-primary dark:from-primary/80 dark:to-primary/60">
+                <CardContent className="p-4 text-primary-foreground">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm">
+                            🟢 Active Tour
+                        </span>
+                    </div>
 
-                        {activeBooking.notes && (
-                            <div className="pt-4 border-t">
-                                <span className="text-sm text-muted-foreground">Notes</span>
-                                <p className="text-sm mt-1">{activeBooking.notes}</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Car className="h-5 w-5 text-primary" />
-                            Vehicle Information
-                        </CardTitle>
-                        <CardDescription>
-                            Assigned vehicle specifications.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-                            <div>
-                                <h3 className="text-2xl font-bold font-mono tracking-wider">{activeBooking.vehicleNo}</h3>
-                                <p className="text-muted-foreground">{assignedVehicle?.model || 'Vehicle'}</p>
-                            </div>
-                            <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-semibold">
-                                {assignedVehicle?.category || 'CAR'}
-                            </div>
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="w-14 h-14 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0">
+                            <Car className="h-7 w-7" />
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-4 pt-2">
-                            <div className="space-y-1 text-sm border-l-2 border-primary/30 pl-3">
-                                <span className="text-muted-foreground">Current Mileage</span>
-                                <p className="font-medium">{assignedVehicle?.currentMileage || 0} km</p>
-                            </div>
-                            <div className="space-y-1 text-sm border-l-2 border-primary/30 pl-3">
-                                <span className="text-muted-foreground">AC Type</span>
-                                <p className="font-medium">{assignedVehicle?.acType || 'Standard'}</p>
-                            </div>
+                        <div className="min-w-0">
+                            <h3 className="text-2xl font-bold font-mono tracking-wider leading-none">{activeBooking.vehicleNo}</h3>
+                            <p className="text-sm opacity-80 mt-0.5">
+                                {assignedVehicle?.model || assignedVehicle?.category || 'Vehicle'}
+                                {assignedVehicle?.seats ? ` • ${assignedVehicle.seats} Seats` : ''}
+                            </p>
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
+                    </div>
 
-            <div className="pt-4">
-                <VehicleExpenseManager vehicleNo={activeBooking.vehicleNo} />
-            </div>
+                    <div className="space-y-2 pt-3 border-t border-white/15 text-sm">
+                        <div className="flex items-center gap-2">
+                            <MapPin className="h-3.5 w-3.5 opacity-70 shrink-0" />
+                            <span className="truncate">{activeBooking.customerName}</span>
+                            {activeBooking.destination && (
+                                <>
+                                    <ArrowRight className="h-3 w-3 opacity-50 shrink-0" />
+                                    <span className="truncate">{activeBooking.destination}</span>
+                                </>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Calendar className="h-3.5 w-3.5 opacity-70 shrink-0" />
+                            <span>{startDate} → {endDate}</span>
+                        </div>
+                    </div>
+
+                    {activeBooking.notes && (
+                        <p className="text-xs opacity-70 mt-3 pt-2 border-t border-white/10 italic">
+                            {activeBooking.notes}
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Expense Manager — mobile mode */}
+            <VehicleExpenseManager
+                vehicleNo={activeBooking.vehicleNo}
+                bookingId={activeBooking.id}
+                userRole="DRIVER"
+            />
         </div>
     );
 }
