@@ -121,6 +121,7 @@ model User {
   bookings         Booking[]
   quotations       Quotation[]
   vehicleExpenses  VehicleExpense[]
+  tripActivities   TripActivity[]
 
   @@map("users")
 }
@@ -152,6 +153,7 @@ model Booking {
   updatedAt    DateTime @updatedAt
 
   driver       User?    @relation(fields: [driverId], references: [id])
+  tripActivities TripActivity[]
 
   @@index([status])
   @@index([startDate])
@@ -260,4 +262,21 @@ model VehicleExpense {
   @@index([vehicleNo])
   @@index([date])
   @@map("vehicle_expenses")
+}
+
+model TripActivity {
+  id          String   @id @default(cuid())
+  bookingId   String
+  driverId    String
+  type        String   // FUEL_FILL, FLAT_TIRE, STOP, HOTEL_CHECKIN, RESUME, BREAKDOWN, NOTE
+  note        String?
+  expenseId   String?  // Links to VehicleExpense if an expense was created
+  timestamp   DateTime @default(now())
+
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  driver      User     @relation(fields: [driverId], references: [id])
+
+  @@index([bookingId])
+  @@index([driverId])
+  @@map("trip_activities")
 }

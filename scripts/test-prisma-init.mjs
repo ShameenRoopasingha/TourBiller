@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 try {
   new PrismaClient({ datasourceUrl: '?connection_limit=5' });
   console.log('No error on init');
