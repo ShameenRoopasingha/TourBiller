@@ -46,18 +46,23 @@ export function Dashboard() {
 
     useEffect(() => {
         const fetchStats = async () => {
-            setLoading(true);
-            setError(null);
+            try {
+                const result = await getDashboardStats();
 
-            const result = await getDashboardStats();
-
-            if (result.success && result.data) {
-                setStats(result.data);
-            } else {
-                setError(result.error || 'Failed to fetch dashboard statistics');
+                if (result.success && result.data) {
+                    setStats(result.data);
+                } else {
+                    const errorMsg = result.error || 'Failed to fetch dashboard statistics';
+                    setError(errorMsg);
+                    console.error('[Dashboard] Fetch Error:', errorMsg);
+                }
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : 'An unexpected network error occurred';
+                setError(errorMessage);
+                console.error('[Dashboard] Critical Error:', err);
+            } finally {
+                setLoading(false);
             }
-
-            setLoading(false);
         };
 
         fetchStats();
