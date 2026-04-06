@@ -38,63 +38,58 @@ export async function getDashboardStats() {
 
         // Run ALL queries in parallel to speed up dashboard loading
         // Removed prisma.$transaction as it's not needed for reads and can cause connection pooler issues
-        console.log('[Dashboard] Starting parallel queries...');
+        console.log('[Dashboard] Starting sequential queries for stability...');
         const startTime = Date.now();
 
-        // Run queries with individual error catching so one failure doesn't hang the whole dashboard
-        const [
-            totalVehicles,
-            occupiedVehicles,
-            yearlyResult,
-            weeklyResult,
-            todayResult,
-            recentBills,
-            ongoingBookings
-        ] = await Promise.all([
-            prisma.vehicle.count({ where: { status: 'ACTIVE' } }).catch(e => { console.error('Error totalVehicles:', e); return 0; }),
-            prisma.booking.count({ where: ongoingBookingFilter }).catch(e => { console.error('Error occupiedVehicles:', e); return 0; }),
-            prisma.bill.aggregate({
-                _sum: { totalAmount: true },
-                where: { createdAt: { gte: startOfYear, lte: endOfYear } }
-            }).catch(e => { console.error('Error yearlyResult:', e); return { _sum: { totalAmount: 0 } }; }),
-            prisma.bill.aggregate({
-                _sum: { totalAmount: true },
-                where: { createdAt: { gte: startOfWeek, lte: endOfWeek } }
-            }).catch(e => { console.error('Error weeklyResult:', e); return { _sum: { totalAmount: 0 } }; }),
-            prisma.bill.aggregate({
-                _sum: { totalAmount: true },
-                where: { createdAt: { gte: startOfToday, lte: endOfToday } }
-            }).catch(e => { console.error('Error todayResult:', e); return { _sum: { totalAmount: 0 } }; }),
-            prisma.bill.findMany({
-                take: 5,
-                orderBy: { createdAt: 'desc' },
-                select: {
-                    id: true,
-                    billNumber: true,
-                    customerName: true,
-                    vehicleNo: true,
-                    totalAmount: true,
-                    createdAt: true,
-                    route: true,
-                    startDate: true,
-                    endDate: true,
-                },
-            }).catch(e => { console.error('Error recentBills:', e); return []; }),
-            prisma.booking.findMany({
-                where: ongoingBookingFilter,
-                orderBy: { startDate: 'asc' },
-                take: 5,
-                select: {
-                    id: true,
-                    vehicleNo: true,
-                    customerName: true,
-                    startDate: true,
-                    endDate: true,
-                    destination: true,
-                    status: true,
-                },
-            }).catch(e => { console.error('Error ongoingBookings:', e); return []; }),
-        ]);
+        // Run queries sequentially instead of parallel to save connections on 5432 port
+        const totalVehicles = await prisma.vehicle.count({ where: { status: 'ACTIVE' } }).catch(e => { console.error('Error totalVehicles:', e); return 0; });
+        const occupiedVehicles = await prisma.booking.count({ where: ongoingBookingFilter }).catch(e => { console.error('Error occupiedVehicles:', e); return 0; });
+        
+        const yearlyResult = await prisma.bill.aggregate({
+            _sum: { totalAmount: true },
+            where: { createdAt: { gte: startOfYear, lte: endOfYear } }
+        }).catch(e => { console.error('Error yearlyResult:', e); return { _sum: { totalAmount: 0 } }; });
+        
+        const weeklyResult = await prisma.bill.aggregate({
+            _sum: { totalAmount: true },
+            where: { createdAt: { gte: startOfWeek, lte: endOfWeek } }
+        }).catch(e => { console.error('Error weeklyResult:', e); return { _sum: { totalAmount: 0 } }; });
+        
+        const todayResult = await prisma.bill.aggregate({
+            _sum: { totalAmount: true },
+            where: { createdAt: { gte: startOfToday, lte: endOfToday } }
+        }).catch(e => { console.error('Error todayResult:', e); return { _sum: { totalAmount: 0 } }; });
+        
+        const recentBills = await prisma.bill.findMany({
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                billNumber: true,
+                customerName: true,
+                vehicleNo: true,
+                totalAmount: true,
+                createdAt: true,
+                route: true,
+                startDate: true,
+                endDate: true,
+            },
+        }).catch(e => { console.error('Error recentBills:', e); return []; });
+        
+        const ongoingBookings = await prisma.booking.findMany({
+            where: ongoingBookingFilter,
+            orderBy: { startDate: 'asc' },
+            take: 5,
+            select: {
+                id: true,
+                vehicleNo: true,
+                customerName: true,
+                startDate: true,
+                endDate: true,
+                destination: true,
+                status: true,
+            },
+        }).catch(e => { console.error('Error ongoingBookings:', e); return []; });
 
         console.log(`[Dashboard] All queries finished in ${Date.now() - startTime}ms`);
 
