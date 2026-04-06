@@ -33,35 +33,91 @@ export async function getDashboardStats() {
         // Calculate "Today" for revenue
         const startOfToday = new Date(now);
         startOfToday.setHours(0, 0, 0, 0);
-        const endOfToday = new Date(now);
-        endOfToday.setHours(23, 59, 59, 999);
-
-        console.log('[Dashboard] Diagnostic: Running single query (count)...');
+        console.log('[Dashboard] Fetching full statistics with serialization...');
         const startTime = Date.now();
 
-        const totalVehicles = await prisma.vehicle.count({ where: { status: 'ACTIVE' } });
+        // Run queries with individual error catching so one failure doesn't hang the whole dashboard
+        const [
+            totalVehicles,
+            occupiedVehicles,
+            yearlyResult,
+            weeklyResult,
+            todayResult,
+            recentBills,
+            ongoingBookings
+        ] = await Promise.all([
+            prisma.vehicle.count({ where: { status: 'ACTIVE' } }).catch(e => { console.error('Error totalVehicles:', e); return 0; }),
+            prisma.booking.count({ where: ongoingBookingFilter }).catch(e => { console.error('Error occupiedVehicles:', e); return 0; }),
+            prisma.bill.aggregate({
+                _sum: { totalAmount: true },
+                where: { createdAt: { gte: startOfYear, lte: endOfYear } }
+            }).catch(e => { console.error('Error yearlyResult:', e); return { _sum: { totalAmount: 0 } }; }),
+            prisma.bill.aggregate({
+                _sum: { totalAmount: true },
+                where: { createdAt: { gte: startOfWeek, lte: endOfWeek } }
+            }).catch(e => { console.error('Error weeklyResult:', e); return { _sum: { totalAmount: 0 } }; }),
+            prisma.bill.aggregate({
+                _sum: { totalAmount: true },
+                where: { createdAt: { gte: startOfToday, lte: endOfToday } }
+            }).catch(e => { console.error('Error todayResult:', e); return { _sum: { totalAmount: 0 } }; }),
+            prisma.bill.findMany({
+                take: 5,
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    billNumber: true,
+                    customerName: true,
+                    vehicleNo: true,
+                    totalAmount: true,
+                    createdAt: true,
+                    route: true,
+                    startDate: true,
+                    endDate: true,
+                },
+            }).catch(e => { console.error('Error recentBills:', e); return []; }),
+            prisma.booking.findMany({
+                where: ongoingBookingFilter,
+                orderBy: { startDate: 'asc' },
+                take: 5,
+                select: {
+                    id: true,
+                    vehicleNo: true,
+                    customerName: true,
+                    startDate: true,
+                    endDate: true,
+                    destination: true,
+                    status: true,
+                },
+            }).catch(e => { console.error('Error ongoingBookings:', e); return []; }),
+        ]);
 
-        console.log(`[Dashboard] Diagnostic: Query finished in ${Date.now() - startTime}ms`);
+        console.log(`[Dashboard] All queries finished successfully in ${Date.now() - startTime}ms`);
+
+        const rawData = {
+            totalVehicles,
+            occupiedVehicles,
+            availableVehicles: Math.max(0, totalVehicles - occupiedVehicles),
+            revenueYearly: yearlyResult?._sum?.totalAmount || 0,
+            revenueWeekly: weeklyResult?._sum?.totalAmount || 0,
+            revenueToday: todayResult?._sum?.totalAmount || 0,
+            recentBills: recentBills || [],
+            ongoingBookings: ongoingBookings || [],
+        };
+
+        // CRITICAL: Convert all Date objects and complex types to plain JSON before returning
+        // This prevents the "500 Internal Server Error" during Next.js response serialization
+        const plainData = JSON.parse(JSON.stringify(rawData));
 
         return {
             success: true,
-            data: {
-                totalVehicles,
-                occupiedVehicles: 0,
-                availableVehicles: totalVehicles,
-                revenueYearly: 0,
-                revenueWeekly: 0,
-                revenueToday: 0,
-                recentBills: [],
-                ongoingBookings: [],
-            }
+            data: plainData
         };
 
     } catch (error) {
-        console.error('[Dashboard] Diagnostic Critical Error:', error);
+        console.error('[Dashboard] Critical Error:', error);
         return { 
             success: false, 
-            error: error instanceof Error ? error.message : 'Diagnostic failed'
+            error: error instanceof Error ? error.message : 'An unexpected error occurred while loading dashboard statistics.'
         };
     }
 }
