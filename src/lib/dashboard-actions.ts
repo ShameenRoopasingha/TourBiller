@@ -38,6 +38,10 @@ export async function getDashboardStats() {
 
         // Run ALL queries in parallel to speed up dashboard loading
         // Removed prisma.$transaction as it's not needed for reads and can cause connection pooler issues
+        console.log('[Dashboard] Starting parallel queries...');
+        const startTime = Date.now();
+
+        // Run queries with individual error catching so one failure doesn't hang the whole dashboard
         const [
             totalVehicles,
             occupiedVehicles,
@@ -47,20 +51,20 @@ export async function getDashboardStats() {
             recentBills,
             ongoingBookings
         ] = await Promise.all([
-            prisma.vehicle.count({ where: { status: 'ACTIVE' } }),
-            prisma.booking.count({ where: ongoingBookingFilter }),
+            prisma.vehicle.count({ where: { status: 'ACTIVE' } }).catch(e => { console.error('Error totalVehicles:', e); return 0; }),
+            prisma.booking.count({ where: ongoingBookingFilter }).catch(e => { console.error('Error occupiedVehicles:', e); return 0; }),
             prisma.bill.aggregate({
                 _sum: { totalAmount: true },
                 where: { createdAt: { gte: startOfYear, lte: endOfYear } }
-            }),
+            }).catch(e => { console.error('Error yearlyResult:', e); return { _sum: { totalAmount: 0 } }; }),
             prisma.bill.aggregate({
                 _sum: { totalAmount: true },
                 where: { createdAt: { gte: startOfWeek, lte: endOfWeek } }
-            }),
+            }).catch(e => { console.error('Error weeklyResult:', e); return { _sum: { totalAmount: 0 } }; }),
             prisma.bill.aggregate({
                 _sum: { totalAmount: true },
                 where: { createdAt: { gte: startOfToday, lte: endOfToday } }
-            }),
+            }).catch(e => { console.error('Error todayResult:', e); return { _sum: { totalAmount: 0 } }; }),
             prisma.bill.findMany({
                 take: 5,
                 orderBy: { createdAt: 'desc' },
@@ -75,7 +79,7 @@ export async function getDashboardStats() {
                     startDate: true,
                     endDate: true,
                 },
-            }),
+            }).catch(e => { console.error('Error recentBills:', e); return []; }),
             prisma.booking.findMany({
                 where: ongoingBookingFilter,
                 orderBy: { startDate: 'asc' },
@@ -89,8 +93,10 @@ export async function getDashboardStats() {
                     destination: true,
                     status: true,
                 },
-            }),
+            }).catch(e => { console.error('Error ongoingBookings:', e); return []; }),
         ]);
+
+        console.log(`[Dashboard] All queries finished in ${Date.now() - startTime}ms`);
 
         return {
             success: true,
@@ -107,7 +113,7 @@ export async function getDashboardStats() {
         };
 
     } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        console.error('[Dashboard] Critical Error:', error);
         return { success: false, error: 'Failed to fetch dashboard stats' };
     }
 }
