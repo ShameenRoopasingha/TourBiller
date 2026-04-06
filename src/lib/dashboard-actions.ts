@@ -35,7 +35,10 @@ export async function getDashboardStats() {
         startOfToday.setHours(0, 0, 0, 0);
         const endOfToday = new Date(now);
         endOfToday.setHours(23, 59, 59, 999);
-        console.log('[Dashboard] Fetching full statistics with serialization...');
+
+        // Run ALL queries in parallel to speed up dashboard loading
+        // Removed prisma.$transaction as it's not needed for reads and can cause connection pooler issues
+        console.log('[Dashboard] Starting parallel queries...');
         const startTime = Date.now();
 
         // Run queries with individual error catching so one failure doesn't hang the whole dashboard
@@ -93,33 +96,24 @@ export async function getDashboardStats() {
             }).catch(e => { console.error('Error ongoingBookings:', e); return []; }),
         ]);
 
-        console.log(`[Dashboard] All queries finished successfully in ${Date.now() - startTime}ms`);
-
-        const rawData = {
-            totalVehicles,
-            occupiedVehicles,
-            availableVehicles: Math.max(0, totalVehicles - occupiedVehicles),
-            revenueYearly: yearlyResult?._sum?.totalAmount || 0,
-            revenueWeekly: weeklyResult?._sum?.totalAmount || 0,
-            revenueToday: todayResult?._sum?.totalAmount || 0,
-            recentBills: recentBills || [],
-            ongoingBookings: ongoingBookings || [],
-        };
-
-        // CRITICAL: Convert all Date objects and complex types to plain JSON before returning
-        // This prevents the "500 Internal Server Error" during Next.js response serialization
-        const plainData = JSON.parse(JSON.stringify(rawData));
+        console.log(`[Dashboard] All queries finished in ${Date.now() - startTime}ms`);
 
         return {
             success: true,
-            data: plainData
+            data: {
+                totalVehicles,
+                occupiedVehicles,
+                availableVehicles: Math.max(0, totalVehicles - occupiedVehicles),
+                revenueYearly: yearlyResult._sum.totalAmount || 0,
+                revenueWeekly: weeklyResult._sum.totalAmount || 0,
+                revenueToday: todayResult._sum.totalAmount || 0,
+                recentBills,
+                ongoingBookings,
+            }
         };
 
     } catch (error) {
         console.error('[Dashboard] Critical Error:', error);
-        return { 
-            success: false, 
-            error: error instanceof Error ? error.message : 'An unexpected error occurred while loading dashboard statistics.'
-        };
+        return { success: false, error: 'Failed to fetch dashboard stats' };
     }
 }
