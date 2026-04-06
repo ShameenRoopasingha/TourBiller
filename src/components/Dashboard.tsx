@@ -1,13 +1,8 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Loader2, FileText, Printer, Plus } from 'lucide-react';
+import Link from 'next/link';
+import { FileText, Printer, Plus, Activity, Banknote, Car } from 'lucide-react';
 import { getDashboardStats } from '@/lib/dashboard-actions';
-
 import { formatCurrency } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
-import { Activity, Banknote, Car } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -25,56 +20,36 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-export function Dashboard() {
-    const [stats, setStats] = useState({
-        totalVehicles: 0,
-        occupiedVehicles: 0,
-        availableVehicles: 0,
+export async function Dashboard() {
+    const result = await getDashboardStats();
 
-        revenueYearly: 0,
-        revenueWeekly: 0,
-        revenueToday: 0,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recentBills: [] as any[],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ongoingBookings: [] as any[],
-    });
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    if (!result.success || !result.data) {
+        return (
+            <Alert variant="destructive" className="mb-6">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{result.error || 'Failed to fetch dashboard stats'}</AlertDescription>
+            </Alert>
+        );
+    }
 
-    const router = useRouter();
-
-    useEffect(() => {
-        const fetchStats = async () => {
-            setLoading(true);
-            setError(null);
-
-            const result = await getDashboardStats();
-
-            if (result.success && result.data) {
-                setStats(result.data);
-            } else {
-                setError(result.error || 'Failed to fetch dashboard statistics');
-            }
-
-            setLoading(false);
-        };
-
-        fetchStats();
-    }, []);
+    const { stats } = { stats: result.data };
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
                 <div className="flex gap-2 w-full sm:w-auto">
-                    <Button variant="outline" className="flex-1 sm:flex-initial" onClick={() => router.push('/bookings/new')}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Booking
+                    <Button variant="outline" className="flex-1 sm:flex-initial" asChild>
+                        <Link href="/bookings/new">
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Booking
+                        </Link>
                     </Button>
-                    <Button className="flex-1 sm:flex-initial" onClick={() => router.push('/bills/new')}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Bill
+                    <Button className="flex-1 sm:flex-initial" asChild>
+                        <Link href="/bills/new">
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Bill
+                        </Link>
                     </Button>
                 </div>
             </div>
@@ -88,20 +63,16 @@ export function Dashboard() {
                         <Car className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        ) : (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <div className="text-xl sm:text-2xl font-bold text-green-600">{stats.availableVehicles}</div>
-                                    <p className="text-xs text-muted-foreground">Available</p>
-                                </div>
-                                <div className="text-right border-l pl-4 border-gray-100">
-                                    <div className="text-xl sm:text-2xl font-bold text-orange-600">{stats.occupiedVehicles}</div>
-                                    <p className="text-xs text-muted-foreground">Occupied</p>
-                                </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <div className="text-xl sm:text-2xl font-bold text-green-600">{stats.availableVehicles}</div>
+                                <p className="text-xs text-muted-foreground">Available</p>
                             </div>
-                        )}
+                            <div className="text-right border-l pl-4 border-gray-100">
+                                <div className="text-xl sm:text-2xl font-bold text-orange-600">{stats.occupiedVehicles}</div>
+                                <p className="text-xs text-muted-foreground">Occupied</p>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -113,18 +84,12 @@ export function Dashboard() {
                         <Banknote className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        ) : (
-                            <>
-                                <div className="text-xl sm:text-2xl font-bold">
-                                    {formatCurrency(stats.revenueWeekly)}
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    This week
-                                </p>
-                            </>
-                        )}
+                        <div className="text-xl sm:text-2xl font-bold">
+                            {formatCurrency(stats.revenueWeekly)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            This week
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -136,18 +101,12 @@ export function Dashboard() {
                         <Banknote className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        ) : (
-                            <>
-                                <div className="text-xl sm:text-2xl font-bold">
-                                    {formatCurrency(stats.revenueYearly)}
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    Total for {new Date().getFullYear()}
-                                </p>
-                            </>
-                        )}
+                        <div className="text-xl sm:text-2xl font-bold">
+                            {formatCurrency(stats.revenueYearly)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Total for {new Date().getFullYear()}
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -159,16 +118,10 @@ export function Dashboard() {
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        ) : (
-                            <>
-                                <div className="text-xl sm:text-2xl font-bold">{stats.totalVehicles}</div>
-                                <p className="text-xs text-muted-foreground">
-                                    Total vehicles
-                                </p>
-                            </>
-                        )}
+                        <div className="text-xl sm:text-2xl font-bold">{stats.totalVehicles}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Total vehicles
+                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -182,18 +135,7 @@ export function Dashboard() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {error && (
-                            <Alert variant="destructive" className="mb-6">
-                                <AlertTitle>Error</AlertTitle>
-                                <AlertDescription>{error}</AlertDescription>
-                            </Alert>
-                        )}
-
-                        {loading ? (
-                            <div className="flex justify-center py-8">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            </div>
-                        ) : stats.recentBills.length === 0 ? (
+                        {stats.recentBills.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground">
                                 <FileText className="mx-auto h-12 w-12 mb-3 text-muted-foreground/20" />
                                 <p className="text-lg font-medium">No bills found</p>
@@ -207,7 +149,7 @@ export function Dashboard() {
                                         <div key={bill.id} className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm space-y-3">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <div className="font-bold text-primary">#{bill.billNumber}</div>
+                                                    <div className="font-bold text-primary">#{String(bill.billNumber)}</div>
                                                     <div className="text-xs text-muted-foreground">{new Date(bill.createdAt).toLocaleDateString('en-GB')}</div>
                                                 </div>
                                                 <div className="font-bold text-primary">{formatCurrency(bill.totalAmount)}</div>
@@ -230,10 +172,10 @@ export function Dashboard() {
 
                                             <div className="flex justify-end pt-2 border-t border-dashed">
                                                 <Button variant="ghost" size="sm" asChild className="h-8">
-                                                    <a href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer">
+                                                    <Link href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer">
                                                         <Printer className="h-4 w-4 mr-2" />
                                                         Print Bill
-                                                    </a>
+                                                    </Link>
                                                 </Button>
                                             </div>
                                         </div>
@@ -258,7 +200,7 @@ export function Dashboard() {
                                         <TableBody>
                                             {stats.recentBills.map((bill) => (
                                                 <TableRow key={bill.id}>
-                                                    <TableCell className="font-medium whitespace-nowrap">#{bill.billNumber}</TableCell>
+                                                    <TableCell className="font-medium whitespace-nowrap">#{String(bill.billNumber)}</TableCell>
                                                     <TableCell>{bill.customerName}</TableCell>
                                                     <TableCell className="max-w-[150px] truncate" title={bill.route}>{bill.route}</TableCell>
                                                     <TableCell>{bill.vehicleNo}</TableCell>
@@ -273,10 +215,10 @@ export function Dashboard() {
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <Button variant="ghost" size="sm" asChild>
-                                                            <a href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer">
+                                                            <Link href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer">
                                                                 <Printer className="h-4 w-4" />
                                                                 <span className="sr-only">Print</span>
-                                                            </a>
+                                                            </Link>
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
@@ -297,17 +239,15 @@ export function Dashboard() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            <div className="flex justify-center py-8">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            </div>
-                        ) : stats.ongoingBookings?.length === 0 ? (
+                        {stats.ongoingBookings?.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                                 <Car className="mx-auto h-12 w-12 mb-3 text-muted-foreground/20" />
                                 <p className="text-lg font-medium">No Ongoing Tours</p>
                                 <p className="text-sm mb-4">All vehicles are currently available or scheduled for future.</p>
-                                <Button variant="outline" onClick={() => router.push('/bookings')}>
-                                    View All Bookings
+                                <Button variant="outline" asChild>
+                                    <Link href="/bookings">
+                                        View All Bookings
+                                    </Link>
                                 </Button>
                             </div>
                         ) : (
@@ -331,14 +271,16 @@ export function Dashboard() {
                                             )}
                                         </div>
                                         <Button size="sm" className="bg-green-600 hover:bg-green-700" asChild>
-                                            <a href={`/bills/new?vehicleNo=${encodeURIComponent(booking.vehicleNo)}&customerName=${encodeURIComponent(booking.customerName)}&bookingId=${booking.id}`}>
+                                            <Link href={`/bills/new?vehicleNo=${encodeURIComponent(booking.vehicleNo)}&customerName=${encodeURIComponent(booking.customerName)}&bookingId=${booking.id}`}>
                                                 End Tour
-                                            </a>
+                                            </Link>
                                         </Button>
                                     </div>
                                 ))}
-                                <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => router.push('/bookings')}>
-                                    View All Bookings
+                                <Button variant="ghost" className="w-full text-muted-foreground" asChild>
+                                    <Link href="/bookings">
+                                        View All Bookings
+                                    </Link>
                                 </Button>
                             </div>
                         )}
