@@ -30,16 +30,23 @@ export async function getDashboardStats() {
             ]
         };
 
-        // Run ALL queries in a transaction to reuse a single DB connection
-        // (prevents "Max client connections reached" with PgBouncer session mode)
+        // Calculate "Today" for revenue
+        const startOfToday = new Date(now);
+        startOfToday.setHours(0, 0, 0, 0);
+        const endOfToday = new Date(now);
+        endOfToday.setHours(23, 59, 59, 999);
+
+        // Run ALL queries in parallel to speed up dashboard loading
+        // Removed prisma.$transaction as it's not needed for reads and can cause connection pooler issues
         const [
             totalVehicles,
             occupiedVehicles,
             yearlyResult,
             weeklyResult,
+            todayResult,
             recentBills,
             ongoingBookings
-        ] = await prisma.$transaction([
+        ] = await Promise.all([
             prisma.vehicle.count({ where: { status: 'ACTIVE' } }),
             prisma.booking.count({ where: ongoingBookingFilter }),
             prisma.bill.aggregate({
@@ -49,6 +56,10 @@ export async function getDashboardStats() {
             prisma.bill.aggregate({
                 _sum: { totalAmount: true },
                 where: { createdAt: { gte: startOfWeek, lte: endOfWeek } }
+            }),
+            prisma.bill.aggregate({
+                _sum: { totalAmount: true },
+                where: { createdAt: { gte: startOfToday, lte: endOfToday } }
             }),
             prisma.bill.findMany({
                 take: 5,
@@ -89,7 +100,7 @@ export async function getDashboardStats() {
                 availableVehicles: Math.max(0, totalVehicles - occupiedVehicles),
                 revenueYearly: yearlyResult._sum.totalAmount || 0,
                 revenueWeekly: weeklyResult._sum.totalAmount || 0,
-                revenueToday: yearlyResult._sum.totalAmount || 0,
+                revenueToday: todayResult._sum.totalAmount || 0,
                 recentBills,
                 ongoingBookings,
             }
