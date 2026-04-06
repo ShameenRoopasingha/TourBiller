@@ -38,19 +38,16 @@ export async function getDashboardStats() {
 
         // Run ALL queries in parallel to speed up dashboard loading
         // Removed prisma.$transaction as it's not needed for reads and can cause connection pooler issues
-        console.log('[Dashboard] Starting parallel queries...');
+        console.log('[Dashboard] Starting parallel queries with 10s timeout...');
         const startTime = Date.now();
 
+        // Create a timeout promise to ensure dashboard doesn't hang forever
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Dashboard query timed out')), 10000)
+        );
+
         // Run queries with individual error catching so one failure doesn't hang the whole dashboard
-        const [
-            totalVehicles,
-            occupiedVehicles,
-            yearlyResult,
-            weeklyResult,
-            todayResult,
-            recentBills,
-            ongoingBookings
-        ] = await Promise.all([
+        const queriesPromise = Promise.all([
             prisma.vehicle.count({ where: { status: 'ACTIVE' } }).catch(e => { console.error('Error totalVehicles:', e); return 0; }),
             prisma.booking.count({ where: ongoingBookingFilter }).catch(e => { console.error('Error occupiedVehicles:', e); return 0; }),
             prisma.bill.aggregate({
@@ -96,7 +93,21 @@ export async function getDashboardStats() {
             }).catch(e => { console.error('Error ongoingBookings:', e); return []; }),
         ]);
 
-        console.log(`[Dashboard] All queries finished in ${Date.now() - startTime}ms`);
+        // Race the queries against the 10s timeout
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const results = await Promise.race([queriesPromise, timeoutPromise]) as any[];
+
+        const [
+            totalVehicles,
+            occupiedVehicles,
+            yearlyResult,
+            weeklyResult,
+            todayResult,
+            recentBills,
+            ongoingBookings
+        ] = results;
+
+        console.log(`[Dashboard] All queries finished successfully in ${Date.now() - startTime}ms`);
 
         return {
             success: true,
@@ -104,16 +115,30 @@ export async function getDashboardStats() {
                 totalVehicles,
                 occupiedVehicles,
                 availableVehicles: Math.max(0, totalVehicles - occupiedVehicles),
-                revenueYearly: yearlyResult._sum.totalAmount || 0,
-                revenueWeekly: weeklyResult._sum.totalAmount || 0,
-                revenueToday: todayResult._sum.totalAmount || 0,
-                recentBills,
-                ongoingBookings,
+                revenueYearly: yearlyResult?._sum?.totalAmount || 0,
+                revenueWeekly: weeklyResult?._sum?.totalAmount || 0,
+                revenueToday: todayResult?._sum?.totalAmount || 0,
+                recentBills: recentBills || [],
+                ongoingBookings: ongoingBookings || [],
             }
         };
 
     } catch (error) {
-        console.error('[Dashboard] Critical Error:', error);
-        return { success: false, error: 'Failed to fetch dashboard stats' };
+        console.error('[Dashboard] Critical Error or Timeout:', error);
+        // Return zeros if caught at the top level to enable the page to display SOMETHING
+        return { 
+            success: true, // Returning success true but empty data allows UI to unlock
+            error: error instanceof Error ? error.message : 'Database is responding slowly. Some data was missed.',
+            data: {
+                totalVehicles: 0,
+                occupiedVehicles: 0,
+                availableVehicles: 0,
+                revenueYearly: 0,
+                revenueWeekly: 0,
+                revenueToday: 0,
+                recentBills: [],
+                ongoingBookings: [],
+            }
+        };
     }
 }
