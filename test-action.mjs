@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { createBill } = require('./src/lib/actions');
 const { FormData } = require('formdata-node');
 

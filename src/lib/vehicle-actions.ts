@@ -28,6 +28,13 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
             acType: (formData.get('acType') as string) || undefined,
             features: (formData.get('features') as string) || undefined,
             insuranceCoverage: (formData.get('insuranceCoverage') as string) || undefined,
+            currentMileage: parseFloat(formData.get('currentMileage') as string) || 0,
+            oilChangeInterval: parseFloat(formData.get('oilChangeInterval') as string) || 5000,
+            lastOilChangeMileage: parseFloat(formData.get('lastOilChangeMileage') as string) || 0,
+            filterChangeInterval: parseFloat(formData.get('filterChangeInterval') as string) || 10000,
+            lastFilterChangeMileage: parseFloat(formData.get('lastFilterChangeMileage') as string) || 0,
+            washInterval: parseFloat(formData.get('washInterval') as string) || 1000,
+            lastWashMileage: parseFloat(formData.get('lastWashMileage') as string) || 0,
         };
 
         const validatedData = VehicleSchema.parse(rawData);
@@ -100,6 +107,13 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
             acType: (formData.get('acType') as string) || undefined,
             features: (formData.get('features') as string) || undefined,
             insuranceCoverage: (formData.get('insuranceCoverage') as string) || undefined,
+            currentMileage: parseFloat(formData.get('currentMileage') as string) || 0,
+            oilChangeInterval: parseFloat(formData.get('oilChangeInterval') as string) || 5000,
+            lastOilChangeMileage: parseFloat(formData.get('lastOilChangeMileage') as string) || 0,
+            filterChangeInterval: parseFloat(formData.get('filterChangeInterval') as string) || 10000,
+            lastFilterChangeMileage: parseFloat(formData.get('lastFilterChangeMileage') as string) || 0,
+            washInterval: parseFloat(formData.get('washInterval') as string) || 1000,
+            lastWashMileage: parseFloat(formData.get('lastWashMileage') as string) || 0,
         };
 
         const validatedData = VehicleSchema.parse(rawData);

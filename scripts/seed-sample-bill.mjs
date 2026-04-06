@@ -32,7 +32,7 @@ async function seed() {
     });
 
     // 3. Create a Tour Schedule (Route)
-    const schedule = await prisma.tourSchedule.upsert({
+    await prisma.tourSchedule.upsert({
         where: { name: '2-Day Kandy Tour (Sample)' },
         update: {
             days: 2,
