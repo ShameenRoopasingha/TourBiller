@@ -33,6 +33,8 @@ export async function getDashboardStats() {
         // Calculate "Today" for revenue
         const startOfToday = new Date(now);
         startOfToday.setHours(0, 0, 0, 0);
+        const endOfToday = new Date(now);
+        endOfToday.setHours(23, 59, 59, 999);
         console.log('[Dashboard] Fetching full statistics with serialization...');
         const startTime = Date.now();
 
