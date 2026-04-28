@@ -92,7 +92,7 @@ export const BillFormSchema = z.object({
   otherCostsCharge: z.coerce.number().min(0).default(0),
 }).refine(data => data.endMeter > data.startMeter, {
   message: "End meter must be greater than start meter",
-  path: ["endDate"]
+  path: ["endMeter"]
 });
 
 export type BillFormInput = z.infer<typeof BillFormSchema>;

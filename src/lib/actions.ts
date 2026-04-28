@@ -83,37 +83,43 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
     // Save to database (use transaction to ensure bill + booking update are atomic)
     const bookingId = formData.get('bookingId') as string;
 
-    const bill = await prisma.$transaction(async (tx) => {
-      const createdBill = await tx.bill.create({
-        data: {
-          ...validatedData,
-          totalAmount,
-        },
-      });
+    // Create the bill first (this is the critical operation)
+    const createdBill = await prisma.bill.create({
+      data: {
+        ...validatedData,
+        totalAmount,
+      },
+    });
 
-      // Update vehicle mileage
-      await tx.vehicle.update({
+    // Update vehicle mileage (non-critical - don't let this block bill creation)
+    try {
+      await prisma.vehicle.update({
         where: { vehicleNo: createdBill.vehicleNo },
         data: { currentMileage: createdBill.endMeter },
       });
+    } catch (vehicleError) {
+      console.warn('Could not update vehicle mileage:', vehicleError);
+      // Vehicle might not exist in the registry - that's OK
+    }
 
-      // Auto-Close Booking within the same transaction
-      if (bookingId) {
-        await tx.booking.update({
+    // Auto-Close Booking (non-critical)
+    if (bookingId) {
+      try {
+        await prisma.booking.update({
           where: { id: bookingId },
           data: { status: 'COMPLETED' },
         });
+      } catch (bookingError) {
+        console.warn('Could not auto-close booking:', bookingError);
       }
-
-      return createdBill;
-    });
+    }
 
     // Revalidate all affected pages
     revalidateFor('bill', 'booking');
 
     return {
       success: true,
-      data: bill.id,
+      data: createdBill.id,
     };
   } catch (error) {
     console.error('Error creating bill:', error);
