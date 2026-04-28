@@ -145,6 +145,17 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
             return { success: false, error: authCheck.error };
         }
 
+        // Check if vehicle has related expenses
+        const vehicle = await prisma.vehicle.findUnique({ where: { id }, select: { vehicleNo: true } });
+        if (!vehicle) {
+            return { success: false, error: 'Vehicle not found' };
+        }
+
+        const expenseCount = await prisma.vehicleExpense.count({ where: { vehicleNo: vehicle.vehicleNo } });
+        if (expenseCount > 0) {
+            return { success: false, error: `Cannot delete vehicle: it has ${expenseCount} expense record(s). Delete those first.` };
+        }
+
         await prisma.vehicle.delete({
             where: { id },
         });
@@ -154,6 +165,9 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
         return { success: true };
     } catch (error) {
         console.error('Error deleting vehicle:', error);
+        if (error instanceof Error && error.message.includes('Foreign key constraint')) {
+            return { success: false, error: 'Cannot delete vehicle: it has related records. Remove linked expenses first.' };
+        }
         return { success: false, error: 'Failed to delete vehicle' };
     }
 }

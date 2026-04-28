@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Search, Edit, Trash2, Map, Calendar, Eye } from 'lucide-react';
 
@@ -57,6 +58,7 @@ interface TourScheduleListProps {
 }
 
 export function TourScheduleList({ schedules }: TourScheduleListProps) {
+    const router = useRouter();
     const [search, setSearch] = useState('');
     const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -71,6 +73,8 @@ export function TourScheduleList({ schedules }: TourScheduleListProps) {
         const result = await deleteTourSchedule(id);
         if (!result.success) {
             alert(result.error || 'Failed to delete schedule');
+        } else {
+            router.refresh();
         }
         setDeleting(null);
     };

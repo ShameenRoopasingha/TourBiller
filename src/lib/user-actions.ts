@@ -209,11 +209,35 @@ export async function deleteUser(id: string): Promise<ActionResult<void>> {
             return { success: false, error: 'You cannot delete your own account.' };
         }
 
+        // Check for related records that would prevent deletion
+        const [bookingCount, quotationCount, expenseCount, activityCount] = await Promise.all([
+            prisma.booking.count({ where: { driverId: id } }),
+            prisma.quotation.count({ where: { driverId: id } }),
+            prisma.vehicleExpense.count({ where: { driverId: id } }),
+            prisma.tripActivity.count({ where: { driverId: id } }),
+        ]);
+
+        const relatedItems: string[] = [];
+        if (bookingCount > 0) relatedItems.push(`${bookingCount} booking(s)`);
+        if (quotationCount > 0) relatedItems.push(`${quotationCount} quotation(s)`);
+        if (expenseCount > 0) relatedItems.push(`${expenseCount} expense(s)`);
+        if (activityCount > 0) relatedItems.push(`${activityCount} trip activity(ies)`);
+
+        if (relatedItems.length > 0) {
+            return { 
+                success: false, 
+                error: `Cannot delete user: they have ${relatedItems.join(', ')} linked. Remove or reassign these records first.` 
+            };
+        }
+
         await prisma.user.delete({ where: { id } });
         revalidatePath('/users');
         return { success: true };
     } catch (error) {
         console.error('Error deleting user:', error);
+        if (error instanceof Error && error.message.includes('Foreign key constraint')) {
+            return { success: false, error: 'Cannot delete user: they have related records (bookings, quotations, or expenses). Remove those first.' };
+        }
         return { success: false, error: 'Failed to delete user' };
     }
 }
