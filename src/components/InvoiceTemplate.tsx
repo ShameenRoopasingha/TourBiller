@@ -46,6 +46,23 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
             
     const expectedKm = bill.allowedKm * scheduledDays;
 
+    // Parse itinerary if available
+    type ItineraryItem = {
+        dayNumber: number;
+        title: string;
+        distanceKm: number;
+        accommodation: number;
+        meals: number;
+        activities: number;
+        otherCosts: number;
+    };
+    let itineraryItems: ItineraryItem[] = [];
+    try {
+        if (billAny.itinerary) {
+            itineraryItems = JSON.parse(billAny.itinerary);
+        }
+    } catch { /* ignore parse errors for old bills */ }
+
     // --- 58mm THERMAL RECEIPT LAYOUT (FOR DRIVERS) ---
     if (userRole === 'DRIVER') {
         return (
@@ -96,6 +113,25 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                             <div>End:&nbsp;&nbsp; {new Date(bill.endDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
                             <div className="font-semibold">Duration: {scheduledDays}d{bill.extraHours > 0 ? ` + ${bill.extraHours}h` : ''}</div>
                         </div>
+                         {itineraryItems.length > 0 && (
+                             <div className="mt-1 border-t border-dotted border-gray-400 pt-1">
+                                 <div className="font-semibold mb-0.5">ITINERARY:</div>
+                                 {itineraryItems.map((item) => (
+                                     <div key={item.dayNumber} className="leading-tight">
+                                         <span className="font-semibold">D{item.dayNumber}:</span> {item.title}
+                                         {item.distanceKm > 0 && <span className="text-[8px]"> ({item.distanceKm}km)</span>}
+                                     </div>
+                                 ))}
+                             </div>
+                         )}
+
+                         {/* Route Information for thermal receipt (shown when no detailed itinerary) */}
+                         {itineraryItems.length === 0 && bill.route && (
+                             <div className="mt-1 border-t border-dotted border-gray-400 pt-1">
+                                 <div className="font-semibold mb-0.5">DESTINATION:</div>
+                                 <div className="leading-tight">{bill.route}</div>
+                             </div>
+                         )}
                     </div>
 
                     <div className="border-t border-black border-dashed my-1"></div>
@@ -305,6 +341,41 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <span className="font-semibold mt-1">Duration: {scheduledDays} days{bill.extraHours > 0 ? ` + ${bill.extraHours} hrs` : ''}</span>
                             </div>
                         </div>
+
+                        {/* Day-by-Day Itinerary */}
+                        {itineraryItems.length > 0 && (
+                            <div className="mt-3">
+                                <h3 className="text-[10px] font-semibold uppercase text-gray-600 mb-1 border-b border-gray-300 pb-0.5">Day-by-Day Itinerary</h3>
+                                <div className="text-[10px] space-y-0.5">
+                                    {itineraryItems.map((item) => (
+                                        <div key={item.dayNumber} className="flex items-start gap-1">
+                                            <span className="font-bold text-gray-700 shrink-0 w-[28px]">D{item.dayNumber}</span>
+                                            <span className="flex-1 leading-tight">
+                                                {item.title}
+                                                {item.distanceKm > 0 && (
+                                                    <span className="text-gray-500 ml-1">({item.distanceKm} km)</span>
+                                                )}
+                                            </span>
+                                            {(item.accommodation + item.meals + item.activities + item.otherCosts) > 0 && (
+                                                <span className="text-gray-500 shrink-0">
+                                                    {fmt(item.accommodation + item.meals + item.activities + item.otherCosts)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Route Information (shown when no detailed itinerary) */}
+                        {itineraryItems.length === 0 && bill.route && (
+                            <div className="mt-3">
+                                <h3 className="text-[10px] font-semibold uppercase text-gray-600 mb-1 border-b border-gray-300 pb-0.5">Destination</h3>
+                                <div className="text-[10px] text-gray-800 leading-tight">
+                                    {bill.route}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right Column: Calculations */}

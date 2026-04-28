@@ -40,6 +40,7 @@ model Bill {
   mealsCharge    Float    @default(0)
   activitiesCharge Float  @default(0)
   otherCostsCharge Float  @default(0)
+  itinerary      String?  // JSON snapshot of tour schedule day items at bill creation time
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

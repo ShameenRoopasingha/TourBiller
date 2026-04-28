@@ -52,46 +52,47 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
             finalDriverId = authCheck.userId;
         }
 
-        const expense = await prisma.$transaction(async (tx) => {
-            const created = await tx.vehicleExpense.create({
-                data: {
-                    vehicleNo: validatedData.vehicleNo,
-                    amount: validatedData.amount,
-                    category: validatedData.category,
-                    description: validatedData.description || null,
-                    date: validatedData.date || new Date(),
-                    bookingId: finalBookingId,
-                    driverId: finalDriverId,
-                },
-            });
+        // Create the expense first (critical operation)
+        const created = await prisma.vehicleExpense.create({
+            data: {
+                vehicleNo: validatedData.vehicleNo,
+                amount: validatedData.amount,
+                category: validatedData.category,
+                description: validatedData.description || null,
+                date: validatedData.date || new Date(),
+                bookingId: finalBookingId,
+                driverId: finalDriverId,
+            },
+        });
 
-            // Update vehicle last service mileage if applicable
-            const mileage = validatedData.date ? undefined : (await tx.vehicle.findUnique({ where: { vehicleNo: validatedData.vehicleNo } }))?.currentMileage;
-            
-            if (mileage !== undefined) {
+        // Update vehicle last service mileage if applicable (non-critical)
+        try {
+            const vehicle = await prisma.vehicle.findUnique({ where: { vehicleNo: validatedData.vehicleNo } });
+            const mileage = vehicle?.currentMileage;
+
+            if (mileage !== undefined && mileage !== null) {
                 const updateData: Partial<Vehicle> = {};
                 if (validatedData.category === 'OIL_CHANGE') updateData.lastOilChangeMileage = mileage;
                 if (validatedData.category === 'FILTER_CHANGE') updateData.lastFilterChangeMileage = mileage;
                 if (validatedData.category === 'BODY_WASH') updateData.lastWashMileage = mileage;
                 if (validatedData.category === 'SERVICE') {
-                    // Default to updating both if generic service
                     updateData.lastOilChangeMileage = mileage;
                     updateData.lastFilterChangeMileage = mileage;
                 }
 
                 if (Object.keys(updateData).length > 0) {
-                    await tx.vehicle.update({
-                        where: { vehicleNo: data.vehicleNo },
+                    await prisma.vehicle.update({
+                        where: { vehicleNo: validatedData.vehicleNo },
                         data: updateData,
                     });
                 }
             }
-
-            return created;
-        });
+        } catch (vehicleError) {
+            console.warn('Could not update vehicle maintenance mileage:', vehicleError);
+        }
 
         revalidateFor('vehicle-expenses');
-        return { success: true, data: expense.id };
+        return { success: true, data: created.id };
     } catch (error) {
         console.error('Error adding vehicle expense:', error);
         return { success: false, error: 'Failed to add vehicle expense' };

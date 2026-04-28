@@ -75,6 +75,8 @@ export function BillCreator({
         waitingCharge: number;
         gatePass: number;
         items: {
+            dayNumber: number;
+            title: string;
             distanceKm: number;
             accommodation: number;
             meals: number;
@@ -402,6 +404,22 @@ export function BillCreator({
         // Append Booking ID if present to auto-close booking
         if (initialBookingId) {
             formData.append('bookingId', initialBookingId);
+        }
+
+        // Attach itinerary snapshot from matched tour schedule
+        const matchedSchedule = schedules.find(s => s.name === data.route);
+        if (matchedSchedule && matchedSchedule.items.length > 0) {
+            formData.append('itinerary', JSON.stringify(
+                matchedSchedule.items.map(item => ({
+                    dayNumber: item.dayNumber,
+                    title: item.title,
+                    distanceKm: item.distanceKm,
+                    accommodation: item.accommodation,
+                    meals: item.meals,
+                    activities: item.activities,
+                    otherCosts: item.otherCosts,
+                }))
+            ));
         }
 
         const result = await createBill(formData);

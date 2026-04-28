@@ -32,6 +32,8 @@ async function NewBillForm({ searchParams }: { searchParams: Promise<{ vehicleNo
         waitingCharge: s.waitingCharge,
         gatePass: s.gatePass,
         items: s.items.map(item => ({ 
+            dayNumber: item.dayNumber,
+            title: item.title,
             distanceKm: item.distanceKm,
             accommodation: item.accommodation,
             meals: item.meals,

@@ -82,12 +82,14 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
 
     // Save to database (use transaction to ensure bill + booking update are atomic)
     const bookingId = formData.get('bookingId') as string;
+    const itinerary = formData.get('itinerary') as string | null;
 
     // Create the bill first (this is the critical operation)
     const createdBill = await prisma.bill.create({
       data: {
         ...validatedData,
         totalAmount,
+        itinerary: itinerary || null,
       },
     });
 
