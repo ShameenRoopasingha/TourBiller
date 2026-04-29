@@ -51,84 +51,82 @@ export async function generateQuotation(
 
         const validated = QuotationSchema.parse(rawData);
 
-        const quotation = await prisma.$transaction(async (tx) => {
-            // Fetch the tour schedule with items to calculate totals
-            const schedule = await tx.tourSchedule.findUnique({
-                where: { id: validated.tourScheduleId },
-                include: { items: true },
-            });
+        // Fetch the tour schedule with items to calculate totals
+        const schedule = await prisma.tourSchedule.findUnique({
+            where: { id: validated.tourScheduleId },
+            include: { items: true },
+        });
 
-            if (!schedule) {
-                throw new Error('Tour schedule not found');
-            }
+        if (!schedule) {
+            throw new Error('Tour schedule not found');
+        }
 
-            // Check vehicle availability if both vehicle and dates are provided
-            if (validated.vehicleNo && validated.startDate && validated.endDate) {
-                const availability = await checkVehicleAvailability(
-                    validated.vehicleNo,
-                    validated.startDate,
-                    validated.endDate!,
-                    undefined,
-                    'Quotation'
-                );
-                if (availability.success && availability.data && !availability.data.available) {
-                    const conflict = availability.data.conflicts[0];
-                    throw new Error(`Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) from ${new Date(conflict.start).toLocaleDateString()} to ${new Date(conflict.end).toLocaleDateString()}`);
-                }
-            }
-
-            // Calculate totals from day items in a single pass
-            const itemTotals = schedule.items.reduce(
-                (acc, item) => ({
-                    distance: acc.distance + item.distanceKm,
-                    accommodation: acc.accommodation + item.accommodation,
-                    meals: acc.meals + item.meals,
-                    activities: acc.activities + item.activities,
-                    other: acc.other + item.otherCosts,
-                }),
-                { distance: 0, accommodation: 0, meals: 0, activities: 0, other: 0 }
+        // Check vehicle availability if both vehicle and dates are provided
+        if (validated.vehicleNo && validated.startDate && validated.endDate) {
+            const availability = await checkVehicleAvailability(
+                validated.vehicleNo,
+                validated.startDate,
+                validated.endDate!,
+                undefined,
+                'Quotation'
             );
+            if (availability.success && availability.data && !availability.data.available) {
+                const conflict = availability.data.conflicts[0];
+                throw new Error(`Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) from ${new Date(conflict.start).toLocaleDateString()} to ${new Date(conflict.end).toLocaleDateString()}`);
+            }
+        }
 
-            const transportCost = schedule.days * (validated.hireRatePerDay || 0);
-            const driverTotal = schedule.days * (validated.driverCostPerDay || 0);
-            const subtotal = transportCost + driverTotal + itemTotals.accommodation + itemTotals.meals + itemTotals.activities + itemTotals.other;
-            const markupAmount = subtotal * ((validated.markup || 0) / 100);
-            const totalAmount = subtotal + markupAmount - (validated.discount || 0);
+        // Calculate totals from day items in a single pass
+        const itemTotals = schedule.items.reduce(
+            (acc, item) => ({
+                distance: acc.distance + item.distanceKm,
+                accommodation: acc.accommodation + item.accommodation,
+                meals: acc.meals + item.meals,
+                activities: acc.activities + item.activities,
+                other: acc.other + item.otherCosts,
+            }),
+            { distance: 0, accommodation: 0, meals: 0, activities: 0, other: 0 }
+        );
 
-            return tx.quotation.create({
-                data: {
-                    tourScheduleId: validated.tourScheduleId,
-                    customerName: validated.customerName,
-                    customerEmail: validated.customerEmail || null,
-                    customerPhone: validated.customerPhone || null,
-                    vehicleNo: validated.vehicleNo || null,
-                    numberOfPersons: validated.numberOfPersons || 1,
-                    startDate: validated.startDate || null,
-                    endDate: validated.endDate || null,
-                    pickupLocation: validated.pickupLocation || null,
-                    dropLocation: validated.dropLocation || null,
-                    hireRatePerDay: validated.hireRatePerDay || 0,
-                    kmPerDay: validated.kmPerDay || 0,
-                    excessKmRate: validated.excessKmRate || 0,
-                    extraHourRate: validated.extraHourRate || 0,
-                    totalDistance: itemTotals.distance,
-                    transportCost,
-                    accommodationTotal: itemTotals.accommodation,
-                    mealsTotal: itemTotals.meals,
-                    activitiesTotal: itemTotals.activities,
-                    otherCostsTotal: itemTotals.other,
-                    markup: validated.markup || 0,
-                    discount: validated.discount || 0,
-                    driverCostPerDay: validated.driverCostPerDay || 0,
-                    advanceAmount: validated.advanceAmount || 0,
-                    excludedItems: validated.excludedItems || null,
-                    totalAmount: Math.max(0, totalAmount),
-                    notes: validated.notes || null,
-                    validUntil: validated.validUntil || null,
-                    status: 'DRAFT',
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } as any,
-            });
+        const transportCost = schedule.days * (validated.hireRatePerDay || 0);
+        const driverTotal = schedule.days * (validated.driverCostPerDay || 0);
+        const subtotal = transportCost + driverTotal + itemTotals.accommodation + itemTotals.meals + itemTotals.activities + itemTotals.other;
+        const markupAmount = subtotal * ((validated.markup || 0) / 100);
+        const totalAmount = subtotal + markupAmount - (validated.discount || 0);
+
+        const quotation = await prisma.quotation.create({
+            data: {
+                tourScheduleId: validated.tourScheduleId,
+                customerName: validated.customerName,
+                customerEmail: validated.customerEmail || null,
+                customerPhone: validated.customerPhone || null,
+                vehicleNo: validated.vehicleNo || null,
+                numberOfPersons: validated.numberOfPersons || 1,
+                startDate: validated.startDate || null,
+                endDate: validated.endDate || null,
+                pickupLocation: validated.pickupLocation || null,
+                dropLocation: validated.dropLocation || null,
+                hireRatePerDay: validated.hireRatePerDay || 0,
+                kmPerDay: validated.kmPerDay || 0,
+                excessKmRate: validated.excessKmRate || 0,
+                extraHourRate: validated.extraHourRate || 0,
+                totalDistance: itemTotals.distance,
+                transportCost,
+                accommodationTotal: itemTotals.accommodation,
+                mealsTotal: itemTotals.meals,
+                activitiesTotal: itemTotals.activities,
+                otherCostsTotal: itemTotals.other,
+                markup: validated.markup || 0,
+                discount: validated.discount || 0,
+                driverCostPerDay: validated.driverCostPerDay || 0,
+                advanceAmount: validated.advanceAmount || 0,
+                excludedItems: validated.excludedItems || null,
+                totalAmount: Math.max(0, totalAmount),
+                notes: validated.notes || null,
+                validUntil: validated.validUntil || null,
+                status: 'DRAFT',
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
         });
 
         revalidateFor('quotation');
@@ -287,14 +285,10 @@ export async function updateQuotation(
         );
 
         const transportCost = validated.hireRatePerDay * schedule.days;
-        const totalAmount =
-            transportCost +
-            itemTotals.accommodation +
-            itemTotals.meals +
-            itemTotals.activities +
-            itemTotals.other +
-            validated.markup -
-            validated.discount;
+        const driverTotal = schedule.days * (validated.driverCostPerDay || 0);
+        const subtotal = transportCost + driverTotal + itemTotals.accommodation + itemTotals.meals + itemTotals.activities + itemTotals.other;
+        const markupAmount = subtotal * ((validated.markup || 0) / 100);
+        const totalAmount = subtotal + markupAmount - (validated.discount || 0);
 
         const quotation = await prisma.quotation.update({
             where: { id },

@@ -1037,10 +1037,26 @@ export function BillCreator({
 
                                         <div className="border-t border-primary/20 my-4"></div>
 
-                                        <div className="flex justify-between items-end">
+                                        <div className="flex justify-between items-center">
                                             <span className="text-lg font-bold">Total</span>
-                                            <span className="text-xl sm:text-3xl font-bold text-primary">Rs.{formattedTotalAmount.replace('Rs. ', '')}</span>
+                                            <span className="text-xl font-bold text-primary">{formattedTotalAmount}</span>
                                         </div>
+
+                                        {(Number(watchedFields.advanceAmount) || 0) > 0 && (
+                                            <>
+                                                <div className="flex justify-between items-center text-muted-foreground mt-2">
+                                                    <span>Advance Payment</span>
+                                                    <span>-{formatCurrency(Number(watchedFields.advanceAmount))}</span>
+                                                </div>
+                                                <div className="border-t border-dashed border-primary/20 my-2"></div>
+                                                <div className="flex justify-between items-end">
+                                                    <span className="text-xl font-extrabold">Balance</span>
+                                                    <span className="text-2xl sm:text-3xl font-extrabold text-destructive">
+                                                        Rs.{(totalAmount - (Number(watchedFields.advanceAmount) || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
 
                                         <Button type="submit" className="w-full mt-6 h-12 text-lg font-semibold shadow-md" disabled={isSubmitting}>
                                             {isSubmitting ? (

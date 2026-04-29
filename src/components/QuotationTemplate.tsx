@@ -215,15 +215,6 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                                     </span>
                                 </>
                             )}
-                            {(quotation.pickupLocation || quotation.dropLocation) && (
-                                <>
-                                    <span className="font-semibold text-gray-500">Routing:</span>
-                                    <span>
-                                        {quotation.pickupLocation || 'Not specified'} 
-                                        {quotation.dropLocation ? ` to ${quotation.dropLocation}` : ''}
-                                    </span>
-                                </>
-                            )}
                         </div>
                     </div>
                 </div>
