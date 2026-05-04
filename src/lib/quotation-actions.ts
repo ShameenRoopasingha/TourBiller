@@ -422,8 +422,8 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
                     quotation.vehicleNo,
                     quotation.startDate,
                     quotation.endDate as Date,
-                    undefined, // This becomes a NEW booking, so no ID to exclude yet (or we could exclude the quotation)
-                    'Booking'
+                    quotationId, // Exclude the current quotation from the availability check
+                    'Quotation'
                 );
                 if (availability.success && availability.data && !availability.data.available) {
                     const conflict = availability.data.conflicts[0];

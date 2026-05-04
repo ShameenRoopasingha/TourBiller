@@ -112,6 +112,31 @@ export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
             return { success: false, error: authCheck.error };
         }
 
+        // Look up the customer name first for FK checks
+        const customer = await prisma.customer.findUnique({ where: { id }, select: { name: true } });
+        if (!customer) {
+            return { success: false, error: 'Customer not found' };
+        }
+
+        // Check for related records that reference this customer by name
+        const [billCount, bookingCount, quotationCount] = await Promise.all([
+            prisma.bill.count({ where: { customerName: customer.name } }),
+            prisma.booking.count({ where: { customerName: customer.name } }),
+            prisma.quotation.count({ where: { customerName: customer.name } }),
+        ]);
+
+        const relatedItems: string[] = [];
+        if (billCount > 0) relatedItems.push(`${billCount} bill(s)`);
+        if (bookingCount > 0) relatedItems.push(`${bookingCount} booking(s)`);
+        if (quotationCount > 0) relatedItems.push(`${quotationCount} quotation(s)`);
+
+        if (relatedItems.length > 0) {
+            return {
+                success: false,
+                error: `Cannot delete customer "${customer.name}": they have ${relatedItems.join(', ')} linked. Remove or reassign those records first.`,
+            };
+        }
+
         await prisma.customer.delete({
             where: { id },
         });

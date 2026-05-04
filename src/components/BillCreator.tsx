@@ -95,6 +95,7 @@ export function BillCreator({
     const schedules = serverSchedules;
 
     const {
+        totalAmount,
         formattedTotalAmount,
         formattedBaseCharge,
         baseCharge,

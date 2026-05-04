@@ -153,9 +153,9 @@ export async function getBills(searchQuery?: string): Promise<ActionResult<Bill[
         OR: isNumericSearch
           ? [{ billNumber: { equals: billNum } }]
           : [
-              { vehicleNo: { contains: searchQuery, mode: 'insensitive' } },
-              { customerName: { contains: searchQuery, mode: 'insensitive' } },
-              { route: { contains: searchQuery, mode: 'insensitive' } },
+              { vehicleNo: { contains: cleanedQuery, mode: 'insensitive' } },
+              { customerName: { contains: cleanedQuery, mode: 'insensitive' } },
+              { route: { contains: cleanedQuery, mode: 'insensitive' } },
             ],
       } : undefined,
       orderBy: {
