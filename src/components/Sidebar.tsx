@@ -61,9 +61,9 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
         <ShadcnSidebar className="border-r border-border/50 bg-card/40 backdrop-blur-xl">
             <div className="p-4 border-b border-border/50 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-3">
-                    <Image src="/VIGIL-logo.png" alt="VIGIL width={48} height={48} className=" h-12 w-auto drop-shadow-sm" priority />
+                    <Image src="/VIGIL-logo.png" alt="VIGIL" width={48} height={48} className="h-12 w-auto drop-shadow-sm" priority />
                     <div className="flex flex-col">
-                        <span className="font-bold text-2xl tracking-tight leading-none bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-1">VIGIL/span>
+                        <span className="font-bold text-2xl tracking-tight leading-none bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-1">VIGIL</span>
                             <span className="text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase leading-none">Smart Travel Management.</span>
                     </div>
                 </Link>
@@ -128,7 +128,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                 {/* Theme toggle + Settings */}
                 <div className="flex items-center justify-between">
                     <div className="text-xs text-muted-foreground">
-                        <span className="font-semibold">VIGIL/span> v0.1
+                        <span className="font-semibold">VIGIL</span> v0.1
                     </div>
                     <div className="flex items-center gap-1">
                         {mounted ? (
