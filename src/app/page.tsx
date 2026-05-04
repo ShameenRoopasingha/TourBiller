@@ -70,7 +70,7 @@ export default async function DashboardPage() {
         <div className="text-center mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent">
-              VIRGIL
+              VIGIL
             </span>
             <span className="text-foreground invisible sm:visible"> </span>
             <span className="text-foreground">Precision Billing</span>

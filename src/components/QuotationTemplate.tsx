@@ -87,7 +87,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
         return () => clearTimeout(timer);
     }, []);
 
-    const companyName = businessProfile?.companyName || 'VIRGIL Transport';
+    const companyName = businessProfile?.companyName || 'VIGILTransport';
     const address = businessProfile?.address || '';
     const phone = businessProfile?.phone || '';
     const email = businessProfile?.email || '';
@@ -169,7 +169,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                                 quotation.status === 'SENT' ? 'border-blue-600 text-blue-700' :
                                     quotation.status === 'EXPIRED' ? 'border-red-600 text-red-700' :
                                         'border-black text-black'
-                            }`}>
+                                }`}>
                                 {quotation.status}
                             </span>
                         </div>

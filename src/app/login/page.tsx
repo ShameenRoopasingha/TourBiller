@@ -50,7 +50,7 @@ export default function LoginPage() {
         <div className="relative min-h-screen flex items-center justify-center p-3 sm:p-4 overflow-hidden">
             {/* Animated Background */}
             <div className="absolute inset-0 z-0 scale-110">
-                <Grainient 
+                <Grainient
                     color1="#001845" // Deep Navy
                     color2="#00b4d8" // Cyan/Bright Blue
                     color3="#023e8a" // Royal Blue
@@ -65,9 +65,9 @@ export default function LoginPage() {
             <Card className="relative w-full max-w-md shadow-2xl z-10 bg-white/60 dark:bg-black/40 backdrop-blur-2xl border border-white/30 dark:border-white/10 overflow-hidden">
                 <CardHeader className="text-center space-y-3 pb-2 pt-8">
                     <div className="mx-auto flex flex-col items-center justify-center gap-3">
-                        <Image src="/virgil-logo.png" alt="VIRGIL" width={96} height={96} className="h-24 w-auto drop-shadow-md" priority />
+                        <Image src="/VIGIL-logo.png" alt="VIGIL" width={96} height={96} className="h-24 w-auto drop-shadow-md" priority />
                         <div className="flex flex-col items-center mt-2">
-                            <CardTitle className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-1">VIRGIL</CardTitle>
+                            <CardTitle className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-1">VIGIL</CardTitle>
                             <span className="text-sm font-semibold tracking-wide text-muted-foreground uppercase leading-tight mt-1">Smart Travel Management.</span>
                         </div>
                     </div>

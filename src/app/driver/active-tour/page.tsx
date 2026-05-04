@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { DriverTourTabs } from '@/components/DriverTourTabs';
 
 export const metadata = {
-    title: 'My Active Tour - VIRGIL',
+    title: 'My Active Tour - VIGIL',
 };
 
 export default async function DriverActiveTourPage() {
