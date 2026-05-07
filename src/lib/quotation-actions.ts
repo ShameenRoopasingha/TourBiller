@@ -72,7 +72,7 @@ export async function generateQuotation(
             );
             if (availability.success && availability.data && !availability.data.available) {
                 const conflict = availability.data.conflicts[0];
-                throw new Error(`Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) from ${new Date(conflict.start).toLocaleDateString()} to ${new Date(conflict.end).toLocaleDateString()}`);
+                throw new Error(`Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) from ${new Date(conflict.start).toLocaleDateString('en-GB')} to ${new Date(conflict.end).toLocaleDateString('en-GB')}`);
             }
         }
 
@@ -257,7 +257,7 @@ export async function updateQuotation(
                 const conflict = availability.data.conflicts[0];
                 return { 
                     success: false, 
-                    error: `Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString()}` 
+                    error: `Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
                 };
             }
         }
@@ -347,7 +347,7 @@ export async function updateQuotationStatus(
                     const conflict = availability.data.conflicts[0];
                     return { 
                         success: false, 
-                        error: `Cannot accept quotation. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString()}` 
+                        error: `Cannot accept quotation. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
                     };
                 }
             }
@@ -427,7 +427,7 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
                 );
                 if (availability.success && availability.data && !availability.data.available) {
                     const conflict = availability.data.conflicts[0];
-                    throw new Error(`Cannot convert to booking. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString()}`);
+                    throw new Error(`Cannot convert to booking. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}`);
                 }
             }
 

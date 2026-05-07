@@ -220,7 +220,11 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 </div>
 
                 {/* ── Tour Description ── */}
-                {quotation.tourSchedule.description && (
+                {/* Only show standalone description if it differs from ALL day-item descriptions
+                   to avoid duplication in the print preview */}
+                {quotation.tourSchedule.description && 
+                 !quotation.tourSchedule.items.some(item => item.description === quotation.tourSchedule.description) &&
+                 !quotation.tourSchedule.items.some(item => item.title === quotation.tourSchedule.description) && (
                     <p className="text-[10px] italic text-gray-600 border-l-2 border-blue-500 pl-2 mb-3 leading-snug">
                         {quotation.tourSchedule.description}
                     </p>
@@ -407,7 +411,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                         )}
                         {quotation.validUntil && (
                             <p className="font-bold text-red-600">
-                                ⚠ This quotation is valid until: {new Date(quotation.validUntil).toLocaleDateString('en-GB')}
+                                ⚠ This quotation is valid until: {new Date(quotation.validUntil).toLocaleDateString('en-GB')} {new Date(quotation.validUntil).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                             </p>
                         )}
                     </div>

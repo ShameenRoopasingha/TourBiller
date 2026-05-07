@@ -170,7 +170,7 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                                 <div className="mt-2 text-xs font-semibold text-destructive flex items-center gap-1.5 p-2 bg-destructive/10 rounded animate-in fade-in slide-in-from-top-1">
                                                     <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
                                                     <span>
-                                                        Vehicle is occupied by <span className="underline">{availabilityConflict.customer}</span> ({availabilityConflict.type}: {availabilityConflict.reference}) until {new Date(availabilityConflict.end).toLocaleDateString()}
+                                                        Vehicle is occupied by <span className="underline">{availabilityConflict.customer}</span> ({availabilityConflict.type}: {availabilityConflict.reference}) until {new Date(availabilityConflict.end).toLocaleDateString('en-GB')}
                                                     </span>
                                                 </div>
                                             )}
@@ -228,7 +228,7 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                                 <div className="mt-2 text-xs font-semibold text-destructive flex items-center gap-1.5 p-2 bg-destructive/10 rounded animate-in fade-in slide-in-from-top-1">
                                                     <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
                                                     <span>
-                                                        Driver is occupied by <span className="underline">{driverAvailabilityConflict.customer}</span> ({driverAvailabilityConflict.type}: {driverAvailabilityConflict.reference}) until {new Date(driverAvailabilityConflict.end).toLocaleDateString()}
+                                                        Driver is occupied by <span className="underline">{driverAvailabilityConflict.customer}</span> ({driverAvailabilityConflict.type}: {driverAvailabilityConflict.reference}) until {new Date(driverAvailabilityConflict.end).toLocaleDateString('en-GB')}
                                                     </span>
                                                 </div>
                                             )}

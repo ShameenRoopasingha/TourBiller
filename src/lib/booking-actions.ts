@@ -46,7 +46,7 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
                 const conflict = availability.data.conflicts[0];
                 return { 
                     success: false, 
-                    error: `Vehicle is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString()}` 
+                    error: `Vehicle is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
                 };
             }
         }
