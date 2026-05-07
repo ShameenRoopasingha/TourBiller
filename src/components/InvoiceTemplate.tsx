@@ -126,7 +126,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                          )}
 
                          {/* Route Information for thermal receipt (shown when no detailed itinerary) */}
-                         {itineraryItems.length === 0 && bill.route && (
+                         {false && bill.route && (
                              <div className="mt-1 border-t border-dotted border-gray-400 pt-1">
                                  <div className="font-semibold mb-0.5">DESTINATION:</div>
                                  <div className="leading-tight">{bill.route}</div>
@@ -368,7 +368,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         )}
 
                         {/* Route already shown in customer details above - removed to avoid duplication */}
-                        {itineraryItems.length === 0 && bill.route && (
+                        {false && bill.route && (
                             <div className="mt-3">
                                 <h3 className="text-xs font-semibold uppercase text-gray-500 mb-1.5 border-b border-gray-300 pb-1 tracking-wide">Destination</h3>
                                 <div className="text-sm text-gray-800 leading-snug">
