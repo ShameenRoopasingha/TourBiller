@@ -250,7 +250,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
     // --- A4 PORTRAIT INVOICE LAYOUT (FOR ADMINS) ---
     return (
-        <div className="flex flex-col items-center mx-auto font-mono text-xs text-black leading-tight bg-white print:bg-transparent min-h-screen">
+        <div className="flex flex-col items-center mx-auto font-sans text-sm text-black leading-relaxed bg-white print:bg-transparent min-h-screen">
             <style jsx global>{`
                 @media print {
                     @page {
@@ -268,10 +268,10 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
             `}</style>
 
             {/* Main Container - A4 Portrait (21cm x max intrinsic height) */}
-            <div className="w-[190mm] flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none p-6 print:p-8 bg-white my-8 print:my-0">
+            <div className="w-[190mm] flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none p-8 print:p-10 bg-white my-8 print:my-0">
 
                 {/* Header Section - 3 Column Layout */}
-                <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-2 mb-2">
+                <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-3 mb-4">
                     {/* Column 1: Logo */}
                     <div className="flex items-start pt-1">
                         {businessProfile?.logoUrl ? (
@@ -288,8 +288,8 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
                     {/* Column 2: Company Name & Contact */}
                     <div>
-                        <h1 className="text-xl font-bold uppercase tracking-wider">{companyName}</h1>
-                        <p className="text-[10px] text-gray-600 mt-1 whitespace-pre-wrap">
+                        <h1 className="text-2xl font-bold uppercase tracking-wider">{companyName}</h1>
+                        <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">
                             {address}
                             <br />
                             Tel: {phone} {email && `| ${email}`}
@@ -298,11 +298,11 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
                     {/* Column 3: Invoice Details */}
                     <div className="text-right">
-                        <div className="text-2xl font-bold text-red-600">INVOICE</div>
-                        <div className="text-base font-bold mt-0.5">NO: {bill.billNumber}</div>
-                        <div className="text-xs">Date: {new Date(bill.createdAt).toLocaleDateString('en-GB')}</div>
+                        <div className="text-3xl font-bold text-red-600">INVOICE</div>
+                        <div className="text-lg font-bold mt-0.5">NO: {bill.billNumber}</div>
+                        <div className="text-sm text-gray-600">Date: {new Date(bill.createdAt).toLocaleDateString('en-GB')}</div>
                         <div className="mt-1">
-                            <span className="font-bold border border-black px-2 py-0.5 text-[10px] uppercase">
+                            <span className="font-bold border border-black px-2.5 py-1 text-xs uppercase rounded-sm">
                                 {bill.paymentMethod || 'CASH'}
                             </span>
                         </div>
@@ -314,39 +314,39 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
                     {/* Left Column: Trip Details */}
                     <div className="w-[45%] space-y-3">
-                        <div className="bg-gray-50 p-2 border border-gray-200 rounded-sm">
-                            <div className="grid grid-cols-[80px_1fr] gap-1 text-[11px]">
-                                <span className="font-semibold text-gray-600">Customer:</span>
-                                <span className="font-bold truncate">{bill.customerName}</span>
+                        <div className="bg-gray-50 p-3 border border-gray-200 rounded">
+                            <div className="grid grid-cols-[85px_1fr] gap-y-1.5 gap-x-2 text-sm">
+                                <span className="font-medium text-gray-500">Customer:</span>
+                                <span className="font-semibold truncate">{bill.customerName}</span>
 
                                 {bill.customerAddress && (
                                     <>
-                                        <span className="font-semibold text-gray-600 self-start">Address:</span>
-                                        <span className="text-[10px] text-gray-800 leading-tight break-words">{bill.customerAddress}</span>
+                                        <span className="font-medium text-gray-500 self-start">Address:</span>
+                                        <span className="text-xs text-gray-700 leading-snug break-words">{bill.customerAddress}</span>
                                     </>
                                 )}
 
-                                <span className="font-semibold text-gray-600">Vehicle:</span>
-                                <span className="font-bold">{bill.vehicleNo}</span>
+                                <span className="font-medium text-gray-500">Vehicle:</span>
+                                <span className="font-semibold">{bill.vehicleNo}</span>
 
-                                <span className="font-semibold text-gray-600">Route:</span>
-                                <span className="font-bold leading-tight">{bill.route}</span>
+                                <span className="font-medium text-gray-500">Route:</span>
+                                <span className="font-semibold leading-snug">{bill.route}</span>
                             </div>
                         </div>
 
-                        <div className="text-[10px] space-y-1 pt-2">
+                        <div className="text-xs space-y-1 pt-3">
                             <div className="flex flex-col gap-1">
                                 <span>Start: {new Date(bill.startDate).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                                 <span>End:&nbsp;&nbsp;&nbsp;{new Date(bill.endDate).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                                <span className="font-semibold mt-1">Duration: {scheduledDays} days{bill.extraHours > 0 ? ` + ${bill.extraHours} hrs` : ''}</span>
+                                <span className="font-semibold mt-1 text-sm">Duration: {scheduledDays} days{bill.extraHours > 0 ? ` + ${bill.extraHours} hrs` : ''}</span>
                             </div>
                         </div>
 
                         {/* Day-by-Day Itinerary */}
                         {itineraryItems.length > 0 && (
                             <div className="mt-3">
-                                <h3 className="text-[10px] font-semibold uppercase text-gray-600 mb-1 border-b border-gray-300 pb-0.5">Day-by-Day Itinerary</h3>
-                                <div className="text-[10px] space-y-0.5">
+                                <h3 className="text-xs font-semibold uppercase text-gray-500 mb-1.5 border-b border-gray-300 pb-1 tracking-wide">Day-by-Day Itinerary</h3>
+                                <div className="text-xs space-y-1">
                                     {itineraryItems.map((item) => (
                                         <div key={item.dayNumber} className="flex items-start gap-1">
                                             <span className="font-bold text-gray-700 shrink-0 w-[28px]">D{item.dayNumber}</span>
@@ -367,11 +367,11 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                             </div>
                         )}
 
-                        {/* Route Information (shown when no detailed itinerary) */}
+                        {/* Route already shown in customer details above - removed to avoid duplication */}
                         {itineraryItems.length === 0 && bill.route && (
                             <div className="mt-3">
-                                <h3 className="text-[10px] font-semibold uppercase text-gray-600 mb-1 border-b border-gray-300 pb-0.5">Destination</h3>
-                                <div className="text-[10px] text-gray-800 leading-tight">
+                                <h3 className="text-xs font-semibold uppercase text-gray-500 mb-1.5 border-b border-gray-300 pb-1 tracking-wide">Destination</h3>
+                                <div className="text-sm text-gray-800 leading-snug">
                                     {bill.route}
                                 </div>
                             </div>
@@ -380,9 +380,9 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
                     {/* Right Column: Calculations */}
                     <div className="w-[55%]">
-                        <div className="grid grid-cols-12 gap-y-1 text-[11px]">
+                        <div className="grid grid-cols-12 gap-y-1.5 text-sm">
                             {/* Header Row */}
-                            <div className="col-span-12 grid grid-cols-12 border-b border-black pb-1 mb-1 font-semibold text-[10px] uppercase text-gray-600">
+                            <div className="col-span-12 grid grid-cols-12 border-b-2 border-gray-800 pb-1.5 mb-2 font-semibold text-xs uppercase text-gray-500 tracking-wide">
                                 <div className="col-span-8">Description</div>
                                 <div className="col-span-4 text-right">Amount</div>
                             </div>
@@ -390,7 +390,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                             {/* Expected Mileage (covered by package charge) */}
                             <div className="col-span-8 flex justify-between pr-2">
                                 <span>Expected Mileage</span>
-                                <span className="text-[10px] text-gray-500">
+                                <span className="text-xs text-gray-400">
                                     ({bill.allowedKm}km/day × {scheduledDays} days = {expectedKm}km{scheduledDays > 1 ? ` | ${fmt(bill.packageCharge / scheduledDays)}/day` : ''})
                                 </span>
                             </div>
@@ -403,7 +403,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <>
                                     <div className="col-span-8 flex justify-between pr-2">
                                         <span>Extra Mileage Cost</span>
-                                        <span className="text-[10px] text-gray-500">
+                                        <span className="text-xs text-gray-400">
                                             ({bill.extraKm}km × {fmt(bill.hireRate)}/km)
                                         </span>
                                     </div>
@@ -416,7 +416,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <>
                                     <div className="col-span-8 flex justify-between pr-2">
                                         <span>Extra Hours</span>
-                                        <span className="text-[10px] text-gray-500">
+                                        <span className="text-xs text-gray-400">
                                             ({bill.extraHours} hrs @ {fmt(bill.extraHourRate)})
                                         </span>
                                     </div>
@@ -490,8 +490,8 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
                             <div className="col-span-12 border-t border-dotted border-black my-1"></div>
 
-                            <div className="col-span-6 font-bold text-lg text-right pr-2">BALANCE DUE</div>
-                            <div className="col-span-6 text-right font-bold text-lg bg-gray-100 px-1 border border-gray-300">
+                            <div className="col-span-6 font-bold text-xl text-right pr-2">BALANCE DUE</div>
+                            <div className="col-span-6 text-right font-bold text-xl bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">
                                 {fmt(Math.max(0, bill.totalAmount - (bill.advanceAmount || 0)))}
                             </div>
                             <div className="col-span-12 border-b-2 double border-black mt-1"></div>
@@ -500,14 +500,14 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 </div>
 
                 {/* Footer Section */}
-                <div className="mt-4 pt-10 grid grid-cols-2 gap-8 text-[10px]">
-                    <div className="text-center border-t border-dotted border-black pt-1">Customer Signature</div>
-                    <div className="text-center border-t border-dotted border-black pt-1">Authorized Signature</div>
+                <div className="mt-6 pt-12 grid grid-cols-2 gap-8 text-xs">
+                    <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">Customer Signature</div>
+                    <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">Authorized Signature</div>
                 </div>
 
-                <div className="text-center text-[9px] text-gray-400 mt-2">
+                <div className="text-center text-[10px] text-gray-400 mt-4">
                     System Generated Invoice | Thank you for your business!
-                    <div className="mt-0.5 text-[8px] opacity-70">
+                    <div className="mt-1 text-[9px] opacity-70">
                         Powered by <span className="font-semibold text-black">Bitgard PVT LTD</span> (+94 70 563 3969)
                     </div>
                 </div>

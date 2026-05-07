@@ -109,7 +109,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
     const markupAmount = subtotalWithDriver * (quotation.markup / 100);
 
     return (
-        <div className="flex flex-col items-center mx-auto font-mono text-[11px] text-black leading-snug">
+        <div className="flex flex-col items-center mx-auto font-sans text-sm text-black leading-relaxed">
             <style jsx global>{`
                 @media print {
                     @page {
@@ -125,10 +125,10 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 }
             `}</style>
 
-            <div className="w-[190mm] mx-auto p-6 flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-8 bg-white overflow-hidden">
+            <div className="w-[190mm] mx-auto p-8 flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-10 bg-white overflow-hidden">
 
                 {/* ── Header - 3 Column Layout ── */}
-                <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-2 mb-4">
+                <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-3 mb-5">
                     {/* Column 1: Logo */}
                     <div className="flex items-start pt-1">
                         {businessProfile?.logoUrl ? (
@@ -145,8 +145,8 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
 
                     {/* Column 2: Company Name & Contact */}
                     <div>
-                        <h1 className="text-xl font-bold uppercase tracking-wider">{companyName}</h1>
-                        <p className="text-[10px] text-gray-600 mt-1 whitespace-pre-wrap">
+                        <h1 className="text-2xl font-bold uppercase tracking-wider">{companyName}</h1>
+                        <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">
                             {address && <>{address}<br /></>}
                             {phone && <>Tel: {phone}</>}
                             {email && <> | Email: {email}</>}
@@ -155,17 +155,17 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
 
                     {/* Column 3: Quotation Details */}
                     <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-700">
+                        <div className="text-3xl font-bold text-blue-700">
                             QUOTATION
                         </div>
-                        <div className="text-base font-bold mt-0.5">
+                        <div className="text-lg font-bold mt-0.5">
                             NO: {quotation.quotationNumber}
                         </div>
-                        <div className="text-[10px] text-gray-500 mt-0.5">
+                        <div className="text-sm text-gray-500 mt-0.5">
                             Date: {new Date(quotation.createdAt).toLocaleDateString('en-GB')}
                         </div>
                         <div className="mt-1">
-                            <span className={`font-bold border px-2 py-0.5 text-[10px] uppercase ${quotation.status === 'ACCEPTED' ? 'border-green-600 text-green-700' :
+                            <span className={`font-bold border px-2.5 py-1 text-xs uppercase rounded-sm ${quotation.status === 'ACCEPTED' ? 'border-green-600 text-green-700' :
                                 quotation.status === 'SENT' ? 'border-blue-600 text-blue-700' :
                                     quotation.status === 'EXPIRED' ? 'border-red-600 text-red-700' :
                                         'border-black text-black'
@@ -177,38 +177,38 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 </div>
 
                 {/* ── Customer & Tour Details ── */}
-                <div className="flex gap-4 mb-4">
-                    <div className="w-1/2 bg-gray-50 p-2.5 border border-gray-200 rounded-sm">
-                        <div className="grid grid-cols-[70px_1fr] gap-y-0.5 gap-x-2 text-[11px]">
-                            <span className="font-semibold text-gray-500">Customer:</span>
-                            <span className="font-bold">{quotation.customerName}</span>
+                <div className="flex gap-4 mb-5">
+                    <div className="w-1/2 bg-gray-50 p-3 border border-gray-200 rounded">
+                        <div className="grid grid-cols-[75px_1fr] gap-y-1.5 gap-x-2 text-sm">
+                            <span className="font-medium text-gray-500">Customer:</span>
+                            <span className="font-semibold">{quotation.customerName}</span>
                             {quotation.customerPhone && (
                                 <>
-                                    <span className="font-semibold text-gray-500">Phone:</span>
+                                    <span className="font-medium text-gray-500">Phone:</span>
                                     <span>{quotation.customerPhone}</span>
                                 </>
                             )}
                             {quotation.customerEmail && (
                                 <>
-                                    <span className="font-semibold text-gray-500">Email:</span>
+                                    <span className="font-medium text-gray-500">Email:</span>
                                     <span>{quotation.customerEmail}</span>
                                 </>
                             )}
-                            <span className="font-semibold text-gray-500">Persons:</span>
+                            <span className="font-medium text-gray-500">Persons:</span>
                             <span>{quotation.numberOfPersons}</span>
                         </div>
                     </div>
-                    <div className="w-1/2 bg-gray-50 p-2.5 border border-gray-200 rounded-sm">
-                        <div className="grid grid-cols-[70px_1fr] gap-y-0.5 gap-x-2 text-[11px]">
-                            <span className="font-semibold text-gray-500">Tour:</span>
-                            <span className="font-bold">{quotation.tourSchedule.name}</span>
-                            <span className="font-semibold text-gray-500">Duration:</span>
+                    <div className="w-1/2 bg-gray-50 p-3 border border-gray-200 rounded">
+                        <div className="grid grid-cols-[75px_1fr] gap-y-1.5 gap-x-2 text-sm">
+                            <span className="font-medium text-gray-500">Tour:</span>
+                            <span className="font-semibold">{quotation.tourSchedule.name}</span>
+                            <span className="font-medium text-gray-500">Duration:</span>
                             <span>{quotation.tourSchedule.days} days</span>
-                            <span className="font-semibold text-gray-500">Vehicle:</span>
+                            <span className="font-medium text-gray-500">Vehicle:</span>
                             <span>{quotation.vehicleNo || '—'} ({quotation.tourSchedule.vehicleCategory})</span>
                             {quotation.startDate && (
                                 <>
-                                    <span className="font-semibold text-gray-500">Period:</span>
+                                    <span className="font-medium text-gray-500">Period:</span>
                                     <span>
                                         {new Date(quotation.startDate).toLocaleDateString('en-GB')}
                                         {quotation.endDate ? ` - ${new Date(quotation.endDate).toLocaleDateString('en-GB')}` : ''}
@@ -262,19 +262,19 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 )}
 
                 {/* ── Day-by-Day Itinerary ── */}
-                <div className="mb-2">
-                    <h3 className="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-wide">Day-by-Day Itinerary</h3>
-                    <table className="w-full text-[10px] border-collapse border border-gray-300">
+                <div className="mb-3">
+                    <h3 className="text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-wide">Day-by-Day Itinerary</h3>
+                    <table className="w-full text-xs border-collapse border border-gray-300">
                         <thead>
                             <tr className="bg-gray-800 text-white">
-                                <th className="px-1.5 py-1 text-left w-[32px] border-r border-gray-600">Day</th>
-                                <th className="px-1.5 py-1 text-left border-r border-gray-600">Route / Description</th>
-                                <th className="px-1.5 py-1 text-right w-[35px] border-r border-gray-600">Km</th>
-                                <th className="px-1.5 py-1 text-right border-r border-gray-600">Accomm.</th>
-                                <th className="px-1.5 py-1 text-right border-r border-gray-600">Meals</th>
-                                <th className="px-1.5 py-1 text-right border-r border-gray-600">Activities</th>
-                                <th className="px-1.5 py-1 text-right border-r border-gray-600">Other</th>
-                                <th className="px-1.5 py-1 text-right font-bold">Day Total</th>
+                                <th className="px-2 py-1.5 text-left w-[36px] border-r border-gray-600">Day</th>
+                                <th className="px-2 py-1.5 text-left border-r border-gray-600">Route / Description</th>
+                                <th className="px-2 py-1.5 text-right w-[40px] border-r border-gray-600">Km</th>
+                                <th className="px-2 py-1.5 text-right border-r border-gray-600">Accomm.</th>
+                                <th className="px-2 py-1.5 text-right border-r border-gray-600">Meals</th>
+                                <th className="px-2 py-1.5 text-right border-r border-gray-600">Activities</th>
+                                <th className="px-2 py-1.5 text-right border-r border-gray-600">Other</th>
+                                <th className="px-2 py-1.5 text-right font-bold">Day Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -282,19 +282,19 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                                 const dayTotal = item.accommodation + item.meals + item.activities + item.otherCosts;
                                 return (
                                     <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-200`}>
-                                        <td className="px-1.5 py-1 font-bold text-center border-r border-gray-200">{item.dayNumber}</td>
-                                        <td className="px-1.5 py-1 border-r border-gray-200">
+                                        <td className="px-2 py-1.5 font-bold text-center border-r border-gray-200">{item.dayNumber}</td>
+                                        <td className="px-2 py-1.5 border-r border-gray-200">
                                             <span className="font-semibold">{item.title}</span>
                                             {item.description && (
-                                                <span className="text-[9px] text-gray-500 block leading-tight">{item.description}</span>
+                                                <span className="text-[11px] text-gray-500 block leading-snug mt-0.5">{item.description}</span>
                                             )}
                                         </td>
-                                        <td className="px-1.5 py-1 text-right border-r border-gray-200">{item.distanceKm}</td>
-                                        <td className="px-1.5 py-1 text-right border-r border-gray-200">{fmt(item.accommodation)}</td>
-                                        <td className="px-1.5 py-1 text-right border-r border-gray-200">{fmt(item.meals)}</td>
-                                        <td className="px-1.5 py-1 text-right border-r border-gray-200">{fmt(item.activities)}</td>
-                                        <td className="px-1.5 py-1 text-right border-r border-gray-200">{fmt(item.otherCosts)}</td>
-                                        <td className="px-1.5 py-1 text-right font-semibold">{fmt(dayTotal)}</td>
+                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{item.distanceKm}</td>
+                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{fmt(item.accommodation)}</td>
+                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{fmt(item.meals)}</td>
+                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{fmt(item.activities)}</td>
+                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{fmt(item.otherCosts)}</td>
+                                        <td className="px-2 py-1.5 text-right font-semibold">{fmt(dayTotal)}</td>
                                     </tr>
                                 );
                             })}
@@ -303,21 +303,21 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 </div>
 
                 {/* ── Cost Summary ── */}
-                <div className="mb-2">
+                <div className="mb-3">
                     <div>
-                        <h3 className="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-wide">Cost Summary</h3>
-                        <div className="border border-gray-300 rounded-sm p-2 text-[11px]">
+                        <h3 className="text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-wide">Cost Summary</h3>
+                        <div className="border border-gray-300 rounded p-3 text-sm">
                             <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
                                 <span className="text-gray-600">Van Hire ({quotation.tourSchedule.days} days × {fmt(quotation.hireRatePerDay)}/day for {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km)</span>
                                 <span className="text-right">{fmt(quotation.transportCost)}</span>
                             </div>
                             {finalExcessKmRate > 0 && (
-                                <div className="text-[9px] text-gray-500 italic py-0.5">
+                                <div className="text-xs text-gray-400 italic py-0.5">
                                     Any km exceeding {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km charged at {fmt(finalExcessKmRate)}/km
                                 </div>
                             )}
                             {finalExtraHourRate > 0 && (
-                                <div className="text-[9px] text-gray-500 italic py-0.5">
+                                <div className="text-xs text-gray-400 italic py-0.5">
                                     Extra hours charged at {fmt(finalExtraHourRate)}/hr
                                 </div>
                             )}
@@ -361,9 +361,9 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                                 </div>
                             )}
 
-                            <div className="border-t-2 border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-4 text-sm font-bold py-1">
+                            <div className="border-t-2 border-black pt-1.5 mt-1.5 grid grid-cols-[1fr_auto] gap-x-4 text-base font-bold py-1">
                                 <span>TOTAL AMOUNT</span>
-                                <span className="text-right bg-gray-100 px-1 border border-gray-300">{fmt(quotation.totalAmount)}</span>
+                                <span className="text-right bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">{fmt(quotation.totalAmount)}</span>
                             </div>
                         </div>
                     </div>
@@ -371,8 +371,8 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
 
                 {/* ── Excluded Items ── */}
                 {quotation.excludedItems && (
-                    <div className="mb-3 text-[10px]">
-                        <div className="p-2 bg-red-50 border border-red-200 rounded-sm">
+                    <div className="mb-3 text-xs">
+                        <div className="p-3 bg-red-50 border border-red-200 rounded">
                             <span className="font-bold text-red-700">Not Included: </span>
                             <span className="whitespace-pre-wrap text-red-600">{quotation.excludedItems}</span>
                         </div>
@@ -381,10 +381,10 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
 
                 {/* ── Advance Payment & Bank Details ── */}
                 {quotation.advanceAmount > 0 && (
-                    <div className="mb-3 text-[10px]">
-                        <div className="p-2 bg-green-50 border border-green-200 rounded-sm">
+                    <div className="mb-3 text-xs">
+                        <div className="p-3 bg-green-50 border border-green-200 rounded">
                             <span className="font-bold text-green-700">Advance Payment Required: </span>
-                            <span className="font-bold text-green-800">{fmt(quotation.advanceAmount)}</span>
+                            <span className="font-bold text-green-800 text-sm">{fmt(quotation.advanceAmount)}</span>
                             {businessProfile?.bankAccountNo && (
                                 <div className="mt-1 text-green-700">
                                     <span className="font-semibold">Bank: </span>{businessProfile.bankName || 'N/A'}
@@ -402,9 +402,9 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
 
                 {/* ── Notes & Validity ── */}
                 {(quotation.notes || quotation.validUntil) && (
-                    <div className="mb-3 text-[10px] space-y-1">
+                    <div className="mb-3 text-xs space-y-1.5">
                         {quotation.notes && (
-                            <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-sm">
+                            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
                                 <span className="font-bold text-gray-700">Notes & Terms: </span>
                                 <span className="whitespace-pre-wrap">{quotation.notes}</span>
                             </div>
@@ -418,19 +418,19 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                 )}
 
                 {/* ── Signatures ── */}
-                <div className="mt-auto pt-8 grid grid-cols-2 gap-8 text-[10px]">
-                    <div className="text-center border-t border-dotted border-black pt-1">
+                <div className="mt-auto pt-10 grid grid-cols-2 gap-8 text-xs">
+                    <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">
                         Customer Signature
                     </div>
-                    <div className="text-center border-t border-dotted border-black pt-1">
+                    <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">
                         Authorized Signature
                     </div>
                 </div>
 
                 {/* ── Footer ── */}
-                <div className="text-center text-[9px] text-gray-400 mt-3">
+                <div className="text-center text-[10px] text-gray-400 mt-4">
                     System Generated Quotation | Thank you for choosing {companyName}!
-                    <div className="mt-0.5 text-[8px] opacity-70">
+                    <div className="mt-1 text-[9px] opacity-70">
                         Powered by <span className="font-semibold text-black">Bitgard PVT LTD</span> (+94 70 563 3969)
                     </div>
                 </div>
