@@ -12,7 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Plus, Printer, FileText } from 'lucide-react';
+import { Plus, Printer, FileText, Edit } from 'lucide-react';
 import { SearchInput } from '@/components/SearchInput';
 import { DeleteBillButton } from '@/components/DeleteBillButton';
 import { auth } from '@/lib/auth';
@@ -100,7 +100,13 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                                 </Link>
                             </Button>
                             {isAdmin && (
-                                <div className="flex-none">
+                                <div className="flex flex-none gap-2">
+                                    <Button variant="outline" size="sm" asChild className="px-3">
+                                        <Link href={`/bills/${bill.id}/edit`} title="Edit Bill">
+                                            <Edit className="h-4 w-4" />
+                                            <span className="sr-only">Edit</span>
+                                        </Link>
+                                    </Button>
                                     <DeleteBillButton billId={bill.id} billNumber={bill.billNumber} />
                                 </div>
                             )}
@@ -157,7 +163,17 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                                                 <span className="sr-only">Print</span>
                                             </Link>
                                         </Button>
-                                        {isAdmin && <DeleteBillButton billId={bill.id} billNumber={bill.billNumber} />}
+                                        {isAdmin && (
+                                            <>
+                                                <Button variant="ghost" size="sm" asChild>
+                                                    <Link href={`/bills/${bill.id}/edit`} title="Edit Bill">
+                                                        <Edit className="h-4 w-4" />
+                                                        <span className="sr-only">Edit</span>
+                                                    </Link>
+                                                </Button>
+                                                <DeleteBillButton billId={bill.id} billNumber={bill.billNumber} />
+                                            </>
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>

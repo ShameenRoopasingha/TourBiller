@@ -141,6 +141,128 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
 }
 
 /**
+ * Update an existing bill
+ */
+export async function updateBill(id: string, formData: FormData): Promise<ActionResult<string>> {
+  try {
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error };
+    }
+
+    // Extract and parse form data
+    const rawData = {
+      vehicleNo: formData.get('vehicleNo') as string,
+      customerName: formData.get('customerName') as string,
+      customerAddress: (formData.get('customerAddress') as string) || undefined,
+      route: formData.get('route') as string,
+      startMeter: parseFloat(formData.get('startMeter') as string),
+      endMeter: parseFloat(formData.get('endMeter') as string),
+      hireRate: parseFloat(formData.get('hireRate') as string),
+      waitingCharge: parseFloat(formData.get('waitingCharge') as string) || 0,
+      gatePass: parseFloat(formData.get('gatePass') as string) || 0,
+      packageCharge: parseFloat(formData.get('packageCharge') as string) || 0,
+      advanceAmount: parseFloat(formData.get('advanceAmount') as string) || 0,
+      allowedKm: parseFloat(formData.get('allowedKm') as string) || 0,
+      currency: (formData.get('currency') as string) || 'LKR',
+      exchangeRate: parseFloat(formData.get('exchangeRate') as string) || 1,
+      paymentMethod: (formData.get('paymentMethod') as string) || 'CASH',
+      startDate: formData.get('startDate') ? new Date(formData.get('startDate') as string) : undefined,
+      endDate: formData.get('endDate') ? new Date(formData.get('endDate') as string) : undefined,
+      extraHours: parseFloat(formData.get('extraHours') as string) || 0,
+      extraHourRate: parseFloat(formData.get('extraHourRate') as string) || 0,
+      extraKm: parseFloat(formData.get('extraKm') as string) || 0,
+      accommodationCharge: parseFloat(formData.get('accommodationCharge') as string) || 0,
+      mealsCharge: parseFloat(formData.get('mealsCharge') as string) || 0,
+      activitiesCharge: parseFloat(formData.get('activitiesCharge') as string) || 0,
+      otherCostsCharge: parseFloat(formData.get('otherCostsCharge') as string) || 0,
+      scheduledDays: parseFloat(formData.get('scheduledDays') as string) || 1,
+    };
+
+    // Validate the data
+    const validatedData = BillSchema.parse(rawData);
+
+    // Calculate days for bill (Inclusive Calendar Days)
+    let days = 1;
+    if (validatedData.startDate && validatedData.endDate) {
+      const start = new Date(validatedData.startDate);
+      const end = new Date(validatedData.endDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
+        // Normalize dates to midnight to count calendar days properly
+        const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        const diffMs = endDay.getTime() - startDay.getTime();
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        days = Math.max(1, diffDays + 1); // +1 because both start and end days count
+      }
+    }
+
+    // Calculate total amount
+    const totalAmount = calculateTotalAmount(
+      validatedData.startMeter,
+      validatedData.endMeter,
+      validatedData.hireRate,
+      validatedData.waitingCharge,
+      validatedData.gatePass,
+      validatedData.packageCharge,
+      validatedData.allowedKm,
+      validatedData.extraHours,
+      validatedData.extraHourRate,
+      days,
+      validatedData.extraKm,
+      validatedData.accommodationCharge,
+      validatedData.mealsCharge,
+      validatedData.activitiesCharge,
+      validatedData.otherCostsCharge
+    );
+
+    const itinerary = formData.get('itinerary') as string | null;
+
+    // Update the bill
+    const updatedBill = await prisma.bill.update({
+      where: { id },
+      data: {
+        ...validatedData,
+        totalAmount,
+        itinerary: itinerary || null,
+      },
+    });
+
+    // Update vehicle mileage
+    try {
+      await prisma.vehicle.update({
+        where: { vehicleNo: updatedBill.vehicleNo },
+        data: { currentMileage: updatedBill.endMeter },
+      });
+    } catch (vehicleError) {
+      console.warn('Could not update vehicle mileage:', vehicleError);
+    }
+
+    // Revalidate all affected pages
+    revalidateFor('bill', 'booking');
+
+    return {
+      success: true,
+      data: updatedBill.id,
+    };
+  } catch (error) {
+    console.error('Error updating bill:', error);
+
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: false,
+      error: 'An unexpected error occurred while updating the bill',
+    };
+  }
+}
+
+/**
  * Get all bills with optional search
  */
 export async function getBills(searchQuery?: string): Promise<ActionResult<Bill[]>> {

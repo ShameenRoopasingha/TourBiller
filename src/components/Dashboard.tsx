@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FileText, Printer, Plus, Activity, Banknote, Car } from 'lucide-react';
+import { FileText, Printer, Plus, Activity, Banknote, Car, Edit } from 'lucide-react';
 import { getDashboardStats } from '@/lib/dashboard-actions';
 import { formatCurrency } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,11 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
+import { auth } from '@/lib/auth';
+
 export async function Dashboard() {
+    const session = await auth();
+    const isAdmin = (session?.user as { role?: string })?.role === 'ADMIN';
     const result = await getDashboardStats();
 
     if (!result.success || !result.data) {
@@ -170,7 +174,15 @@ export async function Dashboard() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex justify-end pt-2 border-t border-dashed">
+                                            <div className="flex justify-end gap-2 pt-2 border-t border-dashed">
+                                                {isAdmin && (
+                                                    <Button variant="ghost" size="sm" asChild className="h-8">
+                                                        <Link href={`/bills/${bill.id}/edit`} title="Edit Bill">
+                                                            <Edit className="h-4 w-4" />
+                                                            <span className="sr-only">Edit</span>
+                                                        </Link>
+                                                    </Button>
+                                                )}
                                                 <Button variant="ghost" size="sm" asChild className="h-8">
                                                     <Link href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer">
                                                         <Printer className="h-4 w-4 mr-2" />
@@ -214,12 +226,22 @@ export async function Dashboard() {
                                                         {formatCurrency(bill.totalAmount)}
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        <Button variant="ghost" size="sm" asChild>
-                                                            <Link href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer">
-                                                                <Printer className="h-4 w-4" />
-                                                                <span className="sr-only">Print</span>
-                                                            </Link>
-                                                        </Button>
+                                                        <div className="flex justify-end gap-1">
+                                                            {isAdmin && (
+                                                                <Button variant="ghost" size="sm" asChild>
+                                                                    <Link href={`/bills/${bill.id}/edit`} title="Edit Bill">
+                                                                        <Edit className="h-4 w-4" />
+                                                                        <span className="sr-only">Edit</span>
+                                                                    </Link>
+                                                                </Button>
+                                                            )}
+                                                            <Button variant="ghost" size="sm" asChild>
+                                                                <Link href={`/bills/${bill.id}/print`} target="_blank" rel="noopener noreferrer" title="Print Bill">
+                                                                    <Printer className="h-4 w-4" />
+                                                                    <span className="sr-only">Print</span>
+                                                                </Link>
+                                                            </Button>
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}

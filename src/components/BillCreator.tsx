@@ -10,7 +10,7 @@ import { BillFormSchema, type BillFormInput, type Vehicle, type Customer } from 
 
 // For backward compatibility
 export type BillFormData = BillFormInput;
-import { createBill } from '@/lib/actions';
+import { createBill, updateBill } from '@/lib/actions';
 import { getBookingById } from '@/lib/booking-actions';
 import { formatCurrency } from '@/lib/calculations';
 
@@ -54,6 +54,7 @@ export function BillCreator({
     initialVehicleNo,
     initialCustomerName,
     initialBookingId,
+    initialData,
     vehicles: serverVehicles,
     customers: serverCustomers,
     schedules: serverSchedules,
@@ -61,6 +62,7 @@ export function BillCreator({
     initialVehicleNo?: string;
     initialCustomerName?: string;
     initialBookingId?: string;
+    initialData?: any;
     vehicles: Vehicle[];
     customers: Customer[];
     schedules: {
@@ -110,10 +112,35 @@ export function BillCreator({
     const form = useForm<BillFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(BillFormSchema) as any,
-        defaultValues: {
+        defaultValues: initialData ? {
+            vehicleNo: initialData.vehicleNo || '',
+            customerName: initialData.customerName || '',
+            customerAddress: initialData.customerAddress || '',
+            route: initialData.route || '',
+            startMeter: initialData.startMeter,
+            endMeter: initialData.endMeter,
+            hireRate: initialData.hireRate,
+            waitingCharge: initialData.waitingCharge || 0,
+            gatePass: initialData.gatePass || 0,
+            packageCharge: initialData.packageCharge || 0,
+            advanceAmount: initialData.advanceAmount || 0,
+            allowedKm: initialData.allowedKm || 0,
+            currency: initialData.currency || 'LKR',
+            exchangeRate: initialData.exchangeRate || 1,
+            paymentMethod: initialData.paymentMethod || 'CASH',
+            startDate: initialData.startDate ? new Date(initialData.startDate) : new Date(),
+            endDate: initialData.endDate ? new Date(initialData.endDate) : new Date(),
+            extraHours: initialData.extraHours || 0,
+            extraHourRate: initialData.extraHourRate || 0,
+            extraKm: initialData.extraKm || 0,
+            accommodationCharge: initialData.accommodationCharge || 0,
+            mealsCharge: initialData.mealsCharge || 0,
+            activitiesCharge: initialData.activitiesCharge || 0,
+            otherCostsCharge: initialData.otherCostsCharge || 0,
+            scheduledDays: initialData.scheduledDays || 1,
+        } : {
             vehicleNo: initialVehicleNo || '',
             customerName: initialCustomerName || '',
-
             customerAddress: '',
             route: '',
             startMeter: '' as unknown as number,
@@ -426,17 +453,24 @@ export function BillCreator({
             ));
         }
 
-        const result = await createBill(formData);
+        let result;
+        if (initialData?.id) {
+            result = await updateBill(initialData.id, formData);
+        } else {
+            result = await createBill(formData);
+        }
 
         if (result.success && result.data) {
             setSuccessId(result.data);
-            form.reset();
-            resetCalculations();
+            if (!initialData) {
+                form.reset();
+                resetCalculations();
+            }
 
             // Auto open print page
             router.push(`/bills/${result.data}/print`);
         } else {
-            setError(result.error || 'Failed to create bill');
+            setError(result.error || (initialData ? 'Failed to update bill' : 'Failed to create bill'));
         }
 
         setIsSubmitting(false);
@@ -1064,12 +1098,12 @@ export function BillCreator({
 
                                         <Button type="submit" className="w-full mt-6 h-12 text-lg font-semibold shadow-md" disabled={isSubmitting}>
                                             {isSubmitting ? (
-                                                <>
+                                                <span className="flex items-center">
                                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                                    Processing...
-                                                </>
+                                                    {initialData ? 'Updating...' : 'Creating...'}
+                                                </span>
                                             ) : (
-                                                <>Create Bill</>
+                                                initialData ? 'Update Bill' : 'Create Bill'
                                             )}
                                         </Button>
                                     </CardContent>
