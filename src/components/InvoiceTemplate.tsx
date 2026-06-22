@@ -84,60 +84,52 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 `}</style>
 
                 {/* Fixed physical 58mm width wrapper for Thermal Printers */}
-                <div className="w-[58mm] max-w-[58mm] print-thermal text-[10px] font-mono break-words bg-white border border-gray-200 print:border-none my-4 print:my-0 pb-10">
+                <div className="w-[58mm] max-w-[58mm] print-thermal text-[11px] font-sans break-words bg-white border border-gray-200 print:border-none my-4 print:my-0 pb-10">
                     {/* Header */}
-                    <div className="text-center border-b border-black border-dashed pb-2 mb-2 pt-2 flex flex-col items-center">
+                    <div className="text-center border-b-2 border-black border-dashed pb-3 mb-3 pt-2 flex flex-col items-center">
                         {businessProfile?.logoUrl && (
                             /* eslint-disable-next-line @next/next/no-img-element */
                             <img
                                 src={businessProfile.logoUrl}
                                 alt="Company Logo"
-                                className="h-12 w-12 rounded-lg object-cover mb-1 grayscale contrast-125"
+                                className="h-14 w-14 rounded-lg object-cover mb-2 grayscale contrast-125"
                             />
                         )}
-                        <div className="font-bold text-sm uppercase">{companyName}</div>
-                        <div className="text-[9px] leading-tight mt-1 whitespace-pre-wrap">{address}</div>
-                        <div className="text-[9px]">TEL: {phone}</div>
-                        <div className="font-bold mt-2 text-xs uppercase underline">CASH RECEIPT</div>
+                        <div className="font-black text-base uppercase tracking-wide">{companyName}</div>
+                        <div className="text-[10px] leading-tight mt-1 whitespace-pre-wrap font-medium">{address}</div>
+                        <div className="text-[10px] font-semibold mt-0.5">TEL: {phone}</div>
+                        <div className="font-bold mt-3 text-sm uppercase tracking-widest bg-black text-white px-3 py-1 rounded-sm">CASH RECEIPT</div>
                     </div>
 
                     {/* Meta Info */}
-                    <div className="px-1 text-[9px] mb-2 leading-snug">
-                        <div><span className="font-semibold">NO: </span>{bill.billNumber}</div>
-                        <div><span className="font-semibold">DATE: </span>{new Date(bill.createdAt).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
-                        <div><span className="font-semibold">CUSTOMER: </span>{bill.customerName}</div>
-                        <div><span className="font-semibold">VEHICLE: </span>{bill.vehicleNo}</div>
-                        <div><span className="font-semibold">ROUTE: </span>{bill.route}</div>
-                        <div className="mt-1 border-t border-dotted border-gray-400 pt-1">
-                            <div>Start: {new Date(bill.startDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
-                            <div>End:&nbsp;&nbsp; {new Date(bill.endDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
-                            <div className="font-semibold">Duration: {scheduledDays}d{bill.extraHours > 0 ? ` + ${bill.extraHours}h` : ''}</div>
+                    <div className="px-1 text-[11px] mb-3 leading-relaxed">
+                        <div className="flex justify-between border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">NO:</span> <span className="font-semibold">{bill.billNumber}</span></div>
+                        <div className="flex justify-between border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">DATE:</span> <span>{new Date(bill.createdAt).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
+                        <div className="flex flex-col border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">CUSTOMER:</span> <span className="font-semibold text-sm">{bill.customerName}</span></div>
+                        <div className="flex justify-between border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">VEHICLE:</span> <span className="font-semibold">{bill.vehicleNo}</span></div>
+                        <div className="flex flex-col border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">ROUTE:</span> <span className="font-semibold">{bill.route}</span></div>
+                        <div className="mt-2 border-t border-dashed border-gray-400 pt-2">
+                            <div className="flex justify-between"><span>Start:</span> <span className="font-medium">{new Date(bill.startDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
+                            <div className="flex justify-between"><span>End:</span> <span className="font-medium">{new Date(bill.endDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
+                            <div className="text-center font-bold bg-gray-100 py-1 mt-1 rounded-sm">Duration: {scheduledDays}d{bill.extraHours > 0 ? ` + ${bill.extraHours}h` : ''}</div>
                         </div>
                          {itineraryItems.length > 0 && (
-                             <div className="mt-1 border-t border-dotted border-gray-400 pt-1">
-                                 <div className="font-semibold mb-0.5">ITINERARY:</div>
+                             <div className="mt-2 border-t border-dashed border-gray-400 pt-2">
+                                 <div className="font-bold text-[10px] tracking-wider uppercase mb-1">Itinerary:</div>
                                  {itineraryItems.map((item) => (
-                                     <div key={item.dayNumber} className="leading-tight">
-                                         <span className="font-semibold">D{item.dayNumber}:</span> {item.title}
-                                         {item.distanceKm > 0 && <span className="text-[8px]"> ({item.distanceKm}km)</span>}
+                                     <div key={item.dayNumber} className="leading-snug mb-1 text-[10px]">
+                                         <span className="font-bold bg-gray-200 px-1 rounded mr-1">D{item.dayNumber}</span> {item.title}
+                                         {item.distanceKm > 0 && <span className="text-[9px] text-gray-600"> ({item.distanceKm}km)</span>}
                                      </div>
                                  ))}
                              </div>
                          )}
-
-                         {/* Route Information for thermal receipt (shown when no detailed itinerary) */}
-                         {false && bill.route && (
-                             <div className="mt-1 border-t border-dotted border-gray-400 pt-1">
-                                 <div className="font-semibold mb-0.5">DESTINATION:</div>
-                                 <div className="leading-tight">{bill.route}</div>
-                             </div>
-                         )}
                     </div>
 
-                    <div className="border-t border-black border-dashed my-1"></div>
+                    <div className="border-t-2 border-black border-dashed my-2"></div>
 
                     {/* Table-like Rows */}
-                    <div className="px-1 w-full text-[9px]">
+                    <div className="px-1 w-full text-[11px] font-medium space-y-1">
                         <div className="flex justify-between font-bold border-b border-black pb-0.5 mb-1">
                             <span>DESC</span>
                             <span>AMT</span>
@@ -212,30 +204,30 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                     <div className="border-t border-black border-dashed my-1"></div>
 
                     {/* Totals */}
-                    <div className="px-1 text-[10px]">
-                        <div className="flex justify-between items-center mb-0.5">
+                    <div className="px-1 text-[12px] font-semibold">
+                        <div className="flex justify-between items-center mb-1">
                             <span>TOTAL</span>
-                            <span>{fmt(bill.totalAmount)}</span>
+                            <span className="font-bold">{fmt(bill.totalAmount)}</span>
                         </div>
                         {bill.advanceAmount > 0 && (
-                            <div className="flex justify-between items-center text-[9px]">
+                            <div className="flex justify-between items-center text-[10px] text-gray-700">
                                 <span>ADVANCE</span>
                                 <span>-{fmt(bill.advanceAmount)}</span>
                             </div>
                         )}
-                        <div className="flex justify-between items-center font-bold text-sm border-y border-black py-1 my-1">
+                        <div className="flex justify-between items-center font-black text-[16px] border-y-2 border-black py-1.5 my-1.5">
                             <span>BALANCE</span>
                             <span>{fmt(Math.max(0, bill.totalAmount - (bill.advanceAmount || 0)))}</span>
                         </div>
                     </div>
 
                     {/* Footer */}
-                    <div className="text-center text-[8px] mt-4 pt-1 border-t border-black border-dashed">
-                        <div>Customer Signature:</div>
+                    <div className="text-center text-[10px] mt-6 pt-2 border-t-2 border-black border-dashed">
+                        <div className="font-medium text-gray-600">Customer Signature:</div>
                         <br /><br />
-                        <div>.......................</div>
-                        <div className="mt-3 font-semibold italic">Thank you!</div>
-                        <div className="mt-1 opacity-70">Powered By VIGIL</div>
+                        <div className="tracking-widest">.......................</div>
+                        <div className="mt-3 font-bold italic text-sm">Thank you!</div>
+                        <div className="mt-1 font-medium text-[9px] text-gray-500 tracking-wider">Powered By VIGIL</div>
                     </div>
                 </div>
 
