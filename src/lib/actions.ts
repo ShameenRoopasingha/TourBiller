@@ -223,10 +223,12 @@ export async function getBusinessProfile(): Promise<ActionResult<BusinessProfile
           companyName: 'My Transport Company',
         },
       });
-      return { success: true, data: newProfile };
+      // @ts-expect-error - Next.js needs plain objects without Date for Server-to-Client props
+      return { success: true, data: JSON.parse(JSON.stringify(newProfile)) };
     }
 
-    return { success: true, data: profile };
+    // @ts-expect-error - Next.js needs plain objects without Date for Server-to-Client props
+    return { success: true, data: JSON.parse(JSON.stringify(profile)) };
   } catch (error) {
     console.error('Error fetching business profile:', error);
     return { success: false, error: 'Failed to fetch business profile' };
@@ -276,7 +278,8 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
 
     revalidateFor('businessProfile');
 
-    return { success: true, data: profile };
+    // @ts-expect-error - Next.js needs plain objects without Date for Server-to-Client props
+    return { success: true, data: JSON.parse(JSON.stringify(profile)) };
   } catch (error) {
     console.error('Error updating business profile:', error);
     if (error instanceof Error) {
