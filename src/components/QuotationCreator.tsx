@@ -411,7 +411,6 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
 
             if (result.success) {
                 setSuccess(true);
-                router.refresh();
                 setTimeout(() => {
                     router.push(`/quotations/${result.data}`);
                 }, 2000);

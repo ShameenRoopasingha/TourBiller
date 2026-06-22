@@ -52,7 +52,6 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             setProfileSuccess('Profile updated successfully.');
             // Update session data
             await update({ name, email });
-            router.refresh();
         } else {
             setProfileError(result.error || 'Failed to update profile.');
         }

@@ -73,8 +73,6 @@ export function TourScheduleList({ schedules }: TourScheduleListProps) {
         const result = await deleteTourSchedule(id);
         if (!result.success) {
             alert(result.error || 'Failed to delete schedule');
-        } else {
-            router.refresh();
         }
         setDeleting(null);
     };

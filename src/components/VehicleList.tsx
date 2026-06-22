@@ -57,8 +57,6 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
         const result = await deleteVehicle(id);
         if (!result.success) {
             alert(result.error || 'Failed to delete vehicle');
-        } else {
-            router.refresh();
         }
     };
 

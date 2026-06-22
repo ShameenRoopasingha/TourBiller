@@ -92,7 +92,6 @@ export function QuotationList({ quotations }: QuotationListProps) {
             setDialogMessage({ title: 'Status Updated', description: `Quotation status updated to ${status}.`, type: 'success' });
         }
         setUpdating(null);
-        router.refresh();
     };
 
     const executeDelete = async (id: string) => {
@@ -104,7 +103,6 @@ export function QuotationList({ quotations }: QuotationListProps) {
             setDialogMessage({ title: 'Quotation Deleted', description: 'The quotation was deleted successfully.', type: 'success' });
         }
         setDeleting(null);
-        router.refresh();
     };
 
     const executeConvertToBooking = async (id: string) => {

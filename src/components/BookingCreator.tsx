@@ -122,7 +122,6 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
 
         if (result.success) {
             router.push('/bookings');
-            router.refresh();
         } else {
             setError(result.error || 'Failed to create booking');
         }
