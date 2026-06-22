@@ -123,9 +123,9 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
                                             <TableCell>{vehicle.model || '-'}</TableCell>
                                             <TableCell>{vehicle.category}</TableCell>
                                             <TableCell className="text-center">{vehicle.seats || '-'}</TableCell>
-                                            <TableCell className="text-right">{vehicle.ratePerDay ? `Rs. ${vehicle.ratePerDay.toLocaleString('en-US')}` : '-'}</TableCell>
-                                            <TableCell className="text-right">{vehicle.kmPerDay || '-'}</TableCell>
-                                            <TableCell className="text-right">{vehicle.excessKmRate ? `Rs. ${vehicle.excessKmRate.toLocaleString('en-US')}` : '-'}</TableCell>
+                                            <TableCell className="text-right">{vehicle.ratePerDay > 0 ? `Rs. ${vehicle.ratePerDay.toLocaleString('en-US')}` : <span className="text-xs text-muted-foreground">Per Km</span>}</TableCell>
+                                            <TableCell className="text-right">{vehicle.ratePerDay > 0 ? (vehicle.kmPerDay || '-') : '-'}</TableCell>
+                                            <TableCell className="text-right">{vehicle.excessKmRate ? `Rs. ${vehicle.excessKmRate.toLocaleString('en-US')}${vehicle.ratePerDay === 0 ? ' / km' : ''}` : '-'}</TableCell>
                                             <TableCell className="text-right">{vehicle.extraHourRate ? `Rs. ${vehicle.extraHourRate.toLocaleString('en-US')}` : '-'}</TableCell>
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-1">

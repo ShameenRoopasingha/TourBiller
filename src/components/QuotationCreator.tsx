@@ -370,9 +370,14 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
 
         const ratePerDay = Number(watchedHireRate) || 0;
         const kmAllowancePerDay = Number(watchedKmPerDay) || 0;
+        const excessKmRate = Number(watchedExcessKmRate) || 0;
         const days = selectedSchedule.days;
-        const transportCost = days * ratePerDay;
-        const includedKm = days * kmAllowancePerDay;
+        
+        // Dynamic transport cost: if package rate is 0, fall back to pure distance-based calculation
+        const isPerKmMode = ratePerDay === 0;
+        const transportCost = isPerKmMode ? (itemTotals.distance * excessKmRate) : (days * ratePerDay);
+        
+        const includedKm = isPerKmMode ? 0 : (days * kmAllowancePerDay);
         const driverTotal = days * (Number(watchedDriverCost) || 0);
         const subtotal = transportCost + driverTotal + itemTotals.accommodation + itemTotals.meals + itemTotals.activities + itemTotals.other;
         const markupAmount = subtotal * ((Number(watchedMarkup) || 0) / 100);
@@ -926,18 +931,26 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                             {/* Hire Summary Banner */}
                             {calculatedTotals.transportCost > 0 && (
                                 <div className="mb-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                                    <p className="font-semibold text-primary text-sm">
-                                        💰 Van Hire: {selectedSchedule?.days} days : {fmt(calculatedTotals.transportCost)} for {calculatedTotals.includedKm.toFixed(0)} km
-                                    </p>
-                                    {(Number(watchedExcessKmRate) || 0) > 0 && (
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            Any distance exceeding {calculatedTotals.includedKm.toFixed(0)} km will be charged at Rs. {watchedExcessKmRate} per additional km.
+                                    {(Number(watchedHireRate) || 0) === 0 ? (
+                                        <p className="font-semibold text-primary text-sm">
+                                            💰 Vehicle Hire: {calculatedTotals.totalDistance.toFixed(0)} km @ {fmt(Number(watchedExcessKmRate) || 0)}/km : {fmt(calculatedTotals.transportCost)}
                                         </p>
-                                    )}
-                                    {(Number(watchedExtraHourRate) || 0) > 0 && (
-                                        <p className="text-xs text-muted-foreground mt-0.5">
-                                            Extra hours will be charged at Rs. {watchedExtraHourRate} per hour.
-                                        </p>
+                                    ) : (
+                                        <>
+                                            <p className="font-semibold text-primary text-sm">
+                                                💰 Vehicle Hire: {selectedSchedule?.days} days : {fmt(calculatedTotals.transportCost)} for {calculatedTotals.includedKm.toFixed(0)} km
+                                            </p>
+                                            {(Number(watchedExcessKmRate) || 0) > 0 && (
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    Any distance exceeding {calculatedTotals.includedKm.toFixed(0)} km will be charged at Rs. {watchedExcessKmRate} per additional km.
+                                                </p>
+                                            )}
+                                            {(Number(watchedExtraHourRate) || 0) > 0 && (
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                    Extra hours will be charged at Rs. {watchedExtraHourRate} per hour.
+                                                </p>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             )}

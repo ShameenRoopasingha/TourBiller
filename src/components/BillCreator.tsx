@@ -176,6 +176,9 @@ export function BillCreator({
     const watchedExtraHourRate = Number(watchedFields.extraHourRate) || 0;
     const watchedWaitingCharge = Number(watchedFields.waitingCharge) || 0;
     const watchedGatePass = Number(watchedFields.gatePass) || 0;
+    
+    // Determine if the selected vehicle uses Flat Rate Per Km pricing
+    const isPerKmMode = vehicles.find(v => v.vehicleNo === watchedFields.vehicleNo)?.ratePerDay === 0;
 
     // Auto-fill customer address from pre-filled customer name
     useEffect(() => {
@@ -782,33 +785,37 @@ export function BillCreator({
                                     <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-4">
                                         <h3 className="font-semibold text-sm text-foreground">Rate Configuration</h3>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <FormField
-                                                control={form.control}
-                                                name="packageCharge"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Package Charge</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" step="0.01" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'packageCharge')} />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="allowedKm"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Included Km (Per Day)</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" step="1" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'allowedKm')} />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                        {form.getValues('allowedKm') > 0 && <p className="text-[10px] text-muted-foreground">Standard distance per day</p>}
-                                                    </FormItem>
-                                                )}
-                                            />
+                                            {!isPerKmMode && (
+                                                <>
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="packageCharge"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Package Charge</FormLabel>
+                                                                <FormControl>
+                                                                    <Input type="number" step="0.01" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'packageCharge')} />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="allowedKm"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Included Km (Per Day)</FormLabel>
+                                                                <FormControl>
+                                                                    <Input type="number" step="1" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'allowedKm')} />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                                {form.getValues('allowedKm') > 0 && <p className="text-[10px] text-muted-foreground">Standard distance per day</p>}
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </>
+                                            )}
                                             <FormField
                                                 control={form.control}
                                                 name="hireRate"
@@ -856,19 +863,19 @@ export function BillCreator({
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="extraKm"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Extra Km</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" step="0.1" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraKm')} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                            <FormField
+                                                control={form.control}
+                                                name="extraKm"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>{isPerKmMode ? 'Total Distance (Km)' : 'Extra Km'}</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" step="0.1" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraKm')} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
                                         <FormField
                                             control={form.control}
                                             name="extraHours"
@@ -1027,7 +1034,7 @@ export function BillCreator({
                                             {/* Taxi Mode Base Charge */}
                                             {watchedAllowedKm === 0 && watchedPackageCharge === 0 && (
                                                 <div className="flex justify-between text-sm">
-                                                    <span>Base Charge</span>
+                                                    <span>{isPerKmMode ? 'Km Charge' : 'Base Charge'}</span>
                                                     <span>{formattedBaseCharge}</span>
                                                 </div>
                                             )}

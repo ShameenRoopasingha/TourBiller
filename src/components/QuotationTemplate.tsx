@@ -307,19 +307,28 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                     <div>
                         <h3 className="text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-wide">Cost Summary</h3>
                         <div className="border border-gray-300 rounded p-3 text-sm">
-                            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
-                                <span className="text-gray-600">Van Hire ({quotation.tourSchedule.days} days × {fmt(quotation.hireRatePerDay)}/day for {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km)</span>
-                                <span className="text-right">{fmt(quotation.transportCost)}</span>
-                            </div>
-                            {finalExcessKmRate > 0 && (
-                                <div className="text-xs text-gray-400 italic py-0.5">
-                                    Any km exceeding {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km charged at {fmt(finalExcessKmRate)}/km
+                            {quotation.hireRatePerDay === 0 ? (
+                                <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
+                                    <span className="text-gray-600">Vehicle Hire ({quotation.totalDistance} km @ {fmt(finalExcessKmRate)}/km)</span>
+                                    <span className="text-right">{fmt(quotation.transportCost)}</span>
                                 </div>
-                            )}
-                            {finalExtraHourRate > 0 && (
-                                <div className="text-xs text-gray-400 italic py-0.5">
-                                    Extra hours charged at {fmt(finalExtraHourRate)}/hr
-                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
+                                        <span className="text-gray-600">Vehicle Hire ({quotation.tourSchedule.days} days × {fmt(quotation.hireRatePerDay)}/day for {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km)</span>
+                                        <span className="text-right">{fmt(quotation.transportCost)}</span>
+                                    </div>
+                                    {finalExcessKmRate > 0 && (
+                                        <div className="text-xs text-gray-400 italic py-0.5">
+                                            Any km exceeding {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km charged at {fmt(finalExcessKmRate)}/km
+                                        </div>
+                                    )}
+                                    {finalExtraHourRate > 0 && (
+                                        <div className="text-xs text-gray-400 italic py-0.5">
+                                            Extra hours charged at {fmt(finalExtraHourRate)}/hr
+                                        </div>
+                                    )}
+                                </>
                             )}
                             <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
                                 <span className="text-gray-600">Accommodation</span>

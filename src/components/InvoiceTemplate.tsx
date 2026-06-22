@@ -136,17 +136,19 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         </div>
 
                         {/* Expected Mileage */}
-                        <div className="flex justify-between items-start mb-0.5">
-                            <span className="w-[65%] leading-tight">Expected Mileage
-                                <br /><span className="text-[8px]">({bill.allowedKm}km/d × {scheduledDays}d = {expectedKm}km)</span>
-                            </span>
-                            <span className="w-[35%] text-right">{fmt(bill.packageCharge)}</span>
-                        </div>
+                        {(bill.allowedKm > 0 || bill.packageCharge > 0) ? (
+                            <div className="flex justify-between items-start mb-0.5">
+                                <span className="w-[65%] leading-tight">Expected Mileage
+                                    <br /><span className="text-[8px]">({bill.allowedKm}km/d × {scheduledDays}d = {expectedKm}km)</span>
+                                </span>
+                                <span className="w-[35%] text-right">{fmt(bill.packageCharge)}</span>
+                            </div>
+                        ) : null}
 
-                        {/* Extra Mileage Cost */}
+                        {/* Mileage Cost */}
                         {bill.extraKm > 0 && (
                             <div className="flex justify-between items-start mb-0.5">
-                                <span className="w-[65%] leading-tight">Extra Mileage Cost
+                                <span className="w-[65%] leading-tight">{(bill.allowedKm > 0 || bill.packageCharge > 0) ? 'Extra Mileage Cost' : 'Distance Charge'}
                                     <br /><span className="text-[8px]">({bill.extraKm}km × {fmt(bill.hireRate)}/km)</span>
                                 </span>
                                 <span className="w-[35%] text-right">{fmt(bill.extraKm * bill.hireRate)}</span>
@@ -380,21 +382,25 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                             </div>
 
                             {/* Expected Mileage (covered by package charge) */}
-                            <div className="col-span-8 flex justify-between pr-2">
-                                <span>Expected Mileage</span>
-                                <span className="text-xs text-gray-400">
-                                    ({bill.allowedKm}km/day × {scheduledDays} days = {expectedKm}km{scheduledDays > 1 ? ` | ${fmt(bill.packageCharge / scheduledDays)}/day` : ''})
-                                </span>
-                            </div>
-                            <div className="col-span-4 text-right font-medium">
-                                {fmt(bill.packageCharge)}
-                            </div>
+                            {(bill.allowedKm > 0 || bill.packageCharge > 0) ? (
+                                <>
+                                    <div className="col-span-8 flex justify-between pr-2">
+                                        <span>Expected Mileage</span>
+                                        <span className="text-xs text-gray-400">
+                                            ({bill.allowedKm}km/day × {scheduledDays} days = {expectedKm}km{scheduledDays > 1 ? ` | ${fmt(bill.packageCharge / scheduledDays)}/day` : ''})
+                                        </span>
+                                    </div>
+                                    <div className="col-span-4 text-right font-medium">
+                                        {fmt(bill.packageCharge)}
+                                    </div>
+                                </>
+                            ) : null}
 
-                            {/* Extra Mileage Cost */}
+                            {/* Mileage Cost */}
                             {(bill.extraKm || 0) > 0 && (
                                 <>
                                     <div className="col-span-8 flex justify-between pr-2">
-                                        <span>Extra Mileage Cost</span>
+                                        <span>{(bill.allowedKm > 0 || bill.packageCharge > 0) ? 'Extra Mileage Cost' : 'Distance Charge'}</span>
                                         <span className="text-xs text-gray-400">
                                             ({bill.extraKm}km × {fmt(bill.hireRate)}/km)
                                         </span>
