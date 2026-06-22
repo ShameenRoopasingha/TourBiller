@@ -375,11 +375,8 @@ export function BillCreator({
             form.setValue('extraKm', roundedExtraKm);
             form.setValue('scheduledDays', scheduledDays);
 
-            // Auto-update package charge if it makes sense (only if autoPackageCharge > 0)
-            if (autoPackageCharge > 0) {
-                form.setValue('packageCharge', autoPackageCharge);
-                updateField('packageCharge', autoPackageCharge);
-            }
+            // Auto-update package charge removed because it overwrites manual user input
+            // when filling out meter readings or other fields.
 
             updateField('extraKm', roundedExtraKm);
         }
