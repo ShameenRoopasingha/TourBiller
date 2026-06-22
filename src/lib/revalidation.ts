@@ -25,16 +25,7 @@ const REVALIDATION_MAP: Record<string, string[]> = {
  *   revalidateFor('bill', 'booking');     // After a bill creation that also closes a booking
  */
 export function revalidateFor(...entities: string[]) {
-    const paths = new Set<string>();
-    for (const entity of entities) {
-        const entityPaths = REVALIDATION_MAP[entity];
-        if (entityPaths) {
-            for (const p of entityPaths) {
-                paths.add(p);
-            }
-        }
-    }
-    for (const path of paths) {
-        revalidatePath(path);
-    }
+    // A single global layout revalidation is much faster on Vercel than looping through multiple specific paths.
+    // This instantly busts the entire app cache, ensuring all pages show the latest data immediately.
+    revalidatePath('/', 'layout');
 }

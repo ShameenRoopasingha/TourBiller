@@ -284,7 +284,6 @@ export function TourScheduleForm({
 
             if (result.success) {
                 setSuccess(true);
-                router.refresh();
                 if (onSuccess) {
                     onSuccess(result.data!);
                 } else {
