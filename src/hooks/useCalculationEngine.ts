@@ -66,17 +66,21 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
     ...initialValues,
   });
 
-  // Calculate days for calculations
+  // Calculate days for calculations (Inclusive Calendar Days)
   const days = useMemo(() => {
     if (!fields.startDate || !fields.endDate) return 1;
     const start = new Date(fields.startDate);
     const end = new Date(fields.endDate);
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return 1;
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 1;
     
-    const diffMs = end.getTime() - start.getTime();
-    const totalHours = diffMs / (1000 * 60 * 60);
-    // Standard practice: total hours / 24, at least 1 day
-    return Math.max(1, Math.ceil(totalHours / 24));
+    // Calculate based on calendar dates, ignoring time
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    
+    const diffMs = endDay.getTime() - startDay.getTime();
+    const calendarDays = Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    
+    return Math.max(1, calendarDays);
   }, [fields.startDate, fields.endDate]);
 
   // Calculate derived values

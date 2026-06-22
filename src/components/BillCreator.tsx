@@ -321,9 +321,9 @@ export function BillCreator({
             const diffMs = end.getTime() - start.getTime();
             const totalHours = diffMs / (1000 * 60 * 60);
 
-            // Use predefined tour days from selected schedule, or fall back to calculated days
+            // Use predefined tour days from selected schedule, or fall back to calendar days
             const selectedSchedule = schedules.find(s => s.name === routeValue);
-            const scheduledDays = selectedSchedule ? selectedSchedule.days : Math.max(1, Math.floor(totalHours / 24));
+            const scheduledDays = selectedSchedule ? selectedSchedule.days : days;
 
             // Extra hours = total hours beyond the scheduled tour days
             const extra = Math.max(0, totalHours - (scheduledDays * 24));
@@ -348,9 +348,7 @@ export function BillCreator({
             let autoPackageCharge = 0;
 
             if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
-                const diffMs = end.getTime() - start.getTime();
-                const totalHours = diffMs / (1000 * 60 * 60);
-                const actualDays = Math.max(1, Math.ceil(totalHours / 24));
+                const actualDays = days; // Using inclusive calendar days from engine
                 const selectedSchedule = schedules.find(s => s.name === routeValue);
                 if (selectedSchedule) {
                     // If they return early, only charge/allocate for the actual days driven.
@@ -375,8 +373,16 @@ export function BillCreator({
             form.setValue('extraKm', roundedExtraKm);
             form.setValue('scheduledDays', scheduledDays);
 
-            // Auto-update package charge removed because it overwrites manual user input
-            // when filling out meter readings or other fields.
+            // Smart Auto-update: Only overwrite package charge if it's currently 0
+            // OR if it currently equals the standard 1-day rate (meaning they haven't manually customized a total yet).
+            const currentPackageCharge = Number(form.getValues('packageCharge')) || 0;
+            const singleDayRate = schedules.find(s => s.name === routeValue)?.ratePerDay || 
+                                  vehicles.find(v => v.vehicleNo === form.getValues('vehicleNo'))?.ratePerDay || 0;
+
+            if (autoPackageCharge > 0 && (currentPackageCharge === 0 || currentPackageCharge === singleDayRate)) {
+                form.setValue('packageCharge', autoPackageCharge);
+                updateField('packageCharge', autoPackageCharge);
+            }
 
             updateField('extraKm', roundedExtraKm);
         }
