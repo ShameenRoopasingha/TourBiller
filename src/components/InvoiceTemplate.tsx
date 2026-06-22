@@ -316,7 +316,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 {bill.customerAddress && (
                                     <>
                                         <span className="font-medium text-gray-500 self-start">Address:</span>
-                                        <span className="text-xs text-gray-700 leading-snug break-words">{bill.customerAddress}</span>
+                                        <span className="text-xs text-gray-900 font-medium leading-snug break-words">{bill.customerAddress}</span>
                                     </>
                                 )}
 
@@ -386,7 +386,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <>
                                     <div className="col-span-8 flex justify-between pr-2">
                                         <span>Expected Mileage</span>
-                                        <span className="text-xs text-gray-400">
+                                        <span className="text-xs text-gray-600 font-medium">
                                             ({bill.allowedKm}km/day × {scheduledDays} days = {expectedKm}km{scheduledDays > 1 ? ` | ${fmt(bill.packageCharge / scheduledDays)}/day` : ''})
                                         </span>
                                     </div>
@@ -401,7 +401,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <>
                                     <div className="col-span-8 flex justify-between pr-2">
                                         <span>{(bill.allowedKm > 0 || bill.packageCharge > 0) ? 'Extra Mileage Cost' : 'Distance Charge'}</span>
-                                        <span className="text-xs text-gray-400">
+                                        <span className="text-xs text-gray-600 font-medium">
                                             ({bill.extraKm}km × {fmt(bill.hireRate)}/km)
                                         </span>
                                     </div>
@@ -414,7 +414,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <>
                                     <div className="col-span-8 flex justify-between pr-2">
                                         <span>Extra Hours</span>
-                                        <span className="text-xs text-gray-400">
+                                        <span className="text-xs text-gray-600 font-medium">
                                             ({bill.extraHours} hrs @ {fmt(bill.extraHourRate)})
                                         </span>
                                     </div>
