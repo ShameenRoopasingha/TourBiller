@@ -31,6 +31,9 @@ interface VehicleFormProps {
 export function VehicleForm({ vehicle }: VehicleFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [rateMode, setRateMode] = useState<'PER_DAY' | 'PER_KM'>(
+        vehicle?.ratePerDay === 0 && vehicle?.kmPerDay === 0 && (vehicle?.excessKmRate || 0) > 0 ? 'PER_KM' : 'PER_DAY'
+    );
     const router = useRouter();
     const handleEnterKey = useEnterNavigation();
 
@@ -65,7 +68,15 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
         setError(null);
 
         const formData = new FormData();
-        Object.entries(data).forEach(([key, value]) => {
+        const submissionData = { ...data };
+        
+        if (rateMode === 'PER_KM') {
+            submissionData.ratePerDay = 0;
+            submissionData.kmPerDay = 0;
+            // The excessKmRate is used as the rate per km
+        }
+        
+        Object.entries(submissionData).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 formData.append(key, (value as any) instanceof Date ? (value as any).toISOString() : String(value));
@@ -129,35 +140,66 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                            control={form.control}
-                            name="ratePerDay"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Vehicle Rate Per Day (Rs.)</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" step="0.01" placeholder="e.g. 17000" {...field} value={field.value ?? ""} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="kmPerDay"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Included Km Per Day</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" step="0.01" placeholder="e.g. 100" {...field} value={field.value ?? ""} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                    {/* Rate Mode Toggle */}
+                    <div className="flex flex-col gap-2 mb-2 mt-4">
+                        <FormLabel>Pricing Mode</FormLabel>
+                        <div className="flex gap-6 p-3 bg-muted/30 rounded-lg border">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    name="rateMode" 
+                                    value="PER_DAY" 
+                                    checked={rateMode === 'PER_DAY'} 
+                                    onChange={() => setRateMode('PER_DAY')}
+                                    className="w-4 h-4 text-primary accent-primary"
+                                />
+                                <span className="text-sm font-medium">Rate Per Day (Package)</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    name="rateMode" 
+                                    value="PER_KM" 
+                                    checked={rateMode === 'PER_KM'} 
+                                    onChange={() => setRateMode('PER_KM')}
+                                    className="w-4 h-4 text-primary accent-primary"
+                                />
+                                <span className="text-sm font-medium">Flat Rate Per Km</span>
+                            </label>
+                        </div>
                     </div>
+
+                    {rateMode === 'PER_DAY' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="ratePerDay"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Vehicle Rate Per Day (Rs.)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.01" placeholder="e.g. 17000" {...field} value={field.value ?? ""} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="kmPerDay"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Included Km Per Day</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.01" placeholder="e.g. 100" {...field} value={field.value ?? ""} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
@@ -165,7 +207,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                             name="excessKmRate"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Extra Km Charge (Rs.)</FormLabel>
+                                    <FormLabel>{rateMode === 'PER_DAY' ? 'Extra Km Charge (Rs.)' : 'Rate Per Km (Rs.)'}</FormLabel>
                                     <FormControl>
                                         <Input type="number" step="0.01" placeholder="e.g. 120" {...field} value={field.value ?? ""} />
                                     </FormControl>
