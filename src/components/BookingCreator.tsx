@@ -16,7 +16,7 @@ import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { DateTimePicker } from '@/components/ui/datetime-picker';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Loader2, CalendarPlus } from 'lucide-react';
 import {
     Form,
@@ -242,9 +242,9 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                     name="startDate"
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
-                                            <FormLabel>Start Date & Time</FormLabel>
+                                            <FormLabel>Start Date</FormLabel>
                                             <FormControl>
-                                                <DateTimePicker
+                                                <DatePicker
                                                     date={field.value || undefined}
                                                     setDate={(date) => field.onChange(date)}
                                                 />
@@ -259,9 +259,9 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                     name="endDate"
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
-                                            <FormLabel>End Date & Time (Optional)</FormLabel>
+                                            <FormLabel>End Date (Optional)</FormLabel>
                                             <FormControl>
-                                                <DateTimePicker
+                                                <DatePicker
                                                     date={field.value || undefined}
                                                     setDate={(date) => field.onChange(date)}
                                                 />

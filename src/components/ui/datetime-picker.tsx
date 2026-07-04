@@ -99,6 +99,7 @@ export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
                                 {timeSlots.map((time) => (
                                     <Button
                                         key={time}
+                                        type="button"
                                         variant={currentTime === time ? "default" : "ghost"}
                                         size="sm"
                                         className="justify-start font-normal"
