@@ -43,7 +43,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { DatePicker } from '@/components/ui/date-picker';
+import { DateTimePicker } from '@/components/ui/datetime-picker';
 
 import { useRouter } from 'next/navigation';
 
@@ -746,7 +746,7 @@ export function BillCreator({
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Start Date</FormLabel>
-                                                    <DatePicker
+                                                    <DateTimePicker
                                                         date={field.value ? new Date(field.value) : undefined}
                                                         setDate={(date) => field.onChange(date)}
                                                     />
@@ -760,7 +760,7 @@ export function BillCreator({
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>End Date</FormLabel>
-                                                    <DatePicker
+                                                    <DateTimePicker
                                                         date={field.value ? new Date(field.value) : undefined}
                                                         setDate={(date) => field.onChange(date)}
                                                     />
