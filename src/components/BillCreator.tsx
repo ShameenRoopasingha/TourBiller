@@ -62,7 +62,8 @@ export function BillCreator({
     initialVehicleNo?: string;
     initialCustomerName?: string;
     initialBookingId?: string;
-    initialData?: Partial<BillFormData> & { id?: string };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initialData?: Record<string, any>;
     vehicles: Vehicle[];
     customers: Customer[];
     schedules: {
