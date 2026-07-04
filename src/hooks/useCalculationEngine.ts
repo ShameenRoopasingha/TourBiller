@@ -134,10 +134,19 @@ export function useCalculationEngine(initialValues?: Partial<CalculationFields>)
   const updateField = useCallback((field: string, value: number | Date | undefined) => {
     // Check if the field is a valid calculation field using the static initial object
     if (Object.prototype.hasOwnProperty.call(initialFields, field)) {
-      setFields(prev => ({
-        ...prev,
-        [field]: field.toLowerCase().includes('date') ? value : Math.max(0, typeof value === 'number' ? value : 0),
-      }));
+      setFields(prev => {
+        const nextValue = field.toLowerCase().includes('date') ? value : Math.max(0, typeof value === 'number' ? value : 0);
+        
+        // Prevent state update if value is unchanged to avoid infinite loops
+        const prevValue = prev[field as keyof CalculationFields];
+        if (prevValue === nextValue) return prev;
+        if (prevValue instanceof Date && nextValue instanceof Date && prevValue.getTime() === nextValue.getTime()) return prev;
+
+        return {
+          ...prev,
+          [field]: nextValue,
+        };
+      });
     }
   }, []);
 
