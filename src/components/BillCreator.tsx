@@ -62,7 +62,7 @@ export function BillCreator({
     initialVehicleNo?: string;
     initialCustomerName?: string;
     initialBookingId?: string;
-    initialData?: any;
+    initialData?: Partial<BillFormData> & { id?: string };
     vehicles: Vehicle[];
     customers: Customer[];
     schedules: {
@@ -363,7 +363,7 @@ export function BillCreator({
             form.setValue('extraHours', roundedExtra);
             updateField('extraHours', roundedExtra);
         }
-    }, [startDateValue, endDateValue, routeValue, form, updateField, schedules]);
+    }, [startDateValue, endDateValue, routeValue, form, updateField, schedules, days]);
 
     // Automatically calculate extra km based on meters and allowance
     // Uses scheduled days (matching extra hours) to be consistent

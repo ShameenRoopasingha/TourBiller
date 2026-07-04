@@ -8,8 +8,6 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Loader2, Save, KeyRound } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-
 interface ProfileFormProps {
     user: {
         id: string;
@@ -21,7 +19,6 @@ interface ProfileFormProps {
 
 export default function ProfileForm({ user }: ProfileFormProps) {
     const { update } = useSession();
-    const router = useRouter();
 
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);

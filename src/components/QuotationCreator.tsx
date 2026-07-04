@@ -396,7 +396,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             markupAmount,
             totalAmount,
         };
-    }, [selectedSchedule, watchedHireRate, watchedKmPerDay, watchedMarkup, watchedDiscount, watchedDriverCost]);
+    }, [selectedSchedule, watchedHireRate, watchedKmPerDay, watchedMarkup, watchedDiscount, watchedDriverCost, watchedExcessKmRate]);
 
     const onSubmit = async (data: QuotationFormData) => {
         setIsSubmitting(true);
