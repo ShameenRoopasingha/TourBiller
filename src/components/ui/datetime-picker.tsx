@@ -22,9 +22,16 @@ interface DateTimePickerProps {
 export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
     const [isOpen, setIsOpen] = React.useState(false);
 
+    // Safe date parsing
+    const parsedDate = React.useMemo(() => {
+        if (!date) return undefined;
+        const d = new Date(date);
+        return isNaN(d.getTime()) ? undefined : d;
+    }, [date]);
+
     // Initial time check
-    const currentTime = date
-        ? `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
+    const currentTime = parsedDate
+        ? `${parsedDate.getHours().toString().padStart(2, "0")}:${parsedDate.getMinutes().toString().padStart(2, "0")}`
         : "00:00";
 
     const handleDateSelect = (selectedDate: Date | undefined) => {
@@ -34,11 +41,9 @@ export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
         }
 
         const newDate = new Date(selectedDate);
-        // Preserve time if already set, or default to 00:00 (or current time if not set)
-        if (date) {
-            newDate.setHours(date.getHours(), date.getMinutes());
+        if (parsedDate) {
+            newDate.setHours(parsedDate.getHours(), parsedDate.getMinutes());
         } else {
-            // Default to current time for usability
             const now = new Date();
             newDate.setHours(now.getHours(), now.getMinutes());
         }
@@ -46,17 +51,13 @@ export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
     };
 
     const handleTimeChange = (time: string) => {
-        if (!date) return;
+        if (!parsedDate) return;
         const [hours, minutes] = time.split(":").map(Number);
-        const newDate = new Date(date);
+        const newDate = new Date(parsedDate);
         newDate.setHours(hours, minutes);
         setDate(newDate);
     };
 
-    // Generate time slots (every 30 mins for example, or simply a scrollable list of hours/mins?
-    // Screenshot showed hours/mins separate sidebars. Let's do a simple scrollable list of times for now, simpler to implement reliably).
-    // Actually, screenshot showed separate columns for Date | Hours | Minutes.
-    // Let's implement a nice scrollable list of common times.
     const timeSlots = [];
     for (let i = 0; i < 24; i++) {
         for (let j = 0; j < 60; j += 15) { // 15 min increments
@@ -69,14 +70,15 @@ export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
         <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
                 <Button
+                    type="button"
                     variant={"outline"}
                     className={cn(
                         "w-full justify-start text-left font-normal",
-                        !date && "text-muted-foreground"
+                        !parsedDate && "text-muted-foreground"
                     )}
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "dd/MM/yyyy HH:mm") : <span>Pick a date & time</span>}
+                    {parsedDate ? format(parsedDate, "dd/MM/yyyy HH:mm") : <span>Pick a date & time</span>}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -84,7 +86,7 @@ export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
                     <div className="border-r">
                         <Calendar
                             mode="single"
-                            selected={date}
+                            selected={parsedDate}
                             onSelect={handleDateSelect}
                             initialFocus
                         />
@@ -104,7 +106,7 @@ export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
                                         size="sm"
                                         className="justify-start font-normal"
                                         onClick={() => handleTimeChange(time)}
-                                        disabled={!date}
+                                        disabled={!parsedDate}
                                     >
                                         {time}
                                     </Button>
