@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['bcrypt'],
   // reactCompiler: true, // Temporarily disabled to fix React DevTools crash
   
   // Security headers to protect against common web vulnerabilities
