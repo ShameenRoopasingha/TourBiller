@@ -2,7 +2,7 @@
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { type ActionResult } from '@/lib/validations';
 
 /**

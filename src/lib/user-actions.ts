@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { type ActionResult, type DriverAvailabilityConflict } from '@/lib/validations';
 import { revalidatePath } from 'next/cache';
 

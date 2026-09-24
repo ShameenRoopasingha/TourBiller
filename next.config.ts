@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  reactCompiler: true,
+  // reactCompiler: true, // Temporarily disabled to fix React DevTools crash
   
   // Security headers to protect against common web vulnerabilities
   async headers() {
@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+export default process.env.NODE_ENV === "development" ? nextConfig : withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 

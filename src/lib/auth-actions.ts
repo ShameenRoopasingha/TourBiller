@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { type ActionResult } from '@/lib/validations';
 import crypto from 'crypto';
 import { rateLimit } from '@/lib/rate-limit';
