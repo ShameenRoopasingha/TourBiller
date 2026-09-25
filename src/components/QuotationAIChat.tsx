@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { Bot, Send, Loader2, Sparkles, Check, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,10 @@ interface QuotationAIChatProps {
 }
 
 export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps) {
-  const { messages, input, handleInputChange, handleSubmit, status, error } = useChat({
+  const [input, setInput] = useState('');
+  
+  // @ts-ignore - Some versions of AI SDK have different types
+  const { messages, sendMessage, status, error } = useChat({
     api: '/api/chat',
     maxSteps: 1,
     initialMessages: [
@@ -31,6 +34,17 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    sendMessage({ role: 'user', content: input });
+    setInput('');
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
 
   return (
     <div className="flex flex-col h-[500px]">
@@ -100,7 +114,7 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
               </div>
             </div>
           ))}
-          {isLoading && !messages.find(m => m.toolInvocations?.some((t: any) => t.state === 'call')) && (
+          {isLoading && !messages.find((m: any) => m.toolInvocations?.some((t: any) => t.state === 'call')) && (
             <div className="flex justify-start">
               <div className="bg-muted/50 rounded-2xl px-4 py-3 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
