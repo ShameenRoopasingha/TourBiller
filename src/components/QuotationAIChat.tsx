@@ -73,8 +73,14 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
                   if (part.type === 'tool-generateDraftQuotation') {
                     const isDone = part.state === 'output-available' || part.state === 'result';
                     
-                    if (isDone && part.output && part.output.draft) {
-                      const draft = part.output.draft;
+                    let draft = null;
+                    if (part.args) {
+                      draft = part.args;
+                    } else if (part.output && part.output.draft) {
+                      draft = part.output.draft;
+                    }
+                    
+                    if (draft && Object.keys(draft).length > 0) {
                       return (
                         <Card key={index} className="mt-3 border-primary/20 bg-primary/5">
                           <CardContent className="p-4">
@@ -89,6 +95,9 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
                               {draft.numberOfPersons && <div><span className="text-muted-foreground">Persons:</span> <span className="font-medium">{draft.numberOfPersons}</span></div>}
                               {draft.destination && <div><span className="text-muted-foreground">Dest:</span> <span className="font-medium">{draft.destination}</span></div>}
                             </div>
+                            <pre className="text-[10px] overflow-auto mb-4 bg-muted p-2 rounded">
+                              {JSON.stringify(draft, null, 2)}
+                            </pre>
                             <Button 
                               size="sm" 
                               className="w-full"
