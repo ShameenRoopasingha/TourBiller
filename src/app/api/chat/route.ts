@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    console.log('API RECEIVED BODY:', typeof body, JSON.stringify(body).slice(0, 200));
+    console.log('API RECEIVED BODY:', typeof body, JSON.stringify(body));
     
     const messages = Array.isArray(body) ? body : body.messages;
 

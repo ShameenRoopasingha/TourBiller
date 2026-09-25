@@ -14,7 +14,6 @@ export default function ChatAssistant() {
   const { messages, sendMessage, status, error } = useChat({
     api: '/api/chat',
     maxSteps: 5,
-    sendAutomaticallyWhen: () => true,
   });
   const isLoading = status === 'in_progress';
   
