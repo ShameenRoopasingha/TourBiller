@@ -95,9 +95,6 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
                               {draft?.numberOfPersons && <div><span className="text-muted-foreground">Persons:</span> <span className="font-medium">{draft.numberOfPersons}</span></div>}
                               {draft?.destination && <div><span className="text-muted-foreground">Dest:</span> <span className="font-medium">{draft.destination}</span></div>}
                             </div>
-                            <pre className="text-[10px] overflow-auto mb-4 bg-muted p-2 rounded max-h-32">
-                              {JSON.stringify(part, null, 2)}
-                            </pre>
                             <Button 
                               size="sm" 
                               className="w-full"
@@ -122,9 +119,6 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
                            <Loader2 className="w-3 h-3 animate-spin" />
                            Generating draft...
                         </div>
-                        <pre className="text-[10px] overflow-auto mb-4 bg-muted p-2 rounded max-h-32">
-                           {JSON.stringify(part, null, 2)}
-                        </pre>
                       </div>
                     );
                   }
