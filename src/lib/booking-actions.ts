@@ -13,7 +13,7 @@ import { checkVehicleAvailability } from '@/lib/vehicle-actions';
  */
 export async function createBooking(formData: FormData): Promise<ActionResult<string>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -53,7 +53,7 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
         }
 
         const booking = await prisma.booking.create({
-            data: { companyId: ((await auth())?.user as any)?.companyId as string, ...validatedData },
+            data: { companyId: authCheck.companyId!, ...validatedData },
         });
 
         revalidateFor('booking');
@@ -76,14 +76,22 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
  */
 export async function getBookings(searchQuery?: string): Promise<ActionResult<Booking[]>> {
     try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const bookings = await prisma.booking.findMany({
-            where: searchQuery ? {
-                OR: [
-                    { vehicleNo: { contains: searchQuery, mode: 'insensitive' } },
-                    { customerName: { contains: searchQuery, mode: 'insensitive' } },
-                    { destination: { contains: searchQuery, mode: 'insensitive' } },
-                ],
-            } : { companyId: ((await auth())?.user as any)?.companyId as string },
+            where: {
+                companyId: authCheck.companyId,
+                ...(searchQuery ? {
+                    OR: [
+                        { vehicleNo: { contains: searchQuery, mode: 'insensitive' } },
+                        { customerName: { contains: searchQuery, mode: 'insensitive' } },
+                        { destination: { contains: searchQuery, mode: 'insensitive' } },
+                    ],
+                } : {}),
+            },
             orderBy: { createdAt: 'desc' },
         });
 
@@ -105,8 +113,8 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
         }
 
         // 1. Fetch booking to check date
-        const booking = await prisma.booking.findUnique({
-            where: { id },
+        const booking = await prisma.booking.findFirst({
+            where: { id, companyId: authCheck.companyId },
         });
 
         if (!booking) {
@@ -126,13 +134,14 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
         }
 
         // 3. Update Booking
-        await prisma.booking.update({
-            where: { id },
+        const _res = await prisma.booking.updateMany({
+            where: { id, companyId: authCheck.companyId },
             data: {
                 status: 'CANCELLED',
                 refundStatus: refundStatus,
             },
         });
+        if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
         revalidateFor('booking');
 
@@ -148,8 +157,13 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
  */
 export async function getBookingById(id: string): Promise<ActionResult<Booking>> {
     try {
-        const booking = await prisma.booking.findUnique({
-            where: { id },
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const booking = await prisma.booking.findFirst({
+            where: { id, companyId: authCheck.companyId },
         });
 
         if (!booking) {

@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { requireAuth, requireAdmin } from '@/lib/auth-guard';
 import bcrypt from 'bcrypt';
 import { type ActionResult, type DriverAvailabilityConflict } from '@/lib/validations';
 import { revalidatePath } from 'next/cache';
@@ -18,6 +18,12 @@ export async function checkDriverAvailability(
     currentType?: 'Booking' | 'Quotation'
 ): Promise<ActionResult<{ available: boolean; conflicts: DriverAvailabilityConflict[] }>> {
     try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+        const { companyId } = authCheck;
+
         const start = new Date(startDate);
         const end = new Date(endDate);
 
@@ -29,6 +35,7 @@ export async function checkDriverAvailability(
         const bookingConflicts = await prisma.booking.findMany({
             where: {
                 driverId,
+                companyId,
                 status: 'CONFIRMED',
                 id: (currentType === 'Booking' && currentId) ? { not: currentId } : undefined,
                 OR: [
@@ -55,6 +62,7 @@ export async function checkDriverAvailability(
         const quotationConflicts = await prisma.quotation.findMany({
             where: {
                 driverId,
+                companyId,
                 status: 'ACCEPTED',
                 id: (currentType === 'Quotation' && currentId) ? { not: currentId } : undefined,
                 OR: [
@@ -118,10 +126,14 @@ type UserData = {
  */
 export async function getUsers(): Promise<ActionResult<UserData[]>> {
     try {
-        let session = await auth();
-    const companyId = (session?.user as any)?.companyId;
-    const users = await prisma.user.findMany({
-        where: { companyId },
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+        const { companyId } = authCheck;
+
+        const users = await prisma.user.findMany({
+            where: { companyId },
             select: {
                 id: true,
                 name: true,
@@ -145,13 +157,11 @@ export async function getUsers(): Promise<ActionResult<UserData[]>> {
 export async function createUser(formData: FormData): Promise<ActionResult<string>> {
     try {
         // Authorization: Only admins can create users
-        let session = await auth();
-        const callerUser = session?.user?.email
-            ? await prisma.user.findUnique({ where: { email: session.user.email } })
-            : null;
-        if (!callerUser || callerUser.role !== 'ADMIN') {
-            return { success: false, error: 'Unauthorized: Only admins can create users.' };
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
         }
+        const { companyId } = authCheck;
 
         const name = formData.get('name') as string;
         const email = formData.get('email') as string;
@@ -167,14 +177,13 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
         }
 
         // Check if email already exists
-        const existing = await prisma.user.findUnique({ where: { email } });
+        const existing = await prisma.user.findFirst({ where: { email, companyId } });
         if (existing) {
             return { success: false, error: 'A user with this email already exists' };
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const companyId = (session?.user as any)?.companyId;
         const user = await prisma.user.create({
             data: {
                 companyId,
@@ -198,28 +207,23 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
  */
 export async function deleteUser(id: string): Promise<ActionResult<void>> {
     try {
-        let session = await auth();
-        // The basic JWT auth user payload only includes id, name, email, image.
-        // We need to fetch the full user to check their role.
-        const dbUser = session?.user?.email 
-            ? await prisma.user.findUnique({ where: { email: session.user.email } })
-            : null;
-
-        if (!dbUser || dbUser.role !== 'ADMIN') {
-            return { success: false, error: 'Unauthorized: Only admins can delete users.' };
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
         }
+        const { companyId, userId } = authCheck;
 
         // Prevent self-deletion
-        if (dbUser.id === id) {
+        if (userId === id) {
             return { success: false, error: 'You cannot delete your own account.' };
         }
 
         // Check for related records that would prevent deletion
         const [bookingCount, quotationCount, expenseCount, activityCount] = await Promise.all([
-            prisma.booking.count({ where: { driverId: id } }),
-            prisma.quotation.count({ where: { driverId: id } }),
-            prisma.vehicleExpense.count({ where: { driverId: id } }),
-            prisma.tripActivity.count({ where: { driverId: id } }),
+            prisma.booking.count({ where: { driverId: id, companyId } }),
+            prisma.quotation.count({ where: { driverId: id, companyId } }),
+            prisma.vehicleExpense.count({ where: { driverId: id, companyId } }),
+            prisma.tripActivity.count({ where: { driverId: id, companyId } }),
         ]);
 
         const relatedItems: string[] = [];
@@ -235,7 +239,8 @@ export async function deleteUser(id: string): Promise<ActionResult<void>> {
             };
         }
 
-        await prisma.user.delete({ where: { id } });
+        const _res = await prisma.user.deleteMany({ where: { id, companyId } });
+        if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
         revalidatePath('/users');
         return { success: true };
     } catch (error) {
@@ -254,8 +259,14 @@ export type DriverOption = { id: string; name: string; email: string };
  */
 export async function getDrivers(): Promise<ActionResult<DriverOption[]>> {
     try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+        const { companyId } = authCheck;
+
         const drivers = await prisma.user.findMany({
-            where: { role: 'DRIVER' },
+            where: { role: 'DRIVER', companyId },
             select: { id: true, name: true, email: true },
             orderBy: { name: 'asc' },
         });

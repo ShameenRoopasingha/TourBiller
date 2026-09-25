@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -34,6 +34,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
 
             const activeBooking = await prisma.booking.findFirst({
                 where: {
+                    companyId: authCheck.companyId,
                     driverId: authCheck.userId,
                     vehicleNo: validatedData.vehicleNo,
                     status: 'CONFIRMED',
@@ -55,7 +56,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
 
         // Create the expense first (critical operation)
         const created = await prisma.vehicleExpense.create({
-            data: { companyId: ((await auth())?.user as any)?.companyId as string,
+            data: { companyId: authCheck.companyId,
                 vehicleNo: validatedData.vehicleNo,
                 amount: validatedData.amount,
                 category: validatedData.category,
@@ -68,7 +69,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
 
         // Update vehicle last service mileage if applicable (non-critical)
         try {
-            const vehicle = await prisma.vehicle.findUnique({ where: { companyId_vehicleNo: { companyId: ((await auth())?.user as any)?.companyId as string, vehicleNo: validatedData.vehicleNo } } });
+            const vehicle = await prisma.vehicle.findUnique({ where: { companyId_vehicleNo: { companyId: authCheck.companyId, vehicleNo: validatedData.vehicleNo } } });
             const mileage = vehicle?.currentMileage;
 
             if (mileage !== undefined && mileage !== null) {
@@ -83,7 +84,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
 
                 if (Object.keys(updateData).length > 0) {
                     await prisma.vehicle.update({
-                        where: { companyId_vehicleNo: { companyId: ((await auth())?.user as any)?.companyId as string, vehicleNo: validatedData.vehicleNo } },
+                        where: { companyId_vehicleNo: { companyId: authCheck.companyId, vehicleNo: validatedData.vehicleNo } },
                         data: updateData,
                     });
                 }
@@ -105,10 +106,16 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
  */
 export async function getVehicleExpenses(vehicleNo?: string): Promise<ActionResult<VehicleExpense[]>> {
     try {
-        let session = await auth();
-    const companyId = (session?.user as any)?.companyId;
-    const expenses = await prisma.vehicleExpense.findMany({
-            where: vehicleNo ? { vehicleNo } : undefined,
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const expenses = await prisma.vehicleExpense.findMany({
+            where: {
+                companyId: authCheck.companyId,
+                ...(vehicleNo ? { vehicleNo } : {})
+            },
             orderBy: { date: 'desc' },
         });
 
@@ -130,9 +137,10 @@ export async function deleteVehicleExpense(id: string): Promise<ActionResult<boo
             return { success: false, error: authCheck.error };
         }
 
-        await prisma.vehicleExpense.delete({
-            where: { id },
+        const _res = await prisma.vehicleExpense.deleteMany({
+            where: { id, companyId: authCheck.companyId },
         });
+        if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
         revalidateFor('vehicle-expenses');
         return { success: true, data: true };

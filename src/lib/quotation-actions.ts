@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -53,8 +53,8 @@ export async function generateQuotation(
         const validated = QuotationSchema.parse(rawData);
 
         // Fetch the tour schedule with items to calculate totals
-        const schedule = await prisma.tourSchedule.findUnique({
-            where: { id: validated.tourScheduleId },
+        const schedule = await prisma.tourSchedule.findFirst({
+            where: { id: validated.tourScheduleId, companyId: authCheck.companyId },
             include: { items: true },
         });
 
@@ -97,6 +97,7 @@ export async function generateQuotation(
 
         const quotation = await prisma.quotation.create({
             data: {
+                companyId: authCheck.companyId,
                 tourScheduleId: validated.tourScheduleId,
                 customerName: validated.customerName,
                 customerEmail: validated.customerEmail || null,
@@ -148,10 +149,15 @@ export async function getQuotations(
     searchQuery?: string
 ): Promise<ActionResult<QuotationWithSchedule[]>> {
     try {
-        let session = await auth();
-    const companyId = (session?.user as any)?.companyId;
-    const quotations = await prisma.quotation.findMany({
-        where: { companyId, AND: searchQuery ? {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const quotations = await prisma.quotation.findMany({
+            where: {
+                companyId: authCheck.companyId,
+                AND: searchQuery ? {
                     OR: [
                         { customerName: { contains: searchQuery, mode: 'insensitive' } },
                         { tourSchedule: { name: { contains: searchQuery, mode: 'insensitive' } } },
@@ -159,7 +165,8 @@ export async function getQuotations(
                             ? [{ quotationNumber: { equals: Number(searchQuery) } }]
                             : []),
                     ],
-                } : undefined },
+                } : undefined,
+            },
             include: {
                 tourSchedule: {
                     include: { items: { orderBy: { dayNumber: 'asc' } } },
@@ -182,8 +189,13 @@ export async function getQuotationById(
     id: string
 ): Promise<ActionResult<QuotationWithSchedule>> {
     try {
-        const quotation = await prisma.quotation.findUnique({
-            where: { id },
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const quotation = await prisma.quotation.findFirst({
+            where: { id, companyId: authCheck.companyId },
             include: {
                 tourSchedule: {
                     include: { items: { orderBy: { dayNumber: 'asc' } } },
@@ -264,8 +276,8 @@ export async function updateQuotation(
         }
 
         // Get schedule details for calculations
-        const schedule = await prisma.tourSchedule.findUnique({
-            where: { id: tourScheduleId },
+        const schedule = await prisma.tourSchedule.findFirst({
+            where: { id: tourScheduleId, companyId: authCheck.companyId },
             include: { items: true },
         });
 
@@ -291,8 +303,8 @@ export async function updateQuotation(
         const markupAmount = subtotal * ((validated.markup || 0) / 100);
         const totalAmount = subtotal + markupAmount - (validated.discount || 0);
 
-        const quotation = await prisma.quotation.update({
-            where: { id },
+        const _res = await prisma.quotation.updateMany({
+            where: { id, companyId: authCheck.companyId },
             data: {
                 ...validated,
                 tourScheduleId,
@@ -305,9 +317,10 @@ export async function updateQuotation(
                 totalAmount,
             },
         });
+        if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
         revalidateFor('quotation');
-        return { success: true, data: quotation.id };
+        return { success: true, data: id };
     } catch (error) {
         console.error('Error updating quotation:', error);
         if (error instanceof Error) {
@@ -325,14 +338,19 @@ export async function updateQuotationStatus(
     status: string
 ): Promise<ActionResult<void>> {
     try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const validStatuses = ['DRAFT', 'SENT', 'ACCEPTED', 'EXPIRED'];
         if (!validStatuses.includes(status)) {
             return { success: false, error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` };
         }
 
         if (status === 'ACCEPTED') {
-            const quotation = await prisma.quotation.findUnique({
-                where: { id },
+            const quotation = await prisma.quotation.findFirst({
+                where: { id, companyId: authCheck.companyId },
                 select: { vehicleNo: true, startDate: true, endDate: true }
             });
 
@@ -354,10 +372,11 @@ export async function updateQuotationStatus(
             }
         }
 
-        await prisma.quotation.update({
-            where: { id },
+        const _res = await prisma.quotation.updateMany({
+            where: { id, companyId: authCheck.companyId },
             data: { status },
         });
+        if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
         revalidateFor('quotation');
         return { success: true };
@@ -377,9 +396,10 @@ export async function deleteQuotation(id: string): Promise<ActionResult<void>> {
             return { success: false, error: authCheck.error };
         }
 
-        await prisma.quotation.delete({
-            where: { id },
+        const _res = await prisma.quotation.deleteMany({
+            where: { id, companyId: authCheck.companyId },
         });
+        if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
         revalidateFor('quotation');
         return { success: true };
@@ -400,8 +420,8 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
         }
 
         const newBookingId = await prisma.$transaction(async (tx) => {
-            const quotation = await tx.quotation.findUnique({
-                where: { id: quotationId },
+            const quotation = await tx.quotation.findFirst({
+                where: { id: quotationId, companyId: authCheck.companyId },
             });
 
             if (!quotation) {
@@ -454,8 +474,8 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
             });
 
             // Update quotation status
-            await tx.quotation.update({
-                where: { id: quotationId },
+            await tx.quotation.updateMany({
+                where: { id: quotationId, companyId: authCheck.companyId },
                 data: { status: 'ACCEPTED' },
             });
 

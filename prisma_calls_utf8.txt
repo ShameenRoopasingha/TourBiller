@@ -1,0 +1,370 @@
+﻿
+  src\lib\auth-actions.ts:25:        }
+  src\lib\auth-actions.ts:26:
+> src\lib\auth-actions.ts:27:        const user = await prisma.user.findUnique({ where: { email } });
+  src\lib\auth-actions.ts:28:        
+  src\lib\auth-actions.ts:29:        // We always return success even if user not found to prevent email enumeration
+  src\lib\auth-actions.ts:39:
+  src\lib\auth-actions.ts:40:        // Delete any existing tokens for this email
+> src\lib\auth-actions.ts:41:        await prisma.passwordResetToken.deleteMany({
+  src\lib\auth-actions.ts:42:            where: { email }
+  src\lib\auth-actions.ts:43:        });
+  src\lib\auth-actions.ts:44:
+  src\lib\auth-actions.ts:45:        // Save new token
+> src\lib\auth-actions.ts:46:        await prisma.passwordResetToken.create({
+  src\lib\auth-actions.ts:47:            data: {
+  src\lib\auth-actions.ts:48:                email,
+  src\lib\auth-actions.ts:78:        if (!token) return false;
+  src\lib\auth-actions.ts:79:
+> src\lib\auth-actions.ts:80:        const resetToken = await prisma.passwordResetToken.findUnique({
+  src\lib\auth-actions.ts:81:            where: { token }
+  src\lib\auth-actions.ts:82:        });
+  src\lib\auth-actions.ts:121:        // Atomic: verify, update password, and delete token in one transaction
+  src\lib\auth-actions.ts:122:        // This prevents race conditions where the same token could be used twice
+> src\lib\auth-actions.ts:123:        await prisma.$transaction(async (tx) => {
+  src\lib\auth-actions.ts:124:            const resetToken = await tx.passwordResetToken.findUnique({
+  src\lib\auth-actions.ts:125:                where: { token }
+  src\lib\booking-actions.ts:53:        }
+  src\lib\booking-actions.ts:54:
+> src\lib\booking-actions.ts:55:        const booking = await prisma.booking.create({
+  src\lib\booking-actions.ts:56:            data: { companyId: authCheck.companyId!, ...validatedData },
+  src\lib\booking-actions.ts:57:        });
+  src\lib\booking-actions.ts:82:        }
+  src\lib\booking-actions.ts:83:
+> src\lib\booking-actions.ts:84:        const bookings = await prisma.booking.findMany({
+  src\lib\booking-actions.ts:85:            where: {
+  src\lib\booking-actions.ts:86:                companyId: authCheck.companyId,
+  src\lib\booking-actions.ts:114:
+  src\lib\booking-actions.ts:115:        // 1. Fetch booking to check date
+> src\lib\booking-actions.ts:116:        const booking = await prisma.booking.findFirst({
+  src\lib\booking-actions.ts:117:            where: { id, companyId: authCheck.companyId },
+  src\lib\booking-actions.ts:118:        });
+  src\lib\booking-actions.ts:135:
+  src\lib\booking-actions.ts:136:        // 3. Update Booking
+> src\lib\booking-actions.ts:137:        await prisma.booking.updateMany({
+  src\lib\booking-actions.ts:138:            where: { id, companyId: authCheck.companyId },
+  src\lib\booking-actions.ts:139:            data: {
+  src\lib\booking-actions.ts:162:        }
+  src\lib\booking-actions.ts:163:
+> src\lib\booking-actions.ts:164:        const booking = await prisma.booking.findFirst({
+  src\lib\booking-actions.ts:165:            where: { id, companyId: authCheck.companyId },
+  src\lib\booking-actions.ts:166:        });
+  src\lib\customer-actions.ts:27:        const validatedData = CustomerSchema.parse(rawData);
+  src\lib\customer-actions.ts:28:
+> src\lib\customer-actions.ts:29:        const customer = await prisma.customer.create({
+  src\lib\customer-actions.ts:30:            data: { companyId, ...validatedData },
+  src\lib\customer-actions.ts:31:        });
+  src\lib\customer-actions.ts:56:        }
+  src\lib\customer-actions.ts:57:        const companyId = authCheck.companyId;
+> src\lib\customer-actions.ts:58:    const customers = await prisma.customer.findMany({
+  src\lib\customer-actions.ts:59:            where: searchQuery ? {
+  src\lib\customer-actions.ts:60:            companyId,
+  src\lib\customer-actions.ts:95:        const validatedData = CustomerSchema.parse(rawData);
+  src\lib\customer-actions.ts:96:
+> src\lib\customer-actions.ts:97:        await prisma.customer.updateMany({
+  src\lib\customer-actions.ts:98:            where: { id, companyId },
+  src\lib\customer-actions.ts:99:            data: { ...validatedData },
+  src\lib\customer-actions.ts:124:
+  src\lib\customer-actions.ts:125:        // Look up the customer name first for FK checks
+> src\lib\customer-actions.ts:126:        const customer = await prisma.customer.findFirst({ where: { id, companyId }, 
+select: { name: true } });
+  src\lib\customer-actions.ts:127:        if (!customer) {
+  src\lib\customer-actions.ts:128:            return { success: false, error: 'Customer not found' };
+  src\lib\customer-actions.ts:131:        // Check for related records that reference this customer by name
+  src\lib\customer-actions.ts:132:        const [billCount, bookingCount, quotationCount] = await Promise.all([
+> src\lib\customer-actions.ts:133:            prisma.bill.count({ where: { customerName: customer.name, companyId } }),
+> src\lib\customer-actions.ts:134:            prisma.booking.count({ where: { customerName: customer.name, companyId } 
+}),
+> src\lib\customer-actions.ts:135:            prisma.quotation.count({ where: { customerName: customer.name, companyId 
+} }),
+  src\lib\customer-actions.ts:136:        ]);
+  src\lib\customer-actions.ts:137:
+  src\lib\customer-actions.ts:148:        }
+  src\lib\customer-actions.ts:149:
+> src\lib\customer-actions.ts:150:        await prisma.customer.deleteMany({
+  src\lib\customer-actions.ts:151:            where: { id, companyId },
+  src\lib\customer-actions.ts:152:        });
+  src\lib\dashboard-actions.ts:45:
+  src\lib\dashboard-actions.ts:46:        // Run ALL queries in parallel to speed up dashboard loading
+> src\lib\dashboard-actions.ts:47:        // Removed prisma.$transaction as it's not needed for reads and can cause 
+connection pooler issues
+  src\lib\dashboard-actions.ts:48:        console.log('[Dashboard] Starting sequential queries for stability...');
+  src\lib\dashboard-actions.ts:49:        const startTime = Date.now();
+  src\lib\dashboard-actions.ts:50:
+  src\lib\dashboard-actions.ts:51:        // Run queries sequentially instead of parallel to save connections on 5432 
+port
+> src\lib\dashboard-actions.ts:52:        const totalVehicles = await prisma.vehicle.count({ where: { companyId, 
+status: 'ACTIVE' } }).catch(e => { console.error('Error totalVehicles:', e); return 0; });
+> src\lib\dashboard-actions.ts:53:        const occupiedVehicles = await prisma.booking.count({ where: 
+ongoingBookingFilter }).catch(e => { console.error('Error occupiedVehicles:', e); return 0; });
+  src\lib\dashboard-actions.ts:54:        
+> src\lib\dashboard-actions.ts:55:        const yearlyResult = await prisma.bill.aggregate({
+  src\lib\dashboard-actions.ts:56:            _sum: { totalAmount: true },
+  src\lib\dashboard-actions.ts:57:            where: { companyId, createdAt: { gte: startOfYear, lte: endOfYear } }
+  src\lib\dashboard-actions.ts:58:        }).catch(e => { console.error('Error yearlyResult:', e); return { _sum: { 
+totalAmount: 0 } }; });
+  src\lib\dashboard-actions.ts:59:        
+> src\lib\dashboard-actions.ts:60:        const weeklyResult = await prisma.bill.aggregate({
+  src\lib\dashboard-actions.ts:61:            _sum: { totalAmount: true },
+  src\lib\dashboard-actions.ts:62:            where: { companyId, createdAt: { gte: startOfWeek, lte: endOfWeek } }
+  src\lib\dashboard-actions.ts:63:        }).catch(e => { console.error('Error weeklyResult:', e); return { _sum: { 
+totalAmount: 0 } }; });
+  src\lib\dashboard-actions.ts:64:        
+> src\lib\dashboard-actions.ts:65:        const todayResult = await prisma.bill.aggregate({
+  src\lib\dashboard-actions.ts:66:            _sum: { totalAmount: true },
+  src\lib\dashboard-actions.ts:67:            where: { companyId, createdAt: { gte: startOfToday, lte: endOfToday } }
+  src\lib\dashboard-actions.ts:68:        }).catch(e => { console.error('Error todayResult:', e); return { _sum: { 
+totalAmount: 0 } }; });
+  src\lib\dashboard-actions.ts:69:        
+> src\lib\dashboard-actions.ts:70:        const recentBills = await prisma.bill.findMany({
+  src\lib\dashboard-actions.ts:71:            where: { companyId },
+  src\lib\dashboard-actions.ts:72:            take: 5,
+  src\lib\dashboard-actions.ts:85:        }).catch(e => { console.error('Error recentBills:', e); return []; });
+  src\lib\dashboard-actions.ts:86:        
+> src\lib\dashboard-actions.ts:87:        const ongoingBookings = await prisma.booking.findMany({
+  src\lib\dashboard-actions.ts:88:            where: ongoingBookingFilter,
+  src\lib\dashboard-actions.ts:89:            orderBy: { startDate: 'asc' },
+  src\lib\profile-actions.ts:24:
+  src\lib\profile-actions.ts:25:        // Check if email is being changed to one that already exists
+> src\lib\profile-actions.ts:26:        const existingUser = await prisma.user.findUnique({ where: { email } });
+  src\lib\profile-actions.ts:27:        if (existingUser && existingUser.id !== session.user.id) {
+  src\lib\profile-actions.ts:28:            return { success: false, error: 'Email is already in use by another 
+account' };
+  src\lib\profile-actions.ts:29:        }
+  src\lib\profile-actions.ts:30:
+> src\lib\profile-actions.ts:31:        await prisma.user.update({
+  src\lib\profile-actions.ts:32:            where: { id: session.user.id },
+  src\lib\profile-actions.ts:33:            data: { name, email },
+  src\lib\profile-actions.ts:58:        }
+  src\lib\profile-actions.ts:59:
+> src\lib\profile-actions.ts:60:        const user = await prisma.user.findUnique({
+  src\lib\profile-actions.ts:61:            where: { id: session.user.id }
+  src\lib\profile-actions.ts:62:        });
+  src\lib\profile-actions.ts:77:        const hashedPassword = await bcrypt.hash(newPassword, 10);
+  src\lib\profile-actions.ts:78:
+> src\lib\profile-actions.ts:79:        await prisma.user.update({
+  src\lib\profile-actions.ts:80:            where: { id: session.user.id },
+  src\lib\profile-actions.ts:81:            data: { password: hashedPassword },
+  src\lib\quotation-actions.ts:54:
+  src\lib\quotation-actions.ts:55:        // Fetch the tour schedule with items to calculate totals
+> src\lib\quotation-actions.ts:56:        const schedule = await prisma.tourSchedule.findFirst({
+  src\lib\quotation-actions.ts:57:            where: { id: validated.tourScheduleId, companyId: authCheck.companyId },
+  src\lib\quotation-actions.ts:58:            include: { items: true },
+  src\lib\quotation-actions.ts:96:        const totalAmount = subtotal + markupAmount - (validated.discount || 0);
+  src\lib\quotation-actions.ts:97:
+> src\lib\quotation-actions.ts:98:        const quotation = await prisma.quotation.create({
+  src\lib\quotation-actions.ts:99:            data: {
+  src\lib\quotation-actions.ts:100:                companyId: authCheck.companyId,
+  src\lib\quotation-actions.ts:155:        }
+  src\lib\quotation-actions.ts:156:
+> src\lib\quotation-actions.ts:157:        const quotations = await prisma.quotation.findMany({
+  src\lib\quotation-actions.ts:158:            where: {
+  src\lib\quotation-actions.ts:159:                companyId: authCheck.companyId,
+  src\lib\quotation-actions.ts:195:        }
+  src\lib\quotation-actions.ts:196:
+> src\lib\quotation-actions.ts:197:        const quotation = await prisma.quotation.findFirst({
+  src\lib\quotation-actions.ts:198:            where: { id, companyId: authCheck.companyId },
+  src\lib\quotation-actions.ts:199:            include: {
+  src\lib\quotation-actions.ts:277:
+  src\lib\quotation-actions.ts:278:        // Get schedule details for calculations
+> src\lib\quotation-actions.ts:279:        const schedule = await prisma.tourSchedule.findFirst({
+  src\lib\quotation-actions.ts:280:            where: { id: tourScheduleId, companyId: authCheck.companyId },
+  src\lib\quotation-actions.ts:281:            include: { items: true },
+  src\lib\quotation-actions.ts:304:        const totalAmount = subtotal + markupAmount - (validated.discount || 0);
+  src\lib\quotation-actions.ts:305:
+> src\lib\quotation-actions.ts:306:        await prisma.quotation.updateMany({
+  src\lib\quotation-actions.ts:307:            where: { id, companyId: authCheck.companyId },
+  src\lib\quotation-actions.ts:308:            data: {
+  src\lib\quotation-actions.ts:349:
+  src\lib\quotation-actions.ts:350:        if (status === 'ACCEPTED') {
+> src\lib\quotation-actions.ts:351:            const quotation = await prisma.quotation.findFirst({
+  src\lib\quotation-actions.ts:352:                where: { id, companyId: authCheck.companyId },
+  src\lib\quotation-actions.ts:353:                select: { vehicleNo: true, startDate: true, endDate: true }
+  src\lib\quotation-actions.ts:372:        }
+  src\lib\quotation-actions.ts:373:
+> src\lib\quotation-actions.ts:374:        await prisma.quotation.updateMany({
+  src\lib\quotation-actions.ts:375:            where: { id, companyId: authCheck.companyId },
+  src\lib\quotation-actions.ts:376:            data: { status },
+  src\lib\quotation-actions.ts:395:        }
+  src\lib\quotation-actions.ts:396:
+> src\lib\quotation-actions.ts:397:        await prisma.quotation.deleteMany({
+  src\lib\quotation-actions.ts:398:            where: { id, companyId: authCheck.companyId },
+  src\lib\quotation-actions.ts:399:        });
+  src\lib\quotation-actions.ts:417:        }
+  src\lib\quotation-actions.ts:418:
+> src\lib\quotation-actions.ts:419:        const newBookingId = await prisma.$transaction(async (tx) => {
+  src\lib\quotation-actions.ts:420:            const quotation = await tx.quotation.findFirst({
+  src\lib\quotation-actions.ts:421:                where: { id: quotationId, companyId: authCheck.companyId },
+  src\lib\tour-schedule-actions.ts:79:        const validated = TourScheduleSchema.parse(data);
+  src\lib\tour-schedule-actions.ts:80:
+> src\lib\tour-schedule-actions.ts:81:        const schedule = await prisma.$transaction(async (tx) => {
+  src\lib\tour-schedule-actions.ts:82:            const created = await tx.tourSchedule.create({
+  src\lib\tour-schedule-actions.ts:83:                data: {
+  src\lib\tour-schedule-actions.ts:137:        }
+  src\lib\tour-schedule-actions.ts:138:
+> src\lib\tour-schedule-actions.ts:139:        const schedules = await prisma.tourSchedule.findMany({
+  src\lib\tour-schedule-actions.ts:140:            where: {
+  src\lib\tour-schedule-actions.ts:141:                companyId: authCheck.companyId,
+  src\lib\tour-schedule-actions.ts:178:        }
+  src\lib\tour-schedule-actions.ts:179:
+> src\lib\tour-schedule-actions.ts:180:        const schedule = await prisma.tourSchedule.findFirst({
+  src\lib\tour-schedule-actions.ts:181:            where: { id, companyId: authCheck.companyId },
+  src\lib\tour-schedule-actions.ts:182:            include: {
+  src\lib\tour-schedule-actions.ts:235:        const validated = TourScheduleSchema.parse(data);
+  src\lib\tour-schedule-actions.ts:236:
+> src\lib\tour-schedule-actions.ts:237:        await prisma.$transaction(async (tx) => {
+  src\lib\tour-schedule-actions.ts:238:            // Update schedule details
+  src\lib\tour-schedule-actions.ts:239:            const updated = await tx.tourSchedule.updateMany({
+  src\lib\tour-schedule-actions.ts:301:        }
+  src\lib\tour-schedule-actions.ts:302:
+> src\lib\tour-schedule-actions.ts:303:        await prisma.tourSchedule.updateMany({
+  src\lib\tour-schedule-actions.ts:304:            where: { id, companyId: authCheck.companyId },
+  src\lib\tour-schedule-actions.ts:305:            data: { isActive: false },
+  src\lib\trip-activity-actions.ts:37:
+  src\lib\trip-activity-actions.ts:38:        // Verify the booking belongs to this driver
+> src\lib\trip-activity-actions.ts:39:        const booking = await prisma.booking.findFirst({
+  src\lib\trip-activity-actions.ts:40:            where: {
+  src\lib\trip-activity-actions.ts:41:                id: bookingId,
+  src\lib\trip-activity-actions.ts:52:
+  src\lib\trip-activity-actions.ts:53:
+> src\lib\trip-activity-actions.ts:54:    const activity = await prisma.tripActivity.create({
+  src\lib\trip-activity-actions.ts:55:            data: {
+  src\lib\trip-activity-actions.ts:56:                companyId: authCheck.companyId,
+  src\lib\trip-activity-actions.ts:82:
+  src\lib\trip-activity-actions.ts:83:
+> src\lib\trip-activity-actions.ts:84:    const activities = await prisma.tripActivity.findMany({
+  src\lib\trip-activity-actions.ts:85:            where: { bookingId, companyId: authCheck.companyId },
+  src\lib\trip-activity-actions.ts:86:            orderBy: { timestamp: 'desc' },
+  src\lib\trip-activity-actions.ts:123:        let bookings;
+  src\lib\trip-activity-actions.ts:124:        if (type === 'upcoming') {
+> src\lib\trip-activity-actions.ts:125:            bookings = await prisma.booking.findMany({
+  src\lib\trip-activity-actions.ts:126:                where: {
+  src\lib\trip-activity-actions.ts:127:                    companyId: authCheck.companyId,
+  src\lib\trip-activity-actions.ts:134:            });
+  src\lib\trip-activity-actions.ts:135:        } else {
+> src\lib\trip-activity-actions.ts:136:            bookings = await prisma.booking.findMany({
+  src\lib\trip-activity-actions.ts:137:                where: {
+  src\lib\trip-activity-actions.ts:138:                    companyId: authCheck.companyId,
+  src\lib\user-actions.ts:33:
+  src\lib\user-actions.ts:34:        // 1. Check Bookings (Future confirmed usage)
+> src\lib\user-actions.ts:35:        const bookingConflicts = await prisma.booking.findMany({
+  src\lib\user-actions.ts:36:            where: {
+  src\lib\user-actions.ts:37:                driverId,
+  src\lib\user-actions.ts:60:
+  src\lib\user-actions.ts:61:        // 2. Check Accepted Quotations
+> src\lib\user-actions.ts:62:        const quotationConflicts = await prisma.quotation.findMany({
+  src\lib\user-actions.ts:63:            where: {
+  src\lib\user-actions.ts:64:                driverId,
+  src\lib\user-actions.ts:133:        const { companyId } = authCheck;
+  src\lib\user-actions.ts:134:
+> src\lib\user-actions.ts:135:        const users = await prisma.user.findMany({
+  src\lib\user-actions.ts:136:            where: { companyId },
+  src\lib\user-actions.ts:137:            select: {
+  src\lib\user-actions.ts:178:
+  src\lib\user-actions.ts:179:        // Check if email already exists
+> src\lib\user-actions.ts:180:        const existing = await prisma.user.findFirst({ where: { email, companyId } });
+  src\lib\user-actions.ts:181:        if (existing) {
+  src\lib\user-actions.ts:182:            return { success: false, error: 'A user with this email already exists' };
+  src\lib\user-actions.ts:185:        const hashedPassword = await bcrypt.hash(password, 10);
+  src\lib\user-actions.ts:186:
+> src\lib\user-actions.ts:187:        const user = await prisma.user.create({
+  src\lib\user-actions.ts:188:            data: {
+  src\lib\user-actions.ts:189:                companyId,
+  src\lib\user-actions.ts:221:        // Check for related records that would prevent deletion
+  src\lib\user-actions.ts:222:        const [bookingCount, quotationCount, expenseCount, activityCount] = await 
+Promise.all([
+> src\lib\user-actions.ts:223:            prisma.booking.count({ where: { driverId: id, companyId } }),
+> src\lib\user-actions.ts:224:            prisma.quotation.count({ where: { driverId: id, companyId } }),
+> src\lib\user-actions.ts:225:            prisma.vehicleExpense.count({ where: { driverId: id, companyId } }),
+> src\lib\user-actions.ts:226:            prisma.tripActivity.count({ where: { driverId: id, companyId } }),
+  src\lib\user-actions.ts:227:        ]);
+  src\lib\user-actions.ts:228:
+  src\lib\user-actions.ts:240:        }
+  src\lib\user-actions.ts:241:
+> src\lib\user-actions.ts:242:        await prisma.user.deleteMany({ where: { id, companyId } });
+  src\lib\user-actions.ts:243:        revalidatePath('/users');
+  src\lib\user-actions.ts:244:        return { success: true };
+  src\lib\user-actions.ts:265:        const { companyId } = authCheck;
+  src\lib\user-actions.ts:266:
+> src\lib\user-actions.ts:267:        const drivers = await prisma.user.findMany({
+  src\lib\user-actions.ts:268:            where: { role: 'DRIVER', companyId },
+  src\lib\user-actions.ts:269:            select: { id: true, name: true, email: true },
+  src\lib\vehicle-actions.ts:41:        const validatedData = VehicleSchema.parse(rawData);
+  src\lib\vehicle-actions.ts:42:
+> src\lib\vehicle-actions.ts:43:        const vehicle = await prisma.vehicle.create({
+  src\lib\vehicle-actions.ts:44:            data: { companyId: authCheck.companyId, ...validatedData },
+  src\lib\vehicle-actions.ts:45:        });
+  src\lib\vehicle-actions.ts:70:        }
+  src\lib\vehicle-actions.ts:71:
+> src\lib\vehicle-actions.ts:72:        const vehicles = await prisma.vehicle.findMany({
+  src\lib\vehicle-actions.ts:73:            where: {
+  src\lib\vehicle-actions.ts:74:                companyId: authCheck.companyId,
+  src\lib\vehicle-actions.ts:128:        const validatedData = VehicleSchema.parse(rawData);
+  src\lib\vehicle-actions.ts:129:
+> src\lib\vehicle-actions.ts:130:        const result = await prisma.vehicle.updateMany({
+  src\lib\vehicle-actions.ts:131:            where: { id, companyId: authCheck.companyId },
+  src\lib\vehicle-actions.ts:132:            data: { ...validatedData },
+  src\lib\vehicle-actions.ts:160:
+  src\lib\vehicle-actions.ts:161:        // Check if vehicle has related expenses
+> src\lib\vehicle-actions.ts:162:        const vehicle = await prisma.vehicle.findFirst({ 
+  src\lib\vehicle-actions.ts:163:            where: { id, companyId: authCheck.companyId }, 
+  src\lib\vehicle-actions.ts:164:            select: { vehicleNo: true } 
+  src\lib\vehicle-actions.ts:168:        }
+  src\lib\vehicle-actions.ts:169:
+> src\lib\vehicle-actions.ts:170:        const expenseCount = await prisma.vehicleExpense.count({ 
+  src\lib\vehicle-actions.ts:171:            where: { 
+  src\lib\vehicle-actions.ts:172:                vehicleNo: vehicle.vehicleNo,
+  src\lib\vehicle-actions.ts:178:        }
+  src\lib\vehicle-actions.ts:179:
+> src\lib\vehicle-actions.ts:180:        await prisma.vehicle.deleteMany({
+  src\lib\vehicle-actions.ts:181:            where: { id, companyId: authCheck.companyId },
+  src\lib\vehicle-actions.ts:182:        });
+  src\lib\vehicle-actions.ts:219:
+  src\lib\vehicle-actions.ts:220:        // 1. Check Bills (Active/Passive usage)
+> src\lib\vehicle-actions.ts:221:        const billConflicts = await prisma.bill.findMany({
+  src\lib\vehicle-actions.ts:222:            where: {
+  src\lib\vehicle-actions.ts:223:                companyId: authCheck.companyId,
+  src\lib\vehicle-actions.ts:242:        // 2. Check Bookings (Future confirmed usage)
+  src\lib\vehicle-actions.ts:243:        // Handle null endDate by treating as single-day booking
+> src\lib\vehicle-actions.ts:244:        const bookingConflicts = await prisma.booking.findMany({
+  src\lib\vehicle-actions.ts:245:            where: {
+  src\lib\vehicle-actions.ts:246:                companyId: authCheck.companyId,
+  src\lib\vehicle-actions.ts:271:
+  src\lib\vehicle-actions.ts:272:        // 3. Check other Accepted Quotations
+> src\lib\vehicle-actions.ts:273:        const quotationConflicts = await prisma.quotation.findMany({
+  src\lib\vehicle-actions.ts:274:            where: {
+  src\lib\vehicle-actions.ts:275:                companyId: authCheck.companyId,
+  src\lib\vehicle-expense-actions.ts:33:            today.setHours(0, 0, 0, 0);
+  src\lib\vehicle-expense-actions.ts:34:
+> src\lib\vehicle-expense-actions.ts:35:            const activeBooking = await prisma.booking.findFirst({
+  src\lib\vehicle-expense-actions.ts:36:                where: {
+  src\lib\vehicle-expense-actions.ts:37:                    companyId: authCheck.companyId,
+  src\lib\vehicle-expense-actions.ts:56:
+  src\lib\vehicle-expense-actions.ts:57:        // Create the expense first (critical operation)
+> src\lib\vehicle-expense-actions.ts:58:        const created = await prisma.vehicleExpense.create({
+  src\lib\vehicle-expense-actions.ts:59:            data: { companyId: authCheck.companyId,
+  src\lib\vehicle-expense-actions.ts:60:                vehicleNo: validatedData.vehicleNo,
+  src\lib\vehicle-expense-actions.ts:70:        // Update vehicle last service mileage if applicable (non-critical)
+  src\lib\vehicle-expense-actions.ts:71:        try {
+> src\lib\vehicle-expense-actions.ts:72:            const vehicle = await prisma.vehicle.findUnique({ where: { 
+companyId_vehicleNo: { companyId: authCheck.companyId, vehicleNo: validatedData.vehicleNo } } });
+  src\lib\vehicle-expense-actions.ts:73:            const mileage = vehicle?.currentMileage;
+  src\lib\vehicle-expense-actions.ts:74:
+  src\lib\vehicle-expense-actions.ts:84:
+  src\lib\vehicle-expense-actions.ts:85:                if (Object.keys(updateData).length > 0) {
+> src\lib\vehicle-expense-actions.ts:86:                    await prisma.vehicle.update({
+  src\lib\vehicle-expense-actions.ts:87:                        where: { companyId_vehicleNo: { companyId: 
+authCheck.companyId, vehicleNo: validatedData.vehicleNo } },
+  src\lib\vehicle-expense-actions.ts:88:                        data: updateData,
+  src\lib\vehicle-expense-actions.ts:112:        }
+  src\lib\vehicle-expense-actions.ts:113:
+> src\lib\vehicle-expense-actions.ts:114:        const expenses = await prisma.vehicleExpense.findMany({
+  src\lib\vehicle-expense-actions.ts:115:            where: {
+  src\lib\vehicle-expense-actions.ts:116:                companyId: authCheck.companyId,
+  src\lib\vehicle-expense-actions.ts:138:        }
+  src\lib\vehicle-expense-actions.ts:139:
+> src\lib\vehicle-expense-actions.ts:140:        await prisma.vehicleExpense.deleteMany({
+  src\lib\vehicle-expense-actions.ts:141:            where: { id, companyId: authCheck.companyId },
+  src\lib\vehicle-expense-actions.ts:142:        });
+
+

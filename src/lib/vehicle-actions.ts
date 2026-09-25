@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { VehicleSchema, type ActionResult, type Vehicle, type VehicleAvailabilityConflict } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
-import { requireAdmin } from '@/lib/auth-guard';
+import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 
 /**
  * Create a new vehicle
@@ -40,10 +40,8 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
 
         const validatedData = VehicleSchema.parse(rawData);
 
-        let session = await auth();
-    const companyId = (session?.user as any)?.companyId;
-    const vehicle = await prisma.vehicle.create({
-            data: { companyId, ...validatedData },
+        const vehicle = await prisma.vehicle.create({
+            data: { companyId: authCheck.companyId, ...validatedData },
         });
 
         revalidateFor('vehicle');
@@ -66,13 +64,21 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
  */
 export async function getVehicles(searchQuery?: string): Promise<ActionResult<Vehicle[]>> {
     try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const vehicles = await prisma.vehicle.findMany({
-            where: searchQuery ? {
-                OR: [
-                    { vehicleNo: { contains: searchQuery, mode: 'insensitive' } },
-                    { model: { contains: searchQuery, mode: 'insensitive' } },
-                ],
-            } : undefined,
+            where: {
+                companyId: authCheck.companyId,
+                ...(searchQuery ? {
+                    OR: [
+                        { vehicleNo: { contains: searchQuery, mode: 'insensitive' } },
+                        { model: { contains: searchQuery, mode: 'insensitive' } },
+                    ],
+                } : {})
+            },
             orderBy: { updatedAt: 'desc' },
         });
 
@@ -121,10 +127,14 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
 
         const validatedData = VehicleSchema.parse(rawData);
 
-        await prisma.vehicle.update({
-            where: { id },
-            data: { companyId: ((await auth())?.user as any)?.companyId as string, ...validatedData },
+        const result = await prisma.vehicle.updateMany({
+            where: { id, companyId: authCheck.companyId },
+            data: { ...validatedData },
         });
+
+        if (result.count === 0) {
+            return { success: false, error: 'Vehicle not found or unauthorized' };
+        }
 
         revalidateFor('vehicle');
 
@@ -149,19 +159,28 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
         }
 
         // Check if vehicle has related expenses
-        const vehicle = await prisma.vehicle.findUnique({ where: { id }, select: { vehicleNo: true } });
+        const vehicle = await prisma.vehicle.findFirst({ 
+            where: { id, companyId: authCheck.companyId }, 
+            select: { vehicleNo: true } 
+        });
         if (!vehicle) {
-            return { success: false, error: 'Vehicle not found' };
+            return { success: false, error: 'Vehicle not found or unauthorized' };
         }
 
-        const expenseCount = await prisma.vehicleExpense.count({ where: { vehicleNo: vehicle.vehicleNo } });
+        const expenseCount = await prisma.vehicleExpense.count({ 
+            where: { 
+                vehicleNo: vehicle.vehicleNo,
+                companyId: authCheck.companyId
+            } 
+        });
         if (expenseCount > 0) {
             return { success: false, error: `Cannot delete vehicle: it has ${expenseCount} expense record(s). Delete those first.` };
         }
 
-        await prisma.vehicle.delete({
-            where: { id },
+        const _res = await prisma.vehicle.deleteMany({
+            where: { id, companyId: authCheck.companyId },
         });
+        if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
         revalidateFor('vehicle');
 
@@ -187,6 +206,11 @@ export async function checkVehicleAvailability(
     currentType?: 'Bill' | 'Booking' | 'Quotation'
 ): Promise<ActionResult<{ available: boolean; conflicts: VehicleAvailabilityConflict[] }>> {
     try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const start = new Date(startDate);
         const end = new Date(endDate);
 
@@ -197,6 +221,7 @@ export async function checkVehicleAvailability(
         // 1. Check Bills (Active/Passive usage)
         const billConflicts = await prisma.bill.findMany({
             where: {
+                companyId: authCheck.companyId,
                 vehicleNo,
                 id: (currentType === 'Bill' && currentId) ? { not: currentId } : undefined,
                 OR: [
@@ -219,6 +244,7 @@ export async function checkVehicleAvailability(
         // Handle null endDate by treating as single-day booking
         const bookingConflicts = await prisma.booking.findMany({
             where: {
+                companyId: authCheck.companyId,
                 vehicleNo,
                 status: 'CONFIRMED',
                 id: (currentType === 'Booking' && currentId) ? { not: currentId } : undefined,
@@ -247,6 +273,7 @@ export async function checkVehicleAvailability(
         // 3. Check other Accepted Quotations
         const quotationConflicts = await prisma.quotation.findMany({
             where: {
+                companyId: authCheck.companyId,
                 vehicleNo,
                 status: 'ACCEPTED',
                 id: (currentType === 'Quotation' && currentId) ? { not: currentId } : undefined,

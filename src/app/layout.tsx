@@ -9,6 +9,8 @@ import { SessionProvider } from '@/components/SessionProvider';
 import { auth } from '@/lib/auth';
 import { PageTransition } from '@/components/PageTransition';
 
+import ChatAssistant from '@/components/ChatAssistant';
+
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -57,6 +59,11 @@ export default async function RootLayout({
                       <PageTransition>{children}</PageTransition>
                     </main>
                   </SidebarInset>
+                  
+                  {/* AI Assistant Chat UI */}
+                  <div className="print:hidden">
+                    <ChatAssistant />
+                  </div>
                 </div>
               </SidebarProvider>
             </SessionProvider>

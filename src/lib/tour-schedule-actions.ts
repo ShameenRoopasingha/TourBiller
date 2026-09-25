@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { TourScheduleSchema, type ActionResult } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
-import { requireAdmin } from '@/lib/auth-guard';
+import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 
 // Types for server responses
 export type TourScheduleWithItems = {
@@ -95,7 +95,9 @@ export async function createTourSchedule(
                     waitingCharge: validated.waitingCharge,
                     gatePass: validated.gatePass,
                     isActive: validated.isActive,
-                    companyId: ((await auth())?.user as any)?.companyId as string, items: { create: validated.items.map((item) => ({
+                    companyId: authCheck.companyId,
+                    items: {
+                        create: validated.items.map((item) => ({
                             dayNumber: item.dayNumber,
                             title: item.title,
                             description: item.description,
@@ -129,8 +131,14 @@ export async function getTourSchedules(
     searchQuery?: string
 ): Promise<ActionResult<TourScheduleWithItems[]>> {
     try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
         const schedules = await prisma.tourSchedule.findMany({
             where: {
+                companyId: authCheck.companyId,
                 AND: [
                     { isActive: true },
                     searchQuery
@@ -164,8 +172,13 @@ export async function getTourScheduleById(
     id: string
 ): Promise<ActionResult<TourScheduleWithItems>> {
     try {
-        const schedule = await prisma.tourSchedule.findUnique({
-            where: { id },
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const schedule = await prisma.tourSchedule.findFirst({
+            where: { id, companyId: authCheck.companyId },
             include: {
                 items: { orderBy: { dayNumber: 'asc' } },
             },
@@ -223,8 +236,8 @@ export async function updateTourSchedule(
 
         await prisma.$transaction(async (tx) => {
             // Update schedule details
-            await tx.tourSchedule.update({
-                where: { id },
+            const updated = await tx.tourSchedule.updateMany({
+                where: { id, companyId: authCheck.companyId },
                 data: {
                     name: validated.name,
                     description: validated.description,
@@ -241,6 +254,10 @@ export async function updateTourSchedule(
                     gatePass: validated.gatePass,
                 },
             });
+
+            if (updated.count === 0) {
+                throw new Error('Tour schedule not found or unauthorized');
+            }
 
             // Delete existing items and recreate (simpler than upsert for variable-length arrays)
             await tx.tourScheduleDayItem.deleteMany({
@@ -283,10 +300,11 @@ export async function deleteTourSchedule(id: string): Promise<ActionResult<void>
             return { success: false, error: authCheck.error };
         }
 
-        await prisma.tourSchedule.update({
-            where: { id },
+        const _res = await prisma.tourSchedule.updateMany({
+            where: { id, companyId: authCheck.companyId },
             data: { isActive: false },
         });
+        if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
         revalidateFor('tourSchedule');
         return { success: true };

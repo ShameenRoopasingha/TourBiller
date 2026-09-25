@@ -1,6 +1,5 @@
 'use server';
 
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-guard';
 import { type ActionResult } from '@/lib/validations';
@@ -40,6 +39,7 @@ export async function logTripActivity(
         const booking = await prisma.booking.findFirst({
             where: {
                 id: bookingId,
+                companyId: authCheck.companyId,
                 driverId: authCheck.userId,
                 status: 'CONFIRMED',
             },
@@ -49,11 +49,10 @@ export async function logTripActivity(
             return { success: false, error: 'Booking not found or not assigned to you.' };
         }
 
-        let session = await auth();
-    const companyId = (session?.user as any)?.companyId;
-    const activity = await prisma.tripActivity.create({
+
+    const activity = await prisma.tripActivity.create({
             data: {
-                companyId,
+                companyId: authCheck.companyId,
                 bookingId,
                 driverId: authCheck.userId,
                 type,
@@ -79,10 +78,9 @@ export async function getTripActivities(bookingId: string): Promise<ActionResult
             return { success: false, error: authCheck.error };
         }
 
-        let session = await auth();
-    const companyId = (session?.user as any)?.companyId;
-    const activities = await prisma.tripActivity.findMany({
-            where: { bookingId },
+
+    const activities = await prisma.tripActivity.findMany({
+            where: { bookingId, companyId: authCheck.companyId },
             orderBy: { timestamp: 'desc' },
         });
 
@@ -124,6 +122,7 @@ export async function getDriverTourHistory(
         if (type === 'upcoming') {
             bookings = await prisma.booking.findMany({
                 where: {
+                    companyId: authCheck.companyId,
                     driverId: authCheck.userId,
                     status: 'CONFIRMED',
                     startDate: { gt: new Date() },
@@ -134,6 +133,7 @@ export async function getDriverTourHistory(
         } else {
             bookings = await prisma.booking.findMany({
                 where: {
+                    companyId: authCheck.companyId,
                     driverId: authCheck.userId,
                     status: 'COMPLETED',
                 },

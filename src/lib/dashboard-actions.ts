@@ -1,10 +1,16 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-
+import { requireAuth } from '@/lib/auth-guard';
 
 export async function getDashboardStats() {
     try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+        const companyId = authCheck.companyId;
+
         const now = new Date();
         const currentYear = now.getFullYear();
         const startOfYear = new Date(currentYear, 0, 1);
@@ -22,6 +28,7 @@ export async function getDashboardStats() {
 
         // Common booking filter for "ongoing"
         const ongoingBookingFilter = {
+            companyId,
             status: 'CONFIRMED' as const,
             startDate: { lte: now },
             OR: [
@@ -42,25 +49,26 @@ export async function getDashboardStats() {
         const startTime = Date.now();
 
         // Run queries sequentially instead of parallel to save connections on 5432 port
-        const totalVehicles = await prisma.vehicle.count({ where: { status: 'ACTIVE' } }).catch(e => { console.error('Error totalVehicles:', e); return 0; });
+        const totalVehicles = await prisma.vehicle.count({ where: { companyId, status: 'ACTIVE' } }).catch(e => { console.error('Error totalVehicles:', e); return 0; });
         const occupiedVehicles = await prisma.booking.count({ where: ongoingBookingFilter }).catch(e => { console.error('Error occupiedVehicles:', e); return 0; });
         
         const yearlyResult = await prisma.bill.aggregate({
             _sum: { totalAmount: true },
-            where: { createdAt: { gte: startOfYear, lte: endOfYear } }
+            where: { companyId, createdAt: { gte: startOfYear, lte: endOfYear } }
         }).catch(e => { console.error('Error yearlyResult:', e); return { _sum: { totalAmount: 0 } }; });
         
         const weeklyResult = await prisma.bill.aggregate({
             _sum: { totalAmount: true },
-            where: { createdAt: { gte: startOfWeek, lte: endOfWeek } }
+            where: { companyId, createdAt: { gte: startOfWeek, lte: endOfWeek } }
         }).catch(e => { console.error('Error weeklyResult:', e); return { _sum: { totalAmount: 0 } }; });
         
         const todayResult = await prisma.bill.aggregate({
             _sum: { totalAmount: true },
-            where: { createdAt: { gte: startOfToday, lte: endOfToday } }
+            where: { companyId, createdAt: { gte: startOfToday, lte: endOfToday } }
         }).catch(e => { console.error('Error todayResult:', e); return { _sum: { totalAmount: 0 } }; });
         
         const recentBills = await prisma.bill.findMany({
+            where: { companyId },
             take: 5,
             orderBy: { createdAt: 'desc' },
             select: {

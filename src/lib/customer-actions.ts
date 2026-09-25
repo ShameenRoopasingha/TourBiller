@@ -4,19 +4,18 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { CustomerSchema, type ActionResult, type Customer } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
-import { requireAdmin } from '@/lib/auth-guard';
+import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 
 /**
  * Create a new customer
  */
 export async function createCustomer(formData: FormData): Promise<ActionResult<string>> {
     try {
-        let session = await auth();
-        const companyId = (session?.user as any)?.companyId;
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
+        const companyId = authCheck.companyId;
 
         const rawData = {
             name: formData.get('name') as string,
@@ -51,8 +50,11 @@ export async function createCustomer(formData: FormData): Promise<ActionResult<s
  */
 export async function getCustomers(searchQuery?: string): Promise<ActionResult<Customer[]>> {
     try {
-        let session = await auth();
-    const companyId = (session?.user as any)?.companyId;
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+        const companyId = authCheck.companyId;
     const customers = await prisma.customer.findMany({
             where: searchQuery ? {
             companyId,
@@ -77,12 +79,11 @@ export async function getCustomers(searchQuery?: string): Promise<ActionResult<C
  */
 export async function updateCustomer(id: string, formData: FormData): Promise<ActionResult<string>> {
     try {
-        let session = await auth();
-        const companyId = (session?.user as any)?.companyId;
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
+        const companyId = authCheck.companyId;
 
         const rawData = {
             name: formData.get('name') as string,
@@ -93,10 +94,11 @@ export async function updateCustomer(id: string, formData: FormData): Promise<Ac
 
         const validatedData = CustomerSchema.parse(rawData);
 
-        await prisma.customer.update({
-            where: { id },
-            data: { companyId: ((await auth())?.user as any)?.companyId as string, ...validatedData },
+        const _res = await prisma.customer.updateMany({
+            where: { id, companyId },
+            data: { ...validatedData },
         });
+        if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
         revalidateFor('customer');
 
@@ -115,24 +117,23 @@ export async function updateCustomer(id: string, formData: FormData): Promise<Ac
  */
 export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
     try {
-        let session = await auth();
-        const companyId = (session?.user as any)?.companyId;
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
+        const companyId = authCheck.companyId;
 
         // Look up the customer name first for FK checks
-        const customer = await prisma.customer.findUnique({ where: { id }, select: { name: true } });
+        const customer = await prisma.customer.findFirst({ where: { id, companyId }, select: { name: true } });
         if (!customer) {
             return { success: false, error: 'Customer not found' };
         }
 
         // Check for related records that reference this customer by name
         const [billCount, bookingCount, quotationCount] = await Promise.all([
-            prisma.bill.count({ where: { customerName: customer.name } }),
-            prisma.booking.count({ where: { customerName: customer.name } }),
-            prisma.quotation.count({ where: { customerName: customer.name } }),
+            prisma.bill.count({ where: { customerName: customer.name, companyId } }),
+            prisma.booking.count({ where: { customerName: customer.name, companyId } }),
+            prisma.quotation.count({ where: { customerName: customer.name, companyId } }),
         ]);
 
         const relatedItems: string[] = [];
@@ -147,9 +148,10 @@ export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
             };
         }
 
-        await prisma.customer.delete({
-            where: { id },
+        const _res = await prisma.customer.deleteMany({
+            where: { id, companyId },
         });
+        if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
         revalidateFor('customer');
 
