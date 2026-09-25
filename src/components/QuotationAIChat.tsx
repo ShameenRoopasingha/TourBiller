@@ -19,7 +19,7 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
   // @ts-ignore - Some versions of AI SDK have different types
   const { messages, sendMessage, status, error } = useChat({
     api: '/api/chat',
-    maxSteps: 2,
+    maxSteps: 5,
     initialMessages: [
       {
         id: 'welcome',
