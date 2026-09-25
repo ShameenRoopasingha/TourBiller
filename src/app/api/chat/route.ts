@@ -64,6 +64,24 @@ export async function POST(req: Request) {
             return { pending, confirmed, cancelled };
           },
         }),
+        generateDraftQuotation: tool({
+          description: "Extract quotation details from the user's prompt to auto-fill the quotation form. Always call this tool when the user asks to generate or draft a quotation.",
+          parameters: z.object({
+            customerName: z.string().describe('Name of the customer').optional(),
+            vehicleType: z.string().describe('Type or category of the vehicle (e.g. KDH, Car, Van)').optional(),
+            numberOfPersons: z.number().describe('Number of people travelling').optional(),
+            days: z.number().describe('Duration of the trip in days').optional(),
+            pickupLocation: z.string().optional(),
+            dropLocation: z.string().optional(),
+            destination: z.string().optional(),
+            hireRatePerDay: z.number().describe('Estimated hire rate per day').optional(),
+            driverCostPerDay: z.number().describe('Estimated driver cost per day').optional(),
+            notes: z.string().describe('Any other special requirements or notes').optional()
+          }),
+          execute: async (args) => {
+            return { success: true, draft: args };
+          }
+        }),
         searchCustomers: tool({
           description: 'Search for customers by name to get their details.',
           parameters: z.object({

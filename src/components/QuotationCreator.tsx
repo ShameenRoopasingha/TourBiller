@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, FileCheck, Calculator, Plus } from 'lucide-react';
+import { Loader2, FileCheck, Calculator, Plus, Sparkles } from 'lucide-react';
 
 import { QuotationFormSchema, type QuotationFormInput, type QuotationWithSchedule, type VehicleAvailabilityConflict, type DriverAvailabilityConflict } from '@/lib/validations';
 
@@ -16,6 +16,7 @@ import { formatCurrency } from '@/lib/calculations';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 import { TourScheduleForm } from '@/components/TourScheduleForm';
+import { QuotationAIChat } from '@/components/QuotationAIChat';
 import {
     Dialog,
     DialogContent,
@@ -124,6 +125,28 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
     const [availabilityConflict, setAvailabilityConflict] = useState<VehicleAvailabilityConflict | null>(null);
     const [driverAvailabilityConflict, setDriverAvailabilityConflict] = useState<DriverAvailabilityConflict | null>(null);
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+    const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+
+    const handleApplyDraft = (draft: any) => {
+        if (draft.customerName) form.setValue('customerName', draft.customerName, { shouldDirty: true });
+        if (draft.numberOfPersons) form.setValue('numberOfPersons', draft.numberOfPersons, { shouldDirty: true });
+        if (draft.days) form.setValue('kmPerDay', draft.days, { shouldDirty: true });
+        if (draft.pickupLocation) form.setValue('pickupLocation', draft.pickupLocation, { shouldDirty: true });
+        if (draft.dropLocation) form.setValue('dropLocation', draft.dropLocation, { shouldDirty: true });
+        if (draft.hireRatePerDay) form.setValue('hireRatePerDay', draft.hireRatePerDay, { shouldDirty: true });
+        if (draft.driverCostPerDay) form.setValue('driverCostPerDay', draft.driverCostPerDay, { shouldDirty: true });
+        if (draft.notes) form.setValue('notes', draft.notes, { shouldDirty: true });
+
+        // Try to match vehicle type to an existing vehicle
+        if (draft.vehicleType) {
+            const v = vehicles.find(v => v.category?.toLowerCase().includes(draft.vehicleType.toLowerCase()) || v.model?.toLowerCase().includes(draft.vehicleType.toLowerCase()));
+            if (v) {
+                form.setValue('vehicleNo', v.vehicleNo, { shouldDirty: true });
+                setSelectedVehicle(v);
+                form.setValue('hireRatePerDay', v.ratePerDay || draft.hireRatePerDay || 0, { shouldDirty: true });
+            }
+        }
+    };
     const handleEnterKey = useEnterNavigation();
 
     const form = useForm<QuotationFormInput>({
@@ -436,13 +459,26 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         <Form {...form}>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6" onKeyDown={handleEnterKey}>
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold tracking-tight">
-                    {initialData ? `Edit Quotation Q-${String(initialData.quotationNumber).padStart(4, '0')}` : 'New Quotation'}
-                </h1>
-                <p className="text-muted-foreground">
-                    {initialData ? 'Update details for this quotation' : 'Generate a professional tour quotation for your customer'}
-                </p>
+            <div className="mb-6 flex items-start justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">
+                        {initialData ? `Edit Quotation Q-${String(initialData.quotationNumber).padStart(4, '0')}` : 'New Quotation'}
+                    </h1>
+                    <p className="text-muted-foreground">
+                        {initialData ? 'Update details for this quotation' : 'Generate a professional tour quotation for your customer'}
+                    </p>
+                </div>
+                {!initialData && (
+                    <Button 
+                        type="button" 
+                        variant="default"
+                        className="bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                        onClick={() => setIsAIChatOpen(true)}
+                    >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generate with AI
+                    </Button>
+                )}
             </div>
 
             {error && (
@@ -1027,6 +1063,24 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                 </Button>
             </div>
         </form>
+
+        <Dialog open={isAIChatOpen} onOpenChange={setIsAIChatOpen}>
+            <DialogContent className="sm:max-w-xl p-0 overflow-hidden bg-background/95 backdrop-blur-xl border-primary/20">
+                <DialogHeader className="p-4 border-b bg-muted/30">
+                    <DialogTitle className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                        AI Quotation Generator
+                    </DialogTitle>
+                    <DialogDescription>
+                        Describe the trip to instantly draft a quotation.
+                    </DialogDescription>
+                </DialogHeader>
+                <QuotationAIChat 
+                    onApplyDraft={handleApplyDraft} 
+                    onClose={() => setIsAIChatOpen(false)} 
+                />
+            </DialogContent>
+        </Dialog>
         </Form>
     );
 }
