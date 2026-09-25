@@ -19,7 +19,7 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
   // @ts-ignore - Some versions of AI SDK have different types
   const { messages, sendMessage, status, error } = useChat({
     api: '/api/chat',
-    maxSteps: 1,
+    maxSteps: 2,
     initialMessages: [
       {
         id: 'welcome',
@@ -70,7 +70,7 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
                 )}
                 
                 {message.parts && message.parts.map((part: any, index: number) => {
-                  if (part.type === 'tool-generateDraftQuotation') {
+                  if (part.type === 'tool-generateDraftQuotation' || part.type.includes('tool-invocation')) {
                     const isDone = part.state === 'output-available' || part.state === 'result';
                     
                     let draft = null;
@@ -117,9 +117,14 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
                     }
                     
                     return (
-                      <div key={index} className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        Generating draft...
+                      <div key={index} className="flex flex-col gap-2 text-xs text-muted-foreground mt-2">
+                        <div className="flex items-center gap-2">
+                           <Loader2 className="w-3 h-3 animate-spin" />
+                           Generating draft...
+                        </div>
+                        <pre className="text-[10px] overflow-auto mb-4 bg-muted p-2 rounded max-h-32">
+                           {JSON.stringify(part, null, 2)}
+                        </pre>
                       </div>
                     );
                   }
