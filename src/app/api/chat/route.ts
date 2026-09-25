@@ -39,7 +39,6 @@ export async function POST(req: Request) {
     const result = streamText({
       model: google('gemini-flash-lite-latest'),
       messages: coreMessages,
-      maxSteps: 5,
       system: "You are the VIGIL AI Assistant, a smart travel management system AI. You help administrators analyze bookings, vehicles, and business operations. Use the provided tools to query the database when asked about specific data. Always answer in a professional yet helpful tone. If a user asks a general question, answer it. If they ask about data, use tools.",
       tools: {
         getVehicleStats: tool({
