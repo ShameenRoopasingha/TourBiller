@@ -90,8 +90,8 @@ export async function POST(req: Request) {
         return String(error);
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat API Error:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    return new Response(error.message || String(error) || 'VIGIL_SERVER_ERROR', { status: 500 });
   }
 }
