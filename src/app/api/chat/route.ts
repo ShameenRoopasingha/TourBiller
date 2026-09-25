@@ -81,7 +81,15 @@ export async function POST(req: Request) {
       },
     });
 
-    return result.toUIMessageStreamResponse();
+    return result.toDataStreamResponse({
+      getErrorMessage: (error: any) => {
+        console.error("AI Error:", error);
+        if (error && typeof error.message === 'string') {
+          return error.message;
+        }
+        return String(error);
+      }
+    });
   } catch (error) {
     console.error('Chat API Error:', error);
     return new Response('Internal Server Error', { status: 500 });
