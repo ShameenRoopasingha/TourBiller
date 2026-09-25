@@ -81,8 +81,8 @@ export async function POST(req: Request) {
       },
     });
 
-    return result.toDataStreamResponse({
-      getErrorMessage: (error: any) => {
+    return result.toUIMessageStreamResponse({
+      onError: (error: any) => {
         console.error("AI Error:", error);
         if (error && typeof error.message === 'string') {
           return error.message;
