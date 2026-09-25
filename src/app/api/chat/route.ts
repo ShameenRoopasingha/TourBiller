@@ -37,9 +37,9 @@ export async function POST(req: Request) {
     const coreMessages = await convertToModelMessages(sanitizedMessages);
 
     const result = streamText({
-      model: google('gemini-flash-lite-latest'),
+      model: google('gemini-1.5-flash-latest'),
       messages: coreMessages,
-      system: "You are the VIGIL AI Assistant, a smart travel management system AI. You help administrators analyze bookings, vehicles, and business operations. Use the provided tools to query the database when asked about specific data. Always answer in a professional yet helpful tone. If a user asks a general question, answer it. If they ask about data, use tools.",
+      system: "You are the VIGIL AI Assistant, a smart travel management system AI. You help administrators manage quotations, bookings, and vehicles. When a user provides details for a trip, ALWAYS use the generateDraftQuotation tool and meticulously extract all the relevant details (like destination, days, persons, vehicle type) into the tool's parameters. NEVER leave the parameters empty if the user provided the details. If they ask about data, use the relevant database tools.",
       tools: {
         getVehicleStats: tool({
           description: 'Get the count of active vehicles and total vehicles in the company.',
@@ -113,3 +113,4 @@ export async function POST(req: Request) {
     return new Response(error.message || String(error) || 'VIGIL_SERVER_ERROR', { status: 500 });
   }
 }
+
