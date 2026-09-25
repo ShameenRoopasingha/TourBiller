@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+﻿import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
 // Routes that drivers are NOT allowed to access
@@ -17,7 +17,8 @@ export default auth((req) => {
     if (
         pathname.startsWith('/login') ||
         pathname.startsWith('/api/auth') ||
-        pathname.startsWith('/api/keepalive')
+        pathname.startsWith('/api/keepalive') ||
+        pathname.startsWith('/api/webhooks/subscription')
     ) {
         return NextResponse.next();
     }
@@ -55,3 +56,4 @@ export const config = {
         '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 };
+
