@@ -80,7 +80,7 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
                       draft = part.output.draft;
                     }
                     
-                    if (draft && Object.keys(draft).length > 0) {
+                    if (isDone) {
                       return (
                         <Card key={index} className="mt-3 border-primary/20 bg-primary/5">
                           <CardContent className="p-4">
@@ -89,21 +89,23 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
                               Draft Quotation Ready
                             </div>
                             <div className="grid grid-cols-2 gap-2 text-xs mb-4">
-                              {draft.customerName && <div><span className="text-muted-foreground">Customer:</span> <span className="font-medium">{draft.customerName}</span></div>}
-                              {draft.vehicleType && <div><span className="text-muted-foreground">Vehicle:</span> <span className="font-medium">{draft.vehicleType}</span></div>}
-                              {draft.days && <div><span className="text-muted-foreground">Duration:</span> <span className="font-medium">{draft.days} Days</span></div>}
-                              {draft.numberOfPersons && <div><span className="text-muted-foreground">Persons:</span> <span className="font-medium">{draft.numberOfPersons}</span></div>}
-                              {draft.destination && <div><span className="text-muted-foreground">Dest:</span> <span className="font-medium">{draft.destination}</span></div>}
+                              {draft?.customerName && <div><span className="text-muted-foreground">Customer:</span> <span className="font-medium">{draft.customerName}</span></div>}
+                              {draft?.vehicleType && <div><span className="text-muted-foreground">Vehicle:</span> <span className="font-medium">{draft.vehicleType}</span></div>}
+                              {draft?.days && <div><span className="text-muted-foreground">Duration:</span> <span className="font-medium">{draft.days} Days</span></div>}
+                              {draft?.numberOfPersons && <div><span className="text-muted-foreground">Persons:</span> <span className="font-medium">{draft.numberOfPersons}</span></div>}
+                              {draft?.destination && <div><span className="text-muted-foreground">Dest:</span> <span className="font-medium">{draft.destination}</span></div>}
                             </div>
-                            <pre className="text-[10px] overflow-auto mb-4 bg-muted p-2 rounded">
-                              {JSON.stringify(draft, null, 2)}
+                            <pre className="text-[10px] overflow-auto mb-4 bg-muted p-2 rounded max-h-32">
+                              {JSON.stringify(part, null, 2)}
                             </pre>
                             <Button 
                               size="sm" 
                               className="w-full"
                               onClick={() => {
-                                onApplyDraft(draft);
-                                onClose();
+                                if(draft) {
+                                  onApplyDraft(draft);
+                                  onClose();
+                                }
                               }}
                             >
                               <Check className="w-4 h-4 mr-1" />
