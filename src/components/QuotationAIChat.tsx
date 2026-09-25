@@ -69,42 +69,44 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
                   </div>
                 )}
                 
-                {message.toolInvocations?.map((toolCall: any) => {
-                  if (toolCall.toolName === 'generateDraftQuotation' && toolCall.state === 'result') {
-                    const draft = toolCall.result.draft;
+                {message.parts && message.parts.map((part: any, index: number) => {
+                  if (part.type === 'tool-generateDraftQuotation') {
+                    const isDone = part.state === 'output-available' || part.state === 'result';
+                    
+                    if (isDone && part.output && part.output.draft) {
+                      const draft = part.output.draft;
+                      return (
+                        <Card key={index} className="mt-3 border-primary/20 bg-primary/5">
+                          <CardContent className="p-4">
+                            <div className="flex items-center gap-2 font-semibold text-primary mb-3">
+                              <Sparkles className="w-4 h-4" />
+                              Draft Quotation Ready
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs mb-4">
+                              {draft.customerName && <div><span className="text-muted-foreground">Customer:</span> <span className="font-medium">{draft.customerName}</span></div>}
+                              {draft.vehicleType && <div><span className="text-muted-foreground">Vehicle:</span> <span className="font-medium">{draft.vehicleType}</span></div>}
+                              {draft.days && <div><span className="text-muted-foreground">Duration:</span> <span className="font-medium">{draft.days} Days</span></div>}
+                              {draft.numberOfPersons && <div><span className="text-muted-foreground">Persons:</span> <span className="font-medium">{draft.numberOfPersons}</span></div>}
+                              {draft.destination && <div><span className="text-muted-foreground">Dest:</span> <span className="font-medium">{draft.destination}</span></div>}
+                            </div>
+                            <Button 
+                              size="sm" 
+                              className="w-full"
+                              onClick={() => {
+                                onApplyDraft(draft);
+                                onClose();
+                              }}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Apply to Form
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                    
                     return (
-                      <Card key={toolCall.toolCallId} className="mt-3 border-primary/20 bg-primary/5">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 font-semibold text-primary mb-3">
-                            <Sparkles className="w-4 h-4" />
-                            Draft Quotation Ready
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs mb-4">
-                            {draft.customerName && <div><span className="text-muted-foreground">Customer:</span> <span className="font-medium">{draft.customerName}</span></div>}
-                            {draft.vehicleType && <div><span className="text-muted-foreground">Vehicle:</span> <span className="font-medium">{draft.vehicleType}</span></div>}
-                            {draft.days && <div><span className="text-muted-foreground">Duration:</span> <span className="font-medium">{draft.days} Days</span></div>}
-                            {draft.numberOfPersons && <div><span className="text-muted-foreground">Persons:</span> <span className="font-medium">{draft.numberOfPersons}</span></div>}
-                            {draft.destination && <div><span className="text-muted-foreground">Dest:</span> <span className="font-medium">{draft.destination}</span></div>}
-                          </div>
-                          <Button 
-                            size="sm" 
-                            className="w-full"
-                            onClick={() => {
-                              onApplyDraft(draft);
-                              onClose();
-                            }}
-                          >
-                            <Check className="w-4 h-4 mr-1" />
-                            Apply to Form
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    );
-                  }
-                  
-                  if (toolCall.state === 'call') {
-                    return (
-                      <div key={toolCall.toolCallId} className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                      <div key={index} className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                         <Loader2 className="w-3 h-3 animate-spin" />
                         Generating draft...
                       </div>
@@ -115,7 +117,7 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
               </div>
             </div>
           ))}
-          {isLoading && !messages.find((m: any) => m.toolInvocations?.some((t: any) => t.state === 'call')) && (
+          {isLoading && !messages.find((m: any) => m.parts?.some((p: any) => p.type.startsWith('tool-') && (p.state === 'input-streaming' || p.state === 'input-available' || p.state === 'call'))) && (
             <div className="flex justify-start">
               <div className="bg-muted/50 rounded-2xl px-4 py-3 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
