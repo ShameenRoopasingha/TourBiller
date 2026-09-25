@@ -11,8 +11,38 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model BusinessProfile {
+  id              String   @id @default(cuid())
+  companyName     String   @default("My Transport Company")
+  address         String?
+  phone           String?
+  email           String?
+  website         String?
+  usdRate         Float    @default(300.0)
+  logoUrl         String?
+  bankName        String?  // e.g. "BOC"
+  bankBranch      String?  // e.g. "Delgoda"
+  bankAccountNo   String?  // e.g. "80228624"
+  bankAccountName String?  // e.g. "A.P. W. Jithsara"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users            User[]
+  bills            Bill[]
+  vehicles         Vehicle[]
+  customers        Customer[]
+  bookings         Booking[]
+  tourSchedules    TourSchedule[]
+  quotations       Quotation[]
+  vehicleExpenses  VehicleExpense[]
+  tripActivities   TripActivity[]
+
+  @@map("business_profile")
+}
+
 model Bill {
   id             String   @id @default(cuid())
+  companyId      String
   billNumber     Int      @unique @default(autoincrement())
   vehicleNo      String
   customerName   String
@@ -45,6 +75,9 @@ model Bill {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  company        BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
   @@index([customerName])
   @@index([vehicleNo])
   @@index([createdAt])
@@ -53,7 +86,8 @@ model Bill {
 
 model Vehicle {
   id                String   @id @default(cuid())
-  vehicleNo         String   @unique
+  companyId         String
+  vehicleNo         String
   model             String?
   category          String   @default("CAR") // CAR, VAN, SUV, etc.
   status            String   @default("ACTIVE") // ACTIVE, MAINTENANCE, RETIRED
@@ -75,30 +109,16 @@ model Vehicle {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
+  company           BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, vehicleNo])
+  @@index([companyId])
   @@map("vehicles")
-}
-
-model BusinessProfile {
-  id              String   @id @default(cuid())
-  companyName     String   @default("My Transport Company")
-  address         String?
-  phone           String?
-  email           String?
-  website         String?
-  usdRate         Float    @default(300.0)
-  logoUrl         String?
-  bankName        String?  // e.g. "BOC"
-  bankBranch      String?  // e.g. "Delgoda"
-  bankAccountNo   String?  // e.g. "80228624"
-  bankAccountName String?  // e.g. "A.P. W. Jithsara"
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@map("business_profile")
 }
 
 model Customer {
   id        String   @id @default(cuid())
+  companyId String
   name      String
   mobile    String?
   email     String?
@@ -106,6 +126,9 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  company   BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
   @@index([name])
   @@index([mobile])
   @@map("customers")
@@ -113,18 +136,21 @@ model Customer {
 
 model User {
   id        String   @id @default(cuid())
+  companyId String
   name      String
   email     String   @unique
   password  String
-  role      String   @default("ADMIN") // ADMIN, DRIVER
+  role      String   @default("ADMIN") // ADMIN, DRIVER, OWNER
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  company          BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
   bookings         Booking[]
   quotations       Quotation[]
   vehicleExpenses  VehicleExpense[]
   tripActivities   TripActivity[]
 
+  @@index([companyId])
   @@map("users")
 }
 
@@ -141,6 +167,7 @@ model PasswordResetToken {
 
 model Booking {
   id           String   @id @default(cuid())
+  companyId    String
   vehicleNo    String
   customerName String
   startDate    DateTime
@@ -154,9 +181,11 @@ model Booking {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  company      BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
   driver       User?    @relation(fields: [driverId], references: [id])
   tripActivities TripActivity[]
 
+  @@index([companyId])
   @@index([status])
   @@index([startDate])
   @@index([vehicleNo])
@@ -165,7 +194,8 @@ model Booking {
 
 model TourSchedule {
   id                 String   @id @default(cuid())
-  name               String   @unique
+  companyId          String
+  name               String
   description        String?
   days               Int
   basePricePerPerson Float    @default(0)
@@ -182,9 +212,12 @@ model TourSchedule {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
+  company    BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
   items      TourScheduleDayItem[]
   quotations Quotation[]
 
+  @@unique([companyId, name])
+  @@index([companyId])
   @@map("tour_schedules")
 }
 
@@ -207,6 +240,7 @@ model TourScheduleDayItem {
 
 model Quotation {
   id                 String    @id @default(cuid())
+  companyId          String
   quotationNumber    Int       @unique @default(autoincrement())
   tourScheduleId     String
   customerName       String
@@ -218,10 +252,10 @@ model Quotation {
   endDate            DateTime?
   pickupLocation     String?
   dropLocation       String?
-  hireRatePerDay     Float     @default(0)    // snapshot of vehicle rate/day
-  kmPerDay           Float     @default(0)    // snapshot of km allowance/day
-  excessKmRate       Float     @default(0)    // snapshot of charge per extra km
-  extraHourRate      Float     @default(0)    // snapshot of charge per extra hour
+  hireRatePerDay     Float     @default(0)
+  kmPerDay           Float     @default(0)
+  excessKmRate       Float     @default(0)
+  extraHourRate      Float     @default(0)
   totalDistance      Float     @default(0)
   transportCost      Float     @default(0)
   accommodationTotal Float     @default(0)
@@ -230,9 +264,9 @@ model Quotation {
   otherCostsTotal    Float     @default(0)
   markup             Float     @default(0)
   discount           Float     @default(0)
-  driverCostPerDay   Float     @default(0)  // Driver meals & accommodation per day
-  advanceAmount      Float     @default(0)  // Required advance payment
-  excludedItems      String?   // e.g. "Highway charges, Parking fees"
+  driverCostPerDay   Float     @default(0)
+  advanceAmount      Float     @default(0)
+  excludedItems      String?
   totalAmount        Float     @default(0)
   notes              String?
   validUntil         DateTime?
@@ -241,26 +275,31 @@ model Quotation {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
+  company      BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
   tourSchedule TourSchedule @relation(fields: [tourScheduleId], references: [id])
   driver       User?        @relation(fields: [driverId], references: [id])
 
+  @@index([companyId])
   @@map("quotations")
 }
 
 model VehicleExpense {
   id          String   @id @default(cuid())
+  companyId   String
   vehicleNo   String
   amount      Float
   category    String   // REPAIR, BREAKDOWN, FUEL, SERVICE, OTHER
   description String?
   date        DateTime @default(now())
-  bookingId   String?  // Optional: link to a booking/tour if it happened during one
-  driverId    String?  // The driver who recorded the expense
+  bookingId   String?
+  driverId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  company     BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
   driver      User?    @relation(fields: [driverId], references: [id])
 
+  @@index([companyId])
   @@index([vehicleNo])
   @@index([date])
   @@map("vehicle_expenses")
@@ -268,16 +307,19 @@ model VehicleExpense {
 
 model TripActivity {
   id          String   @id @default(cuid())
+  companyId   String
   bookingId   String
   driverId    String
   type        String   // FUEL_FILL, FLAT_TIRE, STOP, HOTEL_CHECKIN, RESUME, BREAKDOWN, NOTE
   note        String?
-  expenseId   String?  // Links to VehicleExpense if an expense was created
+  expenseId   String?
   timestamp   DateTime @default(now())
 
-  booking     Booking  @relation(fields: [bookingId], references: [id])
+  company     BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   driver      User     @relation(fields: [driverId], references: [id])
 
+  @@index([companyId])
   @@index([bookingId])
   @@index([driverId])
   @@map("trip_activities")

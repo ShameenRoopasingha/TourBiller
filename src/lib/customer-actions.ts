@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { CustomerSchema, type ActionResult, type Customer } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
@@ -10,6 +11,8 @@ import { requireAdmin } from '@/lib/auth-guard';
  */
 export async function createCustomer(formData: FormData): Promise<ActionResult<string>> {
     try {
+        let session = await auth();
+        const companyId = (session?.user as any)?.companyId;
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
@@ -25,7 +28,7 @@ export async function createCustomer(formData: FormData): Promise<ActionResult<s
         const validatedData = CustomerSchema.parse(rawData);
 
         const customer = await prisma.customer.create({
-            data: validatedData,
+            data: { companyId, ...validatedData },
         });
 
         revalidateFor('customer');
@@ -48,14 +51,17 @@ export async function createCustomer(formData: FormData): Promise<ActionResult<s
  */
 export async function getCustomers(searchQuery?: string): Promise<ActionResult<Customer[]>> {
     try {
-        const customers = await prisma.customer.findMany({
+        let session = await auth();
+    const companyId = (session?.user as any)?.companyId;
+    const customers = await prisma.customer.findMany({
             where: searchQuery ? {
+            companyId,
                 OR: [
                     { name: { contains: searchQuery, mode: 'insensitive' } },
                     { mobile: { contains: searchQuery, mode: 'insensitive' } },
                     { email: { contains: searchQuery, mode: 'insensitive' } },
                 ],
-            } : undefined,
+            } : { companyId },
             orderBy: { updatedAt: 'desc' },
         });
 
@@ -71,6 +77,8 @@ export async function getCustomers(searchQuery?: string): Promise<ActionResult<C
  */
 export async function updateCustomer(id: string, formData: FormData): Promise<ActionResult<string>> {
     try {
+        let session = await auth();
+        const companyId = (session?.user as any)?.companyId;
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
@@ -87,7 +95,7 @@ export async function updateCustomer(id: string, formData: FormData): Promise<Ac
 
         await prisma.customer.update({
             where: { id },
-            data: validatedData,
+            data: { companyId: ((await auth())?.user as any)?.companyId as string, ...validatedData },
         });
 
         revalidateFor('customer');
@@ -107,6 +115,8 @@ export async function updateCustomer(id: string, formData: FormData): Promise<Ac
  */
 export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
     try {
+        let session = await auth();
+        const companyId = (session?.user as any)?.companyId;
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };

@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { BookingSchema, type ActionResult } from '@/lib/validations';
 import { type Booking } from '@prisma/client';
@@ -52,7 +53,7 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
         }
 
         const booking = await prisma.booking.create({
-            data: validatedData,
+            data: { companyId: ((await auth())?.user as any)?.companyId as string, ...validatedData },
         });
 
         revalidateFor('booking');
@@ -82,7 +83,7 @@ export async function getBookings(searchQuery?: string): Promise<ActionResult<Bo
                     { customerName: { contains: searchQuery, mode: 'insensitive' } },
                     { destination: { contains: searchQuery, mode: 'insensitive' } },
                 ],
-            } : undefined,
+            } : { companyId: ((await auth())?.user as any)?.companyId as string },
             orderBy: { createdAt: 'desc' },
         });
 

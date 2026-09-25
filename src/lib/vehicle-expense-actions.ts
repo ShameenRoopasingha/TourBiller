@@ -1,5 +1,6 @@
-'use server';
+﻿'use server';
 
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { revalidateFor } from '@/lib/revalidation';
@@ -54,7 +55,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
 
         // Create the expense first (critical operation)
         const created = await prisma.vehicleExpense.create({
-            data: {
+            data: { companyId: ((await auth())?.user as any)?.companyId as string,
                 vehicleNo: validatedData.vehicleNo,
                 amount: validatedData.amount,
                 category: validatedData.category,
@@ -67,7 +68,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
 
         // Update vehicle last service mileage if applicable (non-critical)
         try {
-            const vehicle = await prisma.vehicle.findUnique({ where: { vehicleNo: validatedData.vehicleNo } });
+            const vehicle = await prisma.vehicle.findUnique({ where: { companyId_vehicleNo: { companyId: ((await auth())?.user as any)?.companyId as string, vehicleNo: validatedData.vehicleNo } } });
             const mileage = vehicle?.currentMileage;
 
             if (mileage !== undefined && mileage !== null) {
@@ -82,7 +83,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
 
                 if (Object.keys(updateData).length > 0) {
                     await prisma.vehicle.update({
-                        where: { vehicleNo: validatedData.vehicleNo },
+                        where: { companyId_vehicleNo: { companyId: ((await auth())?.user as any)?.companyId as string, vehicleNo: validatedData.vehicleNo } },
                         data: updateData,
                     });
                 }
@@ -104,7 +105,9 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
  */
 export async function getVehicleExpenses(vehicleNo?: string): Promise<ActionResult<VehicleExpense[]>> {
     try {
-        const expenses = await prisma.vehicleExpense.findMany({
+        let session = await auth();
+    const companyId = (session?.user as any)?.companyId;
+    const expenses = await prisma.vehicleExpense.findMany({
             where: vehicleNo ? { vehicleNo } : undefined,
             orderBy: { date: 'desc' },
         });
@@ -138,3 +141,4 @@ export async function deleteVehicleExpense(id: string): Promise<ActionResult<boo
         return { success: false, error: 'Failed to delete vehicle expense' };
     }
 }
+

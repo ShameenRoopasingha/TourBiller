@@ -1,5 +1,6 @@
-'use server';
+﻿'use server';
 
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { BillSchema, BusinessProfileSchema, type ActionResult } from '@/lib/validations';
 import { type Bill, type BusinessProfile } from '@prisma/client';
@@ -87,6 +88,7 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
     // Create the bill first (this is the critical operation)
     const createdBill = await prisma.bill.create({
       data: {
+        companyId: ((await auth())?.user as any)?.companyId as string,
         ...validatedData,
         totalAmount,
         itinerary: itinerary || null,
@@ -96,7 +98,7 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
     // Update vehicle mileage (non-critical - don't let this block bill creation)
     try {
       await prisma.vehicle.update({
-        where: { vehicleNo: createdBill.vehicleNo },
+        where: { companyId_vehicleNo: { companyId: createdBill.companyId, vehicleNo: createdBill.vehicleNo } },
         data: { currentMileage: createdBill.endMeter },
       });
     } catch (vehicleError) {
@@ -231,7 +233,7 @@ export async function updateBill(id: string, formData: FormData): Promise<Action
     // Update vehicle mileage
     try {
       await prisma.vehicle.update({
-        where: { vehicleNo: updatedBill.vehicleNo },
+        where: { companyId_vehicleNo: { companyId: ((await auth())?.user as any)?.companyId as string, vehicleNo: updatedBill.vehicleNo } },
         data: { currentMileage: updatedBill.endMeter },
       });
     } catch (vehicleError) {
@@ -271,7 +273,7 @@ export async function getBills(searchQuery?: string): Promise<ActionResult<Bill[
     const billNum = parseInt(cleanedQuery);
     const isNumericSearch = !isNaN(billNum) && cleanedQuery.trim() === String(billNum);
     const bills = await prisma.bill.findMany({
-      where: searchQuery ? {
+      where: searchQuery ? { companyId: ((await auth())?.user as any)?.companyId as string,
         OR: isNumericSearch
           ? [{ billNumber: { equals: billNum } }]
           : [
@@ -279,7 +281,7 @@ export async function getBills(searchQuery?: string): Promise<ActionResult<Bill[
               { customerName: { contains: cleanedQuery, mode: 'insensitive' } },
               { route: { contains: cleanedQuery, mode: 'insensitive' } },
             ],
-      } : undefined,
+      } : { companyId: ((await auth())?.user as any)?.companyId as string },
       orderBy: {
         createdAt: 'desc',
       },

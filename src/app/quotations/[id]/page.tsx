@@ -28,8 +28,13 @@ import {
     CardDescription
 } from '@/components/ui/card';
 
+import { auth } from '@/lib/auth';
+
+// ... other imports ...
+
 export default async function ViewQuotationPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
+    const session = await auth();
     const result = await getQuotationById(id);
 
     if (!result.success || !result.data) {
@@ -42,7 +47,7 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
     let vehicleContext = null;
     if (q.vehicleNo) {
         vehicleContext = await prisma.vehicle.findUnique({
-            where: { vehicleNo: q.vehicleNo }
+            where: { companyId_vehicleNo: { companyId: (session?.user as any)?.companyId || '', vehicleNo: q.vehicleNo } }
         });
     }
 

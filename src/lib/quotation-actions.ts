@@ -1,5 +1,6 @@
-'use server';
+﻿'use server';
 
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { QuotationSchema, type ActionResult, type QuotationWithSchedule } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
@@ -147,9 +148,10 @@ export async function getQuotations(
     searchQuery?: string
 ): Promise<ActionResult<QuotationWithSchedule[]>> {
     try {
-        const quotations = await prisma.quotation.findMany({
-            where: searchQuery
-                ? {
+        let session = await auth();
+    const companyId = (session?.user as any)?.companyId;
+    const quotations = await prisma.quotation.findMany({
+        where: { companyId, AND: searchQuery ? {
                     OR: [
                         { customerName: { contains: searchQuery, mode: 'insensitive' } },
                         { tourSchedule: { name: { contains: searchQuery, mode: 'insensitive' } } },
@@ -157,8 +159,7 @@ export async function getQuotations(
                             ? [{ quotationNumber: { equals: Number(searchQuery) } }]
                             : []),
                     ],
-                }
-                : undefined,
+                } : undefined },
             include: {
                 tourSchedule: {
                     include: { items: { orderBy: { dayNumber: 'asc' } } },
@@ -440,6 +441,7 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
 
             const booking = await tx.booking.create({
                 data: {
+                    companyId: quotation.companyId,
                     vehicleNo: quotation.vehicleNo!,
                     customerName: quotation.customerName,
                     startDate: quotation.startDate!,
@@ -472,3 +474,4 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
         return { success: false, error: 'Failed to convert quotation to booking' };
     }
 }
+

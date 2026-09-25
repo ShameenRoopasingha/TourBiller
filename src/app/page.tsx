@@ -39,7 +39,7 @@ export default async function DashboardPage() {
 
       if (activeBooking) {
         const vehicle = await prisma.vehicle.findUnique({
-          where: { vehicleNo: activeBooking.vehicleNo },
+          where: { companyId_vehicleNo: { companyId: (session?.user as any)?.companyId || '', vehicleNo: activeBooking.vehicleNo } },
           select: { model: true, category: true },
         });
 

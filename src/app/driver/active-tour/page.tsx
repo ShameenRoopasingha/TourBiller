@@ -1,5 +1,6 @@
-import { redirect } from 'next/navigation';
+﻿import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth-guard';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { DriverTourTabs } from '@/components/DriverTourTabs';
 
@@ -34,7 +35,7 @@ export default async function DriverActiveTourPage() {
     let assignedVehicle = null;
     if (activeBooking?.vehicleNo) {
         assignedVehicle = await prisma.vehicle.findUnique({
-            where: { vehicleNo: activeBooking.vehicleNo },
+            where: { companyId_vehicleNo: { companyId: ((await auth())?.user as any)?.companyId || '', vehicleNo: activeBooking.vehicleNo } },
             select: { model: true, category: true, seats: true, acType: true, currentMileage: true }
         });
     }

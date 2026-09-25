@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { TourScheduleSchema, type ActionResult } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
@@ -94,8 +95,7 @@ export async function createTourSchedule(
                     waitingCharge: validated.waitingCharge,
                     gatePass: validated.gatePass,
                     isActive: validated.isActive,
-                    items: {
-                        create: validated.items.map((item) => ({
+                    companyId: ((await auth())?.user as any)?.companyId as string, items: { create: validated.items.map((item) => ({
                             dayNumber: item.dayNumber,
                             title: item.title,
                             description: item.description,

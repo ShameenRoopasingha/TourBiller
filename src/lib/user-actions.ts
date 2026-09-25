@@ -118,7 +118,10 @@ type UserData = {
  */
 export async function getUsers(): Promise<ActionResult<UserData[]>> {
     try {
-        const users = await prisma.user.findMany({
+        let session = await auth();
+    const companyId = (session?.user as any)?.companyId;
+    const users = await prisma.user.findMany({
+        where: { companyId },
             select: {
                 id: true,
                 name: true,
@@ -142,7 +145,7 @@ export async function getUsers(): Promise<ActionResult<UserData[]>> {
 export async function createUser(formData: FormData): Promise<ActionResult<string>> {
     try {
         // Authorization: Only admins can create users
-        const session = await auth();
+        let session = await auth();
         const callerUser = session?.user?.email
             ? await prisma.user.findUnique({ where: { email: session.user.email } })
             : null;
@@ -171,8 +174,10 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        const companyId = (session?.user as any)?.companyId;
         const user = await prisma.user.create({
             data: {
+                companyId,
                 name,
                 email,
                 password: hashedPassword,
@@ -193,7 +198,7 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
  */
 export async function deleteUser(id: string): Promise<ActionResult<void>> {
     try {
-        const session = await auth();
+        let session = await auth();
         // The basic JWT auth user payload only includes id, name, email, image.
         // We need to fetch the full user to check their role.
         const dbUser = session?.user?.email 

@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-guard';
 import { type ActionResult } from '@/lib/validations';
@@ -48,8 +49,11 @@ export async function logTripActivity(
             return { success: false, error: 'Booking not found or not assigned to you.' };
         }
 
-        const activity = await prisma.tripActivity.create({
+        let session = await auth();
+    const companyId = (session?.user as any)?.companyId;
+    const activity = await prisma.tripActivity.create({
             data: {
+                companyId,
                 bookingId,
                 driverId: authCheck.userId,
                 type,
@@ -75,7 +79,9 @@ export async function getTripActivities(bookingId: string): Promise<ActionResult
             return { success: false, error: authCheck.error };
         }
 
-        const activities = await prisma.tripActivity.findMany({
+        let session = await auth();
+    const companyId = (session?.user as any)?.companyId;
+    const activities = await prisma.tripActivity.findMany({
             where: { bookingId },
             orderBy: { timestamp: 'desc' },
         });

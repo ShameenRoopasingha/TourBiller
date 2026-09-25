@@ -7,6 +7,7 @@ type AuthGuardResult = {
     authorized: true;
     userId: string;
     role: string;
+    companyId: string;
 } | {
     authorized: false;
     error: string;
@@ -17,14 +18,14 @@ type AuthGuardResult = {
  * Use this in any server action that requires admin privileges.
  */
 export async function requireAdmin(): Promise<AuthGuardResult> {
-    const session = await auth();
+    let session = await auth();
     if (!session?.user?.email) {
         return { authorized: false, error: 'Not authenticated' };
     }
 
     const user = await prisma.user.findUnique({
         where: { email: session.user.email },
-        select: { id: true, role: true },
+        select: { id: true, role: true, companyId: true },
     });
 
     if (!user) {
@@ -35,7 +36,7 @@ export async function requireAdmin(): Promise<AuthGuardResult> {
         return { authorized: false, error: 'Unauthorized: Admin access required' };
     }
 
-    return { authorized: true, userId: user.id, role: user.role };
+    return { authorized: true, userId: user.id, role: user.role, companyId: user.companyId };
 }
 
 /**
@@ -43,19 +44,20 @@ export async function requireAdmin(): Promise<AuthGuardResult> {
  * Use this in server actions that any logged-in user can access.
  */
 export async function requireAuth(): Promise<AuthGuardResult> {
-    const session = await auth();
+    let session = await auth();
     if (!session?.user?.email) {
         return { authorized: false, error: 'Not authenticated' };
     }
 
     const user = await prisma.user.findUnique({
         where: { email: session.user.email },
-        select: { id: true, role: true },
+        select: { id: true, role: true, companyId: true },
     });
 
     if (!user) {
         return { authorized: false, error: 'User not found' };
     }
 
-    return { authorized: true, userId: user.id, role: user.role };
+    return { authorized: true, userId: user.id, role: user.role, companyId: user.companyId };
 }
+

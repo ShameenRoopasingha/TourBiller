@@ -10,7 +10,7 @@ import { type ActionResult } from '@/lib/validations';
  */
 export async function updateProfile(formData: FormData): Promise<ActionResult<void>> {
     try {
-        const session = await auth();
+        let session = await auth();
         if (!session?.user?.id) {
             return { success: false, error: 'Unauthorized' };
         }
@@ -45,7 +45,7 @@ export async function updateProfile(formData: FormData): Promise<ActionResult<vo
  */
 export async function updatePassword(formData: FormData): Promise<ActionResult<void>> {
     try {
-        const session = await auth();
+        let session = await auth();
         if (!session?.user?.id) {
             return { success: false, error: 'Unauthorized' };
         }

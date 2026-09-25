@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { VehicleSchema, type ActionResult, type Vehicle, type VehicleAvailabilityConflict } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
@@ -39,8 +40,10 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
 
         const validatedData = VehicleSchema.parse(rawData);
 
-        const vehicle = await prisma.vehicle.create({
-            data: validatedData,
+        let session = await auth();
+    const companyId = (session?.user as any)?.companyId;
+    const vehicle = await prisma.vehicle.create({
+            data: { companyId, ...validatedData },
         });
 
         revalidateFor('vehicle');
@@ -120,7 +123,7 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
 
         await prisma.vehicle.update({
             where: { id },
-            data: validatedData,
+            data: { companyId: ((await auth())?.user as any)?.companyId as string, ...validatedData },
         });
 
         revalidateFor('vehicle');
