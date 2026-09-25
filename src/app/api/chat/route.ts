@@ -69,17 +69,31 @@ export async function POST(req: Request) {
           parameters: z.object({
             customerName: z.string().describe('Name of the customer').optional(),
             vehicleType: z.string().describe('Type or category of the vehicle (e.g. KDH, Car, Van)').optional(),
-            numberOfPersons: z.number().describe('Number of people travelling'),
-            days: z.number().describe('Duration of the trip in days'),
+            numberOfPersons: z.number().describe('Number of people travelling').optional(),
+            days: z.number().describe('Duration of the trip in days').optional(),
             pickupLocation: z.string().optional(),
             dropLocation: z.string().optional(),
-            destination: z.string().describe('Main destination of the trip'),
+            destination: z.string().describe('Main destination of the trip').optional(),
             hireRatePerDay: z.number().describe('Estimated hire rate per day').optional(),
             driverCostPerDay: z.number().describe('Estimated driver cost per day').optional(),
             notes: z.string().describe('Any other special requirements or notes').optional()
           }),
           execute: async (args) => {
-            return { success: true, draft: args };
+            let draft: any = { ...args };
+            // Fallback for weak models that return {}
+            if (Object.keys(draft).length === 0) {
+              const lastUserMsg = sanitizedMessages.filter((m: any) => m.role === 'user').pop()?.content || '';
+              const daysMatch = lastUserMsg.match(/(\d+)\s*day/i);
+              const personsMatch = lastUserMsg.match(/(\d+)\s*(people|persons|pax)/i);
+              const destMatch = lastUserMsg.match(/to\s+([a-zA-Z\s]+?)(?:\s+for|\s*$)/i);
+              const vehicleMatch = lastUserMsg.match(/(kdh|car|van|bus)/i);
+              
+              if (daysMatch) draft.days = parseInt(daysMatch[1]);
+              if (personsMatch) draft.numberOfPersons = parseInt(personsMatch[1]);
+              if (destMatch) draft.destination = destMatch[1].trim();
+              if (vehicleMatch) draft.vehicleType = vehicleMatch[1].toUpperCase();
+            }
+            return { success: true, draft };
           }
         }),
         searchCustomers: tool({
