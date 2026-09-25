@@ -6,7 +6,6 @@ import { Bot, Send, Loader2, Sparkles, Check, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface QuotationAIChatProps {
   onApplyDraft: (draft: any) => void;
@@ -35,7 +34,7 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
 
   return (
     <div className="flex flex-col h-[500px]">
-      <ScrollArea className="flex-1 p-4">
+      <div className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-4">
           {messages.map((message) => (
             <div
@@ -118,7 +117,7 @@ export function QuotationAIChat({ onApplyDraft, onClose }: QuotationAIChatProps)
           )}
           <div ref={messagesEndRef} />
         </div>
-      </ScrollArea>
+      </div>
       
       <div className="p-4 border-t bg-background">
         <form onSubmit={handleSubmit} className="flex gap-2 relative">
