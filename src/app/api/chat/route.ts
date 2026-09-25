@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { google } from '@ai-sdk/google';
-import { streamText, tool, convertToModelMessages } from 'ai';
+import { streamText, tool, convertToModelMessages, generateText } from 'ai';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
@@ -83,15 +83,35 @@ export async function POST(req: Request) {
             // Fallback for weak models that return {}
             if (Object.keys(draft).length === 0) {
               const lastUserMsg = sanitizedMessages.filter((m: any) => m.role === 'user').pop()?.content || '';
-              const daysMatch = lastUserMsg.match(/(\d+)\s*day/i);
-              const personsMatch = lastUserMsg.match(/(\d+)\s*(people|persons|pax)/i);
-              const destMatch = lastUserMsg.match(/to\s+([a-zA-Z\s]+?)(?:\s+for|\s*$)/i);
-              const vehicleMatch = lastUserMsg.match(/(kdh|car|van|bus)/i);
               
-              if (daysMatch) draft.days = parseInt(daysMatch[1]);
-              if (personsMatch) draft.numberOfPersons = parseInt(personsMatch[1]);
-              if (destMatch) draft.destination = destMatch[1].trim();
-              if (vehicleMatch) draft.vehicleType = vehicleMatch[1].toUpperCase();
+              try {
+                // Secondary AI pass to explicitly extract all details
+                const { text } = await generateText({
+                  model: google('gemini-flash-lite-latest'),
+                  prompt: `Extract the following details from this text and return ONLY a valid JSON object. No markdown, no backticks.
+Text: "${lastUserMsg}"
+Format: { "days": number (optional), "numberOfPersons": number (optional), "destination": string (optional), "vehicleType": string (optional), "customerName": string (optional), "notes": string (optional, e.g. dates or times) }`
+                });
+                
+                let cleanJson = text.trim();
+                if (cleanJson.startsWith('\`\`\`json')) cleanJson = cleanJson.replace(/^\`\`\`json/, '');
+                if (cleanJson.startsWith('\`\`\`')) cleanJson = cleanJson.replace(/^\`\`\`/, '');
+                if (cleanJson.endsWith('\`\`\`')) cleanJson = cleanJson.replace(/\`\`\`$/, '');
+                
+                const parsed = JSON.parse(cleanJson.trim());
+                draft = { ...draft, ...parsed };
+              } catch (e) {
+                // Safe regex fallback if AI parsing fails
+                const daysMatch = lastUserMsg.match(/(\d+)\s*day/i);
+                const personsMatch = lastUserMsg.match(/(\d+)\s*(people|persons|pax)/i);
+                const destMatch = lastUserMsg.match(/to\s+([a-zA-Z\s]+?)(?:\s+for|\s*$)/i);
+                const vehicleMatch = lastUserMsg.match(/(kdh|car|van|bus)/i);
+                
+                if (daysMatch) draft.days = parseInt(daysMatch[1]);
+                if (personsMatch) draft.numberOfPersons = parseInt(personsMatch[1]);
+                if (destMatch) draft.destination = destMatch[1].trim();
+                if (vehicleMatch) draft.vehicleType = vehicleMatch[1].toUpperCase();
+              }
             }
             return { success: true, draft };
           }
