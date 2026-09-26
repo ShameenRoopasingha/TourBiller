@@ -99,7 +99,7 @@ export function VehicleCalendar({ vehicles, bookings }: VehicleCalendarProps) {
   };
 
   return (
-    <Card className="w-full border-border/50 shadow-sm overflow-hidden">
+    <Card className="w-full min-w-0 border-border/50 shadow-sm overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-4 bg-muted/20 border-b">
         <CardTitle className="flex items-center gap-2">
           <CalendarIcon className="h-5 w-5 text-primary" />
@@ -118,7 +118,7 @@ export function VehicleCalendar({ vehicles, bookings }: VehicleCalendarProps) {
         </div>
       </CardHeader>
       <CardContent className="p-0 overflow-x-auto">
-        <div className="min-w-[800px]">
+        <div className="min-w-max w-full">
           {/* Header Row: Days */}
           <div className="flex border-b bg-muted/10">
             <div className="w-48 flex-shrink-0 p-3 border-r font-semibold text-sm flex items-center bg-muted/20">
