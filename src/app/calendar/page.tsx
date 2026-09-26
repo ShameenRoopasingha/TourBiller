@@ -56,7 +56,7 @@ export default async function CalendarPage() {
     });
 
     return (
-        <div className="w-full min-w-0 py-6 px-2 md:py-10 md:px-6 overflow-x-hidden">
+        <div className="w-full min-w-0 py-6 px-2 md:py-10 md:px-6">
             <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Booking Calendar</h1>

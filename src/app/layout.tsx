@@ -44,7 +44,7 @@ export default async function RootLayout({
                     <Sidebar userRole={(session.user as { role?: string })?.role} userName={session.user?.name || 'User'} />
                   </div>
 
-                  <SidebarInset className="flex w-full flex-col bg-transparent">
+                  <SidebarInset className="flex flex-1 min-w-0 flex-col bg-transparent">
                     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 print:hidden backdrop-blur-md bg-background/80 md:hidden z-50 sticky top-0">
                       <div className="flex items-center gap-2">
                         <Image src="/VIGIL-logo.png" alt="VIGIL" width={32} height={32} className="h-8 w-auto drop-shadow-sm" priority />
@@ -55,7 +55,7 @@ export default async function RootLayout({
                       </div>
                       <SidebarTrigger className="-mr-2" />
                     </header>
-                    <main className="flex-1 p-2 sm:p-4 md:p-8 bg-background/40 backdrop-blur-[2px] z-10 print:p-0 print:bg-white">
+                    <main className="flex-1 min-w-0 w-full p-2 sm:p-4 md:p-8 bg-background/40 backdrop-blur-[2px] z-10 print:p-0 print:bg-white">
                       <PageTransition>{children}</PageTransition>
                     </main>
                   </SidebarInset>
