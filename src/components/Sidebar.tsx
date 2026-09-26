@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, Sun, Moon, LogOut, UserCog } from 'lucide-react';
+import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, Sun, Moon, LogOut, UserCog, BarChart3 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import {
@@ -37,6 +37,7 @@ const navItems: NavItem[] = [
     { name: 'Tour Schedules', href: '/tour-schedules', icon: Map, adminOnly: true },
     { name: 'Quotations', href: '/quotations', icon: FileCheck, adminOnly: true },
     { name: 'Bills', href: '/bills', icon: FileText, adminOnly: true },
+    { name: 'Reports', href: '/reports', icon: BarChart3, adminOnly: true },
     { name: 'Users', href: '/users', icon: UserCog, adminOnly: true },
 ];
 
