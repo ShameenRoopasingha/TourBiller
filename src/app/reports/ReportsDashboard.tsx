@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, parseISO, subDays } from 'date-fns';
+import { Printer } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type BillData = { totalAmountLKR: number; createdAt: Date };
 type ExpenseData = { amount: number; date: Date };
@@ -72,14 +74,27 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
   const maxVal = Math.max(...aggregatedData.map(d => Math.max(d.income, d.expense)), 100);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 print:space-y-4">
+      {/* Print-only title */}
+      <div className="hidden print:block mb-6">
+        <h2 className="text-2xl font-bold">Financial Report ({timeframe.charAt(0).toUpperCase() + timeframe.slice(1)})</h2>
+        <p className="text-sm text-gray-500">Generated on {format(new Date(), 'MMM dd, yyyy')}</p>
+      </div>
+
       <Tabs defaultValue="monthly" value={timeframe} onValueChange={(v: any) => setTimeframe(v)} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-lg mb-6">
-          <TabsTrigger value="daily">Daily</TabsTrigger>
-          <TabsTrigger value="weekly">Weekly</TabsTrigger>
-          <TabsTrigger value="monthly">Monthly</TabsTrigger>
-          <TabsTrigger value="yearly">Yearly</TabsTrigger>
-        </TabsList>
+        <div className="flex justify-between items-center mb-6 print:hidden">
+          <TabsList className="grid w-full grid-cols-4 max-w-lg">
+            <TabsTrigger value="daily">Daily</TabsTrigger>
+            <TabsTrigger value="weekly">Weekly</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            <TabsTrigger value="yearly">Yearly</TabsTrigger>
+          </TabsList>
+          
+          <Button onClick={() => window.print()} variant="outline" className="flex items-center gap-2">
+            <Printer className="h-4 w-4" />
+            Print Report
+          </Button>
+        </div>
 
         <div className="grid gap-4 md:grid-cols-3 mb-8">
           <Card>

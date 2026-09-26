@@ -52,8 +52,8 @@ export default async function ReportsPage() {
     }));
 
     return (
-        <div className="container mx-auto py-10 px-4 md:px-6">
-            <div className="mb-8">
+        <div className="container mx-auto py-10 px-4 md:px-6 print:py-0 print:px-0">
+            <div className="mb-8 print:hidden">
                 <h1 className="text-3xl font-bold tracking-tight">Financial Reports</h1>
                 <p className="text-muted-foreground mt-2">Analyze your income and expenses with daily, weekly, monthly, and yearly breakdowns.</p>
             </div>
