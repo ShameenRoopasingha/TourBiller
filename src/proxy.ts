@@ -1,4 +1,4 @@
-﻿import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
 // Routes that drivers are NOT allowed to access
@@ -18,7 +18,9 @@ export default auth((req) => {
         pathname.startsWith('/login') ||
         pathname.startsWith('/api/auth') ||
         pathname.startsWith('/api/keepalive') ||
-        pathname.startsWith('/api/webhooks/subscription')
+        pathname.startsWith('/api/webhooks/subscription') ||
+        pathname.startsWith('/api/cron') || // Vercel Cron uses Bearer token auth
+        pathname.startsWith('/api/driver') // Mobile API routes use Bearer token auth, not cookies
     ) {
         return NextResponse.next();
     }
