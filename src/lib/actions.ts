@@ -269,11 +269,17 @@ export async function updateBill(id: string, formData: FormData): Promise<Action
  */
 export async function getBills(searchQuery?: string): Promise<ActionResult<Bill[]>> {
   try {
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error };
+    }
+    const companyId = authCheck.companyId;
+
     const cleanedQuery = searchQuery?.replace(/^#/, '') || '';
     const billNum = parseInt(cleanedQuery);
     const isNumericSearch = !isNaN(billNum) && cleanedQuery.trim() === String(billNum);
     const bills = await prisma.bill.findMany({
-      where: searchQuery ? { companyId: ((await auth())?.user as any)?.companyId as string,
+      where: searchQuery ? { companyId,
         OR: isNumericSearch
           ? [{ billNumber: { equals: billNum } }]
           : [
@@ -281,7 +287,7 @@ export async function getBills(searchQuery?: string): Promise<ActionResult<Bill[
               { customerName: { contains: cleanedQuery, mode: 'insensitive' } },
               { route: { contains: cleanedQuery, mode: 'insensitive' } },
             ],
-      } : { companyId: ((await auth())?.user as any)?.companyId as string },
+      } : { companyId },
       orderBy: {
         createdAt: 'desc',
       },
@@ -435,3 +441,6 @@ export async function deleteBill(id: string): Promise<ActionResult<void>> {
     };
   }
 }
+
+
+
