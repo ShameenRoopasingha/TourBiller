@@ -84,6 +84,24 @@ export async function getDashboardStats() {
             },
         }).catch(e => { console.error('Error recentBills:', e); return []; });
         
+        const allVehicles = await prisma.vehicle.findMany({ where: { companyId, status: 'ACTIVE' }, select: { vehicleNo: true, currentMileage: true, oilChangeInterval: true, lastOilChangeMileage: true, filterChangeInterval: true, lastFilterChangeMileage: true, washInterval: true, lastWashMileage: true, insuranceExpiry: true, revenueLicenseExpiry: true } }).catch(() => []);
+
+        const maintenanceAlerts = allVehicles.filter(v => 
+            (v.currentMileage - v.lastOilChangeMileage >= v.oilChangeInterval - 100) ||
+            (v.currentMileage - v.lastFilterChangeMileage >= v.filterChangeInterval - 100) ||
+            (v.currentMileage - v.lastWashMileage >= v.washInterval) ||
+            (v.insuranceExpiry && (v.insuranceExpiry.getTime() - now.getTime()) / (1000 * 3600 * 24) <= 30) ||
+            (v.revenueLicenseExpiry && (v.revenueLicenseExpiry.getTime() - now.getTime()) / (1000 * 3600 * 24) <= 30)
+        ).map(v => {
+            const alerts = [];
+            if (v.currentMileage - v.lastOilChangeMileage >= v.oilChangeInterval - 100) alerts.push('Oil Change');
+            if (v.currentMileage - v.lastFilterChangeMileage >= v.filterChangeInterval - 100) alerts.push('Filter Change');
+            if (v.currentMileage - v.lastWashMileage >= v.washInterval) alerts.push('Wash');
+            if (v.insuranceExpiry && (v.insuranceExpiry.getTime() - now.getTime()) / (1000 * 3600 * 24) <= 30) alerts.push('Insurance Expiring');
+            if (v.revenueLicenseExpiry && (v.revenueLicenseExpiry.getTime() - now.getTime()) / (1000 * 3600 * 24) <= 30) alerts.push('License Expiring');
+            return { vehicleNo: v.vehicleNo, alerts };
+        });
+
         const ongoingBookings = await prisma.booking.findMany({
             where: ongoingBookingFilter,
             orderBy: { startDate: 'asc' },
@@ -112,6 +130,7 @@ export async function getDashboardStats() {
                 revenueToday: todayResult._sum.totalAmount || 0,
                 recentBills,
                 ongoingBookings,
+                maintenanceAlerts,
             }
         };
 

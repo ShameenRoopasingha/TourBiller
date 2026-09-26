@@ -53,6 +53,8 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
             acType: vehicle?.acType || '',
             features: vehicle?.features || '',
             insuranceCoverage: vehicle?.insuranceCoverage || '',
+            insuranceExpiry: vehicle?.insuranceExpiry ? new Date(vehicle.insuranceExpiry).toISOString().split('T')[0] : '',
+            revenueLicenseExpiry: vehicle?.revenueLicenseExpiry ? new Date(vehicle.revenueLicenseExpiry).toISOString().split('T')[0] : '',
             currentMileage: vehicle?.currentMileage ?? 0,
             oilChangeInterval: vehicle?.oilChangeInterval ?? 5000,
             lastOilChangeMileage: vehicle?.lastOilChangeMileage ?? 0,
@@ -333,6 +335,34 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                         <FormLabel>Insurance Coverage</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g. Rs. 500,000 per passenger" {...field} value={field.value || ""} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="insuranceExpiry"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Insurance Expiry Date</FormLabel>
+                                        <FormControl>
+                                            <Input type="date" {...field} value={field.value || ""} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="revenueLicenseExpiry"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Revenue License Expiry Date</FormLabel>
+                                        <FormControl>
+                                            <Input type="date" {...field} value={field.value || ""} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

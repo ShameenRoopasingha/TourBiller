@@ -99,6 +99,8 @@ model Vehicle {
   acType            String?  // e.g. "Line AC", "Dual AC", "Roof AC", "No AC"
   features          String?  // Free-text specs: TV, sound system, seat type, etc.
   insuranceCoverage String?  // e.g. "Rs. 500,000 per passenger"
+  insuranceExpiry   DateTime? // When insurance expires
+  revenueLicenseExpiry DateTime? // When revenue license expires
   currentMileage          Float    @default(0)
   oilChangeInterval       Float    @default(5000)
   lastOilChangeMileage    Float    @default(0)
