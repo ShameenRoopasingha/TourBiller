@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     if (activities.length) zip.file('activities.csv', toCsv(activities));
 
     // සම්පූර්ණ ZIP file එක generate කරනවා
-    const zipContent = await zip.generateAsync({ type: 'nodebuffer' });
+    const zipContent = await zip.generateAsync({ type: 'uint8array' });
 
     // ZIP file එක download වෙන්න return කරනවා
     return new NextResponse(zipContent, {
