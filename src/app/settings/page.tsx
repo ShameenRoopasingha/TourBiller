@@ -7,6 +7,8 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { prisma } from '@/lib/prisma';
+import { BackupButton } from '@/components/BackupButton';
+import { CsvImport } from '@/components/CsvImport';
 
 async function SettingsContent() {
     const session = await auth();
@@ -60,6 +62,18 @@ async function SettingsContent() {
                             </p>
                             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                             <BusinessProfileForm initialData={profile as any} />
+                            
+                            <div className="mt-10 pt-6 border-t border-border">
+                                <h3 className="text-lg font-medium mb-2">Data Backup</h3>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    Download a complete backup of your business data (Customers, Vehicles, Bookings, etc.) as a ZIP file containing CSVs.
+                                </p>
+                                {profile?.id && <BackupButton companyId={profile.id} />}
+                            </div>
+
+                            <div className="mt-6 pt-6 border-t border-border">
+                                {profile?.id && <CsvImport companyId={profile.id} />}
+                            </div>
                         </div>
                     </TabsContent>
                 )}
