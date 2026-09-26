@@ -157,12 +157,19 @@ export default async function BookingsPage(props: {
                     <h1 className="text-2xl sm:text-3xl font-bold">Bookings</h1>
                     <p className="text-muted-foreground">Manage vehicle reservations</p>
                 </div>
-                <Button asChild className="w-full sm:w-auto">
-                    <Link href="/bookings/new">
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Booking
-                    </Link>
-                </Button>
+                <div className="flex w-full sm:w-auto gap-2">
+                    <Button variant="outline" asChild className="flex-1 sm:flex-none">
+                        <Link href="/calendar">
+                            View Calendar
+                        </Link>
+                    </Button>
+                    <Button asChild className="flex-1 sm:flex-none">
+                        <Link href="/bookings/new">
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Booking
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <div className="mb-6">
