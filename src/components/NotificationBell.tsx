@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, AlertTriangle, FileText } from 'lucide-react';
+import { Bell, AlertTriangle, FileText, Calendar, Banknote } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { getDashboardStats } from '@/lib/dashboard-actions';
@@ -68,9 +68,13 @@ export function NotificationBell() {
                             {alerts.map((alert, i) => (
                                 <div key={i} className="flex gap-3 p-4 border-b last:border-0 hover:bg-muted/50 transition-colors">
                                     <div className="mt-0.5 flex-shrink-0">
-                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${alert.type === 'BILLING' ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                                                                                <div className={\h-8 w-8 rounded-full flex items-center justify-center \\}>
                                             {alert.type === 'BILLING' ? (
                                                 <FileText className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                            ) : alert.type === 'TOUR' ? (
+                                                <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                            ) : alert.type === 'EXPENSE' ? (
+                                                <Banknote className="h-4 w-4 text-green-600 dark:text-green-400" />
                                             ) : (
                                                 <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
                                             )}
@@ -92,3 +96,4 @@ export function NotificationBell() {
         </Popover>
     );
 }
+

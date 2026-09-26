@@ -115,14 +115,57 @@ export async function getDashboardStats() {
             select: { id: true, vehicleNo: true, customerName: true }
         }).catch(() => []);
 
-        const billingAlerts = pendingTours.map(t => ({
-            id: `bill-${t.id}`,
+                const billingAlerts = pendingTours.map(t => ({
+            id: \ill-\\,
             title: t.vehicleNo,
-            message: `Trip ended for ${t.customerName}. Bill needs to be generated.`,
+            message: \Trip ended for \. Bill needs to be generated.\,
             type: 'BILLING'
         }));
 
-        const allNotifications = [...maintenanceAlerts, ...billingAlerts];
+        const todayStart = new Date(now);
+        todayStart.setHours(0, 0, 0, 0);
+        const dayAfterTomorrow = new Date(todayStart);
+        dayAfterTomorrow.setDate(todayStart.getDate() + 2);
+
+        const upcomingTours = await prisma.booking.findMany({
+            where: { 
+                companyId, 
+                status: 'CONFIRMED',
+                startDate: {
+                    gte: todayStart,
+                    lt: dayAfterTomorrow
+                }
+            },
+            select: { id: true, vehicleNo: true, customerName: true, startDate: true }
+        }).catch(() => []);
+
+        const upcomingAlerts = upcomingTours.map(t => {
+            const isToday = t.startDate.getDate() === now.getDate();
+            return {
+                id: \upcoming-\\,
+                title: t.vehicleNo,
+                message: \Tour for \ starts \.\,
+                type: 'TOUR'
+            };
+        });
+
+        const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+        const recentExpenses = await prisma.vehicleExpense.findMany({
+            where: {
+                companyId,
+                createdAt: { gte: twoDaysAgo }
+            },
+            select: { id: true, vehicleNo: true, amount: true, category: true }
+        }).catch(() => []);
+
+        const expenseAlerts = recentExpenses.map(e => ({
+            id: \exp-\\,
+            title: e.vehicleNo,
+            message: \New expense logged: Rs.\ for \.\,
+            type: 'EXPENSE'
+        }));
+
+        const allNotifications = [...maintenanceAlerts, ...billingAlerts, ...upcomingAlerts, ...expenseAlerts];
 
         const ongoingBookings = await prisma.booking.findMany({
             where: ongoingBookingFilter,
@@ -161,3 +204,4 @@ export async function getDashboardStats() {
         return { success: false, error: 'Failed to fetch dashboard stats' };
     }
 }
+
