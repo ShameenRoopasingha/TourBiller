@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, AlertTriangle } from 'lucide-react';
+import { Bell, AlertTriangle, FileText } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { getDashboardStats } from '@/lib/dashboard-actions';
+import Link from 'next/link';
 
 export function NotificationBell() {
     const [alerts, setAlerts] = useState<any[]>([]);
@@ -65,13 +66,20 @@ export function NotificationBell() {
                             {alerts.map((alert, i) => (
                                 <div key={i} className="flex gap-3 p-4 border-b last:border-0 hover:bg-muted/50 transition-colors">
                                     <div className="mt-0.5 flex-shrink-0">
-                                        <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                                            <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${alert.type === 'BILLING' ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                                            {alert.type === 'BILLING' ? (
+                                                <FileText className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                            ) : (
+                                                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                            )}
                                         </div>
                                     </div>
-                                    <div className="flex flex-col gap-1">
-                                        <p className="text-sm font-medium leading-none">{alert.vehicleNo}</p>
+                                    <div className="flex flex-col gap-1 w-full">
+                                        <p className="text-sm font-medium leading-none">{alert.title}</p>
                                         <p className="text-xs text-muted-foreground">{alert.message}</p>
+                                        {alert.type === 'BILLING' && (
+                                            <Link href="/bills" className="text-[10px] text-blue-600 font-semibold mt-1">View in Bills →</Link>
+                                        )}
                                     </div>
                                 </div>
                             ))}

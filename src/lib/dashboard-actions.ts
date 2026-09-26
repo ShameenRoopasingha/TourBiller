@@ -99,8 +99,28 @@ export async function getDashboardStats() {
             if (v.currentMileage - v.lastWashMileage >= v.washInterval) alerts.push('Wash');
             if (v.insuranceExpiry && (v.insuranceExpiry.getTime() - now.getTime()) / (1000 * 3600 * 24) <= 30) alerts.push('Insurance Expiring');
             if (v.revenueLicenseExpiry && (v.revenueLicenseExpiry.getTime() - now.getTime()) / (1000 * 3600 * 24) <= 30) alerts.push('License Expiring');
-            return { vehicleNo: v.vehicleNo, alerts };
+            
+            return { 
+                id: `maint-${v.vehicleNo}`,
+                title: v.vehicleNo, 
+                message: `Maintenance needed: ${alerts.join(", ")}`,
+                type: 'MAINTENANCE' 
+            };
         });
+
+        const pendingTours = await prisma.booking.findMany({
+            where: { companyId, status: 'COMPLETED' },
+            select: { id: true, vehicleNo: true, customerName: true }
+        }).catch(() => []);
+
+        const billingAlerts = pendingTours.map(t => ({
+            id: `bill-${t.id}`,
+            title: t.vehicleNo,
+            message: `Trip ended for ${t.customerName}. Bill needs to be generated.`,
+            type: 'BILLING'
+        }));
+
+        const allNotifications = [...maintenanceAlerts, ...billingAlerts];
 
         const ongoingBookings = await prisma.booking.findMany({
             where: ongoingBookingFilter,
@@ -130,7 +150,7 @@ export async function getDashboardStats() {
                 revenueToday: todayResult._sum.totalAmount || 0,
                 recentBills,
                 ongoingBookings,
-                maintenanceAlerts,
+                maintenanceAlerts: allNotifications,
             }
         };
 
