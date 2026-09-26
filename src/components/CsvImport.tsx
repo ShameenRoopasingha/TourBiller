@@ -4,7 +4,6 @@ import { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import { Upload, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function CsvImport({ companyId }: { companyId: string }) {
   const [entityType, setEntityType] = useState<string>('customers');
@@ -20,7 +19,7 @@ export function CsvImport({ companyId }: { companyId: string }) {
     setIsUploading(true);
 
     Papa.parse(file, {
-      header: true, // පළවෙනි පේළිය headers විදියට ගන්නවා
+      header: true,
       skipEmptyLines: true,
       complete: async (results) => {
         try {
@@ -45,7 +44,7 @@ export function CsvImport({ companyId }: { companyId: string }) {
           setMessage({ type: 'error', text: 'Server එකට connect වෙන්න බැරි වුණා.' });
         } finally {
           setIsUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+          if (fileInputRef.current) fileInputRef.current.value = '';
         }
       },
       error: (err) => {
@@ -77,15 +76,14 @@ export function CsvImport({ companyId }: { companyId: string }) {
       
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         <div className="w-full sm:w-48">
-          <Select value={entityType} onValueChange={setEntityType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="customers">Customers</SelectItem>
-              <SelectItem value="vehicles">Vehicles</SelectItem>
-            </SelectContent>
-          </Select>
+          <select 
+            value={entityType} 
+            onChange={(e) => setEntityType(e.target.value)}
+            className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            <option value="customers" className="bg-background text-foreground">Customers</option>
+            <option value="vehicles" className="bg-background text-foreground">Vehicles</option>
+          </select>
         </div>
 
         <Button variant="outline" size="sm" onClick={downloadTemplate}>
