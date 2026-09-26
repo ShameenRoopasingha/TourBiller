@@ -13,10 +13,12 @@ export function NotificationBell() {
     useEffect(() => {
         const fetchAlerts = async () => {
             try {
-                // Fetching dashboard stats just to get maintenance alerts
-                // In a production app, we would have a dedicated endpoint/action for this
-                const stats = await getDashboardStats();
-                setAlerts(stats.maintenanceAlerts || []);
+                const response = await getDashboardStats();
+                if (response.success && response.data) {
+                    setAlerts(response.data.maintenanceAlerts || []);
+                } else {
+                    setAlerts([]);
+                }
             } catch (error) {
                 console.error("Failed to fetch alerts", error);
             } finally {
