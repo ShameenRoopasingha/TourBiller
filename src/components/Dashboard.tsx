@@ -255,35 +255,6 @@ export async function Dashboard() {
 
                 <Card className="md:col-span-3">
                     <CardHeader>
-                        <CardTitle className="text-red-600 flex items-center gap-2">
-                            <Activity className="h-5 w-5" /> Alerts & Reminders
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {stats.maintenanceAlerts?.length === 0 ? (
-                            <div className="text-sm text-muted-foreground p-4 bg-muted/20 rounded-lg text-center">
-                                No upcoming maintenance or expiring documents. All good!
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {stats.maintenanceAlerts?.map((alert: any, i: number) => (
-                                    <div key={i} className="flex justify-between items-center p-3 border-l-4 border-l-red-500 bg-red-50 dark:bg-red-950/20 rounded-r-lg">
-                                        <div>
-                                            <p className="font-bold">{alert.vehicleNo}</p>
-                                            <p className="text-xs text-red-600 dark:text-red-400">{alert.alerts.join(", ")}</p>
-                                        </div>
-                                        <Button variant="outline" size="sm" asChild>
-                                            <Link href={`/vehicles`}>View</Link>
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card className="md:col-span-3">
-                    <CardHeader>
                         <CardTitle>Ongoing Tours</CardTitle>
                         <CardDescription>
                             Currently active vehicle bookings.
