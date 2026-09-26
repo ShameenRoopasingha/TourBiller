@@ -231,7 +231,7 @@ async function PendingBillsList({ companyId }: { companyId: string }) {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button size="sm" asChild className="bg-orange-600 hover:bg-orange-700 text-white">
-                                        <Link href={/bills/new?vehicleNo= + encodeURIComponent(tour.vehicleNo) + &customerName= + encodeURIComponent(tour.customerName) + &bookingId= + tour.id}>
+                                        <Link href={`/bills/new?vehicleNo=${encodeURIComponent(tour.vehicleNo)}&customerName=${encodeURIComponent(tour.customerName)}&bookingId=${tour.id}`}>
                                             Generate Bill
                                         </Link>
                                     </Button>
