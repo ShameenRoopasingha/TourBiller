@@ -73,10 +73,10 @@ export async function GET(request: NextRequest) {
     if (activities.length) zip.file('activities.csv', toCsv(activities));
 
     // සම්පූර්ණ ZIP file එක generate කරනවා
-    const zipContent = await zip.generateAsync({ type: 'uint8array' });
+    const zipContent = await zip.generateAsync({ type: 'nodebuffer' });
 
     // ZIP file එක download වෙන්න return කරනවා
-    return new NextResponse(zipContent, {
+    return new NextResponse(zipContent as any, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="Business_Backup_${businessInfo.companyName?.replace(/\s+/g, '_') || companyId}.zip"`,
