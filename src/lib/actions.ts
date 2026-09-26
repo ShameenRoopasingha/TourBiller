@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -111,7 +111,7 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
       try {
         await prisma.booking.update({
           where: { id: bookingId },
-          data: { status: 'COMPLETED' },
+          data: { status: 'BILLED' },
         });
       } catch (bookingError) {
         console.warn('Could not auto-close booking:', bookingError);

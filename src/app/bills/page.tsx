@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { prisma } from '@/lib/prisma';
 import { getBills } from '@/lib/actions';
 import { formatCurrency } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
@@ -185,6 +186,65 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
     );
 }
 
+
+async function PendingBillsList({ companyId }: { companyId: string }) {
+    const pendingTours = await prisma.booking.findMany({
+        where: {
+            companyId,
+            status: 'COMPLETED'
+        },
+        orderBy: { updatedAt: 'desc' }
+    });
+
+    if (pendingTours.length === 0) return null;
+
+    return (
+        <Card className="border-orange-200 bg-orange-50/30 dark:bg-orange-950/10 mb-8">
+            <div className="p-4 border-b border-orange-100 bg-orange-100/50 dark:bg-orange-900/20 dark:border-orange-900/50">
+                <h2 className="text-lg font-bold text-orange-800 dark:text-orange-400 flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Pending to be Billed ({pendingTours.length})
+                </h2>
+                <p className="text-sm text-orange-700/80 dark:text-orange-300/80">
+                    These tours were ended by the driver and need to be billed.
+                </p>
+            </div>
+            <div className="p-0 overflow-x-auto">
+                <Table>
+                    <TableHeader className="bg-transparent hover:bg-transparent">
+                        <TableRow className="border-orange-200/50 hover:bg-transparent">
+                            <TableHead className="text-orange-800/80">Vehicle</TableHead>
+                            <TableHead className="text-orange-800/80">Customer</TableHead>
+                            <TableHead className="text-orange-800/80">Destination</TableHead>
+                            <TableHead className="text-orange-800/80">Ended On</TableHead>
+                            <TableHead className="text-right text-orange-800/80">Action</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {pendingTours.map((tour) => (
+                            <TableRow key={tour.id} className="border-orange-200/50 hover:bg-orange-100/30">
+                                <TableCell className="font-medium text-orange-900 dark:text-orange-300">{tour.vehicleNo}</TableCell>
+                                <TableCell className="text-orange-900 dark:text-orange-300">{tour.customerName}</TableCell>
+                                <TableCell className="text-orange-900 dark:text-orange-300">{tour.destination}</TableCell>
+                                <TableCell className="text-orange-900 dark:text-orange-300">
+                                    {new Date(tour.updatedAt).toLocaleDateString('en-GB')}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button size="sm" asChild className="bg-orange-600 hover:bg-orange-700 text-white">
+                                        <Link href={/bills/new?vehicleNo= + encodeURIComponent(tour.vehicleNo) + &customerName= + encodeURIComponent(tour.customerName) + &bookingId= + tour.id}>
+                                            Generate Bill
+                                        </Link>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </Card>
+    );
+}
+
 export default async function BillsPage(
     props: {
         searchParams?: Promise<{ q?: string }>;
@@ -212,7 +272,7 @@ export default async function BillsPage(
                 )}
             </div>
 
-            <SearchInput placeholder="Search by bill no, customer, vehicle..." />
+            <SearchInput placeholder="Search by bill no, customer, vehicle..." />`n`n            {isAdmin && <PendingBillsList companyId={(session?.user as any)?.companyId || ""} />}
 
             <Suspense fallback={
                 <div className="space-y-4">
@@ -226,4 +286,6 @@ export default async function BillsPage(
         </div>
     );
 }
+
+
 
