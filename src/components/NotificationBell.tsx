@@ -28,6 +28,8 @@ export function NotificationBell() {
         };
 
         fetchAlerts();
+        const interval = setInterval(fetchAlerts, 10000); // Poll every 10s
+        return () => clearInterval(interval);
     }, []);
 
     const unreadCount = alerts.length;

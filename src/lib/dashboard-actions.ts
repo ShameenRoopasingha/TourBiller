@@ -2,8 +2,10 @@
 
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-guard';
+import { unstable_noStore as noStore } from 'next/cache';
 
 export async function getDashboardStats() {
+    noStore();
     try {
         const authCheck = await requireAuth();
         if (!authCheck.authorized) {
