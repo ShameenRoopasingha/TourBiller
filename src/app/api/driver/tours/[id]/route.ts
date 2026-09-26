@@ -21,12 +21,13 @@ async function verifyDriver(req: Request) {
 }
 
 // GET: Fetch single tour details with activities
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const auth = await verifyDriver(req);
         if (auth.error) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
 
-        const bookingId = params.id;
+        const resolvedParams = await params;
+        const bookingId = resolvedParams.id;
         const driverId = auth.driver.id;
 
         const booking = await prisma.booking.findUnique({
@@ -51,12 +52,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 // PUT: Update tour status or add activity
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const auth = await verifyDriver(req);
         if (auth.error) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
 
-        const bookingId = params.id;
+        const resolvedParams = await params;
+        const bookingId = resolvedParams.id;
         const { companyId, id: driverId } = auth.driver;
         
         const body = await req.json();
