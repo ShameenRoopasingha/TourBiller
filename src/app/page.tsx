@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Dashboard } from '@/components/Dashboard';
 import { DriverDashboard } from '@/components/DriverDashboard';
+import { AutoRefresh } from '@/components/AutoRefresh';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -87,6 +88,9 @@ export default async function DashboardPage() {
         }>
           <Dashboard />
         </Suspense>
+        
+        {/* Silent auto-refresh for real-time dashboard updates */}
+        <AutoRefresh intervalMs={10000} />
       </div>
     </main>
   );
