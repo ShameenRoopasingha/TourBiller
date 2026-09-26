@@ -272,7 +272,8 @@ export default async function BillsPage(
                 )}
             </div>
 
-            <SearchInput placeholder="Search by bill no, customer, vehicle..." />`n`n            {isAdmin && <PendingBillsList companyId={(session?.user as any)?.companyId || ""} />}
+            <SearchInput placeholder="Search by bill no, customer, vehicle..." />
+            {isAdmin && <PendingBillsList companyId={(session?.user as any)?.companyId || ""} />}
 
             <Suspense fallback={
                 <div className="space-y-4">
