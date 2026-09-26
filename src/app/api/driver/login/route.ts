@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
 
 export async function POST(req: Request) {
+    console.log("REACHED /api/driver/login ROUTE!");
     try {
         const body = await req.json();
         const { email, password } = body;

@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { SessionProvider } from '@/components/SessionProvider';
 import { auth } from '@/lib/auth';
 import { PageTransition } from '@/components/PageTransition';
+import { NotificationBell } from '@/components/NotificationBell';
 
 import ChatAssistant from '@/components/ChatAssistant';
 
@@ -44,17 +45,28 @@ export default async function RootLayout({
                     <Sidebar userRole={(session.user as { role?: string })?.role} userName={session.user?.name || 'User'} />
                   </div>
 
-                  <SidebarInset className="flex flex-1 min-w-0 flex-col bg-transparent">
-                    <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 print:hidden backdrop-blur-md bg-background/80 md:hidden z-50 sticky top-0">
+                  <SidebarInset className="flex flex-1 min-w-0 flex-col bg-transparent relative">
+                    {/* Global Topbar */}
+                    <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6 print:hidden backdrop-blur-md bg-background/80 z-50 sticky top-0">
                       <div className="flex items-center gap-2">
-                        <Image src="/VIGIL-logo.png" alt="VIGIL" width={32} height={32} className="h-8 w-auto drop-shadow-sm" priority />
-                        <div className="flex flex-col justify-center">
-                          <span className="font-bold text-lg tracking-tight leading-none bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-0.5">VIGIL</span>
-                          <span className="text-[0.5rem] font-medium tracking-wide text-muted-foreground uppercase leading-none">Smart Travel Management.</span>
+                        {/* Mobile Only Logo & Trigger */}
+                        <div className="md:hidden flex items-center gap-2">
+                          <SidebarTrigger className="-mr-2" />
+                          <Image src="/VIGIL-logo.png" alt="VIGIL" width={28} height={28} className="h-7 w-auto drop-shadow-sm" priority />
+                          <div className="flex flex-col justify-center">
+                            <span className="font-bold text-base tracking-tight leading-none bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-0.5">VIGIL</span>
+                          </div>
                         </div>
+                        {/* Desktop empty spacer for left side if needed */}
+                        <div className="hidden md:block"></div>
                       </div>
-                      <SidebarTrigger className="-mr-2" />
+                      
+                      {/* Top Right Actions */}
+                      <div className="flex items-center gap-4">
+                         <NotificationBell />
+                      </div>
                     </header>
+
                     <main className="flex-1 min-w-0 w-full p-2 sm:p-4 md:p-8 bg-background/40 backdrop-blur-[2px] z-10 print:p-0 print:bg-white">
                       <PageTransition>{children}</PageTransition>
                     </main>
