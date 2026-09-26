@@ -115,10 +115,10 @@ export async function getDashboardStats() {
             select: { id: true, vehicleNo: true, customerName: true }
         }).catch(() => []);
 
-                const billingAlerts = pendingTours.map(t => ({
-            id: \ill-\\,
+        const billingAlerts = pendingTours.map(t => ({
+            id: `bill-${t.id}`,
             title: t.vehicleNo,
-            message: \Trip ended for \. Bill needs to be generated.\,
+            message: `Trip ended for ${t.customerName}. Bill needs to be generated.`,
             type: 'BILLING'
         }));
 
@@ -142,9 +142,9 @@ export async function getDashboardStats() {
         const upcomingAlerts = upcomingTours.map(t => {
             const isToday = t.startDate.getDate() === now.getDate();
             return {
-                id: \upcoming-\\,
+                id: `upcoming-${t.id}`,
                 title: t.vehicleNo,
-                message: \Tour for \ starts \.\,
+                message: `Tour for ${t.customerName} starts ${isToday ? 'TODAY' : 'TOMORROW'}.`,
                 type: 'TOUR'
             };
         });
@@ -159,9 +159,9 @@ export async function getDashboardStats() {
         }).catch(() => []);
 
         const expenseAlerts = recentExpenses.map(e => ({
-            id: \exp-\\,
+            id: `exp-${e.id}`,
             title: e.vehicleNo,
-            message: \New expense logged: Rs.\ for \.\,
+            message: `New expense logged: Rs.${e.amount} for ${e.category}.`,
             type: 'EXPENSE'
         }));
 
@@ -204,4 +204,3 @@ export async function getDashboardStats() {
         return { success: false, error: 'Failed to fetch dashboard stats' };
     }
 }
-
