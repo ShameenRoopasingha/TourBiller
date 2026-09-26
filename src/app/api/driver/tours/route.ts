@@ -32,6 +32,7 @@ export async function GET(req: Request) {
                 status: {
                     in: ['CONFIRMED', 'PENDING'] // Ongoing or upcoming
                 }
+            },
             orderBy: {
                 startDate: 'asc'
             }
