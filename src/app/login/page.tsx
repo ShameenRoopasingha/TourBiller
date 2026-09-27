@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import LightRays from '@/components/Backgrounds/LightRays';
+import Topography from '@/components/Backgrounds/Topography';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -49,16 +49,24 @@ export default function LoginPage() {
     return (
         <div className="relative min-h-screen flex items-center justify-center p-3 sm:p-4 overflow-hidden">
             {/* Animated Background */}
-            <div className="absolute inset-0 z-0 bg-black">
-                <LightRays
-                    raysColor="#00b4d8" // Cyan/Bright Blue
-                    raysSpeed={1.5}
-                    lightSpread={1.2}
-                    rayLength={1.2}
-                    pulsating={true}
-                    followMouse={true}
-                    lightMode={true}
-                    className="opacity-70 dark:opacity-90"
+            <div className="absolute inset-0 z-0 bg-[#000510]">
+                <Topography
+                    lowColor="#001845"    // Deep Navy
+                    midColor="#00b4d8"    // Cyan
+                    highColor="#caf0f8"   // Very Light Cyan
+                    speed={0.4}
+                    morphAmount={3.0}
+                    morphSpeed={0.05}
+                    bands={2.5}
+                    thickness={0.012}
+                    scale={1.2}
+                    colorMode="elevation"
+                    contrast={2.0}
+                    brightness={1.5}
+                    opacity={0.8}
+                    mouseInteraction={true}
+                    mouseRadius={0.4}
+                    mouseStrength={0.5}
                 />
             </div>
 
