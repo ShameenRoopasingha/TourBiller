@@ -217,8 +217,8 @@ export async function getDashboardStats() {
             }
         };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('[Dashboard] Critical Error:', error);
-        return { success: false, error: 'Failed to fetch dashboard stats' };
+        return { success: false, error: error?.message || 'Failed to fetch dashboard stats' };
     }
 }
