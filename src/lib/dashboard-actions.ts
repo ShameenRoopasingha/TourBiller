@@ -31,7 +31,7 @@ export async function getDashboardStats() {
         // Common booking filter for "ongoing"
         const ongoingBookingFilter = {
             companyId,
-            status: 'CONFIRMED' as const,
+            status: { in: ['CONFIRMED', 'ONGOING'] },
             startDate: { lte: now },
             OR: [
                 { endDate: { gte: now } },

@@ -28,7 +28,7 @@ export default async function DashboardPage() {
       const activeBooking = await prisma.booking.findFirst({
         where: {
           driverId: user.id,
-          status: 'CONFIRMED',
+          status: { in: ['CONFIRMED', 'ONGOING'] },
           startDate: { lte: new Date() },
           OR: [
             { endDate: null },
