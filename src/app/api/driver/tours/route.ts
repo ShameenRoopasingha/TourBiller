@@ -30,7 +30,7 @@ export async function GET(req: Request) {
             where: {
                 driverId: driverId,
                 status: {
-                    in: ['CONFIRMED', 'PENDING'] // Ongoing or upcoming
+                    in: ['CONFIRMED', 'PENDING', 'ONGOING'] // Ongoing or upcoming
                 }
             },
             orderBy: {
