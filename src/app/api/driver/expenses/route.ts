@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
         const { id: driverId, companyId } = decoded;
         const body = await req.json();
-        const { vehicleNo, amount, category, description, bookingId } = body;
+        const { vehicleNo, amount, category, description, bookingId, expenseType } = body;
 
         if (!vehicleNo || !amount || !category) {
             return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
@@ -35,7 +35,8 @@ export async function POST(req: Request) {
                 amount: parseFloat(amount),
                 category,
                 description,
-                bookingId
+                bookingId,
+                expenseType: expenseType || 'COMPANY'
             }
         });
 
