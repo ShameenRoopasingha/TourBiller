@@ -73,6 +73,7 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
     const [selectedAction, setSelectedAction] = useState<MacroAction | null>(null);
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
+    const [borneBy, setBorneBy] = useState<'COMPANY' | 'CUSTOMER'>('COMPANY');
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -99,6 +100,7 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
                 date: new Date(),
                 bookingId,
                 driverId: '',
+                expenseType: borneBy,
             });
 
             if (!expenseResult.success) {
@@ -170,6 +172,13 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
                                 className="pl-12 h-14 text-2xl font-bold text-center"
                                 autoFocus
                             />
+</div>
+                    </div>
+                    <div className="space-y-1 mt-4">
+                        <label className="text-sm font-medium text-muted-foreground">Paid By</label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button variant={borneBy === 'COMPANY' ? 'default' : 'outline'} onClick={() => setBorneBy('COMPANY')} type="button" className="w-full">Company</Button>
+                            <Button variant={borneBy === 'CUSTOMER' ? 'default' : 'outline'} onClick={() => setBorneBy('CUSTOMER')} type="button" className="w-full">Customer</Button>
                         </div>
                     </div>
                 )}
@@ -228,3 +237,4 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
         </div>
     );
 }
+

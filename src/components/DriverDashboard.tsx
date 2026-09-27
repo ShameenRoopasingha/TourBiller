@@ -88,9 +88,14 @@ export function DriverDashboard({ activeTour, driverName }: DriverDashboardProps
     if (!activeTour) {
         return (
             <div className="px-1 py-4 space-y-6">
-                <div>
-                    <h2 className="text-xl font-bold">{greeting()}, {driverName}! 👋</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Here&apos;s your driver dashboard</p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold">{greeting()}, {driverName}! 👋</h2>
+                        <p className="text-sm text-muted-foreground mt-1">Here&apos;s your driver dashboard</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => router.push('/settings')} className="rounded-full bg-muted/50">
+                        <Settings className="h-5 w-5" />
+                    </Button>
                 </div>
 
                 <Card className="border-dashed border-2">
@@ -129,9 +134,14 @@ export function DriverDashboard({ activeTour, driverName }: DriverDashboardProps
     return (
         <div className="px-1 py-4 space-y-5">
             {/* Greeting */}
-            <div>
-                <h2 className="text-xl font-bold">{greeting()}, {driverName}! 👋</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">You have an active tour</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-xl font-bold">{greeting()}, {driverName}! 👋</h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">You have an active tour</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => router.push('/settings')} className="rounded-full bg-muted/50">
+                    <Settings className="h-5 w-5" />
+                </Button>
             </div>
 
             {/* Active Tour Banner with Progress */}

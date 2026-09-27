@@ -12,6 +12,7 @@ import { BillFormSchema, type BillFormInput, type Vehicle, type Customer } from 
 export type BillFormData = BillFormInput;
 import { createBill, updateBill } from '@/lib/actions';
 import { getBookingById } from '@/lib/booking-actions';
+import { getVehicleExpenses } from '@/lib/vehicle-expense-actions';
 import { formatCurrency } from '@/lib/calculations';
 
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
@@ -210,10 +211,23 @@ export function BillCreator({
                         form.setValue('endDate', new Date(bResult.data.endDate) as unknown as Date);
                     }
                 }
+
+                // Fetch customer expenses added by driver during the tour
+                const eResult = await getVehicleExpenses(undefined, initialBookingId);
+                if (eResult.success && eResult.data) {
+                    const customerExpenses = eResult.data.filter(e => e.expenseType === 'CUSTOMER');
+                    const totalCustomerExpense = customerExpenses.reduce((sum, e) => sum + e.amount, 0);
+                    
+                    if (totalCustomerExpense > 0) {
+                        const currentOtherCosts = Number(form.getValues('otherCostsCharge')) || 0;
+                        form.setValue('otherCostsCharge', currentOtherCosts + totalCustomerExpense);
+                        updateField('otherCostsCharge', currentOtherCosts + totalCustomerExpense);
+                    }
+                }
             };
             loadBooking();
         }
-    }, [form, initialBookingId]);
+    }, [form, initialBookingId, updateField]);
 
     // Effect to check if vehicle selection needs to trigger rate update
     useEffect(() => {

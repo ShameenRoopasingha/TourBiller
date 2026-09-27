@@ -191,6 +191,7 @@ export const VehicleExpenseFormSchema = z.object({
   date: z.coerce.date().default(() => new Date()),
   bookingId: z.string().optional().default(''),
   driverId: z.string().optional().default(''),
+  expenseType: z.string().default('COMPANY'),
 });
 
 export type VehicleExpenseFormInput = z.infer<typeof VehicleExpenseFormSchema>;

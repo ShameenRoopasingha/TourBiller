@@ -61,6 +61,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
                 amount: validatedData.amount,
                 category: validatedData.category,
                 description: validatedData.description || null,
+                expenseType: validatedData.expenseType || 'COMPANY',
                 date: validatedData.date || new Date(),
                 bookingId: finalBookingId,
                 driverId: finalDriverId,
@@ -104,7 +105,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
 /**
  * Get expenses for a vehicle
  */
-export async function getVehicleExpenses(vehicleNo?: string): Promise<ActionResult<VehicleExpense[]>> {
+export async function getVehicleExpenses(vehicleNo?: string, bookingId?: string): Promise<ActionResult<VehicleExpense[]>> {
     try {
         const authCheck = await requireAuth();
         if (!authCheck.authorized) {
@@ -114,7 +115,8 @@ export async function getVehicleExpenses(vehicleNo?: string): Promise<ActionResu
         const expenses = await prisma.vehicleExpense.findMany({
             where: {
                 companyId: authCheck.companyId,
-                ...(vehicleNo ? { vehicleNo } : {})
+                ...(vehicleNo ? { vehicleNo } : {}),
+                ...(bookingId ? { bookingId } : {})
             },
             orderBy: { date: 'desc' },
         });

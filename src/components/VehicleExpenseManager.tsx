@@ -77,6 +77,7 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
     const [amount, setAmount] = useState('');
     const [category, setCategory] = useState<VehicleExpenseCategory>('REPAIR');
     const [description, setDescription] = useState('');
+    const [borneBy, setBorneBy] = useState<'COMPANY' | 'CUSTOMER'>('COMPANY');
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [showDescription, setShowDescription] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -136,6 +137,7 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
             date: new Date(date),
             bookingId: bookingId || '',
             driverId: '',
+            expenseType: borneBy,
         });
 
         if (result.success) {
@@ -488,3 +490,5 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
         </div>
     );
 }
+
+

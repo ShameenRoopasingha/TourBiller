@@ -40,6 +40,7 @@ const navItems: NavItem[] = [
     { name: 'Bills', href: '/bills', icon: FileText, adminOnly: true },
     { name: 'Reports', href: '/reports', icon: BarChart3, adminOnly: true },
     { name: 'Users', href: '/users', icon: UserCog, adminOnly: true },
+    { name: 'Profile', href: '/settings', icon: UserCog, driverOnly: true },
 ];
 
 interface SidebarProps {

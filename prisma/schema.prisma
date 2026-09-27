@@ -295,6 +295,7 @@ model VehicleExpense {
   date        DateTime @default(now())
   bookingId   String?
   driverId    String?
+  expenseType String   @default("COMPANY") // COMPANY, CUSTOMER
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
