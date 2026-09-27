@@ -171,13 +171,11 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
             return { success: false, error: 'Vehicle not found or unauthorized' };
         }
 
-        const [expenseCount, billCount, bookingCount, quotationCount, tourScheduleCount] = await Promise.all([
-            prisma.vehicleExpense.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } }),
-            prisma.bill.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } }),
-            prisma.booking.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } }),
-            prisma.quotation.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } }),
-            prisma.tourSchedule.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } }),
-        ]);
+        const expenseCount = await prisma.vehicleExpense.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } });
+        const billCount = await prisma.bill.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } });
+        const bookingCount = await prisma.booking.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } });
+        const quotationCount = await prisma.quotation.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } });
+        const tourScheduleCount = await prisma.tourSchedule.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } });
 
         const relatedItems: string[] = [];
         if (expenseCount > 0) relatedItems.push(`${expenseCount} expense(s)`);

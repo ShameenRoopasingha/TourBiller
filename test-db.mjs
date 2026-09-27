@@ -1,14 +1,13 @@
-import { prisma } from './src/lib/prisma';
 
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 async function main() {
-  try {
-    const count = await prisma.customer.count();
-    console.log(`Successfully connected. Customer count: ${count}`);
-  } catch (error) {
-    console.error('Connection failed:', error);
-  } finally {
-    await prisma.$disconnect();
-  }
+    try {
+        const vehicles = await prisma.vehicle.findMany();
+        console.log("Vehicles:", vehicles.length);
+    } catch(e) {
+        console.error("Error:", e);
+    }
 }
+main().catch(console.error).finally(()=>prisma.$disconnect());
 
-main();
