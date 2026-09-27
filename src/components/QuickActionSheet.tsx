@@ -159,28 +159,30 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
                 </div>
 
                 {selectedAction.needsAmount && (
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-muted-foreground">Amount</label>
-                        <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">Rs.</span>
-                            <Input
-                                type="number"
-                                inputMode="decimal"
-                                placeholder="0.00"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                className="pl-12 h-14 text-2xl font-bold text-center"
-                                autoFocus
-                            />
-</div>
-                    </div>
-                    <div className="space-y-1 mt-4">
-                        <label className="text-sm font-medium text-muted-foreground">Paid By</label>
-                        <div className="grid grid-cols-2 gap-2">
-                            <Button variant={borneBy === 'COMPANY' ? 'default' : 'outline'} onClick={() => setBorneBy('COMPANY')} type="button" className="w-full">Company</Button>
-                            <Button variant={borneBy === 'CUSTOMER' ? 'default' : 'outline'} onClick={() => setBorneBy('CUSTOMER')} type="button" className="w-full">Customer</Button>
+                    <>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-muted-foreground">Amount</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">Rs.</span>
+                                <Input
+                                    type="number"
+                                    inputMode="decimal"
+                                    placeholder="0.00"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    className="pl-12 h-14 text-2xl font-bold text-center"
+                                    autoFocus
+                                />
+                            </div>
                         </div>
-                    </div>
+                        <div className="space-y-1 mt-4">
+                            <label className="text-sm font-medium text-muted-foreground">Paid By</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <Button variant={borneBy === 'COMPANY' ? 'default' : 'outline'} onClick={() => setBorneBy('COMPANY')} type="button" className="w-full">Company</Button>
+                                <Button variant={borneBy === 'CUSTOMER' ? 'default' : 'outline'} onClick={() => setBorneBy('CUSTOMER')} type="button" className="w-full">Customer</Button>
+                            </div>
+                        </div>
+                    </>
                 )}
 
                 <div className="space-y-1">
