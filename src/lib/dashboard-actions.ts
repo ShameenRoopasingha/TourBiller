@@ -45,14 +45,32 @@ export async function getDashboardStats() {
         const endOfToday = new Date(now);
         endOfToday.setHours(23, 59, 59, 999);
 
-        // Run ALL queries in parallel to speed up dashboard loading
-        // Removed prisma.$transaction as it's not needed for reads and can cause connection pooler issues
         console.log('[Dashboard] Starting sequential queries for stability...');
         const startTime = Date.now();
 
         // Run queries sequentially instead of parallel to save connections on 5432 port
         const totalVehicles = await prisma.vehicle.count({ where: { companyId, status: 'ACTIVE' } }).catch(e => { console.error('Error totalVehicles:', e); return 0; });
-        const occupiedVehicles = await prisma.booking.count({ where: ongoingBookingFilter }).catch(e => { console.error('Error occupiedVehicles:', e); return 0; });
+        
+        // Find distinct vehicles from ongoing bookings
+        const activeBookings = await prisma.booking.findMany({
+            where: ongoingBookingFilter,
+            select: { vehicleNo: true },
+            distinct: ['vehicleNo']
+        }).catch(e => { console.error('Error fetching active bookings:', e); return []; });
+        
+        const activeVehicleNos = activeBookings.map(b => b.vehicleNo);
+        
+        // Count how many of those actually belong to our active fleet
+        let occupiedVehicles = 0;
+        if (activeVehicleNos.length > 0) {
+            occupiedVehicles = await prisma.vehicle.count({
+                where: {
+                    companyId,
+                    status: 'ACTIVE',
+                    vehicleNo: { in: activeVehicleNos }
+                }
+            }).catch(e => { console.error('Error counting occupied vehicles:', e); return 0; });
+        }
         
         const yearlyResult = await prisma.bill.aggregate({
             _sum: { totalAmount: true },
