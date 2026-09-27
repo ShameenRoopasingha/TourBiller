@@ -16,6 +16,17 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
     Card,
     CardContent,
     CardHeader,
@@ -65,15 +76,17 @@ export function CustomerList() {
         router.replace(`${pathname}?${params.toString()}`);
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this customer?')) return;
+    const [deleting, setDeleting] = useState<string | null>(null);
 
+    const executeDelete = async (id: string) => {
+        setDeleting(id);
         const result = await deleteCustomer(id);
         if (result.success) {
             fetchCustomers(); // Refresh list
         } else {
             alert(result.error || 'Failed to delete customer');
         }
+        setDeleting(null);
     };
 
     return (
@@ -151,10 +164,32 @@ export function CustomerList() {
                                                         <span className="sr-only">Edit</span>
                                                     </Link>
                                                 </Button>
-                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(customer.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                                                    <Trash2 className="h-4 w-4" />
-                                                    <span className="sr-only">Delete</span>
-                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                                                            <Trash2 className="h-4 w-4" />
+                                                            <span className="sr-only">Delete</span>
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Are you sure you want to delete {customer.name}? This action cannot be undone.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction
+                                                                onClick={() => executeDelete(customer.id)}
+                                                                className="bg-red-600 hover:bg-red-700"
+                                                                disabled={deleting === customer.id}
+                                                            >
+                                                                {deleting === customer.id ? 'Deleting...' : 'Delete'}
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
                                             </TableCell>
                                         </TableRow>
                                     ))}
