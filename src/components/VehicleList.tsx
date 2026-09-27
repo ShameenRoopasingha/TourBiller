@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Search, Car, Plus, Pencil, Trash2, Receipt, Droplets, Filter } from 'lucide-react';
 import { deleteVehicle } from '@/lib/vehicle-actions';
 import { type Vehicle } from '@/lib/validations';
+import { toast } from 'sonner';
 import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
@@ -67,8 +68,10 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
     const executeDelete = async (id: string) => {
         setDeleting(id);
         const result = await deleteVehicle(id);
-        if (!result.success) {
-            alert(result.error || 'Failed to delete vehicle');
+        if (result.success) {
+            toast.success('Vehicle deleted successfully');
+        } else {
+            toast.error(result.error || 'Failed to delete vehicle');
         }
         setDeleting(null);
     };

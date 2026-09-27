@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Loader2, Search, Users, Plus, Pencil, Trash2 } from 'lucide-react';
 import { getCustomers, deleteCustomer } from '@/lib/customer-actions';
 import { type Customer } from '@/lib/validations';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -82,9 +83,10 @@ export function CustomerList() {
         setDeleting(id);
         const result = await deleteCustomer(id);
         if (result.success) {
+            toast.success('Customer deleted successfully');
             fetchCustomers(); // Refresh list
         } else {
-            alert(result.error || 'Failed to delete customer');
+            toast.error(result.error || 'Failed to delete customer');
         }
         setDeleting(null);
     };
