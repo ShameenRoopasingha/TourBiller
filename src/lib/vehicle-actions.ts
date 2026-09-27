@@ -171,14 +171,26 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
             return { success: false, error: 'Vehicle not found or unauthorized' };
         }
 
-        const expenseCount = await prisma.vehicleExpense.count({ 
-            where: { 
-                vehicleNo: vehicle.vehicleNo,
-                companyId: authCheck.companyId
-            } 
-        });
-        if (expenseCount > 0) {
-            return { success: false, error: `Cannot delete vehicle: it has ${expenseCount} expense record(s). Delete those first.` };
+        const [expenseCount, billCount, bookingCount, quotationCount, tourScheduleCount] = await Promise.all([
+            prisma.vehicleExpense.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } }),
+            prisma.bill.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } }),
+            prisma.booking.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } }),
+            prisma.quotation.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } }),
+            prisma.tourSchedule.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } }),
+        ]);
+
+        const relatedItems: string[] = [];
+        if (expenseCount > 0) relatedItems.push(`${expenseCount} expense(s)`);
+        if (billCount > 0) relatedItems.push(`${billCount} bill(s)`);
+        if (bookingCount > 0) relatedItems.push(`${bookingCount} booking(s)`);
+        if (quotationCount > 0) relatedItems.push(`${quotationCount} quotation(s)`);
+        if (tourScheduleCount > 0) relatedItems.push(`${tourScheduleCount} tour schedule(s)`);
+
+        if (relatedItems.length > 0) {
+            return {
+                success: false,
+                error: `Cannot delete vehicle "${vehicle.vehicleNo}": it has ${relatedItems.join(", ")} linked. Remove or reassign those records first.`,
+            };
         }
 
         const _res = await prisma.vehicle.deleteMany({
