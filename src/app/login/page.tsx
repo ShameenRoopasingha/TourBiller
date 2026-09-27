@@ -70,66 +70,80 @@ export default function LoginPage() {
                 />
             </div>
 
-            <Card className="relative w-full max-w-md shadow-2xl z-10 bg-white/60 dark:bg-black/40 backdrop-blur-2xl border border-white/30 dark:border-white/10 overflow-hidden">
-                <CardHeader className="text-center space-y-3 pb-2 pt-8">
-                    <div className="mx-auto flex flex-col items-center justify-center gap-3">
-                        <Image src="/VIGIL-logo.png" alt="VIGIL" width={96} height={96} className="h-24 w-auto drop-shadow-md" priority />
-                        <div className="flex flex-col items-center mt-2">
-                            <CardTitle className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-1">VIGIL</CardTitle>
-                            <span className="text-sm font-semibold tracking-wide text-muted-foreground uppercase leading-tight mt-1">Smart Travel Management.</span>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {error && (
-                            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm text-center">
-                                {error}
+            <div className="dark relative w-full max-w-md z-10">
+                <Card className="w-full shadow-[0_0_40px_rgba(0,180,216,0.1)] bg-black/50 backdrop-blur-xl border-cyan-500/20 overflow-hidden text-slate-100">
+                    <CardHeader className="text-center space-y-3 pb-2 pt-8">
+                        <div className="mx-auto flex flex-col items-center justify-center gap-3">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full scale-150"></div>
+                                <Image src="/VIGIL-logo.png" alt="VIGIL" width={96} height={96} className="h-24 w-auto drop-shadow-[0_0_15px_rgba(0,180,216,0.5)] relative z-10" priority />
                             </div>
-                        )}
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Email</label>
-                            <Input
-                                type="email"
-                                placeholder="Enter your email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
+                            <div className="flex flex-col items-center mt-2">
+                                <CardTitle className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent pb-1">VIGIL</CardTitle>
+                                <span className="text-sm font-semibold tracking-wide text-cyan-100/70 uppercase leading-tight mt-1">Smart Travel Management.</span>
+                            </div>
                         </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Password</label>
-                            <PasswordInput
-                                placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="flex justify-end">
-                            <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
-                                Forgot password?
-                            </Link>
-                        </div>
-
-                        <Button
-                            type="submit"
-                            className="w-full py-5"
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <LogIn className="mr-2 h-4 w-4" />
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {error && (
+                                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
+                                    {error}
+                                </div>
                             )}
-                            {loading ? 'Signing in...' : 'Sign In'}
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-cyan-50/80">Email</label>
+                                <Input
+                                    type="email"
+                                    placeholder="Enter your email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    className="bg-black/40 border-cyan-500/20 text-white placeholder:text-slate-500 focus-visible:ring-cyan-500/50"
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium text-cyan-50/80">Password</label>
+                                    <Link href="/forgot-password" className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
+                                        Forgot password?
+                                    </Link>
+                                </div>
+                                <PasswordInput
+                                    placeholder="Enter your password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className="bg-black/40 border-cyan-500/20 text-white placeholder:text-slate-500 focus-visible:ring-cyan-500/50"
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <Button 
+                                type="submit" 
+                                className="w-full mt-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white border-0 shadow-[0_0_20px_rgba(0,180,216,0.3)] transition-all duration-300" 
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Authenticating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <LogIn className="mr-2 h-4 w-4" />
+                                        Sign In
+                                    </>
+                                )}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+
         </div>
     );
 }
