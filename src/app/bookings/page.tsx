@@ -117,15 +117,31 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                                             <EndTourDialog vehicleNo={booking.vehicleNo} customerName={booking.customerName} bookingId={booking.id} />
                                         )}
                                         {booking.status === 'CONFIRMED' && (
-                                            <form action={async () => {
-                                                'use server';
-                                                await cancelBooking(booking.id);
-                                            }}>
-                                                <Button variant="destructive" size="sm" type="submit">
-                                                    <CalendarX className="w-4 h-4 mr-2" />
-                                                    Cancel
-                                                </Button>
-                                            </form>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="destructive" size="sm">
+                                                        <CalendarX className="w-4 h-4 mr-2" />
+                                                        Cancel
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently cancel the booking for {booking.customerName}.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                                                        <form action={async () => {
+                                                            'use server';
+                                                            await cancelBooking(booking.id);
+                                                        }}>
+                                                            <AlertDialogAction type="submit" className="bg-red-600 hover:bg-red-700">Yes, cancel it</AlertDialogAction>
+                                                        </form>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         )}
                                         <Button variant="outline" size="sm" asChild>
                                             <Link href={`/bookings/${booking.id}`}>
