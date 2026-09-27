@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Grainient from '@/components/Grainient';
+import LightRays from '@/components/Backgrounds/LightRays';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -49,16 +49,16 @@ export default function LoginPage() {
     return (
         <div className="relative min-h-screen flex items-center justify-center p-3 sm:p-4 overflow-hidden">
             {/* Animated Background */}
-            <div className="absolute inset-0 z-0 scale-110">
-                <Grainient
-                    color1="#001845" // Deep Navy
-                    color2="#00b4d8" // Cyan/Bright Blue
-                    color3="#023e8a" // Royal Blue
-                    zoom={0.8}
-                    timeSpeed={0.15}
-                    noiseScale={1.5}
-                    grainAmount={0.05}
-                    className="opacity-50 dark:opacity-40"
+            <div className="absolute inset-0 z-0 bg-black">
+                <LightRays
+                    raysColor="#00b4d8" // Cyan/Bright Blue
+                    raysSpeed={1.5}
+                    lightSpread={1.2}
+                    rayLength={1.2}
+                    pulsating={true}
+                    followMouse={true}
+                    lightMode={true}
+                    className="opacity-70 dark:opacity-90"
                 />
             </div>
 
