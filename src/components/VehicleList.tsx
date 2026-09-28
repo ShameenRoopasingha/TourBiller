@@ -75,9 +75,10 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
             } else {
                 toast.error(result.error || 'Failed to delete vehicle');
             }
-        } catch (error) {
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : String(error);
             console.error('Error deleting vehicle:', error);
-            toast.error('An unexpected error occurred. Please try again.');
+            toast.error(`Delete failed: ${msg}`);
         } finally {
             setDeleting(null);
         }
