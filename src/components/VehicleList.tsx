@@ -71,6 +71,7 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
             const result = await deleteVehicle(id);
             if (result.success) {
                 toast.success('Vehicle deleted successfully');
+                router.refresh();
             } else {
                 toast.error(result.error || 'Failed to delete vehicle');
             }

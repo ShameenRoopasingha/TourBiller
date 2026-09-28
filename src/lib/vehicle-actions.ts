@@ -162,7 +162,6 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
             return { success: false, error: authCheck.error };
         }
 
-        // Check if vehicle has related expenses
         const vehicle = await prisma.vehicle.findFirst({ 
             where: { id, companyId: authCheck.companyId }, 
             select: { vehicleNo: true } 
@@ -171,23 +170,30 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
             return { success: false, error: 'Vehicle not found or unauthorized' };
         }
 
-        const expenseCount = await prisma.vehicleExpense.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } });
-        const billCount = await prisma.bill.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } });
-        const bookingCount = await prisma.booking.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } });
-        const quotationCount = await prisma.quotation.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } });
-        const tourScheduleCount = await prisma.tourSchedule.count({ where: { vehicleNo: vehicle.vehicleNo, companyId: authCheck.companyId } });
+        // Single query to count all related records across 5 tables
+        const counts = await prisma.$queryRaw<Array<{
+            expenses: bigint; bills: bigint; bookings: bigint; quotations: bigint; tour_schedules: bigint;
+        }>>`
+            SELECT
+                (SELECT COUNT(*) FROM vehicle_expenses WHERE "vehicleNo" = ${vehicle.vehicleNo} AND "companyId" = ${authCheck.companyId}) AS expenses,
+                (SELECT COUNT(*) FROM bills WHERE "vehicleNo" = ${vehicle.vehicleNo} AND "companyId" = ${authCheck.companyId}) AS bills,
+                (SELECT COUNT(*) FROM bookings WHERE "vehicleNo" = ${vehicle.vehicleNo} AND "companyId" = ${authCheck.companyId}) AS bookings,
+                (SELECT COUNT(*) FROM quotations WHERE "vehicleNo" = ${vehicle.vehicleNo} AND "companyId" = ${authCheck.companyId}) AS quotations,
+                (SELECT COUNT(*) FROM tour_schedules WHERE "vehicleNo" = ${vehicle.vehicleNo} AND "companyId" = ${authCheck.companyId}) AS tour_schedules
+        `;
 
+        const c = counts[0];
         const relatedItems: string[] = [];
-        if (expenseCount > 0) relatedItems.push(`${expenseCount} expense(s)`);
-        if (billCount > 0) relatedItems.push(`${billCount} bill(s)`);
-        if (bookingCount > 0) relatedItems.push(`${bookingCount} booking(s)`);
-        if (quotationCount > 0) relatedItems.push(`${quotationCount} quotation(s)`);
-        if (tourScheduleCount > 0) relatedItems.push(`${tourScheduleCount} tour schedule(s)`);
+        if (c.expenses > 0) relatedItems.push(`${c.expenses} expense(s)`);
+        if (c.bills > 0) relatedItems.push(`${c.bills} bill(s)`);
+        if (c.bookings > 0) relatedItems.push(`${c.bookings} booking(s)`);
+        if (c.quotations > 0) relatedItems.push(`${c.quotations} quotation(s)`);
+        if (c.tour_schedules > 0) relatedItems.push(`${c.tour_schedules} tour schedule(s)`);
 
         if (relatedItems.length > 0) {
             return {
                 success: false,
-                error: `Cannot delete vehicle "${vehicle.vehicleNo}": it has ${relatedItems.join(", ")} linked. Remove or reassign those records first.`,
+                error: `Cannot delete vehicle "${vehicle.vehicleNo}": it has ${relatedItems.join(', ')} linked. Remove or reassign those records first.`,
             };
         }
 
@@ -201,10 +207,7 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
         return { success: true };
     } catch (error) {
         console.error('Error deleting vehicle:', error);
-        if (error instanceof Error && error.message.includes('Foreign key constraint')) {
-            return { success: false, error: 'Cannot delete vehicle: it has related records. Remove linked expenses first.' };
-        }
-        return { success: false, error: 'Failed to delete vehicle' };
+        return { success: false, error: 'Failed to delete vehicle. Please try again.' };
     }
 }
 
