@@ -90,7 +90,7 @@ export default async function DashboardPage() {
         </Suspense>
         
         {/* Silent auto-refresh for real-time dashboard updates */}
-        <AutoRefresh intervalMs={10000} />
+        <AutoRefresh intervalMs={60000} />
       </div>
     </main>
   );
