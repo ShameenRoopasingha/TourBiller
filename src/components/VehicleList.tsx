@@ -67,13 +67,19 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
 
     const executeDelete = async (id: string) => {
         setDeleting(id);
-        const result = await deleteVehicle(id);
-        if (result.success) {
-            toast.success('Vehicle deleted successfully');
-        } else {
-            toast.error(result.error || 'Failed to delete vehicle');
+        try {
+            const result = await deleteVehicle(id);
+            if (result.success) {
+                toast.success('Vehicle deleted successfully');
+            } else {
+                toast.error(result.error || 'Failed to delete vehicle');
+            }
+        } catch (error) {
+            console.error('Error deleting vehicle:', error);
+            toast.error('An unexpected error occurred. Please try again.');
+        } finally {
+            setDeleting(null);
         }
-        setDeleting(null);
     };
 
     return (
