@@ -170,35 +170,36 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
             return { success: false, error: 'Vehicle not found or unauthorized' };
         }
 
-        // Single query to count all related records across 5 tables
-        const counts = await prisma.$queryRaw<Array<{
-            expenses: bigint; bills: bigint; bookings: bigint; quotations: bigint; tour_schedules: bigint;
-        }>>`
-            SELECT
-                (SELECT COUNT(*) FROM vehicle_expenses WHERE "vehicleNo" = ${vehicle.vehicleNo} AND "companyId" = ${authCheck.companyId}) AS expenses,
-                (SELECT COUNT(*) FROM bills WHERE "vehicleNo" = ${vehicle.vehicleNo} AND "companyId" = ${authCheck.companyId}) AS bills,
-                (SELECT COUNT(*) FROM bookings WHERE "vehicleNo" = ${vehicle.vehicleNo} AND "companyId" = ${authCheck.companyId}) AS bookings,
-                (SELECT COUNT(*) FROM quotations WHERE "vehicleNo" = ${vehicle.vehicleNo} AND "companyId" = ${authCheck.companyId}) AS quotations,
-                (SELECT COUNT(*) FROM tour_schedules WHERE "vehicleNo" = ${vehicle.vehicleNo} AND "companyId" = ${authCheck.companyId}) AS tour_schedules
-        `;
+        const vno = vehicle.vehicleNo;
+        const cid = authCheck.companyId;
 
-        const c = counts[0];
+        // Check for related records (sequential to avoid pool issues with PgBouncer)
         const relatedItems: string[] = [];
-        if (c.expenses > 0) relatedItems.push(`${c.expenses} expense(s)`);
-        if (c.bills > 0) relatedItems.push(`${c.bills} bill(s)`);
-        if (c.bookings > 0) relatedItems.push(`${c.bookings} booking(s)`);
-        if (c.quotations > 0) relatedItems.push(`${c.quotations} quotation(s)`);
-        if (c.tour_schedules > 0) relatedItems.push(`${c.tour_schedules} tour schedule(s)`);
+
+        const expenses = await prisma.vehicleExpense.count({ where: { vehicleNo: vno, companyId: cid } });
+        if (expenses > 0) relatedItems.push(`${expenses} expense(s)`);
+
+        const bills = await prisma.bill.count({ where: { vehicleNo: vno, companyId: cid } });
+        if (bills > 0) relatedItems.push(`${bills} bill(s)`);
+
+        const bookings = await prisma.booking.count({ where: { vehicleNo: vno, companyId: cid } });
+        if (bookings > 0) relatedItems.push(`${bookings} booking(s)`);
+
+        const quotations = await prisma.quotation.count({ where: { vehicleNo: vno, companyId: cid } });
+        if (quotations > 0) relatedItems.push(`${quotations} quotation(s)`);
+
+        const tours = await prisma.tourSchedule.count({ where: { vehicleNo: vno, companyId: cid } });
+        if (tours > 0) relatedItems.push(`${tours} tour schedule(s)`);
 
         if (relatedItems.length > 0) {
             return {
                 success: false,
-                error: `Cannot delete vehicle "${vehicle.vehicleNo}": it has ${relatedItems.join(', ')} linked. Remove or reassign those records first.`,
+                error: `Cannot delete vehicle "${vno}": it has ${relatedItems.join(', ')} linked. Remove or reassign those records first.`,
             };
         }
 
         const _res = await prisma.vehicle.deleteMany({
-            where: { id, companyId: authCheck.companyId },
+            where: { id, companyId: cid },
         });
         if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
