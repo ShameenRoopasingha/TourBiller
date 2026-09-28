@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Search, Car, Plus, Pencil, Trash2, Receipt, Droplets, Filter } from 'lucide-react';
-import { deleteVehicle } from '@/lib/vehicle-actions';
 import { type Vehicle } from '@/lib/validations';
 import { toast } from 'sonner';
 import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
@@ -68,7 +67,8 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
     const executeDelete = async (id: string) => {
         setDeleting(id);
         try {
-            const result = await deleteVehicle(id);
+            const res = await fetch(`/api/vehicles/${id}`, { method: 'DELETE' });
+            const result = await res.json();
             if (result.success) {
                 toast.success('Vehicle deleted successfully');
                 router.refresh();
