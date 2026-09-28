@@ -29,7 +29,7 @@ export function NotificationBell() {
         };
 
         fetchAlerts();
-        const interval = setInterval(fetchAlerts, 10000); // Poll every 10s
+        const interval = setInterval(fetchAlerts, 60000); // Poll every 60s
         return () => clearInterval(interval);
     }, []);
 

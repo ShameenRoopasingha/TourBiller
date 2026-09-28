@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { VehicleSchema, type ActionResult, type Vehicle, type VehicleAvailabilityConflict } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 
 /**
@@ -203,7 +204,7 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
         });
         if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
 
-        revalidateFor('vehicle');
+        revalidatePath('/vehicles');
 
         return { success: true };
     } catch (error) {
