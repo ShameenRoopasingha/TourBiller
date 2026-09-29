@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/button';
 import {
     AlertDialog,
@@ -32,14 +33,15 @@ export function DeleteBillButton({ billId, billNumber }: DeleteBillButtonProps) 
             const response = await fetch(`/api/bills/${encodeURIComponent(billId)}`, { method: 'DELETE' });
             const result = await response.json();
             if (!response.ok || !result.success) {
-                alert(result.error || 'Failed to delete bill');
+                toast.error(result.error || 'Failed to delete bill');
             } else {
+                toast.success(`Bill #${billNumber} deleted successfully`);
                 router.refresh();
             }
             // Router refresh is handled by server action revalidation
         } catch (error) {
             console.error('Error deleting bill:', error);
-            alert('An unexpected error occurred');
+            toast.error('An unexpected error occurred while deleting the bill');
         } finally {
             setIsDeleting(false);
             setOpen(false);

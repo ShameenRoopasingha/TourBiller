@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Search, Car, Plus, Pencil, Trash2, Receipt, Droplets, Filter } from 'lucide-react';
 import { type Vehicle } from '@/lib/validations';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import { Loader2, Plus, Trash2, Shield, Truck, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -140,6 +141,7 @@ export default function UsersPage() {
             const response = await fetch(`/api/users/${encodeURIComponent(userToDelete.id)}`, { method: 'DELETE' });
             const result = await response.json();
             if (response.ok && result.success) {
+                toast.success('User deleted successfully');
                 router.refresh();
                 setDeleteDialogOpen(false);
                 setUserToDelete(null);
@@ -148,11 +150,11 @@ export default function UsersPage() {
                 const refresh = await refreshResponse.json();
                 if (refreshResponse.ok && refresh.success && refresh.data) setUsers(refresh.data);
             } else {
-                alert(result.error || 'Failed to delete user');
+                toast.error(result.error || 'Failed to delete user');
             }
         } catch (deleteError) {
             console.error('Error deleting user:', deleteError);
-            alert('Failed to delete user. Please try again.');
+            toast.error('Failed to delete user. Please try again.');
         } finally {
             setIsDeleting(false);
         }

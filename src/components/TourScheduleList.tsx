@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import Link from 'next/link';
 import { Plus, Search, Edit, Trash2, Map, Calendar, Eye } from 'lucide-react';
 
@@ -73,13 +74,14 @@ export function TourScheduleList({ schedules }: TourScheduleListProps) {
             const response = await fetch(`/api/tour-schedules/${encodeURIComponent(id)}`, { method: 'DELETE' });
             const result = await response.json();
             if (!response.ok || !result.success) {
-                alert(result.error || 'Failed to delete schedule');
+                toast.error(result.error || 'Failed to delete schedule');
             } else {
+                toast.success('Tour schedule deleted successfully');
                 router.refresh();
             }
         } catch (error) {
             console.error('Error deleting tour schedule:', error);
-            alert('Failed to delete schedule. Please try again.');
+            toast.error('Failed to delete schedule. Please try again.');
         } finally {
             setDeleting(null);
         }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Bluetooth, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { type Bill } from '@/lib/validations';
 import { formatCurrency } from '@/lib/calculations';
 
@@ -32,7 +33,7 @@ export function BluetoothPrintButton({ bill, companyName }: BluetoothPrintButton
             // 1. Request Bluetooth Device (Filtering for common generic printer services + SPP)
             // Note: Many generic Chinese PT-210 printers use the common UUID '000018f0-0000-1000-8000-00805f9b34fb' or similar for BLE Printing
             if (!navigator.bluetooth) {
-                alert("Web Bluetooth is not supported on this browser/device. Please use Google Chrome on Android, or print via the OS Print Dialog using RawBT.");
+                toast.info('Web Bluetooth is unavailable on this device. Use Chrome on Android, or print through the OS dialog with RawBT.', { autoClose: false });
                 setIsPrinting(false);
                 setStatusText('');
                 return;
@@ -141,7 +142,8 @@ export function BluetoothPrintButton({ bill, companyName }: BluetoothPrintButton
         } catch (error) {
             console.error("Bluetooth Print Error:", error);
             setStatusText('Failed to print');
-            alert(`Printing Failed: ${(error as Error).message}\n\nNote: If your printer is PT-210, it might only support 'Classic Bluetooth'. For Classic Bluetooth, use the standard OS 'Print' button with the 'RawBT' Android app instead.`);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown printer error';
+            toast.error(`Printing failed: ${errorMessage}. If using a PT-210, print through the OS dialog with the RawBT Android app.`, { autoClose: 9000 });
             setIsPrinting(false);
             setTimeout(() => setStatusText(''), 4000);
         }

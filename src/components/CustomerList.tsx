@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Loader2, Search, Users, Plus, Pencil, Trash2 } from 'lucide-react';
 import { type Customer } from '@/lib/validations';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {

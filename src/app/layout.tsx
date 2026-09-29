@@ -9,7 +9,7 @@ import { SessionProvider } from '@/components/SessionProvider';
 import { auth } from '@/lib/auth';
 import { PageTransition } from '@/components/PageTransition';
 import { NotificationBell } from '@/components/NotificationBell';
-import { Toaster } from "@/components/ui/sonner"
+import { ToastProvider } from '@/components/ToastProvider';
 
 import ChatAssistant from '@/components/ChatAssistant';
 
@@ -83,7 +83,7 @@ export default async function RootLayout({
           ) : (
             children
           )}
-          <Toaster />
+          <ToastProvider />
         </ThemeProvider>
       </body>
     </html>
