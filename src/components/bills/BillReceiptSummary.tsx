@@ -123,9 +123,9 @@ export function BillReceiptSummary({
                                     <span>-{formatCurrency(advanceAmount)}</span>
                                 </div>
                                 <div className="border-t border-dashed border-primary/20 my-2" />
-                                <div className="flex justify-between items-end">
-                                    <span className="text-xl font-extrabold">Balance</span>
-                                    <span className="text-2xl sm:text-3xl font-extrabold text-destructive">
+                                <div className="space-y-1">
+                                    <span className="block text-xl font-extrabold">Balance</span>
+                                    <span className="block max-w-full break-words text-2xl font-extrabold leading-tight text-destructive">
                                         Rs.{(totalAmount - advanceAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
