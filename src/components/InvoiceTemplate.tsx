@@ -107,7 +107,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         <div className="flex justify-between border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">DATE:</span> <span>{new Date(bill.createdAt).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
                         <div className="flex flex-col border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">CUSTOMER:</span> <span className="font-semibold text-sm">{bill.customerName}</span></div>
                         <div className="flex justify-between border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">VEHICLE:</span> <span className="font-semibold">{bill.vehicleNo}</span></div>
-                        <div className="flex flex-col border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">ROUTE:</span> <span className="font-semibold">{bill.route}</span></div>
+                        <div className="flex flex-col border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">TOUR NAME / ROUTE:</span> <span className="font-semibold">{bill.route}</span></div>
                         <div className="mt-2 border-t border-dashed border-gray-400 pt-2">
                             <div className="flex justify-between"><span>Start:</span> <span className="font-medium">{new Date(bill.startDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
                             <div className="flex justify-between"><span>End:</span> <span className="font-medium">{new Date(bill.endDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
@@ -323,7 +323,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <span className="font-medium text-gray-500">Vehicle:</span>
                                 <span className="font-semibold">{bill.vehicleNo}</span>
 
-                                <span className="font-medium text-gray-500">Route:</span>
+                                <span className="font-medium text-gray-500">Tour Name / Route:</span>
                                 <span className="font-semibold leading-snug">{bill.route}</span>
                             </div>
                         </div>

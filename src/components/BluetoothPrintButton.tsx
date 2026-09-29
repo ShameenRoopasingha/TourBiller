@@ -80,7 +80,7 @@ export function BluetoothPrintButton({ bill, companyName }: BluetoothPrintButton
             receipt += `DATE    : ${new Date(bill.createdAt).toLocaleString('en-GB', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}` + NL;
             receipt += `CUST    : ${bill.customerName}` + NL;
             receipt += `VEHICLE : ${bill.vehicleNo}` + NL;
-            receipt += `ROUTE   : ${bill.route}` + NL;
+            receipt += `TOUR/ROUTE: ${bill.route}` + NL;
             receipt += "--------------------------------" + NL;
             receipt += formatLine('DESC', 'AMT') + NL;
             receipt += "--------------------------------" + NL;
