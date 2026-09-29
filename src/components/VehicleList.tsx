@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Search, Car, Plus, Pencil, Trash2, Receipt, Droplets, Filter } from 'lucide-react';
 import { type Vehicle } from '@/lib/validations';
-import { toast } from 'react-toastify';
+import { notify } from '@/lib/notifications';
 import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
@@ -70,15 +70,15 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
             const res = await fetch(`/api/vehicles/${id}`, { method: 'DELETE' });
             const result = await res.json();
             if (result.success) {
-                toast.success('Vehicle deleted successfully');
+                notify.success('Vehicle deleted successfully');
                 router.refresh();
             } else {
-                toast.error(result.error || 'Failed to delete vehicle');
+                notify.error(result.error || 'Failed to delete vehicle');
             }
         } catch (error: unknown) {
             const msg = error instanceof Error ? error.message : String(error);
             console.error('Error deleting vehicle:', error);
-            toast.error(`Delete failed: ${msg}`);
+            notify.error(`Delete failed: ${msg}`);
         } finally {
             setDeleting(null);
         }

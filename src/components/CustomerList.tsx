@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Loader2, Search, Users, Plus, Pencil, Trash2 } from 'lucide-react';
 import { type Customer } from '@/lib/validations';
-import { toast } from 'react-toastify';
+import { notify } from '@/lib/notifications';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -90,14 +90,14 @@ export function CustomerList() {
             const response = await fetch(`/api/customers/${encodeURIComponent(id)}`, { method: 'DELETE' });
             const result = await response.json();
             if (response.ok && result.success) {
-                toast.success('Customer deleted successfully');
+                notify.success('Customer deleted successfully');
                 await fetchCustomers();
             } else {
-                toast.error(result.error || 'Failed to delete customer');
+                notify.error(result.error || 'Failed to delete customer');
             }
         } catch (deleteError) {
             console.error('Error deleting customer:', deleteError);
-            toast.error('Failed to delete customer');
+            notify.error('Failed to delete customer');
         } finally {
             setDeleting(null);
         }
