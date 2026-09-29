@@ -17,6 +17,17 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const emptySubscribe = () => () => { };
 
@@ -118,14 +129,31 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                             {userRole}
                         </div>
                     </Link>
-                    <button
-                        onClick={() => signOut({ callbackUrl: '/login' })}
-                        className="p-2 rounded-full transition-colors hover:bg-red-50 text-muted-foreground hover:text-red-600 shrink-0"
-                        aria-label="Sign out"
-                        title="Sign out"
-                    >
-                        <LogOut className="h-4 w-4" />
-                    </button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <button
+                                className="p-2 rounded-full transition-colors hover:bg-red-50 text-muted-foreground hover:text-red-600 shrink-0"
+                                aria-label="Sign out"
+                                title="Sign out"
+                            >
+                                <LogOut className="h-4 w-4" />
+                            </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Are you sure you want to sign out of your account?
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => signOut({ callbackUrl: '/login' })}>
+                                    Sign out
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
 
                 {/* Theme toggle + Settings */}

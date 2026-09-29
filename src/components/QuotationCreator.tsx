@@ -14,6 +14,7 @@ import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 import { TourScheduleForm } from '@/components/TourScheduleForm';
 import { QuotationAIChat } from '@/components/QuotationAIChat';
+import { QuotationCostSummary } from '@/components/quotations/QuotationCostSummary';
 import {
     Dialog,
     DialogContent,
@@ -106,6 +107,18 @@ interface QuotationCreatorProps {
     initialData?: QuotationWithSchedule;
 }
 
+interface QuotationDraft {
+    customerName?: string;
+    numberOfPersons?: number;
+    days?: number;
+    pickupLocation?: string;
+    dropLocation?: string;
+    hireRatePerDay?: number;
+    driverCostPerDay?: number;
+    notes?: string;
+    vehicleType?: string;
+}
+
 export function QuotationCreator({ schedules, customers, vehicles, drivers = [], initialData }: QuotationCreatorProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,7 +137,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
-    const handleApplyDraft = (draft: any) => {
+    const handleApplyDraft = (draft: QuotationDraft) => {
         if (draft.customerName) form.setValue('customerName', draft.customerName, { shouldDirty: true });
         if (draft.numberOfPersons) form.setValue('numberOfPersons', draft.numberOfPersons, { shouldDirty: true });
         if (draft.days) form.setValue('kmPerDay', draft.days, { shouldDirty: true });
@@ -136,7 +149,8 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
 
         // Try to match vehicle type to an existing vehicle
         if (draft.vehicleType) {
-            const v = vehicles.find(v => v.category?.toLowerCase().includes(draft.vehicleType.toLowerCase()) || v.model?.toLowerCase().includes(draft.vehicleType.toLowerCase()));
+            const vehicleType = draft.vehicleType.toLowerCase();
+            const v = vehicles.find(v => v.category?.toLowerCase().includes(vehicleType) || v.model?.toLowerCase().includes(vehicleType));
             if (v) {
                 form.setValue('vehicleNo', v.vehicleNo, { shouldDirty: true });
                 setSelectedVehicle(v);
@@ -961,89 +975,16 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
 
                     {/* Live Cost Summary */}
                     {selectedSchedule && (
-                        <div className="mt-4 p-4 bg-muted/40 rounded-lg border">
-                            <h4 className="font-semibold text-sm mb-3">Cost Summary</h4>
-
-                            {/* Hire Summary Banner */}
-                            {calculatedTotals.transportCost > 0 && (
-                                <div className="mb-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                                    {(Number(watchedHireRate) || 0) === 0 ? (
-                                        <p className="font-semibold text-primary text-sm">
-                                            💰 Vehicle Hire: {calculatedTotals.totalDistance.toFixed(0)} km @ {fmt(Number(watchedExcessKmRate) || 0)}/km : {fmt(calculatedTotals.transportCost)}
-                                        </p>
-                                    ) : (
-                                        <>
-                                            <p className="font-semibold text-primary text-sm">
-                                                💰 Vehicle Hire: {selectedSchedule?.days} days : {fmt(calculatedTotals.transportCost)} for {calculatedTotals.includedKm.toFixed(0)} km
-                                            </p>
-                                            {(Number(watchedExcessKmRate) || 0) > 0 && (
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    Any distance exceeding {calculatedTotals.includedKm.toFixed(0)} km will be charged at Rs. {watchedExcessKmRate} per additional km.
-                                                </p>
-                                            )}
-                                            {(Number(watchedExtraHourRate) || 0) > 0 && (
-                                                <p className="text-xs text-muted-foreground mt-0.5">
-                                                    Extra hours will be charged at Rs. {watchedExtraHourRate} per hour.
-                                                </p>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">
-                                        Van Hire ({selectedSchedule?.days} days × {fmt(Number(watchedHireRate) || 0)}/day)
-                                    </span>
-                                    <span>{fmt(calculatedTotals.transportCost)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Accommodation</span>
-                                    <span>{fmt(calculatedTotals.accommodationTotal)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Meals</span>
-                                    <span>{fmt(calculatedTotals.mealsTotal)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Activities</span>
-                                    <span>{fmt(calculatedTotals.activitiesTotal)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Other Costs</span>
-                                    <span>{fmt(calculatedTotals.otherCostsTotal)}</span>
-                                </div>
-                                {(Number(watchedDriverCost) || 0) > 0 && (
-                                    <div className="flex justify-between">
-                                        <span className="text-muted-foreground">
-                                            Driver ({selectedSchedule?.days} days × {fmt(Number(watchedDriverCost) || 0)}/day)
-                                        </span>
-                                        <span>{fmt(calculatedTotals.driverTotal)}</span>
-                                    </div>
-                                )}
-                                <div className="border-t pt-2 flex justify-between">
-                                    <span className="text-muted-foreground">Subtotal</span>
-                                    <span className="font-medium">{fmt(calculatedTotals.subtotal)}</span>
-                                </div>
-                                {(Number(watchedMarkup) || 0) > 0 && (
-                                    <div className="flex justify-between text-green-600">
-                                        <span>Commission ({watchedMarkup}%)</span>
-                                        <span>+{fmt(calculatedTotals.markupAmount)}</span>
-                                    </div>
-                                )}
-                                {(Number(watchedDiscount) || 0) > 0 && (
-                                    <div className="flex justify-between text-destructive">
-                                        <span>Discount</span>
-                                        <span>-{fmt(Number(watchedDiscount) || 0)}</span>
-                                    </div>
-                                )}
-                                <div className="border-t-2 pt-2 flex justify-between text-lg font-bold">
-                                    <span>TOTAL</span>
-                                    <span className="text-primary">{fmt(calculatedTotals.totalAmount)}</span>
-                                </div>
-                            </div>
-                        </div>
+                        <QuotationCostSummary
+                            days={selectedSchedule.days}
+                            hireRate={Number(watchedHireRate) || 0}
+                            excessKmRate={Number(watchedExcessKmRate) || 0}
+                            extraHourRate={Number(watchedExtraHourRate) || 0}
+                            driverCost={Number(watchedDriverCost) || 0}
+                            markup={Number(watchedMarkup) || 0}
+                            discount={Number(watchedDiscount) || 0}
+                            totals={calculatedTotals}
+                        />
                     )}
                 </CardContent>
             </Card>

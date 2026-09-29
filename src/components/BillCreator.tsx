@@ -5,17 +5,18 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Printer, Plus } from 'lucide-react';
+import { Printer, Plus } from 'lucide-react';
 import { BillFormSchema, type ActionResult, type BillFormInput, type Vehicle, type Customer, type VehicleExpense } from '@/lib/validations';
 
 // For backward compatibility
 export type BillFormData = BillFormInput;
-import { formatCurrency } from '@/lib/calculations';
+import { BillReceiptSummary } from '@/components/bills/BillReceiptSummary';
 
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 import { TourScheduleForm } from '@/components/TourScheduleForm';
+import { BillChargeFields } from '@/components/bills/BillChargeFields';
 import {
     Dialog,
     DialogContent,
@@ -790,351 +791,31 @@ export function BillCreator({
                                 </CardContent>
                             </Card>
 
-                            {/* Card 2: Billing & Charges */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <MoneyIcon /> Billing & Charges
-                                    </CardTitle>
-                                    <CardDescription>Configure rates, packages, and extra charges.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    {/* Primary Rate Configuration */}
-                                    <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-4">
-                                        <h3 className="font-semibold text-sm text-foreground">Rate Configuration</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            {!isPerKmMode && (
-                                                <>
-                                                    <FormField
-                                                        control={form.control}
-                                                        name="packageCharge"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>Package Charge</FormLabel>
-                                                                <FormControl>
-                                                                    <Input type="number" step="0.01" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'packageCharge')} />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                    <FormField
-                                                        control={form.control}
-                                                        name="allowedKm"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>Included Km (Per Day)</FormLabel>
-                                                                <FormControl>
-                                                                    <Input type="number" step="1" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'allowedKm')} />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                                {form.getValues('allowedKm') > 0 && <p className="text-[10px] text-muted-foreground">Standard distance per day</p>}
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </>
-                                            )}
-                                            <FormField
-                                                control={form.control}
-                                                name="hireRate"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>{watchedAllowedKm > 0 ? "Excess Rate / km" : "Rate / km"}</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" step="0.01" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'hireRate')} />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Extra Charges */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="waitingCharge"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Waiting Charge</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'waitingCharge')} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="gatePass"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Gate Pass</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'gatePass')} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                            <FormField
-                                                control={form.control}
-                                                name="extraKm"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>{isPerKmMode ? 'Total Distance (Km)' : 'Extra Km'}</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" step="0.1" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraKm')} />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        <FormField
-                                            control={form.control}
-                                            name="extraHours"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Extra Hours</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" step="0.1" {...field} onChange={e => handleNumericChange(e, field.onChange, 'extraHours')} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="extraHourRate"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Extra Hour Rate</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" step="0.01" {...field} value={field.value ?? ""} onChange={e => handleNumericChange(e, field.onChange, 'extraHourRate')} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    {/* Additional Package Costs */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="accommodationCharge"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Accommodation</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'accommodationCharge')} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="mealsCharge"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Meals</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'mealsCharge')} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="activitiesCharge"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Activities</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'activitiesCharge')} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="otherCostsCharge"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Other Costs</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'otherCostsCharge')} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="advanceAmount"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Advance Deducted</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" step="0.01" {...field} onChange={e => handleNumericChange(e, field.onChange, 'advanceAmount')} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <FormField
-                                        control={form.control}
-                                        name="paymentMethod"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Payment Method</FormLabel>
-                                                <FormControl>
-                                                    <div className="flex gap-4">
-                                                        <label className="flex items-center gap-2 cursor-pointer border p-3 rounded-md hover:bg-muted/50 transition-colors w-full">
-                                                            <input type="radio" {...field} value="CASH" checked={field.value === 'CASH'} className="h-4 w-4 text-primary" />
-                                                            <span className="font-medium">Cash</span>
-                                                        </label>
-                                                        <label className="flex items-center gap-2 cursor-pointer border p-3 rounded-md hover:bg-muted/50 transition-colors w-full">
-                                                            <input type="radio" {...field} value="CREDIT" checked={field.value === 'CREDIT'} className="h-4 w-4 text-primary" />
-                                                            <span className="font-medium">Credit</span>
-                                                        </label>
-                                                    </div>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </CardContent>
-                            </Card>
+                            <BillChargeFields
+                                isPerKmMode={isPerKmMode}
+                                watchedAllowedKm={watchedAllowedKm}
+                                handleNumericChange={handleNumericChange}
+                            />
                         </div>
 
-                        {/* RIGHT COLUMN: STICKY SUMMARY */}
-                        <div className="lg:col-span-1 h-full">
-                            <div className="sticky top-8 space-y-6">
-                                <Card className="bg-primary/5 border-primary/20 shadow-lg">
-                                    <CardHeader className="bg-primary/10 border-b border-primary/10 pb-4">
-                                        <CardTitle className="text-lg">Receipt Summary</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="pt-6 space-y-4">
-
-                                        {/* Distance Breakdown */}
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-sm">
-                                                <span className="text-muted-foreground">Total Distance</span>
-                                                <span className="font-medium">{distance.toFixed(1)} km</span>
-                                            </div>
-                                            {watchedAllowedKm > 0 && (
-                                                <div className="space-y-1 mt-2">
-                                                    <div className="flex justify-between text-xs text-muted-foreground pl-2 border-l-2 border-primary/20">
-                                                        <span>Included ({watchedAllowedKm} km × {days} {days === 1 ? 'day' : 'days'})</span>
-                                                        <span>{watchedAllowedKm * days} km</span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="border-t border-dashed border-primary/20 my-2"></div>
-
-                                        {/* Cost Breakdown */}
-                                        <div className="space-y-2">
-                                            {/* Taxi Mode Base Charge */}
-                                            {watchedAllowedKm === 0 && watchedPackageCharge === 0 && (
-                                                <div className="flex justify-between text-sm">
-                                                    <span>{isPerKmMode ? 'Km Charge' : 'Base Charge'}</span>
-                                                    <span>{formattedBaseCharge}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Package Charge */}
-                                            {watchedPackageCharge > 0 && (
-                                                <div className="flex justify-between text-sm">
-                                                    <span>Package Charge</span>
-                                                    <span>{formatCurrency(watchedPackageCharge)}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Extra Km Charge */}
-                                            {watchedAllowedKm > 0 && watchedPackageCharge > 0 && baseCharge > 0 && (
-                                                <div className="flex justify-between text-sm text-destructive">
-                                                    <span>Extra Km Charge</span>
-                                                    <span>{formatCurrency(baseCharge)}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Extra Hours */}
-                                            {watchedExtraHours > 0 && (
-                                                <div className="flex justify-between text-sm">
-                                                    <span>Extra Hours ({watchedExtraHours}h &times; {watchedExtraHourRate})</span>
-                                                    <span>{formatCurrency(watchedExtraHours * watchedExtraHourRate)}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Waiting Charge */}
-                                            {watchedWaitingCharge > 0 && (
-                                                <div className="flex justify-between text-sm">
-                                                    <span>Waiting Charge</span>
-                                                    <span>{formatCurrency(watchedWaitingCharge)}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Gate Pass / Parking */}
-                                            {watchedGatePass > 0 && (
-                                                <div className="flex justify-between text-sm">
-                                                    <span>Gate Pass / Parking</span>
-                                                    <span>{formatCurrency(watchedGatePass)}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="border-t border-primary/20 my-4"></div>
-
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-lg font-bold">Total</span>
-                                            <span className="text-xl font-bold text-primary">{formattedTotalAmount}</span>
-                                        </div>
-
-                                        {(Number(watchedFields.advanceAmount) || 0) > 0 && (
-                                            <>
-                                                <div className="flex justify-between items-center text-muted-foreground mt-2">
-                                                    <span>Advance Payment</span>
-                                                    <span>-{formatCurrency(Number(watchedFields.advanceAmount))}</span>
-                                                </div>
-                                                <div className="border-t border-dashed border-primary/20 my-2"></div>
-                                                <div className="flex justify-between items-end">
-                                                    <span className="text-xl font-extrabold">Balance</span>
-                                                    <span className="text-2xl sm:text-3xl font-extrabold text-destructive">
-                                                        Rs.{(totalAmount - (Number(watchedFields.advanceAmount) || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                    </span>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        <Button type="submit" className="w-full mt-6 h-12 text-lg font-semibold shadow-md" disabled={isSubmitting}>
-                                            {isSubmitting ? (
-                                                <span className="flex items-center">
-                                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                                    {initialData ? 'Updating...' : 'Creating...'}
-                                                </span>
-                                            ) : (
-                                                initialData ? 'Update Bill' : 'Create Bill'
-                                            )}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
+                        <BillReceiptSummary
+                            distance={distance}
+                            allowedKm={watchedAllowedKm}
+                            days={days}
+                            baseCharge={baseCharge}
+                            packageCharge={watchedPackageCharge}
+                            extraHours={watchedExtraHours}
+                            extraHourRate={watchedExtraHourRate}
+                            waitingCharge={watchedWaitingCharge}
+                            gatePass={watchedGatePass}
+                            advanceAmount={Number(watchedFields.advanceAmount) || 0}
+                            totalAmount={totalAmount}
+                            formattedBaseCharge={formattedBaseCharge}
+                            formattedTotalAmount={formattedTotalAmount}
+                            isPerKmMode={isPerKmMode}
+                            isSubmitting={isSubmitting}
+                            isEditing={Boolean(initialData)}
+                        />
 
                     </div>
                 </form>
@@ -1148,6 +829,3 @@ function TripIcon() {
     return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg>
 }
 
-function MoneyIcon() {
-    return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></svg>
-}
