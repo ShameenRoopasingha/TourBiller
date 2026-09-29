@@ -19,13 +19,7 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import {
-    addVehicleExpense,
-    getVehicleExpenses,
-    deleteVehicleExpense,
-    type VehicleExpense,
-    type VehicleExpenseCategory
-} from '@/lib/vehicle-expense-actions';
+import type { VehicleExpense, VehicleExpenseCategory } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,20 +71,26 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
     const [amount, setAmount] = useState('');
     const [category, setCategory] = useState<VehicleExpenseCategory>('REPAIR');
     const [description, setDescription] = useState('');
-    const [borneBy, setBorneBy] = useState<'COMPANY' | 'CUSTOMER'>('COMPANY');
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [showDescription, setShowDescription] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     const fetchExpenses = useCallback(async () => {
         setLoading(true);
-        const result = await getVehicleExpenses(vehicleNo);
-        if (result.success && result.data) {
-            setExpenses(result.data);
-        } else {
-            setError(result.error || 'Failed to fetch expenses');
+        try {
+            const response = await fetch(`/api/vehicle-expenses?vehicleNo=${encodeURIComponent(vehicleNo)}`);
+            const result = await response.json();
+            if (response.ok && result.success && result.data) {
+                setExpenses(result.data);
+            } else {
+                setError(result.error || 'Failed to fetch expenses');
+            }
+        } catch (error) {
+            console.error('Error fetching vehicle expenses:', error);
+            setError('Failed to fetch expenses');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     }, [vehicleNo]);
 
     useEffect(() => {
@@ -98,14 +98,18 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
         const fetchData = async () => {
             setLoading(true);
             try {
-                const result = await getVehicleExpenses(vehicleNo);
+                const response = await fetch(`/api/vehicle-expenses?vehicleNo=${encodeURIComponent(vehicleNo)}`);
+                const result = await response.json();
                 if (isMounted) {
-                    if (result.success && result.data) {
+                    if (response.ok && result.success && result.data) {
                         setExpenses(result.data);
                     } else {
                         setError(result.error || 'Failed to fetch expenses');
                     }
                 }
+            } catch (error) {
+                console.error('Error fetching vehicle expenses:', error);
+                if (isMounted) setError('Failed to fetch expenses');
             } finally {
                 if (isMounted) {
                     setLoading(false);
@@ -129,38 +133,55 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
         setError(null);
         setSuccess(false);
 
-        const result = await addVehicleExpense({
-            vehicleNo,
-            amount: Number(amount),
-            category,
-            description,
-            date: new Date(date),
-            bookingId: bookingId || '',
-            driverId: '',
-            expenseType: borneBy,
-        });
+        try {
+            const response = await fetch('/api/vehicle-expenses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                vehicleNo,
+                amount: Number(amount),
+                category,
+                description,
+                date: new Date(date),
+                bookingId: bookingId || '',
+                driverId: '',
+                expenseType: 'COMPANY',
+                }),
+            });
+            const result = await response.json();
 
-        if (result.success) {
-            setAmount('');
-            setDescription('');
-            setShowDescription(false);
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
-            fetchExpenses();
-        } else {
-            setError(result.error || 'Failed to add expense');
+            if (response.ok && result.success) {
+                setAmount('');
+                setDescription('');
+                setShowDescription(false);
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+                await fetchExpenses();
+            } else {
+                setError(result.error || 'Failed to add expense');
+            }
+        } catch (error) {
+            console.error('Error adding vehicle expense:', error);
+            setError('Failed to add expense. Please try again.');
+        } finally {
+            setSubmitting(false);
         }
-        setSubmitting(false);
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this expense?')) return;
 
-        const result = await deleteVehicleExpense(id);
-        if (result.success) {
-            fetchExpenses();
-        } else {
-            setError(result.error || 'Failed to delete expense');
+        try {
+            const response = await fetch(`/api/vehicle-expenses/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (response.ok && result.success) {
+                await fetchExpenses();
+            } else {
+                setError(result.error || 'Failed to delete expense');
+            }
+        } catch (error) {
+            console.error('Error deleting vehicle expense:', error);
+            setError('Failed to delete expense. Please try again.');
         }
     };
 

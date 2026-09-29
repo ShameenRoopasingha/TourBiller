@@ -8,12 +8,11 @@ import { BookingCreator } from '@/components/BookingCreator';
 
 async function NewBookingForm() {
     // Fetch all needed data on the server so dropdowns are instantly available
-    const [vResult, cResult, sResult, dResult] = await Promise.all([
+    const [vResult, cResult] = await Promise.all([
         getVehicles(),
         getCustomers(),
-        getTourSchedules(),
-        getDrivers(),
     ]);
+    const [sResult, dResult] = await Promise.all([getTourSchedules(), getDrivers()]);
 
     const vehicles = vResult.success && vResult.data ? vResult.data : [];
     const customers = cResult.success && cResult.data ? cResult.data : [];

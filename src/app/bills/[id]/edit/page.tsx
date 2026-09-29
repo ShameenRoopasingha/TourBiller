@@ -22,12 +22,11 @@ async function EditBillForm({ id }: { id: string }) {
     }
 
     // Fetch bill and lookup data
-    const [billResult, vResult, cResult, sResult] = await Promise.all([
+    const [billResult, vResult] = await Promise.all([
         getBillById(id),
         getVehicles(),
-        getCustomers(),
-        getTourSchedules(),
     ]);
+    const [cResult, sResult] = await Promise.all([getCustomers(), getTourSchedules()]);
 
     if (!billResult.success || !billResult.data) {
         return notFound();

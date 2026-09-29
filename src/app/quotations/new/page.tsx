@@ -8,12 +8,11 @@ import { QuotationCreator } from '@/components/QuotationCreator';
 
 async function NewQuotationForm() {
     // Fetch all needed data in parallel
-    const [schedulesResult, customersResult, vehiclesResult, driversResult] = await Promise.all([
+    const [schedulesResult, customersResult] = await Promise.all([
         getTourSchedules(),
         getCustomers(),
-        getVehicles(),
-        getDrivers(),
     ]);
+    const [vehiclesResult, driversResult] = await Promise.all([getVehicles(), getDrivers()]);
 
     const schedules = schedulesResult.success && schedulesResult.data
         ? schedulesResult.data

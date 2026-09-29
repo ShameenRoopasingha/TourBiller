@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { getBookings, cancelBooking } from '@/lib/booking-actions';
+import { getBookings } from '@/lib/booking-actions';
+import { CancelBookingButton } from '@/components/CancelBookingButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -14,7 +15,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, CalendarX, Clock, Eye } from 'lucide-react';
+import { Plus, Clock, Eye } from 'lucide-react';
 import { SearchInput } from '@/components/SearchInput';
 
 function EndTourDialog({ vehicleNo, customerName, bookingId }: { vehicleNo: string, customerName: string, bookingId: string }) {
@@ -117,31 +118,7 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                                             <EndTourDialog vehicleNo={booking.vehicleNo} customerName={booking.customerName} bookingId={booking.id} />
                                         )}
                                         {booking.status === 'CONFIRMED' && (
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="destructive" size="sm">
-                                                        <CalendarX className="w-4 h-4 mr-2" />
-                                                        Cancel
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This action cannot be undone. This will permanently cancel the booking for {booking.customerName}.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                                                        <form action={async () => {
-                                                            'use server';
-                                                            await cancelBooking(booking.id);
-                                                        }}>
-                                                            <AlertDialogAction type="submit" className="bg-red-600 hover:bg-red-700">Yes, cancel it</AlertDialogAction>
-                                                        </form>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                            <CancelBookingButton bookingId={booking.id} customerName={booking.customerName} />
                                         )}
                                         <Button variant="outline" size="sm" asChild>
                                             <Link href={`/bookings/${booking.id}`}>

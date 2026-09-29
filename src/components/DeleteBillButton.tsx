@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { deleteBill } from '@/lib/actions';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
     AlertDialog,
@@ -22,15 +22,19 @@ interface DeleteBillButtonProps {
 }
 
 export function DeleteBillButton({ billId, billNumber }: DeleteBillButtonProps) {
+    const router = useRouter();
     const [isDeleting, setIsDeleting] = useState(false);
     const [open, setOpen] = useState(false);
 
     const handleDelete = async () => {
         setIsDeleting(true);
         try {
-            const result = await deleteBill(billId);
-            if (!result.success) {
+            const response = await fetch(`/api/bills/${encodeURIComponent(billId)}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
                 alert(result.error || 'Failed to delete bill');
+            } else {
+                router.refresh();
             }
             // Router refresh is handled by server action revalidation
         } catch (error) {

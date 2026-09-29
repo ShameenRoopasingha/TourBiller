@@ -219,12 +219,10 @@ export async function deleteUser(id: string): Promise<ActionResult<void>> {
         }
 
         // Check for related records that would prevent deletion
-        const [bookingCount, quotationCount, expenseCount, activityCount] = await Promise.all([
-            prisma.booking.count({ where: { driverId: id, companyId } }),
-            prisma.quotation.count({ where: { driverId: id, companyId } }),
-            prisma.vehicleExpense.count({ where: { driverId: id, companyId } }),
-            prisma.tripActivity.count({ where: { driverId: id, companyId } }),
-        ]);
+        const bookingCount = await prisma.booking.count({ where: { driverId: id, companyId } });
+        const quotationCount = await prisma.quotation.count({ where: { driverId: id, companyId } });
+        const expenseCount = await prisma.vehicleExpense.count({ where: { driverId: id, companyId } });
+        const activityCount = await prisma.tripActivity.count({ where: { driverId: id, companyId } });
 
         const relatedItems: string[] = [];
         if (bookingCount > 0) relatedItems.push(`${bookingCount} booking(s)`);

@@ -1,14 +1,20 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth-guard';
 import { VehicleForm } from '@/components/VehicleForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { Vehicle } from '@/lib/validations';
 
 async function EditVehicleForm({ id }: { id: string }) {
-    const vehicle = await prisma.vehicle.findUnique({
-        where: { id },
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized) {
+        return notFound();
+    }
+
+    const vehicle = await prisma.vehicle.findFirst({
+        where: { id, companyId: authCheck.companyId },
     }) as unknown as Vehicle;
 
     if (!vehicle) {

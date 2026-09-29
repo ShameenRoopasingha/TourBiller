@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Search, Edit, Trash2, Map, Calendar, Eye } from 'lucide-react';
 
-import { deleteTourSchedule } from '@/lib/tour-schedule-actions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,6 +57,7 @@ interface TourScheduleListProps {
 }
 
 export function TourScheduleList({ schedules }: TourScheduleListProps) {
+    const router = useRouter();
     const [search, setSearch] = useState('');
     const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -68,11 +69,20 @@ export function TourScheduleList({ schedules }: TourScheduleListProps) {
 
     const handleDelete = async (id: string) => {
         setDeleting(id);
-        const result = await deleteTourSchedule(id);
-        if (!result.success) {
-            alert(result.error || 'Failed to delete schedule');
+        try {
+            const response = await fetch(`/api/tour-schedules/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                alert(result.error || 'Failed to delete schedule');
+            } else {
+                router.refresh();
+            }
+        } catch (error) {
+            console.error('Error deleting tour schedule:', error);
+            alert('Failed to delete schedule. Please try again.');
+        } finally {
+            setDeleting(null);
         }
-        setDeleting(null);
     };
 
     const calculateTotal = (items: TourScheduleRow['items']) => {

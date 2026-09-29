@@ -9,7 +9,6 @@ import { VehicleFormSchema, type VehicleFormInput, type Vehicle } from '@/lib/va
 
 // For backward compatibility - alias the type
 export type VehicleFormData = VehicleFormInput;
-import { createVehicle, updateVehicle } from '@/lib/vehicle-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
@@ -85,18 +84,24 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
             }
         });
 
-        let result;
-        if (vehicle) {
-            result = await updateVehicle(vehicle.id, formData);
-        } else {
-            result = await createVehicle(formData);
-        }
+        try {
+            const response = await fetch(vehicle ? `/api/vehicles/${encodeURIComponent(vehicle.id)}` : '/api/vehicles', {
+                method: vehicle ? 'PUT' : 'POST',
+                body: formData,
+            });
+            const result = await response.json();
 
-        if (result.success) {
-            router.push('/vehicles');
-            // Intentionally not setting isSubmitting to false here
-        } else {
+            if (response.ok && result.success) {
+                router.refresh();
+                router.push('/vehicles');
+                return;
+            }
+
             setError(result.error || 'Failed to save vehicle');
+        } catch (submitError) {
+            console.error('Error saving vehicle:', submitError);
+            setError('Failed to save vehicle. Please try again.');
+        } finally {
             setIsSubmitting(false);
         }
     };

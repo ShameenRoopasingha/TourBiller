@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth-guard';
 import JSZip from 'jszip';
 
 // CSV එකක් විදියට JSON array එකක් convert කරන function එක
@@ -29,25 +30,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Company ID is required' }, { status: 400 });
     }
 
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized || authCheck.companyId !== companyId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
     // අදාල Business එකේ සියලුම data DB එකෙන් ගන්න
-    const [
-      businessInfo,
-      users,
-      vehicles,
-      customers,
-      bookings,
-      quotations,
-      tourSchedules,
-      expenses,
-      activities
-    ] = await Promise.all([
-      prisma.businessProfile.findUnique({ where: { id: companyId } }),
+    const businessInfo = await prisma.businessProfile.findUnique({ where: { id: companyId } });
+    const [users, vehicles] = await Promise.all([
       prisma.user.findMany({ where: { companyId } }),
       prisma.vehicle.findMany({ where: { companyId } }),
+    ]);
+    const [customers, bookings] = await Promise.all([
       prisma.customer.findMany({ where: { companyId } }),
       prisma.booking.findMany({ where: { companyId } }),
+    ]);
+    const [quotations, tourSchedules] = await Promise.all([
       prisma.quotation.findMany({ where: { companyId } }),
       prisma.tourSchedule.findMany({ where: { companyId } }),
+    ]);
+    const [expenses, activities] = await Promise.all([
       prisma.vehicleExpense.findMany({ where: { companyId } }),
       prisma.tripActivity.findMany({ where: { companyId } }),
     ]);

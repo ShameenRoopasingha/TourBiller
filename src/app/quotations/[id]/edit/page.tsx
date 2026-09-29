@@ -11,12 +11,11 @@ import { type TourScheduleWithItems } from '@/lib/tour-schedule-actions';
 export default async function EditQuotationPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
 
-    const [quotationResult, schedulesResult, customersResult, vehiclesResult] = await Promise.all([
+    const [quotationResult, schedulesResult] = await Promise.all([
         getQuotationById(id),
         getTourSchedules(),
-        getCustomers(),
-        getVehicles()
     ]);
+    const [customersResult, vehiclesResult] = await Promise.all([getCustomers(), getVehicles()]);
 
     if (!quotationResult.success || !quotationResult.data) {
         notFound();

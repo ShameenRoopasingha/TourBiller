@@ -9,8 +9,6 @@ import { TourScheduleFormSchema, type TourScheduleFormInput, type Vehicle } from
 
 // For backward compatibility
 export type TourScheduleFormData = TourScheduleFormInput;
-import { createTourSchedule, updateTourSchedule } from '@/lib/tour-schedule-actions';
-import { getVehicles } from '@/lib/vehicle-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 
@@ -201,9 +199,14 @@ export function TourScheduleForm({
     // Fetch vehicles
     useEffect(() => {
         async function fetchVehicles() {
-            const result = await getVehicles();
-            if (result.success) {
-                setVehicles(result.data || []);
+            try {
+                const response = await fetch('/api/vehicles');
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    setVehicles(result.data || []);
+                }
+            } catch (error) {
+                console.error('Failed to fetch vehicles:', error);
             }
         }
         fetchVehicles();
@@ -278,12 +281,16 @@ export function TourScheduleForm({
         setError(null);
 
         try {
-            const result = isEditing
-                ? await updateTourSchedule(initialData!.id, data)
-                : await createTourSchedule(data);
+            const response = await fetch(isEditing ? `/api/tour-schedules/${encodeURIComponent(initialData!.id)}` : '/api/tour-schedules', {
+                method: isEditing ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            const result = await response.json();
 
-            if (result.success) {
+            if (response.ok && result.success) {
                 setSuccess(true);
+                router.refresh();
                 if (onSuccess) {
                     onSuccess(result.data!);
                 } else {

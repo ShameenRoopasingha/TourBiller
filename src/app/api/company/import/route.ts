@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth-guard';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,6 +9,11 @@ export async function POST(request: NextRequest) {
 
     if (!companyId || !entityType || !data || !Array.isArray(data)) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    }
+
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized || authCheck.companyId !== companyId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     let importedCount = 0;

@@ -1,8 +1,22 @@
-'use server';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth-guard';
+import { updateVehicle } from '@/lib/vehicle-actions';
+
+export async function PUT(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const formData = await req.formData();
+        const result = await updateVehicle(id, formData);
+        return NextResponse.json(result, { status: result.success ? 200 : 400 });
+    } catch (error) {
+        console.error('API error updating vehicle:', error);
+        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    }
+}
 
 export async function DELETE(
     _req: NextRequest,

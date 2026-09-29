@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
-import { updateQuotationStatus, deleteQuotation, convertQuotationToBooking } from '@/lib/quotation-actions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -85,38 +84,66 @@ export function QuotationList({ quotations }: QuotationListProps) {
 
     const handleStatusUpdate = async (id: string, status: string) => {
         setUpdating(id);
-        const result = await updateQuotationStatus(id, status);
-        if (!result.success) {
-            setDialogMessage({ title: 'Update Failed', description: result.error || 'Failed to update status', type: 'error' });
-        } else {
-            setDialogMessage({ title: 'Status Updated', description: `Quotation status updated to ${status}.`, type: 'success' });
+        try {
+            const response = await fetch(`/api/quotations/${encodeURIComponent(id)}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status }),
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                setDialogMessage({ title: 'Update Failed', description: result.error || 'Failed to update status', type: 'error' });
+            } else {
+                router.refresh();
+                setDialogMessage({ title: 'Status Updated', description: `Quotation status updated to ${status}.`, type: 'success' });
+            }
+        } catch (error) {
+            console.error('Error updating quotation status:', error);
+            setDialogMessage({ title: 'Update Failed', description: 'Failed to update quotation status. Please try again.', type: 'error' });
+        } finally {
+            setUpdating(null);
         }
-        setUpdating(null);
     };
 
     const executeDelete = async (id: string) => {
         setDeleting(id);
-        const result = await deleteQuotation(id);
-        if (!result.success) {
-            setDialogMessage({ title: 'Deletion Failed', description: result.error || 'Failed to delete quotation', type: 'error' });
-        } else {
-            setDialogMessage({ title: 'Quotation Deleted', description: 'The quotation was deleted successfully.', type: 'success' });
+        try {
+            const response = await fetch(`/api/quotations/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                setDialogMessage({ title: 'Deletion Failed', description: result.error || 'Failed to delete quotation', type: 'error' });
+            } else {
+                router.refresh();
+                setDialogMessage({ title: 'Quotation Deleted', description: 'The quotation was deleted successfully.', type: 'success' });
+            }
+        } catch (error) {
+            console.error('Error deleting quotation:', error);
+            setDialogMessage({ title: 'Deletion Failed', description: 'Failed to delete quotation. Please try again.', type: 'error' });
+        } finally {
+            setDeleting(null);
         }
-        setDeleting(null);
     };
 
     const executeConvertToBooking = async (id: string) => {
         setConverting(id);
-        const result = await convertQuotationToBooking(id);
-        if (!result.success) {
-            setDialogMessage({ title: 'Conversion Failed', description: result.error || 'Failed to convert quotation to booking', type: 'error' });
-        } else {
-            setDialogMessage({ title: 'Conversion Successful', description: 'Booking successfully created!', type: 'success' });
-            setTimeout(() => {
-                router.push('/bookings');
-            }, 1500);
+        try {
+            const response = await fetch(`/api/quotations/${encodeURIComponent(id)}/convert`, { method: 'POST' });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                setDialogMessage({ title: 'Conversion Failed', description: result.error || 'Failed to convert quotation to booking', type: 'error' });
+            } else {
+                setDialogMessage({ title: 'Conversion Successful', description: 'Booking successfully created!', type: 'success' });
+                router.refresh();
+                setTimeout(() => {
+                    router.push('/bookings');
+                }, 1500);
+            }
+        } catch (error) {
+            console.error('Error converting quotation:', error);
+            setDialogMessage({ title: 'Conversion Failed', description: 'Failed to convert quotation to booking. Please try again.', type: 'error' });
+        } finally {
+            setConverting(null);
         }
-        setConverting(null);
     };
 
     const fmt = formatCurrency;

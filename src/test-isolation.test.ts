@@ -1,10 +1,15 @@
 import { prisma } from '@/lib/prisma';
 import { getVehicles, createVehicle, updateVehicle, deleteVehicle } from '@/lib/vehicle-actions';
 import { getDashboardStats } from '@/lib/dashboard-actions';
+import { getBillById, updateBill, deleteBill } from '@/lib/actions';
+import { getBookingById, cancelBooking } from '@/lib/booking-actions';
+import { getQuotationById, updateQuotation, updateQuotationStatus, deleteQuotation } from '@/lib/quotation-actions';
+import { getUsers, deleteUser } from '@/lib/user-actions';
 
 jest.mock('next/cache', () => ({
     revalidatePath: jest.fn(),
-    revalidateTag: jest.fn()
+    revalidateTag: jest.fn(),
+    unstable_noStore: jest.fn(),
 }));
 
 // Mock auth-guard
@@ -17,8 +22,12 @@ import * as authGuard from '@/lib/auth-guard';
 describe('Multi-Tenant Data Isolation', () => {
     let companyA_Id: string;
     let companyB_Id: string;
-    let vehicleA_Id: string;
     let vehicleB_Id: string;
+    let billB_Id: string;
+    let bookingB_Id: string;
+    let quotationB_Id: string;
+    let userB_Id: string;
+    let scheduleB_Id: string;
 
 
     beforeAll(async () => {
@@ -27,6 +36,55 @@ describe('Multi-Tenant Data Isolation', () => {
         const compB = await prisma.businessProfile.create({ data: { companyName: 'Test Isolation Company B' } });
         companyA_Id = compA.id;
         companyB_Id = compB.id;
+
+        const bill = await prisma.bill.create({
+            data: {
+                companyId: companyB_Id,
+                vehicleNo: 'ISO-B-222',
+                customerName: 'Company B Customer',
+                route: 'Test Route',
+                startMeter: 100,
+                endMeter: 150,
+                hireRate: 100,
+                totalAmount: 5000,
+            },
+        });
+        billB_Id = bill.id;
+
+        const booking = await prisma.booking.create({
+            data: {
+                companyId: companyB_Id,
+                vehicleNo: 'ISO-B-222',
+                customerName: 'Company B Customer',
+                startDate: new Date(Date.now() + 86_400_000),
+            },
+        });
+        bookingB_Id = booking.id;
+
+        const schedule = await prisma.tourSchedule.create({
+            data: { companyId: companyB_Id, name: 'ISO-B Tour', days: 1 },
+        });
+        scheduleB_Id = schedule.id;
+
+        const quotation = await prisma.quotation.create({
+            data: {
+                companyId: companyB_Id,
+                tourScheduleId: scheduleB_Id,
+                customerName: 'Company B Customer',
+            },
+        });
+        quotationB_Id = quotation.id;
+
+        const user = await prisma.user.create({
+            data: {
+                companyId: companyB_Id,
+                name: 'Company B Driver',
+                email: `iso-driver-${Date.now()}@example.test`,
+                password: 'test-password-hash',
+                role: 'DRIVER',
+            },
+        });
+        userB_Id = user.id;
     });
 
     afterAll(async () => {
@@ -69,8 +127,6 @@ describe('Multi-Tenant Data Isolation', () => {
         fdA.append('ownerType', 'COMPANY');
         const resA = await createVehicle(fdA);
         expect(resA.success).toBe(true);
-        vehicleA_Id = resA.data as string;
-
         // Create Vehicle for B
         simulateUserB();
         const fdB = new FormData();
@@ -119,6 +175,66 @@ describe('Multi-Tenant Data Isolation', () => {
         // User A tries to delete B's vehicle directly by ID
         const delB = await deleteVehicle(vehicleB_Id);
         expect(delB.success).toBe(false);
+    });
+
+    it('should block Company A from reading, updating, or deleting Company B bills', async () => {
+        simulateUserA();
+
+        const bill = await getBillById(billB_Id);
+        expect(bill.success).toBe(false);
+
+        const formData = new FormData();
+        formData.set('vehicleNo', 'ISO-A-111');
+        formData.set('customerName', 'Changed by Company A');
+        formData.set('route', 'Changed Route');
+        formData.set('startMeter', '100');
+        formData.set('endMeter', '200');
+        formData.set('hireRate', '100');
+        const update = await updateBill(billB_Id, formData);
+        expect(update.success).toBe(false);
+        expect(update.error).toBe('Bill not found or unauthorized');
+
+        const deletion = await deleteBill(billB_Id);
+        expect(deletion.success).toBe(false);
+    });
+
+    it('should block Company A from reading or cancelling Company B bookings', async () => {
+        simulateUserA();
+
+        const booking = await getBookingById(bookingB_Id);
+        expect(booking.success).toBe(false);
+
+        const cancellation = await cancelBooking(bookingB_Id);
+        expect(cancellation.success).toBe(false);
+    });
+
+    it('should block Company A from reading or mutating Company B quotations', async () => {
+        simulateUserA();
+
+        const quotation = await getQuotationById(quotationB_Id);
+        expect(quotation.success).toBe(false);
+
+        const formData = new FormData();
+        formData.set('customerName', 'Changed by Company A');
+        const update = await updateQuotation(quotationB_Id, scheduleB_Id, formData);
+        expect(update.success).toBe(false);
+
+        const status = await updateQuotationStatus(quotationB_Id, 'SENT');
+        expect(status.success).toBe(false);
+
+        const deletion = await deleteQuotation(quotationB_Id);
+        expect(deletion.success).toBe(false);
+    });
+
+    it('should not list or delete Company B users from Company A', async () => {
+        simulateUserA();
+
+        const users = await getUsers();
+        expect(users.success).toBe(true);
+        expect(users.data?.some(user => user.id === userB_Id)).toBe(false);
+
+        const deletion = await deleteUser(userB_Id);
+        expect(deletion.success).toBe(false);
     });
 
     it('should aggregate only current company data (dashboard)', async () => {

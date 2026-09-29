@@ -1,6 +1,5 @@
 'use server';
 
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { CustomerSchema, type ActionResult, type Customer } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
@@ -130,11 +129,9 @@ export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
         }
 
         // Check for related records that reference this customer by name
-        const [billCount, bookingCount, quotationCount] = await Promise.all([
-            prisma.bill.count({ where: { customerName: customer.name, companyId } }),
-            prisma.booking.count({ where: { customerName: customer.name, companyId } }),
-            prisma.quotation.count({ where: { customerName: customer.name, companyId } }),
-        ]);
+        const billCount = await prisma.bill.count({ where: { customerName: customer.name, companyId } });
+        const bookingCount = await prisma.booking.count({ where: { customerName: customer.name, companyId } });
+        const quotationCount = await prisma.quotation.count({ where: { customerName: customer.name, companyId } });
 
         const relatedItems: string[] = [];
         if (billCount > 0) relatedItems.push(`${billCount} bill(s)`);

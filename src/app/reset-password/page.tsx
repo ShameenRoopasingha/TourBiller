@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { verifyResetToken, resetPassword } from '@/lib/auth-actions';
 import { Button } from '@/components/ui/button';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,9 +29,16 @@ export default function ResetPasswordPage() {
                 setIsValidToken(false);
                 return;
             }
-            const isValid = await verifyResetToken(token);
-            setIsValidToken(isValid);
-            setVerifying(false);
+            try {
+                const response = await fetch(`/api/auth/password-reset?token=${encodeURIComponent(token)}`);
+                const result = await response.json();
+                setIsValidToken(response.ok && result.success && result.data === true);
+            } catch (error) {
+                console.error('Error verifying reset token:', error);
+                setIsValidToken(false);
+            } finally {
+                setVerifying(false);
+            }
         };
 
         checkToken();
@@ -60,15 +66,20 @@ export default function ResetPasswordPage() {
         formData.set('token', token);
         formData.set('password', password);
 
-        const result = await resetPassword(formData);
-        
-        if (result.success) {
-            setSuccess(true);
-            setTimeout(() => {
-                router.push('/login');
-            }, 3000);
-        } else {
-            setError(result.error || 'Failed to reset password.');
+        try {
+            const response = await fetch('/api/auth/password-reset', { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                setSuccess(true);
+                setTimeout(() => router.push('/login'), 3000);
+            } else {
+                setError(result.error || 'Failed to reset password.');
+            }
+        } catch (error) {
+            console.error('Error resetting password:', error);
+            setError('Failed to reset password. Please try again.');
+        } finally {
             setResetting(false);
         }
     };

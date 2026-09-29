@@ -9,7 +9,6 @@ import { CustomerFormSchema, type CustomerFormInput, type Customer } from '@/lib
 
 // For backward compatibility - alias the type
 export type CustomerFormData = CustomerFormInput;
-import { createCustomer, updateCustomer } from '@/lib/customer-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,19 +55,24 @@ export function CustomerForm({ customer }: CustomerFormProps) {
             }
         });
 
-        let result;
-        if (customer) {
-            result = await updateCustomer(customer.id, formData);
-        } else {
-            result = await createCustomer(formData);
-        }
+        try {
+            const response = await fetch(customer ? `/api/customers?id=${encodeURIComponent(customer.id)}` : '/api/customers', {
+                method: customer ? 'PUT' : 'POST',
+                body: formData,
+            });
+            const result = await response.json();
 
-        if (result.success) {
-            router.push('/customers');
-            // Intentionally not setting isSubmitting to false here
-            // so the loading spinner stays active while Next.js fetches the new page
-        } else {
+            if (response.ok && result.success) {
+                router.refresh();
+                router.push('/customers');
+                return;
+            }
+
             setError(result.error || 'Failed to save customer');
+        } catch (submitError) {
+            console.error('Error saving customer:', submitError);
+            setError('Failed to save customer. Please try again.');
+        } finally {
             setIsSubmitting(false);
         }
     };

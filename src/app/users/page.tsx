@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Loader2, Plus, Trash2, Shield, Truck, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +39,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { getUsers, createUser, deleteUser } from '@/lib/user-actions';
 
 type User = {
     id: string;
@@ -49,11 +49,13 @@ type User = {
 };
 
 export default function UsersPage() {
+    const router = useRouter();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [error, setError] = useState('');
+    const [loadError, setLoadError] = useState('');
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<{ id: string, name: string } | null>(null);
@@ -70,13 +72,22 @@ export default function UsersPage() {
         let isMounted = true;
         
         const initFetch = async () => {
-            const result = await getUsers();
-            if (!isMounted) return;
-            
-            if (result.success && result.data) {
-                setUsers(result.data);
+            try {
+                const response = await fetch('/api/users');
+                const result = await response.json();
+                if (!isMounted) return;
+
+                if (response.ok && result.success && result.data) {
+                    setUsers(result.data);
+                } else {
+                    setLoadError(result.error || 'Failed to load users');
+                }
+            } catch (fetchError) {
+                console.error('Error loading users:', fetchError);
+                if (isMounted) setLoadError('Failed to load users. Please try again.');
+            } finally {
+                if (isMounted) setLoading(false);
             }
-            setLoading(false);
         };
         
         initFetch();
@@ -97,37 +108,54 @@ export default function UsersPage() {
         formData.set('password', password);
         formData.set('role', role);
 
-        const result = await createUser(formData);
+        try {
+            const response = await fetch('/api/users', { method: 'POST', body: formData });
+            const result = await response.json();
 
-        if (result.success) {
-            setName('');
-            setEmail('');
-            setPassword('');
-            setRole('DRIVER');
-            setDialogOpen(false);
-            const refresh = await getUsers();
-            if (refresh.success && refresh.data) setUsers(refresh.data);
-        } else {
-            setError(result.error || 'Failed to create user');
+            if (response.ok && result.success) {
+                router.refresh();
+                setName('');
+                setEmail('');
+                setPassword('');
+                setRole('DRIVER');
+                setDialogOpen(false);
+                const refreshResponse = await fetch('/api/users');
+                const refresh = await refreshResponse.json();
+                if (refreshResponse.ok && refresh.success && refresh.data) setUsers(refresh.data);
+            } else {
+                setError(result.error || 'Failed to create user');
+            }
+        } catch (createError) {
+            console.error('Error creating user:', createError);
+            setError('Failed to create user. Please try again.');
+        } finally {
+            setCreating(false);
         }
-
-        setCreating(false);
     };
 
     const confirmDelete = async () => {
         if (!userToDelete) return;
         setIsDeleting(true);
-        const result = await deleteUser(userToDelete.id);
-        if (result.success) {
-            setDeleteDialogOpen(false);
-            setUserToDelete(null);
-            setDeleteConfirmText('');
-            const refresh = await getUsers();
-            if (refresh.success && refresh.data) setUsers(refresh.data);
-        } else {
-            alert(result.error || 'Failed to delete user');
+        try {
+            const response = await fetch(`/api/users/${encodeURIComponent(userToDelete.id)}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (response.ok && result.success) {
+                router.refresh();
+                setDeleteDialogOpen(false);
+                setUserToDelete(null);
+                setDeleteConfirmText('');
+                const refreshResponse = await fetch('/api/users');
+                const refresh = await refreshResponse.json();
+                if (refreshResponse.ok && refresh.success && refresh.data) setUsers(refresh.data);
+            } else {
+                alert(result.error || 'Failed to delete user');
+            }
+        } catch (deleteError) {
+            console.error('Error deleting user:', deleteError);
+            alert('Failed to delete user. Please try again.');
+        } finally {
+            setIsDeleting(false);
         }
-        setIsDeleting(false);
     };
 
     if (loading) {
@@ -283,6 +311,11 @@ export default function UsersPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    {loadError && (
+                        <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                            {loadError}
+                        </div>
+                    )}
                     {users.length === 0 ? (
                         <div className="text-center p-8 text-muted-foreground">
                             No users found.

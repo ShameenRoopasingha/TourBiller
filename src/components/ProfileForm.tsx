@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { updateProfile, updatePassword } from '@/lib/profile-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -43,24 +42,29 @@ export default function ProfileForm({ user }: ProfileFormProps) {
         formData.set('name', name);
         formData.set('email', email);
 
-        const result = await updateProfile(formData);
-        
-        if (result.success) {
-            setProfileSuccess('Profile updated successfully.');
-            // Update session data
-            await update({ name, email });
-        } else {
-            setProfileError(result.error || 'Failed to update profile.');
+        try {
+            const response = await fetch('/api/profile', { method: 'PUT', body: formData });
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                setProfileSuccess('Profile updated successfully.');
+                await update({ name, email });
+            } else {
+                setProfileError(result.error || 'Failed to update profile.');
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            setProfileError('Failed to update profile. Please try again.');
+        } finally {
+            setUpdatingProfile(false);
         }
-        
-        setUpdatingProfile(false);
     };
 
     const handleUpdatePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         setPasswordError('');
         setPasswordSuccess('');
-        
+
         if (newPassword !== confirmPassword) {
             setPasswordError('New passwords do not match.');
             return;
@@ -77,18 +81,24 @@ export default function ProfileForm({ user }: ProfileFormProps) {
         formData.set('currentPassword', currentPassword);
         formData.set('newPassword', newPassword);
 
-        const result = await updatePassword(formData);
-        
-        if (result.success) {
-            setPasswordSuccess('Password updated successfully.');
-            setCurrentPassword('');
-            setNewPassword('');
-            setConfirmPassword('');
-        } else {
-            setPasswordError(result.error || 'Failed to update password.');
+        try {
+            const response = await fetch('/api/profile/password', { method: 'PUT', body: formData });
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                setPasswordSuccess('Password updated successfully.');
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+            } else {
+                setPasswordError(result.error || 'Failed to update password.');
+            }
+        } catch (error) {
+            console.error('Error updating password:', error);
+            setPasswordError('Failed to update password. Please try again.');
+        } finally {
+            setUpdatingPassword(false);
         }
-        
-        setUpdatingPassword(false);
     };
 
     return (

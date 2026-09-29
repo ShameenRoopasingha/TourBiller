@@ -490,3 +490,15 @@ export const VehicleExpenseDbSchema = VehicleExpenseSchema.extend({
 });
 
 export type VehicleExpense = z.infer<typeof VehicleExpenseDbSchema>;
+
+export type TripActivityType = 'FUEL_FILL' | 'FLAT_TIRE' | 'STOP' | 'HOTEL_CHECKIN' | 'RESUME' | 'BREAKDOWN' | 'NOTE';
+
+export interface TripActivity {
+  id: string;
+  bookingId: string;
+  driverId: string;
+  type: string;
+  note: string | null;
+  expenseId: string | null;
+  timestamp: Date | string;
+}

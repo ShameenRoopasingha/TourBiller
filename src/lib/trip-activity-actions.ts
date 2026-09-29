@@ -2,19 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-guard';
-import { type ActionResult } from '@/lib/validations';
-
-export type TripActivityType = 'FUEL_FILL' | 'FLAT_TIRE' | 'STOP' | 'HOTEL_CHECKIN' | 'RESUME' | 'BREAKDOWN' | 'NOTE';
-
-export interface TripActivity {
-    id: string;
-    bookingId: string;
-    driverId: string;
-    type: string;
-    note: string | null;
-    expenseId: string | null;
-    timestamp: Date | string;
-}
+import { type ActionResult, type TripActivity, type TripActivityType } from '@/lib/validations';
 
 /**
  * Log a trip activity (driver only, must have active booking)
@@ -50,7 +38,8 @@ export async function logTripActivity(
         }
 
 
-    const activity = await prisma.tripActivity.create({
+
+    const activity = await prisma.tripActivity.create({
             data: {
                 companyId: authCheck.companyId,
                 bookingId,
@@ -79,7 +68,8 @@ export async function getTripActivities(bookingId: string): Promise<ActionResult
         }
 
 
-    const activities = await prisma.tripActivity.findMany({
+
+    const activities = await prisma.tripActivity.findMany({
             where: { bookingId, companyId: authCheck.companyId },
             orderBy: { timestamp: 'desc' },
         });

@@ -1,12 +1,11 @@
 'use server';
 
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { BillSchema, BusinessProfileSchema, type ActionResult } from '@/lib/validations';
 import { type Bill, type BusinessProfile } from '@prisma/client';
 import { calculateTotalAmount } from '@/lib/calculations';
 import { revalidateFor } from '@/lib/revalidation';
-import { requireAdmin } from '@/lib/auth-guard';
+import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 
 /**
  * Create a new bill
@@ -88,7 +87,7 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
     // Create the bill first (this is the critical operation)
     const createdBill = await prisma.bill.create({
       data: {
-        companyId: ((await auth())?.user as any)?.companyId as string,
+        companyId: authCheck.companyId,
         ...validatedData,
         totalAmount,
         itinerary: itinerary || null,
@@ -221,8 +220,8 @@ export async function updateBill(id: string, formData: FormData): Promise<Action
     const itinerary = formData.get('itinerary') as string | null;
 
     // Update the bill
-    const updatedBill = await prisma.bill.update({
-      where: { id },
+    const updatedBill = await prisma.bill.updateMany({
+      where: { id, companyId: authCheck.companyId },
       data: {
         ...validatedData,
         totalAmount,
@@ -230,11 +229,15 @@ export async function updateBill(id: string, formData: FormData): Promise<Action
       },
     });
 
+    if (updatedBill.count === 0) {
+      return { success: false, error: 'Bill not found or unauthorized' };
+    }
+
     // Update vehicle mileage
     try {
       await prisma.vehicle.update({
-        where: { companyId_vehicleNo: { companyId: ((await auth())?.user as any)?.companyId as string, vehicleNo: updatedBill.vehicleNo } },
-        data: { currentMileage: updatedBill.endMeter },
+        where: { companyId_vehicleNo: { companyId: authCheck.companyId, vehicleNo: validatedData.vehicleNo } },
+        data: { currentMileage: validatedData.endMeter },
       });
     } catch (vehicleError) {
       console.warn('Could not update vehicle mileage:', vehicleError);
@@ -245,7 +248,7 @@ export async function updateBill(id: string, formData: FormData): Promise<Action
 
     return {
       success: true,
-      data: updatedBill.id,
+      data: id,
     };
   } catch (error) {
     console.error('Error updating bill:', error);
@@ -312,8 +315,13 @@ export async function getBills(searchQuery?: string): Promise<ActionResult<Bill[
  */
 export async function getBillById(id: string): Promise<ActionResult<Bill>> {
   try {
-    const bill = await prisma.bill.findUnique({
-      where: { id },
+    const authCheck = await requireAuth();
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error };
+    }
+
+    const bill = await prisma.bill.findFirst({
+      where: { id, companyId: authCheck.companyId },
     });
 
     if (!bill) {
@@ -344,16 +352,17 @@ export async function getBillById(id: string): Promise<ActionResult<Bill>> {
  */
 export async function getBusinessProfile(): Promise<ActionResult<BusinessProfile>> {
   try {
-    const profile = await prisma.businessProfile.findFirst();
+    const authCheck = await requireAuth();
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error };
+    }
+
+    const profile = await prisma.businessProfile.findUnique({
+      where: { id: authCheck.companyId },
+    });
 
     if (!profile) {
-      // Create default profile if none exists
-      const newProfile = await prisma.businessProfile.create({
-        data: {
-          companyName: 'My Transport Company',
-        },
-      });
-      return { success: true, data: JSON.parse(JSON.stringify(newProfile)) };
+      return { success: false, error: 'Business profile not found' };
     }
 
     return { success: true, data: JSON.parse(JSON.stringify(profile)) };
@@ -389,20 +398,10 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
 
     const validatedData = BusinessProfileSchema.parse(rawData);
 
-    // Check if profile exists
-    const existingProfile = await prisma.businessProfile.findFirst();
-
-    let profile;
-    if (existingProfile) {
-      profile = await prisma.businessProfile.update({
-        where: { id: existingProfile.id },
-        data: validatedData,
-      });
-    } else {
-      profile = await prisma.businessProfile.create({
-        data: validatedData,
-      });
-    }
+    const profile = await prisma.businessProfile.update({
+      where: { id: authCheck.companyId },
+      data: validatedData,
+    });
 
     revalidateFor('businessProfile');
 
@@ -426,9 +425,12 @@ export async function deleteBill(id: string): Promise<ActionResult<void>> {
       return { success: false, error: authCheck.error };
     }
 
-    await prisma.bill.delete({
-      where: { id },
+    const deleted = await prisma.bill.deleteMany({
+      where: { id, companyId: authCheck.companyId },
     });
+    if (deleted.count === 0) {
+      return { success: false, error: 'Bill not found or unauthorized' };
+    }
 
     revalidateFor('bill');
 

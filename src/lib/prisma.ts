@@ -6,9 +6,19 @@ const globalForPrisma = globalThis as unknown as {
 
 // Limit Prisma's connection pool to avoid exhausting PgBouncer session-mode limits
 const databaseUrl = process.env.DATABASE_URL || '';
-const urlWithLimit = databaseUrl.includes('connection_limit')
-  ? databaseUrl
-  : `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}connection_limit=2`;
+const urlWithLimit = (() => {
+  try {
+    const url = new URL(databaseUrl);
+    const configuredLimit = Number(url.searchParams.get('connection_limit'));
+    const connectionLimit = Number.isFinite(configuredLimit) && configuredLimit > 0
+      ? Math.min(configuredLimit, 2)
+      : 2;
+    url.searchParams.set('connection_limit', String(connectionLimit));
+    return url.toString();
+  } catch {
+    return `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}connection_limit=2`;
+  }
+})();
 
 export const prisma =
   globalForPrisma.prisma ??

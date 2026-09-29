@@ -4,20 +4,22 @@ import { useState, useEffect } from 'react';
 import { Bell, AlertTriangle, FileText, Calendar, Banknote } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { getDashboardStats } from '@/lib/dashboard-actions';
 import Link from 'next/link';
 
+type DashboardAlert = { id: string; title: string; message: string; type: string };
+
 export function NotificationBell() {
-    const [alerts, setAlerts] = useState<any[]>([]);
+    const [alerts, setAlerts] = useState<DashboardAlert[]>([]);
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
         const fetchAlerts = async () => {
             try {
-                const response = await getDashboardStats();
-                if (response.success && response.data) {
-                    setAlerts(response.data.maintenanceAlerts || []);
+                const response = await fetch('/api/dashboard/notifications');
+                const result = await response.json();
+                if (response.ok && result.success && result.data) {
+                    setAlerts(result.data.maintenanceAlerts || []);
                 } else {
                     setAlerts([]);
                 }

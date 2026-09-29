@@ -9,9 +9,6 @@ import { QuotationFormSchema, type QuotationFormInput, type QuotationWithSchedul
 
 // For backward compatibility
 export type QuotationFormData = QuotationFormInput;
-import { generateQuotation, updateQuotation } from '@/lib/quotation-actions';
-import { checkVehicleAvailability } from '@/lib/vehicle-actions';
-import { checkDriverAvailability } from '@/lib/user-actions';
 import { formatCurrency } from '@/lib/calculations';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
@@ -255,27 +252,27 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                 if (hasDriver) setDriverAvailabilityConflict(null);
 
                 try {
+                    const currentParams = {
+                        startDate: new Date(watchedStartDate).toISOString(),
+                        endDate: new Date(watchedEndDate).toISOString(),
+                        currentType: 'Quotation',
+                        ...(initialData?.id ? { currentId: initialData.id } : {}),
+                    };
+                    const vehicleParams = new URLSearchParams({ ...currentParams, vehicleNo: watchedVehicleNo || '' });
+                    const driverParams = new URLSearchParams({ ...currentParams, driverId: String(watchedDriverId || '') });
+                    const [vehicleResponse, driverResponse] = await Promise.all([
+                        hasVehicle ? fetch(`/api/vehicles/availability?${vehicleParams}`) : Promise.resolve(null),
+                        hasDriver ? fetch(`/api/drivers/availability?${driverParams}`) : Promise.resolve(null)
+                    ]);
                     const [vehicleRes, driverRes] = await Promise.all([
-                        hasVehicle ? checkVehicleAvailability(
-                            watchedVehicleNo,
-                            watchedStartDate,
-                            watchedEndDate,
-                            initialData?.id,
-                            'Quotation'
-                        ) : Promise.resolve(null),
-                        hasDriver ? checkDriverAvailability(
-                            watchedDriverId as string,
-                            watchedStartDate,
-                            watchedEndDate,
-                            initialData?.id,
-                            'Quotation'
-                        ) : Promise.resolve(null)
+                        vehicleResponse?.json() ?? null,
+                        driverResponse?.json() ?? null,
                     ]);
 
-                    if (vehicleRes?.success && !vehicleRes.data?.available) {
+                    if (vehicleResponse?.ok && vehicleRes?.success && !vehicleRes.data?.available) {
                         setAvailabilityConflict(vehicleRes.data?.conflicts[0] || null);
                     }
-                    if (driverRes?.success && !driverRes.data?.available) {
+                    if (driverResponse?.ok && driverRes?.success && !driverRes.data?.available) {
                         setDriverAvailabilityConflict(driverRes.data?.conflicts[0] || null);
                     }
                 } catch (e) {
@@ -433,12 +430,15 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                 }
             });
 
-            const result = initialData
-                ? await updateQuotation(initialData.id, data.tourScheduleId, formData)
-                : await generateQuotation(data.tourScheduleId, formData);
+            const response = await fetch(initialData ? `/api/quotations/${encodeURIComponent(initialData.id)}` : '/api/quotations', {
+                method: initialData ? 'PUT' : 'POST',
+                body: formData,
+            });
+            const result = await response.json();
 
-            if (result.success) {
+            if (response.ok && result.success) {
                 setSuccess(true);
+                router.refresh();
                 setTimeout(() => {
                     router.push(`/quotations/${result.data}`);
                 }, 2000);

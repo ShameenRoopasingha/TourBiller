@@ -1,12 +1,12 @@
-# BRIEFING — 2026-09-25T02:56:40Z
+# BRIEFING — 2026-09-28T15:58:47Z
 
 ## Mission
-Conduct a thorough Multi-Tenant security and data isolation test and fix on the Next.js tourBiller application using a large team of agents under teamwork_preview_orchestrator.
+Audit and fix all CRUD operations, database queries for PgBouncer compatibility, and polling/data loading across the Next.js tourBiller app.
 
 ## 🔒 My Identity
 - Archetype: sentinel
 - Working directory: e:\projects\tourBiller\.agents\teamwork\sentinel
-- Orchestrator: 63a5aab3-ebb7-4ceb-9a6d-9d5f14464f86
+- Orchestrator: TBD
 - Victory Auditor: to be spawned on victory claim
 
 ## 🔒 Key Constraints
@@ -17,18 +17,15 @@ Conduct a thorough Multi-Tenant security and data isolation test and fix on the 
 
 ## Routing Decision
 - Route: General (teamwork_preview_orchestrator)
-- Rationale: Multi-tenant security audit and fix across multiple files and actions, automated script creation, and compilation verification. User explicitly requested a very large team to break down and assign the work; this is SWE work, not a math/proof task and not a single self-contained light change. No pre-flight dependency audit required.
+- Rationale: Multi-component SWE refactor and audit across CRUD mutations, API route migration, PgBouncer compatibility, and polling optimization. Not a document review, not a math/proof task, and not a single self-contained light change. Pre-flight dependency audit not required.
 
 ## User Context
-- **Last user request**: Conduct thorough Multi-Tenant security and data isolation test and fix on Next.js tourBiller app, patching server actions, securing single-record operations, writing automated verification script, and zero tsc errors.
+- **Last user request**: Audit and fix all CRUD operations and data loading across Next.js 16 + Prisma 5 + Supabase PgBouncer app: migrate mutation server actions to API routes, ensure PgBouncer compatibility, optimize polling (>= 60s), preserve existing functionality, pass tsc and next build.
 - **Pending clarifications**: none
 - **Delivered results**: none
 
 ## Project Status
-- **Phase**: in progress
-- **Active Orchestrator ID**: 63a5aab3-ebb7-4ceb-9a6d-9d5f14464f86
-- **Cron 1 (Reporting)**: task-21 (*/8 * * * *)
-- **Cron 2 (Liveness)**: task-23 (*/10 * * * *)
+- **Phase**: not started
 
 ## Victory Audit Status
 - **Triggered**: no

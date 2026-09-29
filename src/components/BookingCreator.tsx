@@ -8,9 +8,6 @@ import { BookingFormSchema, type BookingFormInput, type Vehicle, type Customer, 
 
 // For backward compatibility
 export type BookingFormData = BookingFormInput;
-import { createBooking } from '@/lib/booking-actions';
-import { checkVehicleAvailability } from '@/lib/vehicle-actions';
-import { checkDriverAvailability } from '@/lib/user-actions';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
@@ -79,15 +76,31 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                 try {
                     const end = watchedEndDate || watchedStartDate;
                     
+                    const vehicleParams = new URLSearchParams({
+                        vehicleNo: watchedVehicleNo || '',
+                        startDate: new Date(watchedStartDate).toISOString(),
+                        endDate: new Date(end).toISOString(),
+                        currentType: 'Booking',
+                    });
+                    const driverParams = new URLSearchParams({
+                        driverId: watchedDriverId || '',
+                        startDate: new Date(watchedStartDate).toISOString(),
+                        endDate: new Date(end).toISOString(),
+                        currentType: 'Booking',
+                    });
+                    const [vehicleResponse, driverResponse] = await Promise.all([
+                        hasVehicle ? fetch(`/api/vehicles/availability?${vehicleParams}`) : Promise.resolve(null),
+                        hasDriver ? fetch(`/api/drivers/availability?${driverParams}`) : Promise.resolve(null)
+                    ]);
                     const [vehicleRes, driverRes] = await Promise.all([
-                        hasVehicle ? checkVehicleAvailability(watchedVehicleNo, watchedStartDate, end, undefined, 'Booking') : Promise.resolve(null),
-                        hasDriver ? checkDriverAvailability(watchedDriverId, watchedStartDate, end, undefined, 'Booking') : Promise.resolve(null)
+                        vehicleResponse?.json() ?? null,
+                        driverResponse?.json() ?? null,
                     ]);
 
-                    if (vehicleRes?.success && vehicleRes.data && !vehicleRes.data.available) {
+                    if (vehicleResponse?.ok && vehicleRes?.success && vehicleRes.data && !vehicleRes.data.available) {
                         setAvailabilityConflict(vehicleRes.data.conflicts[0]);
                     }
-                    if (driverRes?.success && driverRes.data && !driverRes.data.available) {
+                    if (driverResponse?.ok && driverRes?.success && driverRes.data && !driverRes.data.available) {
                         setDriverAvailabilityConflict(driverRes.data.conflicts[0]);
                     }
                 } catch (e) {
@@ -118,15 +131,22 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
             }
         });
 
-        const result = await createBooking(formData);
+        try {
+            const response = await fetch('/api/bookings', { method: 'POST', body: formData });
+            const result = await response.json();
 
-        if (result.success) {
-            router.push('/bookings');
-        } else {
-            setError(result.error || 'Failed to create booking');
+            if (response.ok && result.success) {
+                router.refresh();
+                router.push('/bookings');
+            } else {
+                setError(result.error || 'Failed to create booking');
+            }
+        } catch (submitError) {
+            console.error('Error creating booking:', submitError);
+            setError('Failed to create booking. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
-
-        setIsSubmitting(false);
     };
 
     return (

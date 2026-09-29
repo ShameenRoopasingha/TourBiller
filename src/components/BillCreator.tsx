@@ -6,13 +6,10 @@ import { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Printer, Plus } from 'lucide-react';
-import { BillFormSchema, type BillFormInput, type Vehicle, type Customer } from '@/lib/validations';
+import { BillFormSchema, type ActionResult, type BillFormInput, type Vehicle, type Customer, type VehicleExpense } from '@/lib/validations';
 
 // For backward compatibility
 export type BillFormData = BillFormInput;
-import { createBill, updateBill } from '@/lib/actions';
-import { getBookingById } from '@/lib/booking-actions';
-import { getVehicleExpenses } from '@/lib/vehicle-expense-actions';
 import { formatCurrency } from '@/lib/calculations';
 
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
@@ -196,8 +193,9 @@ export function BillCreator({
     useEffect(() => {
         if (initialBookingId) {
             const loadBooking = async () => {
-                const bResult = await getBookingById(initialBookingId);
-                if (bResult.success && bResult.data) {
+                const bookingResponse = await fetch(`/api/bookings/${encodeURIComponent(initialBookingId)}`);
+                const bResult = await bookingResponse.json();
+                if (bookingResponse.ok && bResult.success && bResult.data) {
                     if (bResult.data.advanceAmount) {
                         form.setValue('advanceAmount', bResult.data.advanceAmount);
                     }
@@ -213,8 +211,9 @@ export function BillCreator({
                 }
 
                 // Fetch customer expenses added by driver during the tour
-                const eResult = await getVehicleExpenses(undefined, initialBookingId);
-                if (eResult.success && eResult.data) {
+                const expensesResponse = await fetch(`/api/vehicle-expenses?bookingId=${encodeURIComponent(initialBookingId)}`);
+                const eResult = await expensesResponse.json() as ActionResult<VehicleExpense[]>;
+                if (expensesResponse.ok && eResult.success && eResult.data) {
                     const customerExpenses = eResult.data.filter(e => e.expenseType === 'CUSTOMER');
                     const totalCustomerExpense = customerExpenses.reduce((sum, e) => sum + e.amount, 0);
                     
@@ -471,27 +470,31 @@ export function BillCreator({
             ));
         }
 
-        let result;
-        if (initialData?.id) {
-            result = await updateBill(initialData.id, formData);
-        } else {
-            result = await createBill(formData);
-        }
+        try {
+            const response = await fetch(initialData?.id ? `/api/bills/${encodeURIComponent(initialData.id)}` : '/api/bills', {
+                method: initialData?.id ? 'PUT' : 'POST',
+                body: formData,
+            });
+            const result = await response.json();
 
-        if (result.success && result.data) {
-            setSuccessId(result.data);
-            if (!initialData) {
-                form.reset();
-                resetCalculations();
+            if (response.ok && result.success && result.data) {
+                setSuccessId(result.data);
+                if (!initialData) {
+                    form.reset();
+                    resetCalculations();
+                }
+
+                router.refresh();
+                router.push(`/bills/${result.data}/print`);
+            } else {
+                setError(result.error || (initialData ? 'Failed to update bill' : 'Failed to create bill'));
             }
-
-            // Auto open print page
-            router.push(`/bills/${result.data}/print`);
-        } else {
-            setError(result.error || (initialData ? 'Failed to update bill' : 'Failed to create bill'));
+        } catch (submitError) {
+            console.error('Error saving bill:', submitError);
+            setError(initialData ? 'Failed to update bill. Please try again.' : 'Failed to create bill. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
-
-        setIsSubmitting(false);
     };
 
     const handleNumericChange = (

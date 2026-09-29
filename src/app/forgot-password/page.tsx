@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { requestPasswordReset } from '@/lib/auth-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,15 +21,20 @@ export default function ForgotPasswordPage() {
         const formData = new FormData();
         formData.set('email', email);
 
-        const result = await requestPasswordReset(formData);
-        
-        if (result.success) {
-            setSuccess(true);
-        } else {
-            setError(result.error || 'Failed to request reset link.');
+        try {
+            const response = await fetch('/api/auth/password-reset/request', { method: 'POST', body: formData });
+            const result = await response.json();
+            if (response.ok && result.success) {
+                setSuccess(true);
+            } else {
+                setError(result.error || 'Failed to request reset link.');
+            }
+        } catch (error) {
+            console.error('Error requesting password reset:', error);
+            setError('Failed to request reset link. Please try again.');
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     if (success) {

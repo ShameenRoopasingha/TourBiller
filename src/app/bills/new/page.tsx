@@ -12,11 +12,11 @@ async function NewBillForm({ searchParams }: { searchParams: Promise<{ vehicleNo
     const bookingId = params.bookingId || undefined;
 
     // Fetch vehicles, customers, and schedules on the server so dropdowns are instantly available
-    const [vResult, cResult, sResult] = await Promise.all([
+    const [vResult, cResult] = await Promise.all([
         getVehicles(),
         getCustomers(),
-        getTourSchedules(),
     ]);
+    const sResult = await getTourSchedules();
 
     const vehicles = vResult.success && vResult.data ? vResult.data : [];
     const customers = cResult.success && cResult.data ? cResult.data : [];

@@ -15,8 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { addVehicleExpense } from '@/lib/vehicle-expense-actions';
-import { logTripActivity, type TripActivityType } from '@/lib/trip-activity-actions';
+import type { TripActivityType } from '@/lib/validations';
 
 interface MacroAction {
     type: TripActivityType;
@@ -90,43 +89,56 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
 
         let expenseId: string | undefined;
 
-        // If this macro needs an expense, create it first
-        if (selectedAction.needsAmount && selectedAction.expenseCategory) {
-            const expenseResult = await addVehicleExpense({
-                vehicleNo,
-                amount: Number(amount),
-                category: selectedAction.expenseCategory as 'FUEL' | 'REPAIR' | 'BREAKDOWN',
-                description: note || selectedAction.label,
-                date: new Date(),
-                bookingId,
-                driverId: '',
-                expenseType: borneBy,
-            });
+        try {
+            if (selectedAction.needsAmount && selectedAction.expenseCategory) {
+                const expenseResponse = await fetch('/api/vehicle-expenses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        vehicleNo,
+                        amount: Number(amount),
+                        category: selectedAction.expenseCategory as 'FUEL' | 'REPAIR' | 'BREAKDOWN',
+                        description: note || selectedAction.label,
+                        date: new Date(),
+                        bookingId,
+                        driverId: '',
+                        expenseType: borneBy,
+                    }),
+                });
+                const expenseResult = await expenseResponse.json();
 
-            if (!expenseResult.success) {
-                setError(expenseResult.error || 'Failed to add expense');
-                setSubmitting(false);
-                return;
+                if (!expenseResponse.ok || !expenseResult.success) {
+                    setError(expenseResult.error || 'Failed to add expense');
+                    return;
+                }
+                expenseId = expenseResult.data || undefined;
             }
-            expenseId = expenseResult.data || undefined;
-        }
 
-        // Log the trip activity
-        const activityResult = await logTripActivity(bookingId, selectedAction.type, note || undefined, expenseId);
+            const activityResponse = await fetch('/api/trip-activities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bookingId, type: selectedAction.type, note: note || undefined, expenseId }),
+            });
+            const activityResult = await activityResponse.json();
 
-        if (activityResult.success) {
-            setSuccess(true);
-            setTimeout(() => {
-                setSelectedAction(null);
-                setAmount('');
-                setNote('');
-                setSuccess(false);
-                onComplete();
-            }, 1200);
-        } else {
-            setError(activityResult.error || 'Failed to log activity');
+            if (activityResponse.ok && activityResult.success) {
+                setSuccess(true);
+                setTimeout(() => {
+                    setSelectedAction(null);
+                    setAmount('');
+                    setNote('');
+                    setSuccess(false);
+                    onComplete();
+                }, 1200);
+            } else {
+                setError(activityResult.error || 'Failed to log activity');
+            }
+        } catch (error) {
+            console.error('Error submitting trip action:', error);
+            setError('Failed to submit trip action. Please try again.');
+        } finally {
+            setSubmitting(false);
         }
-        setSubmitting(false);
     };
 
     // Success state

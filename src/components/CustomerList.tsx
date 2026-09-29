@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Loader2, Search, Users, Plus, Pencil, Trash2 } from 'lucide-react';
-import { getCustomers, deleteCustomer } from '@/lib/customer-actions';
 import { type Customer } from '@/lib/validations';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -51,15 +50,21 @@ export function CustomerList() {
         setLoading(true);
         setError(null);
 
-        const result = await getCustomers(query);
+        try {
+            const response = await fetch(`/api/customers${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+            const result = await response.json();
 
-        if (result.success && result.data) {
-            setCustomers(result.data);
-        } else {
-            setError(result.error || 'Failed to fetch customers');
+            if (response.ok && result.success && result.data) {
+                setCustomers(result.data);
+            } else {
+                setError(result.error || 'Failed to fetch customers');
+            }
+        } catch (fetchError) {
+            console.error('Error fetching customers:', fetchError);
+            setError('Failed to fetch customers');
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     }, [query]);
 
     useEffect(() => {
@@ -81,14 +86,21 @@ export function CustomerList() {
 
     const executeDelete = async (id: string) => {
         setDeleting(id);
-        const result = await deleteCustomer(id);
-        if (result.success) {
-            toast.success('Customer deleted successfully');
-            fetchCustomers(); // Refresh list
-        } else {
-            toast.error(result.error || 'Failed to delete customer');
+        try {
+            const response = await fetch(`/api/customers/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (response.ok && result.success) {
+                toast.success('Customer deleted successfully');
+                await fetchCustomers();
+            } else {
+                toast.error(result.error || 'Failed to delete customer');
+            }
+        } catch (deleteError) {
+            console.error('Error deleting customer:', deleteError);
+            toast.error('Failed to delete customer');
+        } finally {
+            setDeleting(null);
         }
-        setDeleting(null);
     };
 
     return (

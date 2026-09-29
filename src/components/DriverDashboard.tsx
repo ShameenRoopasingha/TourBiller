@@ -7,8 +7,7 @@ import {
     Car, ChevronRight, CircleStop, Hotel, AlertTriangle, Droplets, Filter, Sparkles,
 } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
-import { getVehicleExpenses, type VehicleExpense } from '@/lib/vehicle-expense-actions';
-import { getTripActivities, type TripActivity } from '@/lib/trip-activity-actions';
+import type { TripActivity, VehicleExpense } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { QuickActionSheet } from '@/components/QuickActionSheet';
@@ -62,17 +61,23 @@ export function DriverDashboard({ activeTour, driverName }: DriverDashboardProps
         if (!activeTour) return;
         const fetchData = async () => {
             setLoading(true);
-            const [expResult, actResult] = await Promise.all([
-                getVehicleExpenses(activeTour.vehicleNo),
-                getTripActivities(activeTour.bookingId),
-            ]);
-            if (expResult.success && expResult.data) {
-                setRecentExpenses(expResult.data.slice(0, 5));
+            try {
+                const [expensesResponse, activitiesResponse] = await Promise.all([
+                    fetch(`/api/vehicle-expenses?vehicleNo=${encodeURIComponent(activeTour.vehicleNo)}`),
+                    fetch(`/api/trip-activities?bookingId=${encodeURIComponent(activeTour.bookingId)}`),
+                ]);
+                const [expResult, actResult] = await Promise.all([expensesResponse.json(), activitiesResponse.json()]);
+                if (expensesResponse.ok && expResult.success && expResult.data) {
+                    setRecentExpenses(expResult.data.slice(0, 5));
+                }
+                if (activitiesResponse.ok && actResult.success && actResult.data) {
+                    setActivities(actResult.data.slice(0, 8));
+                }
+            } catch (error) {
+                console.error('Error loading driver dashboard:', error);
+            } finally {
+                setLoading(false);
             }
-            if (actResult.success && actResult.data) {
-                setActivities(actResult.data.slice(0, 8));
-            }
-            setLoading(false);
         };
         fetchData();
     }, [activeTour, refreshKey]);

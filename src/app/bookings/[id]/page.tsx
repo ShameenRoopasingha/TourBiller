@@ -1,7 +1,8 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Car, Calendar, MapPin, CreditCard, AlignLeft, CalendarX } from 'lucide-react';
-import { getBookingById, cancelBooking } from '@/lib/booking-actions';
+import { ArrowLeft, Car, Calendar, MapPin, CreditCard, AlignLeft } from 'lucide-react';
+import { getBookingById } from '@/lib/booking-actions';
+import { CancelBookingButton } from '@/components/CancelBookingButton';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -128,16 +129,7 @@ export default async function BookingDetailsPage(props: {
                             )}
                             
                             {booking.status === 'CONFIRMED' && (
-                                <form action={async () => {
-                                    'use server';
-                                    await cancelBooking(booking.id);
-                                    redirect('/bookings');
-                                }}>
-                                    <Button variant="destructive" type="submit">
-                                        <CalendarX className="w-4 h-4 mr-2" />
-                                        Cancel Booking
-                                    </Button>
-                                </form>
+                                    <CancelBookingButton bookingId={booking.id} customerName={booking.customerName} redirectAfterSuccess />
                             )}
                         </div>
                     </div>

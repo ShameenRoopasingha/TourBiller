@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Save } from 'lucide-react';
-import { updateBusinessProfile } from '@/lib/actions';
 import { BusinessProfileFormSchema, type BusinessProfileFormInput, type BusinessProfile } from '@/lib/validations';
 
 // For backward compatibility
@@ -70,16 +69,22 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
         if (data.bankAccountNo) formData.append('bankAccountNo', data.bankAccountNo);
         if (data.bankAccountName) formData.append('bankAccountName', data.bankAccountName);
 
-        const result = await updateBusinessProfile(formData);
+        try {
+            const response = await fetch('/api/business-profile', { method: 'PUT', body: formData });
+            const result = await response.json();
 
-        if (result.success) {
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
-        } else {
-            setError(result.error || 'Failed to update profile');
+            if (response.ok && result.success) {
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+            } else {
+                setError(result.error || 'Failed to update profile');
+            }
+        } catch (submitError) {
+            console.error('Error updating business profile:', submitError);
+            setError('Failed to update profile. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
-
-        setIsSubmitting(false);
     };
 
     return (

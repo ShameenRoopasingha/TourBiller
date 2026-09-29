@@ -1,12 +1,9 @@
 'use server';
 
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { revalidateFor } from '@/lib/revalidation';
-import { type ActionResult, VehicleExpenseSchema, type VehicleExpense, type VehicleExpenseFormData, type VehicleExpenseCategory, type Vehicle } from '@/lib/validations';
-
-export type { VehicleExpense, VehicleExpenseCategory };
+import { type ActionResult, VehicleExpenseSchema, type VehicleExpense, type VehicleExpenseFormData, type Vehicle } from '@/lib/validations';
 
 /**
  * Add a new vehicle expense
