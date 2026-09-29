@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
+import { notify } from '@/lib/notifications';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,7 +74,6 @@ export function QuotationList({ quotations }: QuotationListProps) {
     const [updating, setUpdating] = useState<string | null>(null);
     const [deleting, setDeleting] = useState<string | null>(null);
     const [converting, setConverting] = useState<string | null>(null);
-    const [dialogMessage, setDialogMessage] = useState<{ title: string; description: string; type: 'error' | 'success' } | null>(null);
 
     const filtered = quotations.filter(
         (q) =>
@@ -92,14 +92,14 @@ export function QuotationList({ quotations }: QuotationListProps) {
             });
             const result = await response.json();
             if (!response.ok || !result.success) {
-                setDialogMessage({ title: 'Update Failed', description: result.error || 'Failed to update status', type: 'error' });
+                notify.error(result.error || 'Failed to update quotation status');
             } else {
                 router.refresh();
-                setDialogMessage({ title: 'Status Updated', description: `Quotation status updated to ${status}.`, type: 'success' });
+                notify.success(`Quotation status updated to ${status}`);
             }
         } catch (error) {
             console.error('Error updating quotation status:', error);
-            setDialogMessage({ title: 'Update Failed', description: 'Failed to update quotation status. Please try again.', type: 'error' });
+            notify.error('Failed to update quotation status. Please try again.');
         } finally {
             setUpdating(null);
         }
@@ -111,14 +111,14 @@ export function QuotationList({ quotations }: QuotationListProps) {
             const response = await fetch(`/api/quotations/${encodeURIComponent(id)}`, { method: 'DELETE' });
             const result = await response.json();
             if (!response.ok || !result.success) {
-                setDialogMessage({ title: 'Deletion Failed', description: result.error || 'Failed to delete quotation', type: 'error' });
+                notify.error(result.error || 'Failed to delete quotation');
             } else {
                 router.refresh();
-                setDialogMessage({ title: 'Quotation Deleted', description: 'The quotation was deleted successfully.', type: 'success' });
+                notify.success('Quotation deleted successfully');
             }
         } catch (error) {
             console.error('Error deleting quotation:', error);
-            setDialogMessage({ title: 'Deletion Failed', description: 'Failed to delete quotation. Please try again.', type: 'error' });
+            notify.error('Failed to delete quotation. Please try again.');
         } finally {
             setDeleting(null);
         }
@@ -130,9 +130,9 @@ export function QuotationList({ quotations }: QuotationListProps) {
             const response = await fetch(`/api/quotations/${encodeURIComponent(id)}/convert`, { method: 'POST' });
             const result = await response.json();
             if (!response.ok || !result.success) {
-                setDialogMessage({ title: 'Conversion Failed', description: result.error || 'Failed to convert quotation to booking', type: 'error' });
+                notify.error(result.error || 'Failed to convert quotation to booking');
             } else {
-                setDialogMessage({ title: 'Conversion Successful', description: 'Booking successfully created!', type: 'success' });
+                notify.success('Quotation converted to booking');
                 router.refresh();
                 setTimeout(() => {
                     router.push('/bookings');
@@ -140,7 +140,7 @@ export function QuotationList({ quotations }: QuotationListProps) {
             }
         } catch (error) {
             console.error('Error converting quotation:', error);
-            setDialogMessage({ title: 'Conversion Failed', description: 'Failed to convert quotation to booking. Please try again.', type: 'error' });
+            notify.error('Failed to convert quotation to booking. Please try again.');
         } finally {
             setConverting(null);
         }
@@ -345,22 +345,6 @@ export function QuotationList({ quotations }: QuotationListProps) {
                 </CardContent>
             </Card>
 
-            {/* Global Message Dialog */}
-            <AlertDialog open={!!dialogMessage} onOpenChange={() => setDialogMessage(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className={dialogMessage?.type === 'error' ? 'text-destructive' : 'text-green-600'}>
-                            {dialogMessage?.title}
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {dialogMessage?.description}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setDialogMessage(null)}>OK</AlertDialogCancel>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 }

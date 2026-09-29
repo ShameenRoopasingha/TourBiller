@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, Trash2, MapPin } from 'lucide-react';
 
 import { TourScheduleFormSchema, type TourScheduleFormInput, type Vehicle } from '@/lib/validations';
+import { notify } from '@/lib/notifications';
 
 // For backward compatibility
 export type TourScheduleFormData = TourScheduleFormInput;
@@ -289,6 +290,7 @@ export function TourScheduleForm({
             const result = await response.json();
 
             if (response.ok && result.success) {
+                notify.success(isEditing ? 'Tour schedule updated successfully' : 'Tour schedule created successfully');
                 setSuccess(true);
                 router.refresh();
                 if (onSuccess) {
@@ -298,11 +300,15 @@ export function TourScheduleForm({
                     setTimeout(() => router.push('/tour-schedules'), 1000);
                 }
             } else {
-                setError(result.error || 'An error occurred');
+                const message = result.error || 'An error occurred';
+                notify.error(message);
+                setError(message);
                 setIsSubmitting(false);
             }
         } catch {
-            setError('An unexpected error occurred');
+            const message = 'An unexpected error occurred';
+            notify.error(message);
+            setError(message);
             setIsSubmitting(false);
         }
     };

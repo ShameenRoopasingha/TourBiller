@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { TripActivityType } from '@/lib/validations';
+import { notify } from '@/lib/notifications';
 
 interface MacroAction {
     type: TripActivityType;
@@ -108,7 +109,9 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
                 const expenseResult = await expenseResponse.json();
 
                 if (!expenseResponse.ok || !expenseResult.success) {
-                    setError(expenseResult.error || 'Failed to add expense');
+                    const message = expenseResult.error || 'Failed to add expense';
+                    notify.error(message);
+                    setError(message);
                     return;
                 }
                 expenseId = expenseResult.data || undefined;
@@ -122,6 +125,7 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
             const activityResult = await activityResponse.json();
 
             if (activityResponse.ok && activityResult.success) {
+                notify.success(`${selectedAction.label} recorded successfully`);
                 setSuccess(true);
                 setTimeout(() => {
                     setSelectedAction(null);
@@ -131,11 +135,15 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
                     onComplete();
                 }, 1200);
             } else {
-                setError(activityResult.error || 'Failed to log activity');
+                const message = activityResult.error || 'Failed to log activity';
+                notify.error(message);
+                setError(message);
             }
         } catch (error) {
             console.error('Error submitting trip action:', error);
-            setError('Failed to submit trip action. Please try again.');
+            const message = 'Failed to submit trip action. Please try again.';
+            notify.error(message);
+            setError(message);
         } finally {
             setSubmitting(false);
         }

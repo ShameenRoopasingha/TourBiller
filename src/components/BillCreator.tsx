@@ -17,6 +17,7 @@ import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 import { TourScheduleForm } from '@/components/TourScheduleForm';
 import { BillChargeFields } from '@/components/bills/BillChargeFields';
+import { notify } from '@/lib/notifications';
 import {
     Dialog,
     DialogContent,
@@ -479,6 +480,7 @@ export function BillCreator({
             const result = await response.json();
 
             if (response.ok && result.success && result.data) {
+                notify.success(initialData ? 'Bill updated successfully' : 'Bill created successfully');
                 setSuccessId(result.data);
                 if (!initialData) {
                     form.reset();
@@ -488,11 +490,15 @@ export function BillCreator({
                 router.refresh();
                 router.push(`/bills/${result.data}/print`);
             } else {
-                setError(result.error || (initialData ? 'Failed to update bill' : 'Failed to create bill'));
+                const message = result.error || (initialData ? 'Failed to update bill' : 'Failed to create bill');
+                notify.error(message);
+                setError(message);
             }
         } catch (submitError) {
             console.error('Error saving bill:', submitError);
-            setError(initialData ? 'Failed to update bill. Please try again.' : 'Failed to create bill. Please try again.');
+            const message = initialData ? 'Failed to update bill. Please try again.' : 'Failed to create bill. Please try again.';
+            notify.error(message);
+            setError(message);
         } finally {
             setIsSubmitting(false);
         }

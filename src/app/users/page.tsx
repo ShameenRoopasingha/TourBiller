@@ -114,6 +114,7 @@ export default function UsersPage() {
             const result = await response.json();
 
             if (response.ok && result.success) {
+                notify.success('User created successfully');
                 router.refresh();
                 setName('');
                 setEmail('');
@@ -124,11 +125,15 @@ export default function UsersPage() {
                 const refresh = await refreshResponse.json();
                 if (refreshResponse.ok && refresh.success && refresh.data) setUsers(refresh.data);
             } else {
-                setError(result.error || 'Failed to create user');
+                const message = result.error || 'Failed to create user';
+                notify.error(message);
+                setError(message);
             }
         } catch (createError) {
             console.error('Error creating user:', createError);
-            setError('Failed to create user. Please try again.');
+            const message = 'Failed to create user. Please try again.';
+            notify.error(message);
+            setError(message);
         } finally {
             setCreating(false);
         }

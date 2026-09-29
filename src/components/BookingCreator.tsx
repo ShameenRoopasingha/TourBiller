@@ -5,6 +5,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { BookingFormSchema, type BookingFormInput, type Vehicle, type Customer, type VehicleAvailabilityConflict, type DriverAvailabilityConflict } from '@/lib/validations';
+import { notify } from '@/lib/notifications';
 
 // For backward compatibility
 export type BookingFormData = BookingFormInput;
@@ -136,14 +137,19 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
             const result = await response.json();
 
             if (response.ok && result.success) {
+                notify.success('Booking created successfully');
                 router.refresh();
                 router.push('/bookings');
             } else {
-                setError(result.error || 'Failed to create booking');
+                const message = result.error || 'Failed to create booking';
+                notify.error(message);
+                setError(message);
             }
         } catch (submitError) {
             console.error('Error creating booking:', submitError);
-            setError('Failed to create booking. Please try again.');
+            const message = 'Failed to create booking. Please try again.';
+            notify.error(message);
+            setError(message);
         } finally {
             setIsSubmitting(false);
         }

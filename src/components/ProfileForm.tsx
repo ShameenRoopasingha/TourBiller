@@ -7,6 +7,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Loader2, Save, KeyRound } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { notify } from '@/lib/notifications';
 interface ProfileFormProps {
     user: {
         id: string;
@@ -47,14 +48,19 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             const result = await response.json();
 
             if (response.ok && result.success) {
+                notify.success('Profile updated successfully');
                 setProfileSuccess('Profile updated successfully.');
                 await update({ name, email });
             } else {
-                setProfileError(result.error || 'Failed to update profile.');
+                const message = result.error || 'Failed to update profile.';
+                notify.error(message);
+                setProfileError(message);
             }
         } catch (error) {
             console.error('Error updating profile:', error);
-            setProfileError('Failed to update profile. Please try again.');
+            const message = 'Failed to update profile. Please try again.';
+            notify.error(message);
+            setProfileError(message);
         } finally {
             setUpdatingProfile(false);
         }
@@ -86,16 +92,21 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             const result = await response.json();
 
             if (response.ok && result.success) {
+                notify.success('Password updated successfully');
                 setPasswordSuccess('Password updated successfully.');
                 setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');
             } else {
-                setPasswordError(result.error || 'Failed to update password.');
+                const message = result.error || 'Failed to update password.';
+                notify.error(message);
+                setPasswordError(message);
             }
         } catch (error) {
             console.error('Error updating password:', error);
-            setPasswordError('Failed to update password. Please try again.');
+            const message = 'Failed to update password. Please try again.';
+            notify.error(message);
+            setPasswordError(message);
         } finally {
             setUpdatingPassword(false);
         }

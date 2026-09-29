@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import { Upload, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { notify } from '@/lib/notifications';
 
 export function CsvImport({ companyId }: { companyId: string }) {
   const [entityType, setEntityType] = useState<string>('customers');
@@ -36,19 +37,25 @@ export function CsvImport({ companyId }: { companyId: string }) {
           const resData = await response.json();
 
           if (response.ok) {
-            setMessage({ type: 'success', text: `සාර්ථකයි! අලුතෙන් records ${resData.importedCount} ක් import කළා.` });
+            const message = `Successfully imported ${resData.importedCount} records.`;
+            setMessage({ type: 'success', text: message });
+            notify.success(message);
           } else {
-            setMessage({ type: 'error', text: resData.error || 'Import කිරීම අසාර්ථකයි.' });
+            const message = resData.error || 'Import failed.';
+            setMessage({ type: 'error', text: message });
+            notify.error(message);
           }
-        } catch (err) {
-          setMessage({ type: 'error', text: 'Server එකට connect වෙන්න බැරි වුණා.' });
+        } catch {
+          setMessage({ type: 'error', text: 'Could not connect to the server.' });
+          notify.error('Could not connect to the server.');
         } finally {
           setIsUploading(false);
           if (fileInputRef.current) fileInputRef.current.value = '';
         }
       },
-      error: (err) => {
-        setMessage({ type: 'error', text: 'CSV file එක read කරන්න බැරි වුණා.' });
+      error: () => {
+        setMessage({ type: 'error', text: 'Could not read the CSV file.' });
+        notify.error('Could not read the CSV file.');
         setIsUploading(false);
       }
     });

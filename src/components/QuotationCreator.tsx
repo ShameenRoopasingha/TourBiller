@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, FileCheck, Calculator, Plus, Sparkles } from 'lucide-react';
 
 import { QuotationFormSchema, type QuotationFormInput, type QuotationWithSchedule, type VehicleAvailabilityConflict, type DriverAvailabilityConflict } from '@/lib/validations';
+import { notify } from '@/lib/notifications';
 
 // For backward compatibility
 export type QuotationFormData = QuotationFormInput;
@@ -451,17 +452,21 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             const result = await response.json();
 
             if (response.ok && result.success) {
+                notify.success(initialData ? 'Quotation updated successfully' : 'Quotation created successfully');
                 setSuccess(true);
                 router.refresh();
                 setTimeout(() => {
                     router.push(`/quotations/${result.data}`);
                 }, 2000);
             } else {
-                setError(result.error || 'Failed to process quotation');
+                const message = result.error || 'Failed to process quotation';
+                notify.error(message);
+                setError(message);
             }
         } catch (e) {
             setError('An unexpected error occurred');
             console.error(e);
+            notify.error('Failed to process quotation. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

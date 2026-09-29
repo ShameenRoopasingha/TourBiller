@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarX, Loader2 } from 'lucide-react';
+import { notify } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import {
     AlertDialog,
@@ -37,15 +38,20 @@ export function CancelBookingButton({
             const response = await fetch(`/api/bookings/${encodeURIComponent(bookingId)}`, { method: 'PATCH' });
             const result = await response.json();
             if (!response.ok || !result.success) {
-                setError(result.error || 'Failed to cancel booking');
+                const message = result.error || 'Failed to cancel booking';
+                notify.error(message);
+                setError(message);
                 return;
             }
+            notify.success('Booking cancelled successfully');
             setOpen(false);
             router.refresh();
             if (redirectAfterSuccess) router.push('/bookings');
         } catch (requestError) {
             console.error('Error cancelling booking:', requestError);
-            setError('Failed to cancel booking. Please try again.');
+            const message = 'Failed to cancel booking. Please try again.';
+            notify.error(message);
+            setError(message);
         } finally {
             setLoading(false);
         }

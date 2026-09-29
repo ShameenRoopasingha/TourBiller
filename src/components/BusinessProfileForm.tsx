@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Save } from 'lucide-react';
+import { notify } from '@/lib/notifications';
 import { BusinessProfileFormSchema, type BusinessProfileFormInput, type BusinessProfile } from '@/lib/validations';
 
 // For backward compatibility
@@ -74,14 +75,19 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
             const result = await response.json();
 
             if (response.ok && result.success) {
+                notify.success('Business profile updated successfully');
                 setSuccess(true);
                 setTimeout(() => setSuccess(false), 3000);
             } else {
-                setError(result.error || 'Failed to update profile');
+                const message = result.error || 'Failed to update profile';
+                notify.error(message);
+                setError(message);
             }
         } catch (submitError) {
             console.error('Error updating business profile:', submitError);
-            setError('Failed to update profile. Please try again.');
+            const message = 'Failed to update profile. Please try again.';
+            notify.error(message);
+            setError(message);
         } finally {
             setIsSubmitting(false);
         }

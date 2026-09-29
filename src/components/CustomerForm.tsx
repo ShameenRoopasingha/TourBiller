@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { CustomerFormSchema, type CustomerFormInput, type Customer } from '@/lib/validations';
+import { notify } from '@/lib/notifications';
 
 // For backward compatibility - alias the type
 export type CustomerFormData = CustomerFormInput;
@@ -63,15 +64,20 @@ export function CustomerForm({ customer }: CustomerFormProps) {
             const result = await response.json();
 
             if (response.ok && result.success) {
+                notify.success(customer ? 'Customer updated successfully' : 'Customer created successfully');
                 router.refresh();
                 router.push('/customers');
                 return;
             }
 
-            setError(result.error || 'Failed to save customer');
+            const message = result.error || 'Failed to save customer';
+            notify.error(message);
+            setError(message);
         } catch (submitError) {
             console.error('Error saving customer:', submitError);
-            setError('Failed to save customer. Please try again.');
+            const message = 'Failed to save customer. Please try again.';
+            notify.error(message);
+            setError(message);
         } finally {
             setIsSubmitting(false);
         }

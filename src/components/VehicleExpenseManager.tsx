@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { VehicleExpense, VehicleExpenseCategory } from '@/lib/validations';
+import { notify } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -151,6 +152,7 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
             const result = await response.json();
 
             if (response.ok && result.success) {
+                notify.success('Vehicle expense added successfully');
                 setAmount('');
                 setDescription('');
                 setShowDescription(false);
@@ -158,11 +160,15 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
                 setTimeout(() => setSuccess(false), 3000);
                 await fetchExpenses();
             } else {
-                setError(result.error || 'Failed to add expense');
+                const message = result.error || 'Failed to add expense';
+                notify.error(message);
+                setError(message);
             }
         } catch (error) {
             console.error('Error adding vehicle expense:', error);
-            setError('Failed to add expense. Please try again.');
+            const message = 'Failed to add expense. Please try again.';
+            notify.error(message);
+            setError(message);
         } finally {
             setSubmitting(false);
         }
@@ -175,13 +181,18 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
             const response = await fetch(`/api/vehicle-expenses/${encodeURIComponent(id)}`, { method: 'DELETE' });
             const result = await response.json();
             if (response.ok && result.success) {
+                notify.success('Vehicle expense deleted successfully');
                 await fetchExpenses();
             } else {
-                setError(result.error || 'Failed to delete expense');
+                const message = result.error || 'Failed to delete expense';
+                notify.error(message);
+                setError(message);
             }
         } catch (error) {
             console.error('Error deleting vehicle expense:', error);
-            setError('Failed to delete expense. Please try again.');
+            const message = 'Failed to delete expense. Please try again.';
+            notify.error(message);
+            setError(message);
         }
     };
 
