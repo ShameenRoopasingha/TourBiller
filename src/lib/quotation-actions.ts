@@ -447,6 +447,14 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
             return { success: true, data: existingBooking.id };
         }
 
+        const tourSchedule = await prisma.tourSchedule.findFirst({
+            where: { id: quotation.tourScheduleId, companyId: authCheck.companyId },
+            select: { name: true },
+        });
+        if (!tourSchedule) {
+            throw new Error('Tour schedule not found');
+        }
+
         // Keep the availability queries outside the interactive transaction so they cannot consume its timeout.
         if (quotation.endDate) {
             const availability = await checkVehicleAvailability(
@@ -507,7 +515,7 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
                     startDate: currentQuotation.startDate!,
                     endDate: q.endDate as Date | null,
                     destination,
-                    notes: `${conversionMarker} ${currentQuotation.notes || ''}`.trim(),
+                    notes: `Tour schedule: ${tourSchedule.name}\n${conversionMarker} ${currentQuotation.notes || ''}`.trim(),
                     advanceAmount: currentQuotation.advanceAmount,
                     status: 'CONFIRMED',
                 },

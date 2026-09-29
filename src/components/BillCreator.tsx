@@ -11,6 +11,7 @@ import { BillFormSchema, type ActionResult, type BillFormInput, type Vehicle, ty
 // For backward compatibility
 export type BillFormData = BillFormInput;
 import { BillReceiptSummary } from '@/components/bills/BillReceiptSummary';
+import { parseBillItinerary } from '@/lib/bill-itinerary';
 
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
@@ -93,6 +94,9 @@ export function BillCreator({
     const [error, setError] = useState<string | null>(null);
     const [successId, setSuccessId] = useState<string | null>(null);
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [tourScheduleName, setTourScheduleName] = useState<string | undefined>(
+        () => parseBillItinerary(initialData?.itinerary).scheduleName
+    );
     const vehicles = serverVehicles;
     const customers = serverCustomers;
     const schedules = serverSchedules;
@@ -198,6 +202,10 @@ export function BillCreator({
                 const bookingResponse = await fetch(`/api/bookings/${encodeURIComponent(initialBookingId)}`);
                 const bResult = await bookingResponse.json();
                 if (bookingResponse.ok && bResult.success && bResult.data) {
+                    const scheduleMatch = typeof bResult.data.notes === 'string'
+                        ? bResult.data.notes.match(/^Tour schedule:\s*(.+)$/im)
+                        : null;
+                    if (scheduleMatch?.[1]) setTourScheduleName(scheduleMatch[1].trim());
                     if (bResult.data.advanceAmount) {
                         form.setValue('advanceAmount', bResult.data.advanceAmount);
                     }
@@ -457,10 +465,15 @@ export function BillCreator({
         }
 
         // Attach itinerary snapshot from matched tour schedule
-        const matchedSchedule = schedules.find(s => s.name === data.route);
-        if (matchedSchedule && matchedSchedule.items.length > 0) {
-            formData.append('itinerary', JSON.stringify(
-                matchedSchedule.items.map(item => ({
+        const matchedSchedule = schedules.find(s => s.name === data.route)
+            ?? schedules.find(s => s.name === tourScheduleName);
+        const scheduleName = matchedSchedule?.name ?? tourScheduleName;
+        const itineraryItems = matchedSchedule?.items ?? parseBillItinerary(initialData?.itinerary).items;
+        if (scheduleName || itineraryItems.length > 0) {
+            formData.append('itinerary', JSON.stringify({
+                scheduleName,
+                route: data.route,
+                items: itineraryItems.map(item => ({
                     dayNumber: item.dayNumber,
                     title: item.title,
                     distanceKm: item.distanceKm,
@@ -468,8 +481,10 @@ export function BillCreator({
                     meals: item.meals,
                     activities: item.activities,
                     otherCosts: item.otherCosts,
-                }))
-            ));
+                })),
+            }));
+        } else if (initialData?.itinerary) {
+            formData.append('itinerary', initialData.itinerary);
         }
 
         try {
@@ -705,7 +720,10 @@ export function BillCreator({
                                                                 value: s.name
                                                             }))}
                                                             value={field.value || ''}
-                                                            onChange={field.onChange}
+                                                            onChange={(value) => {
+                                                                field.onChange(value);
+                                                                setTourScheduleName(schedules.find(schedule => schedule.name === value)?.name);
+                                                            }}
                                                             placeholder="e.g. Airport Drop or Kandy Tour"
                                                             allowCustomValue={true}
                                                         />
@@ -729,6 +747,7 @@ export function BillCreator({
                                                 hideHeader={true}
                                                 onSuccess={(data) => {
                                                     form.setValue('route', data.name);
+                                                    setTourScheduleName(data.name);
                                                     setIsScheduleModalOpen(false);
                                                 }}
                                                 onCancel={() => setIsScheduleModalOpen(false)}

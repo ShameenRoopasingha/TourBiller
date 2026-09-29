@@ -5,6 +5,7 @@ import { type Bill } from '@/lib/validations';
 import { formatCurrency } from '@/lib/calculations';
 import { PrintButton } from '@/components/PrintButton';
 import { BluetoothPrintButton } from '@/components/BluetoothPrintButton';
+import { parseBillItinerary } from '@/lib/bill-itinerary';
 
 import { BusinessProfile } from '@/lib/validations';
 
@@ -46,22 +47,10 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
             
     const expectedKm = bill.allowedKm * scheduledDays;
 
-    // Parse itinerary if available
-    type ItineraryItem = {
-        dayNumber: number;
-        title: string;
-        distanceKm: number;
-        accommodation: number;
-        meals: number;
-        activities: number;
-        otherCosts: number;
-    };
-    let itineraryItems: ItineraryItem[] = [];
-    try {
-        if (billAny.itinerary) {
-            itineraryItems = JSON.parse(billAny.itinerary);
-        }
-    } catch { /* ignore parse errors for old bills */ }
+    const itinerarySnapshot = parseBillItinerary(billAny.itinerary);
+    const itineraryItems = itinerarySnapshot.items;
+    const tourScheduleName = itinerarySnapshot.scheduleName || (itineraryItems.length > 0 ? bill.route : undefined);
+    const showRoute = !tourScheduleName || bill.route !== tourScheduleName;
 
     // --- 58mm THERMAL RECEIPT LAYOUT (FOR DRIVERS) ---
     if (userRole === 'DRIVER') {
@@ -107,7 +96,18 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         <div className="flex justify-between border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">DATE:</span> <span>{new Date(bill.createdAt).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
                         <div className="flex flex-col border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">CUSTOMER:</span> <span className="font-semibold text-sm">{bill.customerName}</span></div>
                         <div className="flex justify-between border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">VEHICLE:</span> <span className="font-semibold">{bill.vehicleNo}</span></div>
-                        <div className="flex flex-col border-b border-gray-200 pb-1 mb-1"><span className="font-bold text-gray-700">TOUR NAME / ROUTE:</span> <span className="font-semibold">{bill.route}</span></div>
+                        {tourScheduleName && (
+                            <div className="flex flex-col border-b border-gray-200 pb-1 mb-1">
+                                <span className="font-bold text-gray-700">TOUR SCHEDULE:</span>
+                                <span className="font-semibold">{tourScheduleName}</span>
+                            </div>
+                        )}
+                        {showRoute && (
+                            <div className="flex flex-col border-b border-gray-200 pb-1 mb-1">
+                                <span className="font-bold text-gray-700">{tourScheduleName ? 'ROUTE:' : 'TOUR NAME / ROUTE:'}</span>
+                                <span className="font-semibold">{bill.route}</span>
+                            </div>
+                        )}
                         <div className="mt-2 border-t border-dashed border-gray-400 pt-2">
                             <div className="flex justify-between"><span>Start:</span> <span className="font-medium">{new Date(bill.startDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
                             <div className="flex justify-between"><span>End:</span> <span className="font-medium">{new Date(bill.endDate).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
@@ -236,7 +236,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 {/* Connect/Print Actions Panel (Hidden on Print) */}
                 <div className="w-[58mm] mb-8 print:hidden flex flex-col gap-2">
                     <PrintButton />
-                    <BluetoothPrintButton bill={bill} companyName={companyName} />
+                    <BluetoothPrintButton bill={bill} companyName={companyName} tourScheduleName={tourScheduleName} />
                 </div>
             </div>
         );
@@ -323,8 +323,18 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                                 <span className="font-medium text-gray-500">Vehicle:</span>
                                 <span className="font-semibold">{bill.vehicleNo}</span>
 
-                                <span className="font-medium text-gray-500">Tour Name / Route:</span>
-                                <span className="font-semibold leading-snug">{bill.route}</span>
+                                {tourScheduleName && (
+                                    <>
+                                        <span className="font-medium text-gray-500">Tour Schedule:</span>
+                                        <span className="font-semibold leading-snug">{tourScheduleName}</span>
+                                    </>
+                                )}
+                                {showRoute && (
+                                    <>
+                                        <span className="font-medium text-gray-500">{tourScheduleName ? 'Route:' : 'Tour Name / Route:'}</span>
+                                        <span className="font-semibold leading-snug">{bill.route}</span>
+                                    </>
+                                )}
                             </div>
                         </div>
 
