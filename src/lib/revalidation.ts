@@ -24,7 +24,7 @@ import { revalidatePath } from 'next/cache';
  *   revalidateFor('bill');                // After creating/updating/deleting a bill
  *   revalidateFor('bill', 'booking');     // After a bill creation that also closes a booking
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 export function revalidateFor(..._entities: string[]) {
     // A single global layout revalidation is much faster on Vercel than looping through multiple specific paths.
     // This instantly busts the entire app cache, ensuring all pages show the latest data immediately.

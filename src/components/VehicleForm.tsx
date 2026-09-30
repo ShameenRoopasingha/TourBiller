@@ -37,7 +37,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
     const handleEnterKey = useEnterNavigation();
 
     const form = useForm<VehicleFormInput>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         resolver: zodResolver(VehicleFormSchema) as any,
         defaultValues: {
             vehicleNo: vehicle?.vehicleNo || '',
@@ -79,7 +79,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
         
         Object.entries(submissionData).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
                 formData.append(key, (value as any) instanceof Date ? (value as any).toISOString() : String(value));
             }
         });

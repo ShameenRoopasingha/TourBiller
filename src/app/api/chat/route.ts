@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     }
 
     // Polyfill parts array if missing, to prevent convertToModelMessages crash
-    const sanitizedMessages = messages.map((m: any) => ({
+    const sanitizedMessages = messages.map((m: unknown) => ({
       ...m,
       parts: m.parts || [{ type: 'text', text: m.content || '' }]
     }));
@@ -79,10 +79,10 @@ export async function POST(req: Request) {
             notes: z.string().describe('Any other special requirements or notes').optional()
           }),
           execute: async (args) => {
-            let draft: any = { ...args };
+            let draft: unknown = { ...args };
             // Fallback for weak models that return {}
             if (Object.keys(draft).length === 0) {
-              const lastUserMsg = sanitizedMessages.filter((m: any) => m.role === 'user').pop()?.content || '';
+              const lastUserMsg = sanitizedMessages.filter((m: unknown) => m.role === 'user').pop()?.content || '';
               
               try {
                 // Secondary AI pass to explicitly extract all details
@@ -134,7 +134,7 @@ Format: { "days": number (optional), "numberOfPersons": number (optional), "dest
     });
 
     return result.toUIMessageStreamResponse({
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         console.error("AI Error:", error);
         if (error && typeof error.message === 'string') {
           return error.message;
@@ -142,7 +142,7 @@ Format: { "days": number (optional), "numberOfPersons": number (optional), "dest
         return String(error);
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Chat API Error:', error);
     return new Response(error.message || String(error) || 'VIGIL_SERVER_ERROR', { status: 500 });
   }

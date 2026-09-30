@@ -12,9 +12,9 @@ export async function POST(req: Request) {
         }
 
         const token = authHeader.split(' ')[1];
-        let decoded: any;
+        let decoded: { id: string, companyId: string, role?: string };
         try {
-            decoded = jwt.verify(token, JWT_SECRET);
+            decoded = jwt.verify(token, JWT_SECRET) as { id: string, companyId: string };
         } catch (e) {
             return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
         }

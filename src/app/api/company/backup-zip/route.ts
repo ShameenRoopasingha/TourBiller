@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth-guard';
 import JSZip from 'jszip';
 
 // CSV එකක් විදියට JSON array එකක් convert කරන function එක
-function toCsv(data: any[]) {
+function toCsv(data: Record<string, unknown>[]) {
   if (!data || data.length === 0) return '';
   const headers = Object.keys(data[0]);
   const csvRows = [headers.join(',')];

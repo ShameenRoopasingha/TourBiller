@@ -37,7 +37,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
     const diffMs = new Date(bill.endDate).getTime() - new Date(bill.startDate).getTime();
     const totalHours = Math.max(0, diffMs / (1000 * 60 * 60));
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const billAny = bill as any; // Cast to bypass strict type checking temporarily if Prisma client hasn't caught up
     const scheduledDays = billAny.scheduledDays !== undefined 
         ? billAny.scheduledDays 

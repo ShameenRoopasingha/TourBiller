@@ -60,7 +60,7 @@ async function SettingsContent() {
                             <p className="text-sm text-muted-foreground">
                                 These details appear on invoices and reports. Only administrators can modify business settings.
                             </p>
-                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                            { }
                             <BusinessProfileForm initialData={profile as any} />
                             
                             <div className="mt-10 pt-6 border-t border-border">

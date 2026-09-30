@@ -81,7 +81,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
         <p className="text-sm text-gray-500">Generated on {format(new Date(), 'MMM dd, yyyy')}</p>
       </div>
 
-      <Tabs defaultValue="monthly" value={timeframe} onValueChange={(v: any) => setTimeframe(v)} className="w-full">
+      <Tabs defaultValue="monthly" value={timeframe} onValueChange={(v: string) => setTimeframe(v as "daily" | "weekly" | "monthly" | "yearly")} className="w-full">
         <div className="flex justify-between items-center mb-6 print:hidden">
           <TabsList className="grid w-full grid-cols-4 max-w-lg">
             <TabsTrigger value="daily">Daily</TabsTrigger>

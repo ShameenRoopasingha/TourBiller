@@ -79,10 +79,10 @@ export async function POST(request: Request) {
             message: 'Subscription created successfully'
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Webhook error:', error);
         return NextResponse.json(
-            { success: false, error: error.message },
+            { success: false, error: error instanceof Error ? error.message : "Unknown error" },
             { status: 500 }
         );
     }

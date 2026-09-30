@@ -110,7 +110,7 @@ export function TourScheduleForm({
         ];
 
     const form = useForm<TourScheduleFormData>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         resolver: zodResolver(TourScheduleFormSchema) as any,
         defaultValues: {
             name: initialData?.name || '',

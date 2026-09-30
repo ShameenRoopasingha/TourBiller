@@ -44,7 +44,7 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
     const handleEnterKey = useEnterNavigation();
 
     const form = useForm<BookingFormInput>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         resolver: zodResolver(BookingFormSchema) as any,
         defaultValues: {
             vehicleNo: '',

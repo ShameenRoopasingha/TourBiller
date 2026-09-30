@@ -126,7 +126,7 @@ export async function generateQuotation(
                 notes: validated.notes || null,
                 validUntil: validated.validUntil || null,
                 status: 'DRAFT',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             } as any,
         });
 

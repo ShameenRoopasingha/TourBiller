@@ -20,14 +20,14 @@ export async function POST(request: NextRequest) {
 
     if (entityType === 'customers') {
       const customersToInsert = data
-        .map((row: any) => ({
+        .map((row: Record<string, any>) => ({
           companyId,
           name: row.Name || row.name,
           mobile: String(row.Mobile || row.mobile || ''),
           email: row.Email || row.email || null,
           address: row.Address || row.address || null,
         }))
-        .filter((c: any) => c.name); // නමක් අනිවාර්යයි (Must have a name)
+        .filter((c: Record<string, any>) => c.name); // නමක් අනිවාර්යයි (Must have a name)
 
       const result = await prisma.customer.createMany({
         data: customersToInsert,
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     } 
     else if (entityType === 'vehicles') {
       const vehiclesToInsert = data
-        .map((row: any) => ({
+        .map((row: Record<string, any>) => ({
           companyId,
           vehicleNo: String(row['Vehicle No'] || row.vehicleNo || row.VehicleNo || ''),
           model: row.Model || row.model || null,
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
           ratePerDay: parseFloat(row['Rate Per Day'] || row.ratePerDay || '0') || 0,
           kmPerDay: parseFloat(row['Km Per Day'] || row.kmPerDay || '0') || 0,
         }))
-        .filter((v: any) => v.vehicleNo); // Vehicle No අනිවාර්යයි
+        .filter((v: Record<string, any>) => v.vehicleNo); // Vehicle No අනිවාර්යයි
 
       const result = await prisma.vehicle.createMany({
         data: vehiclesToInsert,

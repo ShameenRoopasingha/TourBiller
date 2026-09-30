@@ -63,7 +63,7 @@ export function BillCreator({
     initialVehicleNo?: string;
     initialCustomerName?: string;
     initialBookingId?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     initialData?: Record<string, any>;
     vehicles: Vehicle[];
     customers: Customer[];
@@ -115,7 +115,7 @@ export function BillCreator({
     const handleEnterKey = useEnterNavigation();
 
     const form = useForm<BillFormData>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         resolver: zodResolver(BillFormSchema) as any,
         defaultValues: initialData ? {
             vehicleNo: initialData.vehicleNo || '',

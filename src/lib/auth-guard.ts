@@ -18,7 +18,7 @@ type AuthGuardResult = {
  * Use this in any server action that requires admin privileges.
  */
 export async function requireAdmin(): Promise<AuthGuardResult> {
-    let session = await auth();
+    const session = await auth();
     if (!session?.user?.email) {
         return { authorized: false, error: 'Not authenticated' };
     }
@@ -44,7 +44,7 @@ export async function requireAdmin(): Promise<AuthGuardResult> {
  * Use this in server actions that any logged-in user can access.
  */
 export async function requireAuth(): Promise<AuthGuardResult> {
-    let session = await auth();
+    const session = await auth();
     if (!session?.user?.email) {
         return { authorized: false, error: 'Not authenticated' };
     }

@@ -162,7 +162,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
     const handleEnterKey = useEnterNavigation();
 
     const form = useForm<QuotationFormInput>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         resolver: zodResolver(QuotationFormSchema) as any,
         defaultValues: initialData ? {
             customerName: initialData.customerName,
@@ -185,7 +185,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             excludedItems: initialData.excludedItems || 'Highway charges, Parking fees',
             notes: initialData.notes || '',
             tourScheduleId: initialData.tourScheduleId,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             status: (initialData.status as any) || 'DRAFT',
             validUntil: initialData.validUntil ? new Date(initialData.validUntil).toISOString().split('T')[0] as unknown as Date : undefined,
             driverId: initialData.driverId || '',
@@ -476,7 +476,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
 
     return (
         <Form {...form}>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        { }
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6" onKeyDown={handleEnterKey}>
             <div className="mb-6 flex items-start justify-between">
                 <div>

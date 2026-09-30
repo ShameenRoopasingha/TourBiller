@@ -34,7 +34,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
     const handleEnterKey = useEnterNavigation();
 
     const form = useForm<CustomerFormInput>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         resolver: zodResolver(CustomerFormSchema) as any,
         defaultValues: {
             name: customer?.name || '',
@@ -51,7 +51,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
                 formData.append(key, (value as any) instanceof Date ? (value as any).toISOString() : String(value));
             }
         });
