@@ -36,7 +36,7 @@ export async function checkDriverAvailability(
             where: {
                 driverId,
                 companyId,
-                status: 'CONFIRMED',
+                status: { in: ['CONFIRMED', 'ONGOING'] },
                 id: (currentType === 'Booking' && currentId) ? { not: currentId } : undefined,
                 OR: [
                     {

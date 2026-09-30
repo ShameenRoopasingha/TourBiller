@@ -7,6 +7,7 @@ import { type Booking } from '@prisma/client';
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAuth, requireAdmin } from '@/lib/auth-guard';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
+import { checkDriverAvailability } from '@/lib/user-actions';
 
 /**
  * Generate a quotation from tour schedule and customer data
@@ -48,6 +49,26 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
                 return { 
                     success: false, 
                     error: `Vehicle is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
+                };
+            }
+        }
+
+        // Check driver availability
+        if (validatedData.driverId && validatedData.startDate) {
+            const endDate = validatedData.endDate || validatedData.startDate;
+            const driverAvailability = await checkDriverAvailability(
+                validatedData.driverId,
+                validatedData.startDate,
+                endDate,
+                undefined,
+                'Booking'
+            );
+            
+            if (driverAvailability.success && driverAvailability.data && !driverAvailability.data.available) {
+                const conflict = driverAvailability.data.conflicts[0];
+                return { 
+                    success: false, 
+                    error: `Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
                 };
             }
         }
