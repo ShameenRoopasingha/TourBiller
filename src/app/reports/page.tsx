@@ -39,6 +39,20 @@ export default async function ReportsPage() {
         orderBy: { date: 'desc' }
     });
 
+    // Fetch company profile for print letterhead
+    const company = await prisma.company.findUnique({
+        where: { id: companyId },
+        select: { name: true, address: true, phone: true, email: true, logoUrl: true }
+    });
+
+    const businessProfile = {
+        companyName: company?.name || 'VIGIL',
+        address: company?.address || null,
+        phone: company?.phone || null,
+        email: company?.email || null,
+        logoUrl: company?.logoUrl || null
+    };
+
     // Sanitize dates for passing to Client Component
     const bills = billsRaw.map(b => ({
       id: b.id,
@@ -65,7 +79,7 @@ export default async function ReportsPage() {
                 <p className="text-muted-foreground mt-2">Analyze your income and expenses with daily, weekly, monthly, and yearly breakdowns.</p>
             </div>
             
-            <ReportsDashboard bills={bills} expenses={expenses} />
+            <ReportsDashboard bills={bills} expenses={expenses} businessProfile={businessProfile} />
         </div>
     );
 }

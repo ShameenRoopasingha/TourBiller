@@ -10,12 +10,21 @@ import { Button } from '@/components/ui/button';
 type BillData = { id: string; billNumber: number | string; vehicleNo: string; customerName: string; totalAmount: number; createdAt: Date };
 type ExpenseData = { id: string; vehicleNo: string; category: string; description: string | null; amount: number; date: Date };
 
+interface BusinessProfileData {
+  companyName: string;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  logoUrl?: string | null;
+}
+
 interface ReportsDashboardProps {
   bills: BillData[];
   expenses: ExpenseData[];
+  businessProfile?: BusinessProfileData;
 }
 
-export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
+export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDashboardProps) {
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [viewMode, setViewMode] = useState<'dashboard' | 'spreadsheet'>('dashboard');
 
@@ -99,14 +108,56 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
     });
   }, [expenses, timeframe]);
 
-  return (
-    <div className="space-y-6 print:space-y-4">
-      {/* Print-only title */}
-      <div className="hidden print:block mb-6">
-        <h2 className="text-2xl font-bold">Financial Report</h2>
-        <p className="text-sm text-gray-500">Generated on {format(new Date(), 'MMM dd, yyyy')}</p>
-      </div>
+  const companyName = businessProfile?.companyName || 'VIGIL';
+  const address = businessProfile?.address || '';
+  const phone = businessProfile?.phone || '';
+  const email = businessProfile?.email || '';
 
+  return (
+    <div className="space-y-6 print:space-y-4 print:mx-auto print:bg-white print:text-black">
+      {/* Inject print styles for perfect A4 printing */}
+      <style jsx global>{`
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            body {
+                background: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+      `}</style>
+
+      {/* Print-only Beautiful Letterhead */}
+      <div className="hidden print:block mb-8 pb-4 border-b-2 border-black">
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-4">
+            {businessProfile?.logoUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={businessProfile.logoUrl} alt="Logo" className="h-16 w-16 object-cover rounded-full" />
+            ) : null}
+            <div>
+              <h1 className="text-2xl font-bold uppercase tracking-wider">{companyName}</h1>
+              <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
+                  {address && <>{address}<br /></>}
+                  {phone && <>Tel: {phone}</>}
+                  {email && <> | Email: {email}</>}
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <h2 className="text-xl font-bold text-blue-700 uppercase">
+              {viewMode === 'dashboard' ? 'Analytical Report' : 'Financial Log'}
+            </h2>
+            <p className="text-sm text-gray-700 mt-1">Generated: {format(new Date(), 'dd/MM/yyyy')}</p>
+            <p className="text-sm font-medium mt-1 uppercase border px-2 py-0.5 inline-block rounded">
+              Period: {timeframe}
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 print:hidden">
         <div className="flex flex-col gap-2 w-full sm:w-auto">
           {viewMode === 'spreadsheet' && (
@@ -147,7 +198,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 print:pb-1">
                 <CardTitle className="text-sm font-medium print:text-black">Total Income</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="print:px-0">
                 <div className="text-2xl font-bold text-green-600 print:text-green-800">
                   Rs. {totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
@@ -157,7 +208,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 print:pb-1">
                 <CardTitle className="text-sm font-medium print:text-black">Total Expenses</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="print:px-0">
                 <div className="text-2xl font-bold text-red-600 print:text-red-800">
                   Rs. {totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
@@ -167,7 +218,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 print:pb-1">
                 <CardTitle className="text-sm font-medium print:text-black">Net Profit</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="print:px-0">
                 <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600 print:text-blue-800' : 'text-red-600 print:text-red-800'}`}>
                   Rs. {netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
@@ -181,12 +232,12 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
             </div>
           ) : (
             <div className="space-y-8">
-              <Card>
-                <CardHeader>
+              <Card className="print:border-none print:shadow-none">
+                <CardHeader className="print:px-0">
                   <CardTitle>Income vs Expenses Chart</CardTitle>
                   <CardDescription>Visual breakdown by {timeframe}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="print:px-0">
                   <div className="w-full overflow-x-auto pb-4">
                     <div className="flex gap-4 min-w-max h-64 items-end pt-6">
                       {aggregatedData.map((data, i) => (
@@ -271,39 +322,39 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
       ) : (
         <div className="flex flex-col gap-8">
           {/* Income Spreadsheet */}
-          <Card>
-            <CardHeader>
+          <Card className="print:border-none print:shadow-none">
+            <CardHeader className="print:px-0">
               <CardTitle className="text-green-600">Income Log (Bills)</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto border rounded-lg max-h-[600px] scrollbar-thin">
-                <table className="w-full text-sm text-left relative">
-                  <thead className="text-xs text-muted-foreground uppercase bg-muted/90 backdrop-blur-sm border-b sticky top-0 z-10">
+            <CardContent className="print:px-0">
+              <div className="overflow-x-auto border print:border-gray-300 rounded-lg print:rounded-none max-h-[600px] print:max-h-none print:overflow-visible scrollbar-thin">
+                <table className="w-full text-sm text-left relative print:text-black border-collapse">
+                  <thead className="text-xs text-muted-foreground print:text-black uppercase bg-muted/90 print:bg-gray-100 backdrop-blur-sm border-b sticky top-0 z-10" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>
                     <tr>
-                      <th className="px-4 py-3">Date</th>
-                      <th className="px-4 py-3">Bill No</th>
-                      <th className="px-4 py-3">Vehicle</th>
-                      <th className="px-4 py-3">Customer</th>
-                      <th className="px-4 py-3 text-right">Amount (Rs.)</th>
+                      <th className="px-4 py-3 print:border print:border-gray-300">Date</th>
+                      <th className="px-4 py-3 print:border print:border-gray-300">Bill No</th>
+                      <th className="px-4 py-3 print:border print:border-gray-300">Vehicle</th>
+                      <th className="px-4 py-3 print:border print:border-gray-300">Customer</th>
+                      <th className="px-4 py-3 print:border print:border-gray-300 text-right">Amount (Rs.)</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredBills.length === 0 ? (
                       <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No income recorded in this period</td></tr>
                     ) : filteredBills.map((b) => (
-                      <tr key={b.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-4 py-3 whitespace-nowrap">{format(new Date(b.createdAt), 'MMM dd, yyyy')}</td>
-                        <td className="px-4 py-3 font-medium">{b.billNumber}</td>
-                        <td className="px-4 py-3">{b.vehicleNo}</td>
-                        <td className="px-4 py-3 truncate max-w-[150px]" title={b.customerName}>{b.customerName}</td>
-                        <td className="px-4 py-3 text-right font-bold text-green-600">{b.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <tr key={b.id} className="border-b last:border-0 hover:bg-muted/30 print:border-b-0">
+                        <td className="px-4 py-3 print:border print:border-gray-300 whitespace-nowrap">{format(new Date(b.createdAt), 'MMM dd, yyyy')}</td>
+                        <td className="px-4 py-3 print:border print:border-gray-300 font-medium">{b.billNumber}</td>
+                        <td className="px-4 py-3 print:border print:border-gray-300">{b.vehicleNo}</td>
+                        <td className="px-4 py-3 print:border print:border-gray-300 truncate max-w-[150px]" title={b.customerName}>{b.customerName}</td>
+                        <td className="px-4 py-3 print:border print:border-gray-300 text-right font-bold text-green-600">{b.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="bg-muted/50 border-t font-semibold">
                     <tr>
                       <td colSpan={4} className="px-4 py-3 text-right">Total Income:</td>
-                      <td className="px-4 py-3 text-right text-green-700">
+                      <td className="px-4 py-3 print:border print:border-gray-300 text-right text-green-700">
                         {filteredBills.reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                     </tr>
@@ -314,39 +365,39 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
           </Card>
 
           {/* Expenses Spreadsheet */}
-          <Card>
-            <CardHeader>
+          <Card className="print:border-none print:shadow-none">
+            <CardHeader className="print:px-0">
               <CardTitle className="text-red-600">Expense Log</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto border rounded-lg max-h-[600px] scrollbar-thin">
-                <table className="w-full text-sm text-left relative">
-                  <thead className="text-xs text-muted-foreground uppercase bg-muted/90 backdrop-blur-sm border-b sticky top-0 z-10">
+            <CardContent className="print:px-0">
+              <div className="overflow-x-auto border print:border-gray-300 rounded-lg print:rounded-none max-h-[600px] print:max-h-none print:overflow-visible scrollbar-thin">
+                <table className="w-full text-sm text-left relative print:text-black border-collapse">
+                  <thead className="text-xs text-muted-foreground print:text-black uppercase bg-muted/90 print:bg-gray-100 backdrop-blur-sm border-b sticky top-0 z-10" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}>
                     <tr>
-                      <th className="px-4 py-3">Date</th>
-                      <th className="px-4 py-3">Vehicle</th>
-                      <th className="px-4 py-3">Category</th>
-                      <th className="px-4 py-3">Description</th>
-                      <th className="px-4 py-3 text-right">Amount (Rs.)</th>
+                      <th className="px-4 py-3 print:border print:border-gray-300">Date</th>
+                      <th className="px-4 py-3 print:border print:border-gray-300">Vehicle</th>
+                      <th className="px-4 py-3 print:border print:border-gray-300">Category</th>
+                      <th className="px-4 py-3 print:border print:border-gray-300">Description</th>
+                      <th className="px-4 py-3 print:border print:border-gray-300 text-right">Amount (Rs.)</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredExpenses.length === 0 ? (
                       <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No expenses recorded in this period</td></tr>
                     ) : filteredExpenses.map((e) => (
-                      <tr key={e.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-4 py-3 whitespace-nowrap">{format(new Date(e.date), 'MMM dd, yyyy')}</td>
-                        <td className="px-4 py-3 font-medium">{e.vehicleNo}</td>
-                        <td className="px-4 py-3 text-xs">{e.category.replace('_', ' ')}</td>
-                        <td className="px-4 py-3 truncate max-w-[150px]" title={e.description || '-'}>{e.description || '-'}</td>
-                        <td className="px-4 py-3 text-right font-bold text-red-600">{e.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <tr key={e.id} className="border-b last:border-0 hover:bg-muted/30 print:border-b-0">
+                        <td className="px-4 py-3 print:border print:border-gray-300 whitespace-nowrap">{format(new Date(e.date), 'MMM dd, yyyy')}</td>
+                        <td className="px-4 py-3 print:border print:border-gray-300 font-medium">{e.vehicleNo}</td>
+                        <td className="px-4 py-3 print:border print:border-gray-300 text-xs">{e.category.replace('_', ' ')}</td>
+                        <td className="px-4 py-3 print:border print:border-gray-300 truncate max-w-[150px]" title={e.description || '-'}>{e.description || '-'}</td>
+                        <td className="px-4 py-3 print:border print:border-gray-300 text-right font-bold text-red-600">{e.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="bg-muted/50 border-t font-semibold">
                     <tr>
                       <td colSpan={4} className="px-4 py-3 text-right">Total Expenses:</td>
-                      <td className="px-4 py-3 text-right text-red-700">
+                      <td className="px-4 py-3 print:border print:border-gray-300 text-right text-red-700">
                         {filteredExpenses.reduce((sum, e) => sum + e.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                     </tr>
@@ -360,6 +411,8 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
     </div>
   );
 }
+
+
 
 
 
