@@ -204,7 +204,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
           )}
         </>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="flex flex-col gap-8">
           {/* Income Spreadsheet */}
           <Card>
             <CardHeader>
