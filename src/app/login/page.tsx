@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Topography from '@/components/Backgrounds/Topography';
+import Waves from '../../../components/reactbits/Waves';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -49,24 +49,19 @@ export default function LoginPage() {
     return (
         <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
             {/* Animated Background */}
-            <div className="absolute inset-0 z-0 bg-[#000510]">
-                <Topography
-                    lowColor="#001845"    // Deep Navy
-                    midColor="#00b4d8"    // Cyan
-                    highColor="#caf0f8"   // Very Light Cyan
-                    speed={0.4}
-                    morphAmount={3.0}
-                    morphSpeed={0.05}
-                    bands={2.5}
-                    thickness={0.012}
-                    scale={1.2}
-                    colorMode="elevation"
-                    contrast={2.0}
-                    brightness={1.5}
-                    opacity={0.6} // Reduced background opacity slightly for better text contrast
-                    mouseInteraction={true}
-                    mouseRadius={0.4}
-                    mouseStrength={0.5}
+            <div className="absolute inset-0 z-0 bg-black">
+                <Waves
+                    lineColor="#00b4d8"
+                    backgroundColor="#000510"
+                    waveSpeedX={0.03}
+                    waveSpeedY={0.015}
+                    waveAmpX={50}
+                    waveAmpY={25}
+                    friction={0.9}
+                    tension={0.01}
+                    maxCursorMove={120}
+                    xGap={12}
+                    yGap={36}
                 />
             </div>
 
