@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { VehicleFormSchema, type VehicleFormInput, type Vehicle } from '@/lib/validations';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 
 // For backward compatibility - alias the type
 export type VehicleFormData = VehicleFormInput;
