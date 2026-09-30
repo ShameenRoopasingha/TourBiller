@@ -163,7 +163,9 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
           {viewMode === 'spreadsheet' && (
             <div>
               <h2 className="text-lg font-semibold">Financial Log View</h2>
-              <p className="text-sm text-muted-foreground mb-2">Showing records for the current {timeframe.replace('ly', '')}.</p>
+              <p className="text-sm text-muted-foreground mb-2">
+                Showing records for the current {timeframe === 'daily' ? 'day' : timeframe.replace('ly', '')}.
+              </p>
             </div>
           )}
           <Tabs defaultValue="monthly" value={timeframe} onValueChange={(v: any) => setTimeframe(v)} className="w-full sm:w-auto">
