@@ -79,10 +79,20 @@ export async function GET() {
             message: `Tour for ${tour.customerName} starts ${tour.startDate.toDateString() === now.toDateString() ? 'TODAY' : 'TOMORROW'}.`,
             type: 'TOUR',
         }));
-        const expenseAlerts = recentExpenses.map((expense) => ({
-            id: `exp-${expense.id}`,
-            title: expense.vehicleNo,
-            message: `New expense logged: Rs.${expense.amount} for ${expense.category}.`,
+        // Group expenses by vehicle
+        const expensesByVehicle = recentExpenses.reduce((acc, expense) => {
+            if (!acc[expense.vehicleNo]) acc[expense.vehicleNo] = { count: 0, total: 0, latestCategory: expense.category, latestId: expense.id };
+            acc[expense.vehicleNo].count += 1;
+            acc[expense.vehicleNo].total += expense.amount;
+            return acc;
+        }, {} as Record<string, { count: number; total: number; latestCategory: string; latestId: string }>);
+
+        const expenseAlerts = Object.entries(expensesByVehicle).map(([vehicleNo, data]) => ({
+            id: `exp-${data.latestId}`,
+            title: vehicleNo,
+            message: data.count > 1 
+                ? `${data.count} new expenses logged recently (Total: Rs.${data.total.toLocaleString()}).`
+                : `New expense logged: Rs.${data.total.toLocaleString()} for ${data.latestCategory}.`,
             type: 'EXPENSE',
         }));
 
