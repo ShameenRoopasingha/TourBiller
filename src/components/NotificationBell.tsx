@@ -19,7 +19,15 @@ export function NotificationBell() {
                 const response = await fetch('/api/dashboard/notifications');
                 const result = await response.json();
                 if (response.ok && result.success && result.data) {
-                    setAlerts(result.data.maintenanceAlerts || []);
+                    const fetchedAlerts = result.data.maintenanceAlerts || [];
+                    
+                    // Filter out dismissed EXPENSE alerts
+                    const dismissed = JSON.parse(localStorage.getItem('dismissedAlerts') || '[]');
+                    const filteredAlerts = fetchedAlerts.filter((a: DashboardAlert) => 
+                        !(a.type === 'EXPENSE' && dismissed.includes(a.id))
+                    );
+                    
+                    setAlerts(filteredAlerts);
                 } else {
                     setAlerts([]);
                 }
@@ -45,8 +53,29 @@ export function NotificationBell() {
     const unreadCount = alerts.length;
 
     const clearAll = () => {
-        setAlerts([]);
-        setOpen(false);
+        // Find all EXPENSE alerts currently shown
+        const expenseAlerts = alerts.filter(a => a.type === 'EXPENSE');
+        
+        if (expenseAlerts.length > 0) {
+            // Save their IDs to localStorage so they don't reappear
+            const dismissed = JSON.parse(localStorage.getItem('dismissedAlerts') || '[]');
+            const newDismissed = [...dismissed, ...expenseAlerts.map(a => a.id)];
+            
+            // Keep array size manageable (only keep last 100)
+            if (newDismissed.length > 100) {
+                newDismissed.splice(0, newDismissed.length - 100);
+            }
+            
+            localStorage.setItem('dismissedAlerts', JSON.stringify(newDismissed));
+            
+            // Keep non-expense alerts (Maintenance, Billing, etc)
+            setAlerts(alerts.filter(a => a.type !== 'EXPENSE'));
+        }
+        
+        // Don't close the popover if there are still important alerts
+        if (alerts.filter(a => a.type !== 'EXPENSE').length === 0) {
+            setOpen(false);
+        }
     };
 
     return (
@@ -67,9 +96,9 @@ export function NotificationBell() {
                         <Bell className="h-4 w-4" /> Notifications
                     </h3>
                     <div className="flex items-center gap-2">
-                        {unreadCount > 0 && (
+                        {alerts.some(a => a.type === 'EXPENSE') && (
                             <button onClick={clearAll} className="text-[10px] text-muted-foreground hover:text-foreground">
-                                Clear All
+                                Clear Info
                             </button>
                         )}
                         <span className="text-xs bg-muted px-2 py-1 rounded-full font-medium">
