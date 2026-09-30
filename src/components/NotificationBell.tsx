@@ -44,6 +44,11 @@ export function NotificationBell() {
 
     const unreadCount = alerts.length;
 
+    const clearAll = () => {
+        setAlerts([]);
+        setOpen(false);
+    };
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -61,9 +66,16 @@ export function NotificationBell() {
                     <h3 className="font-semibold flex items-center gap-2">
                         <Bell className="h-4 w-4" /> Notifications
                     </h3>
-                    <span className="text-xs bg-muted px-2 py-1 rounded-full font-medium">
-                        {unreadCount} New
-                    </span>
+                    <div className="flex items-center gap-2">
+                        {unreadCount > 0 && (
+                            <button onClick={clearAll} className="text-[10px] text-muted-foreground hover:text-foreground">
+                                Clear All
+                            </button>
+                        )}
+                        <span className="text-xs bg-muted px-2 py-1 rounded-full font-medium">
+                            {unreadCount} New
+                        </span>
+                    </div>
                 </div>
                 <div className="max-h-[400px] overflow-y-auto">
                     {loading ? (
