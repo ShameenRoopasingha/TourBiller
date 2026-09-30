@@ -42,7 +42,7 @@ export async function GET() {
 
         const [upcomingTours, recentExpenses] = await Promise.all([
             prisma.booking.findMany({
-                where: { companyId, status: 'CONFIRMED', startDate: { gte: todayStart, lt: dayAfterTomorrow } },
+                where: { companyId, status: 'CONFIRMED', startDate: { gte: now, lt: dayAfterTomorrow } },
                 select: { id: true, vehicleNo: true, customerName: true, startDate: true },
             }),
             prisma.vehicleExpense.findMany({
