@@ -4,11 +4,11 @@ import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, parseISO, subDays } from 'date-fns';
-import { Printer } from 'lucide-react';
+import { Printer, BarChart3, TableProperties } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-type BillData = { totalAmountLKR: number; createdAt: Date };
-type ExpenseData = { amount: number; date: Date };
+type BillData = { id: string; billNumber: string; vehicleNo: string; customerName: string; totalAmountLKR: number; createdAt: Date };
+type ExpenseData = { id: string; vehicleNo: string; category: string; description: string | null; amount: number; date: Date };
 
 interface ReportsDashboardProps {
   bills: BillData[];
@@ -17,6 +17,7 @@ interface ReportsDashboardProps {
 
 export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
+  const [viewMode, setViewMode] = useState<'dashboard' | 'spreadsheet'>('dashboard');
 
   // Aggregate Data based on selected timeframe
   const aggregatedData = useMemo(() => {
@@ -77,147 +78,204 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
     <div className="space-y-6 print:space-y-4">
       {/* Print-only title */}
       <div className="hidden print:block mb-6">
-        <h2 className="text-2xl font-bold">Financial Report ({timeframe.charAt(0).toUpperCase() + timeframe.slice(1)})</h2>
+        <h2 className="text-2xl font-bold">Financial Report</h2>
         <p className="text-sm text-gray-500">Generated on {format(new Date(), 'MMM dd, yyyy')}</p>
       </div>
 
-      <Tabs defaultValue="monthly" value={timeframe} onValueChange={(v: any) => setTimeframe(v)} className="w-full">
-        <div className="flex justify-between items-center mb-6 print:hidden">
-          <TabsList className="grid w-full grid-cols-4 max-w-lg">
-            <TabsTrigger value="daily">Daily</TabsTrigger>
-            <TabsTrigger value="weekly">Weekly</TabsTrigger>
-            <TabsTrigger value="monthly">Monthly</TabsTrigger>
-            <TabsTrigger value="yearly">Yearly</TabsTrigger>
-          </TabsList>
-          
-          <Button onClick={() => window.print()} variant="outline" className="flex items-center gap-2">
-            <Printer className="h-4 w-4" />
-            Print Report
-          </Button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                Rs. {totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                Rs. {totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                Rs. {netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {aggregatedData.length === 0 ? (
-          <div className="text-center py-20 border rounded-lg bg-muted/10">
-            <p className="text-muted-foreground">No financial data found for this view.</p>
-          </div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 print:hidden">
+        {viewMode === 'dashboard' ? (
+          <Tabs defaultValue="monthly" value={timeframe} onValueChange={(v: any) => setTimeframe(v)} className="w-full sm:w-auto">
+            <TabsList className="grid w-full grid-cols-4 sm:w-[400px]">
+              <TabsTrigger value="daily">Daily</TabsTrigger>
+              <TabsTrigger value="weekly">Weekly</TabsTrigger>
+              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+              <TabsTrigger value="yearly">Yearly</TabsTrigger>
+            </TabsList>
+          </Tabs>
         ) : (
-          <div className="space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Income vs Expenses Chart</CardTitle>
-                <CardDescription>Visual breakdown by {timeframe}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="w-full overflow-x-auto pb-4">
-                  <div className="flex gap-4 min-w-max h-64 items-end pt-6">
-                    {aggregatedData.map((data, i) => (
-                      <div key={i} className="flex flex-col items-center gap-2 group">
-                        <div className="flex gap-1 h-48 items-end">
-                          {/* Income Bar */}
-                          <div 
-                            className="w-12 bg-green-500 rounded-t-md hover:bg-green-600 transition-all relative"
-                            style={{ height: `${(data.income / maxVal) * 100}%`, minHeight: data.income > 0 ? '4px' : '0' }}
-                            title={`Income: Rs. ${data.income.toLocaleString()}`}
-                          >
-                            <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white px-1 py-0.5 rounded z-10 whitespace-nowrap">
-                              Rs. {data.income.toLocaleString()}
-                            </span>
-                          </div>
-                          {/* Expense Bar */}
-                          <div 
-                            className="w-12 bg-red-500 rounded-t-md hover:bg-red-600 transition-all relative"
-                            style={{ height: `${(data.expense / maxVal) * 100}%`, minHeight: data.expense > 0 ? '4px' : '0' }}
-                            title={`Expense: Rs. ${data.expense.toLocaleString()}`}
-                          >
-                            <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white px-1 py-0.5 rounded z-10 whitespace-nowrap">
-                              Rs. {data.expense.toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                        <span className="text-xs text-muted-foreground max-w-[100px] text-center truncate px-1">
-                          {data.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex gap-4 mt-4 justify-center text-sm">
-                    <div className="flex items-center gap-1"><div className="w-3 h-3 bg-green-500 rounded-sm"></div> Income</div>
-                    <div className="flex items-center gap-1"><div className="w-3 h-3 bg-red-500 rounded-sm"></div> Expenses</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Detailed Report Table</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
-                      <tr>
-                        <th className="px-4 py-3">Period ({timeframe})</th>
-                        <th className="px-4 py-3 text-right">Income (Rs.)</th>
-                        <th className="px-4 py-3 text-right">Expense (Rs.)</th>
-                        <th className="px-4 py-3 text-right">Profit (Rs.)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {aggregatedData.map((data, i) => {
-                        const profit = data.income - data.expense;
-                        return (
-                          <tr key={i} className="border-b last:border-0 hover:bg-muted/30">
-                            <td className="px-4 py-3 font-medium">{data.label}</td>
-                            <td className="px-4 py-3 text-right text-green-600">{data.income.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                            <td className="px-4 py-3 text-right text-red-600">{data.expense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                            <td className={`px-4 py-3 text-right font-bold ${profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                              {profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+          <div>
+            <h2 className="text-lg font-semibold">Descriptive Spreadsheet View</h2>
+            <p className="text-sm text-muted-foreground">Detailed breakdown of all financial records.</p>
           </div>
         )}
-      </Tabs>
+        
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button onClick={() => setViewMode('dashboard')} variant={viewMode === 'dashboard' ? 'default' : 'outline'} size="sm" className="flex-1 sm:flex-none">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Dashboard
+          </Button>
+          <Button onClick={() => setViewMode('spreadsheet')} variant={viewMode === 'spreadsheet' ? 'default' : 'outline'} size="sm" className="flex-1 sm:flex-none">
+            <TableProperties className="h-4 w-4 mr-2" />
+            Spreadsheet
+          </Button>
+          <Button onClick={() => window.print()} variant="outline" size="sm" className="flex-none items-center gap-2">
+            <Printer className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {viewMode === 'dashboard' ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-3 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Income</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  Rs. {totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  Rs. {totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  Rs. {netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {aggregatedData.length === 0 ? (
+            <div className="text-center py-20 border rounded-lg bg-muted/10">
+              <p className="text-muted-foreground">No financial data found for this view.</p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Income vs Expenses Chart</CardTitle>
+                  <CardDescription>Visual breakdown by {timeframe}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="w-full overflow-x-auto pb-4">
+                    <div className="flex gap-4 min-w-max h-64 items-end pt-6">
+                      {aggregatedData.map((data, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2 group">
+                          <div className="flex gap-1 h-48 items-end">
+                            {/* Income Bar */}
+                            <div 
+                              className="w-12 bg-green-500 rounded-t-md hover:bg-green-600 transition-all relative"
+                              style={{ height: `${(data.income / maxVal) * 100}%`, minHeight: data.income > 0 ? '4px' : '0' }}
+                              title={`Income: Rs. ${data.income.toLocaleString()}`}
+                            >
+                              <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white px-1 py-0.5 rounded z-10 whitespace-nowrap">
+                                Rs. {data.income.toLocaleString()}
+                              </span>
+                            </div>
+                            {/* Expense Bar */}
+                            <div 
+                              className="w-12 bg-red-500 rounded-t-md hover:bg-red-600 transition-all relative"
+                              style={{ height: `${(data.expense / maxVal) * 100}%`, minHeight: data.expense > 0 ? '4px' : '0' }}
+                              title={`Expense: Rs. ${data.expense.toLocaleString()}`}
+                            >
+                              <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white px-1 py-0.5 rounded z-10 whitespace-nowrap">
+                                Rs. {data.expense.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground max-w-[100px] text-center truncate px-1">
+                            {data.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-4 mt-4 justify-center text-sm">
+                      <div className="flex items-center gap-1"><div className="w-3 h-3 bg-green-500 rounded-sm"></div> Income</div>
+                      <div className="flex items-center gap-1"><div className="w-3 h-3 bg-red-500 rounded-sm"></div> Expenses</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Income Spreadsheet */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-green-600">Income Log (Bills)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto border rounded-lg max-h-[600px] scrollbar-thin">
+                <table className="w-full text-sm text-left relative">
+                  <thead className="text-xs text-muted-foreground uppercase bg-muted/90 backdrop-blur-sm border-b sticky top-0 z-10">
+                    <tr>
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Bill No</th>
+                      <th className="px-4 py-3">Vehicle</th>
+                      <th className="px-4 py-3">Customer</th>
+                      <th className="px-4 py-3 text-right">Amount (Rs.)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bills.length === 0 ? (
+                      <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No income recorded</td></tr>
+                    ) : bills.map((b) => (
+                      <tr key={b.id} className="border-b last:border-0 hover:bg-muted/30">
+                        <td className="px-4 py-3 whitespace-nowrap">{format(new Date(b.createdAt), 'MMM dd, yyyy')}</td>
+                        <td className="px-4 py-3 font-medium">{b.billNumber}</td>
+                        <td className="px-4 py-3">{b.vehicleNo}</td>
+                        <td className="px-4 py-3 truncate max-w-[150px]" title={b.customerName}>{b.customerName}</td>
+                        <td className="px-4 py-3 text-right font-bold text-green-600">{b.totalAmountLKR.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Expenses Spreadsheet */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-red-600">Expense Log</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto border rounded-lg max-h-[600px] scrollbar-thin">
+                <table className="w-full text-sm text-left relative">
+                  <thead className="text-xs text-muted-foreground uppercase bg-muted/90 backdrop-blur-sm border-b sticky top-0 z-10">
+                    <tr>
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Vehicle</th>
+                      <th className="px-4 py-3">Category</th>
+                      <th className="px-4 py-3">Description</th>
+                      <th className="px-4 py-3 text-right">Amount (Rs.)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {expenses.length === 0 ? (
+                      <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No expenses recorded</td></tr>
+                    ) : expenses.map((e) => (
+                      <tr key={e.id} className="border-b last:border-0 hover:bg-muted/30">
+                        <td className="px-4 py-3 whitespace-nowrap">{format(new Date(e.date), 'MMM dd, yyyy')}</td>
+                        <td className="px-4 py-3 font-medium">{e.vehicleNo}</td>
+                        <td className="px-4 py-3 text-xs">{e.category.replace('_', ' ')}</td>
+                        <td className="px-4 py-3 truncate max-w-[150px]" title={e.description || '-'}>{e.description || '-'}</td>
+                        <td className="px-4 py-3 text-right font-bold text-red-600">{e.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

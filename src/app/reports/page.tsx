@@ -26,27 +26,34 @@ export default async function ReportsPage() {
     const companyId = user.companyId;
 
     // Fetch Income (Bills)
-    // We only select the fields needed to minimize data transfer
     const billsRaw = await prisma.bill.findMany({
         where: { companyId },
-        select: { totalAmountLKR: true, createdAt: true },
-        orderBy: { createdAt: 'asc' }
+        select: { id: true, totalAmountLKR: true, createdAt: true, billNumber: true, vehicleNo: true, customerName: true },
+        orderBy: { createdAt: 'desc' }
     });
 
     // Fetch Expenses
     const expensesRaw = await prisma.vehicleExpense.findMany({
         where: { companyId },
-        select: { amount: true, date: true },
-        orderBy: { date: 'asc' }
+        select: { id: true, amount: true, date: true, vehicleNo: true, category: true, description: true },
+        orderBy: { date: 'desc' }
     });
 
-    // Sanitize dates for passing to Client Component (Client components need plain serializable objects in some setups, though Date works usually in Next 13+)
+    // Sanitize dates for passing to Client Component
     const bills = billsRaw.map(b => ({
+      id: b.id,
+      billNumber: b.billNumber,
+      vehicleNo: b.vehicleNo,
+      customerName: b.customerName,
       totalAmountLKR: b.totalAmountLKR,
       createdAt: b.createdAt
     }));
     
     const expenses = expensesRaw.map(e => ({
+      id: e.id,
+      vehicleNo: e.vehicleNo,
+      category: e.category,
+      description: e.description,
       amount: e.amount,
       date: e.date
     }));
