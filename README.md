@@ -42,30 +42,7 @@ cd TourBiller
 npm install
 ```
 
-### 2. Environment Variables
 
-Copy the example and fill in your values:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env`:
-
-```env
-DATABASE_URL="postgresql://user:password@host:5432/database"
-AUTH_SECRET="run: npx auth secret"
-```
-
-### 3. Set Up Database
-
-```bash
-# Push schema to database
-npx prisma db push
-
-# (Optional) Seed with sample data
-npx prisma db seed
-```
 
 ### 4. Run Development Server
 
@@ -73,41 +50,9 @@ npx prisma db seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Default Login
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@tourbiller.com` | `admin123` |
 
-## Project Structure
-
-```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── bills/              # Bill CRUD + print view
-│   ├── bookings/           # Booking management
-│   ├── customers/          # Customer CRUD
-│   ├── vehicles/           # Vehicle fleet management
-│   ├── tour-schedules/     # Tour itinerary builder
-│   ├── quotations/         # Quotation generator
-│   ├── users/              # User management (admin)
-│   ├── settings/           # Profile + business settings
-│   ├── login/              # Authentication
-│   ├── forgot-password/    # Password reset request
-│   └── reset-password/     # Password reset form
-├── components/             # Reusable UI components
-├── lib/                    # Server actions & utilities
-│   ├── actions.ts          # Bill CRUD actions
-│   ├── auth.ts             # NextAuth config
-│   ├── auth-guard.ts       # Role-based auth helpers
-│   ├── rate-limit.ts       # Brute-force protection
-│   ├── validations.ts      # Zod schemas
-│   ├── prisma.ts           # Prisma singleton
-│   └── *-actions.ts        # Domain-specific actions
-└── hooks/                  # Custom React hooks
-```
 
 ## Security
 
@@ -139,14 +84,6 @@ npx prisma studio # Database GUI
 2. Connect repo to [Vercel](https://vercel.com)
 3. Set environment variables in Vercel dashboard
 4. Deploy — Prisma generates on `postinstall` automatically
-
-### Environment Variables for Production
-
-```env
-DATABASE_URL="your-production-database-url"
-AUTH_SECRET="your-secret-key"
-NEXT_PUBLIC_APP_URL="https://your-domain.com"
-```
 
 ## License
 
