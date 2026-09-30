@@ -7,7 +7,7 @@ import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, parseISO, s
 import { Printer, BarChart3, TableProperties } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-type BillData = { id: string; billNumber: string; vehicleNo: string; customerName: string; totalAmountLKR: number; createdAt: Date };
+type BillData = { id: string; billNumber: number | string; vehicleNo: string; customerName: string; totalAmountLKR: number; createdAt: Date };
 type ExpenseData = { id: string; vehicleNo: string; category: string; description: string | null; amount: number; date: Date };
 
 interface ReportsDashboardProps {
