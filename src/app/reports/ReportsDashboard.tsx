@@ -162,7 +162,7 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
         <div className="flex flex-col gap-2 w-full sm:w-auto">
           {viewMode === 'spreadsheet' && (
             <div>
-              <h2 className="text-lg font-semibold">Descriptive Spreadsheet View</h2>
+              <h2 className="text-lg font-semibold">Financial Log View</h2>
               <p className="text-sm text-muted-foreground mb-2">Showing records for the current {timeframe.replace('ly', '')}.</p>
             </div>
           )}
@@ -179,11 +179,11 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
         <div className="flex gap-2 w-full sm:w-auto">
           <Button onClick={() => setViewMode('dashboard')} variant={viewMode === 'dashboard' ? 'default' : 'outline'} size="sm" className="flex-1 sm:flex-none">
             <BarChart3 className="h-4 w-4 mr-2" />
-            Dashboard
+            Analytical
           </Button>
           <Button onClick={() => setViewMode('spreadsheet')} variant={viewMode === 'spreadsheet' ? 'default' : 'outline'} size="sm" className="flex-1 sm:flex-none">
             <TableProperties className="h-4 w-4 mr-2" />
-            Spreadsheet
+            Financial
           </Button>
           <Button onClick={() => window.print()} variant="outline" size="sm" className="flex-none items-center gap-2">
             <Printer className="h-4 w-4" />
