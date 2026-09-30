@@ -13,21 +13,18 @@ export default async function DashboardPage() {
   const userName = session?.user?.name || 'Driver';
 
   if (userRole === 'DRIVER') {
-    // Find the user's ID
-    const user = await prisma.user.findUnique({
-      where: { email: session?.user?.email || '' },
-      select: { id: true },
-    });
+    // Get the user's ID directly from the JWT session without a DB trip
+    const userId = (session?.user as { id?: string })?.id;
 
     let activeTourData = null;
 
-    if (user) {
+    if (userId) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       const activeBooking = await prisma.booking.findFirst({
         where: {
-          driverId: user.id,
+          driverId: userId,
           status: { in: ['CONFIRMED', 'ONGOING'] },
           startDate: { lte: new Date() },
           OR: [
