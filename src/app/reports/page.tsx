@@ -28,7 +28,7 @@ export default async function ReportsPage() {
     // Fetch Income (Bills)
     const billsRaw = await prisma.bill.findMany({
         where: { companyId },
-        select: { id: true, totalAmountLKR: true, createdAt: true, billNumber: true, vehicleNo: true, customerName: true },
+        select: { id: true, totalAmount: true, createdAt: true, billNumber: true, vehicleNo: true, customerName: true },
         orderBy: { createdAt: 'desc' }
     });
 
@@ -45,7 +45,7 @@ export default async function ReportsPage() {
       billNumber: b.billNumber,
       vehicleNo: b.vehicleNo,
       customerName: b.customerName,
-      totalAmountLKR: b.totalAmountLKR,
+      totalAmount: b.totalAmount,
       createdAt: b.createdAt
     }));
     

@@ -7,7 +7,7 @@ import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, parseISO, s
 import { Printer, BarChart3, TableProperties } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-type BillData = { id: string; billNumber: number | string; vehicleNo: string; customerName: string; totalAmountLKR: number; createdAt: Date };
+type BillData = { id: string; billNumber: number | string; vehicleNo: string; customerName: string; totalAmount: number; createdAt: Date };
 type ExpenseData = { id: string; vehicleNo: string; category: string; description: string | null; amount: number; date: Date };
 
 interface ReportsDashboardProps {
@@ -47,7 +47,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
     bills.forEach(b => {
       const key = getGroupKey(b.createdAt);
       const existing = map.get(key) || { income: 0, expense: 0, label: getLabel(key) };
-      existing.income += b.totalAmountLKR;
+      existing.income += b.totalAmount;
       map.set(key, existing);
     });
 
@@ -231,7 +231,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
                         <td className="px-4 py-3 font-medium">{b.billNumber}</td>
                         <td className="px-4 py-3">{b.vehicleNo}</td>
                         <td className="px-4 py-3 truncate max-w-[150px]" title={b.customerName}>{b.customerName}</td>
-                        <td className="px-4 py-3 text-right font-bold text-green-600">{b.totalAmountLKR.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-3 text-right font-bold text-green-600">{b.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -239,7 +239,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
                     <tr>
                       <td colSpan={4} className="px-4 py-3 text-right">Total Income:</td>
                       <td className="px-4 py-3 text-right text-green-700">
-                        {bills.reduce((sum, b) => sum + b.totalAmountLKR, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {bills.reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                     </tr>
                   </tfoot>
