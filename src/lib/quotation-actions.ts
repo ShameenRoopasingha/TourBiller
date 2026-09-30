@@ -5,6 +5,7 @@ import { QuotationSchema, type ActionResult, type QuotationWithSchedule } from '
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
+import { checkDriverAvailability } from '@/lib/user-actions';
 
 // Types for server responses
 
@@ -73,6 +74,21 @@ export async function generateQuotation(
             if (availability.success && availability.data && !availability.data.available) {
                 const conflict = availability.data.conflicts[0];
                 throw new Error(`Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) from ${new Date(conflict.start).toLocaleDateString('en-GB')} to ${new Date(conflict.end).toLocaleDateString('en-GB')}`);
+            }
+        }
+
+        // Check driver availability if driver and dates are provided
+        if (validated.driverId && validated.startDate && validated.endDate) {
+            const driverAvailability = await checkDriverAvailability(
+                validated.driverId,
+                validated.startDate,
+                validated.endDate,
+                undefined,
+                'Quotation'
+            );
+            if (driverAvailability.success && driverAvailability.data && !driverAvailability.data.available) {
+                const conflict = driverAvailability.data.conflicts[0];
+                throw new Error(`Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) from ${new Date(conflict.start).toLocaleDateString('en-GB')} to ${new Date(conflict.end).toLocaleDateString('en-GB')}`);
             }
         }
 
@@ -274,6 +290,24 @@ export async function updateQuotation(
             }
         }
 
+        // Check driver availability if driver and dates are provided
+        if (validated.driverId && validated.startDate && validated.endDate) {
+            const driverAvailability = await checkDriverAvailability(
+                validated.driverId,
+                validated.startDate,
+                validated.endDate,
+                id,
+                'Quotation'
+            );
+            if (driverAvailability.success && driverAvailability.data && !driverAvailability.data.available) {
+                const conflict = driverAvailability.data.conflicts[0];
+                return { 
+                    success: false, 
+                    error: `Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) from ${new Date(conflict.start).toLocaleDateString('en-GB')} to ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
+                };
+            }
+        }
+
         // Get schedule details for calculations
         const schedule = await prisma.tourSchedule.findFirst({
             where: { id: tourScheduleId, companyId: authCheck.companyId },
@@ -350,7 +384,7 @@ export async function updateQuotationStatus(
         if (status === 'ACCEPTED') {
             const quotation = await prisma.quotation.findFirst({
                 where: { id, companyId: authCheck.companyId },
-                select: { vehicleNo: true, startDate: true, endDate: true }
+                select: { vehicleNo: true, startDate: true, endDate: true, driverId: true }
             });
 
             if (quotation?.vehicleNo && quotation?.startDate && quotation?.endDate) {
@@ -366,6 +400,23 @@ export async function updateQuotationStatus(
                     return { 
                         success: false, 
                         error: `Cannot accept quotation. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
+                    };
+                }
+            }
+
+            if (quotation?.driverId && quotation?.startDate && quotation?.endDate) {
+                const driverAvailability = await checkDriverAvailability(
+                    quotation.driverId,
+                    quotation.startDate,
+                    quotation.endDate,
+                    id, // Exclude current quotation
+                    'Quotation'
+                );
+                if (driverAvailability.success && driverAvailability.data && !driverAvailability.data.available) {
+                    const conflict = driverAvailability.data.conflicts[0];
+                    return { 
+                        success: false, 
+                        error: `Cannot accept quotation. Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
                     };
                 }
             }
@@ -470,6 +521,23 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
             if (availability.data && !availability.data.available) {
                 const conflict = availability.data.conflicts[0];
                 throw new Error(`Cannot convert to booking. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}`);
+            }
+
+            if (quotation.driverId) {
+                const driverAvailability = await checkDriverAvailability(
+                    quotation.driverId,
+                    quotation.startDate,
+                    quotation.endDate,
+                    quotationId,
+                    'Quotation'
+                );
+                if (!driverAvailability.success) {
+                    throw new Error(driverAvailability.error || 'Failed to check driver availability');
+                }
+                if (driverAvailability.data && !driverAvailability.data.available) {
+                    const conflict = driverAvailability.data.conflicts[0];
+                    throw new Error(`Cannot convert to booking. Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}`);
+                }
             }
         }
 
