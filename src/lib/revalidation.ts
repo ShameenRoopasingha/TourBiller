@@ -6,27 +6,43 @@ import { revalidatePath } from 'next/cache';
  * When a mutation occurs on an entity, all listed paths are revalidated,
  * ensuring perfect data sync across all pages.
  */
-// const REVALIDATION_MAP: Record<string, string[]> = {
-//     bill: ['/bills', '/', '/bookings'],
-//     customer: ['/customers', '/quotations/new', '/bills/new', '/bookings/new', '/'],
-//     vehicle: ['/vehicles', '/quotations/new', '/bills/new', '/bookings/new', '/'],
-//     tourSchedule: ['/tour-schedules', '/quotations/new', '/quotations', '/'],
-//     quotation: ['/quotations', '/tour-schedules', '/'],
-//     booking: ['/bookings', '/', '/bills/new'],
-//     businessProfile: ['/settings', '/bills', '/quotations'],
-// };
+const REVALIDATION_MAP: Record<string, string[]> = {
+    bill: ['/bills', '/', '/bookings'],
+    customer: ['/customers', '/quotations/new', '/bills/new', '/bookings/new', '/'],
+    vehicle: ['/vehicles', '/quotations/new', '/bills/new', '/bookings/new', '/'],
+    tourSchedule: ['/tour-schedules', '/quotations/new', '/quotations', '/'],
+    quotation: ['/quotations', '/tour-schedules', '/'],
+    booking: ['/bookings', '/', '/bills/new'],
+    businessProfile: ['/settings', '/bills', '/quotations'],
+};
 
 /**
  * Revalidate all paths affected by mutations on the given entity types.
  * Deduplicates paths automatically when multiple entities are specified.
- *
- * @example
- *   revalidateFor('bill');                // After creating/updating/deleting a bill
- *   revalidateFor('bill', 'booking');     // After a bill creation that also closes a booking
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function revalidateFor(..._entities: string[]) {
-    // A single global layout revalidation is much faster on Vercel than looping through multiple specific paths.
-    // This instantly busts the entire app cache, ensuring all pages show the latest data immediately.
-    revalidatePath('/', 'layout');
+export function revalidateFor(...entities: string[]) {
+    try {
+        const pathsToRevalidate = new Set<string>();
+
+        for (const entity of entities) {
+            const paths = REVALIDATION_MAP[entity];
+            if (paths) {
+                for (const path of paths) {
+                    pathsToRevalidate.add(path);
+                }
+            }
+        }
+
+        if (pathsToRevalidate.size === 0) {
+            // Fallback if entity not mapped, just refresh current data
+            revalidatePath('/');
+        } else {
+            // Revalidate each specific path
+            for (const path of pathsToRevalidate) {
+                revalidatePath(path);
+            }
+        }
+    } catch (e) {
+        console.error('Revalidation error:', e);
+    }
 }

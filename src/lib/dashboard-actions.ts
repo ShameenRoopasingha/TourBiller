@@ -18,7 +18,6 @@ export async function getDashboardStats() {
         const startOfYear = new Date(currentYear, 0, 1);
         const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
 
-        // Weekly (Start of week - Monday)
         const startOfWeek = new Date(now);
         const day = startOfWeek.getDay();
         const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
@@ -28,10 +27,9 @@ export async function getDashboardStats() {
         endOfWeek.setDate(startOfWeek.getDate() + 6);
         endOfWeek.setHours(23, 59, 59, 999);
 
-        // Common booking filter for "ongoing"
         const ongoingBookingFilter = {
             companyId,
-            status: { in: ['CONFIRMED', 'ONGOING'] },
+            status: { in: ['CONFIRMED', 'ONGOING'] as string[] },
             startDate: { lte: now },
             OR: [
                 { endDate: { gte: now } },
@@ -39,75 +37,75 @@ export async function getDashboardStats() {
             ]
         };
 
-        // Calculate "Today" for revenue
         const startOfToday = new Date(now);
         startOfToday.setHours(0, 0, 0, 0);
         const endOfToday = new Date(now);
         endOfToday.setHours(23, 59, 59, 999);
 
-        console.log('[Dashboard] Starting pooled queries in pairs...');
         const startTime = Date.now();
 
+        // === BATCH 1: Vehicle count + active bookings (2 queries) ===
         const [totalVehicles, activeBookings] = await Promise.all([
-            prisma.vehicle.count({ where: { companyId, status: 'ACTIVE' } }).catch(e => { console.error('Error totalVehicles:', e); return 0; }),
+            prisma.vehicle.count({ where: { companyId, status: 'ACTIVE' } }).catch(() => 0),
             prisma.booking.findMany({
-            where: ongoingBookingFilter,
-            select: { vehicleNo: true },
-            distinct: ['vehicleNo']
-            }).catch(e => { console.error('Error fetching active bookings:', e); return []; }),
+                where: ongoingBookingFilter,
+                select: { vehicleNo: true },
+                distinct: ['vehicleNo']
+            }).catch(() => []),
         ]);
-        
+
         const activeVehicleNos = activeBookings.map(b => b.vehicleNo);
-        
-        // Count how many of those actually belong to our active fleet
-        let occupiedVehicles = 0;
-        if (activeVehicleNos.length > 0) {
-            occupiedVehicles = await prisma.vehicle.count({
-                where: {
-                    companyId,
-                    status: 'ACTIVE',
-                    vehicleNo: { in: activeVehicleNos }
-                }
-            }).catch(e => { console.error('Error counting occupied vehicles:', e); return 0; });
-        }
-        
+
+        // === BATCH 2: Revenue aggregates (2 queries) ===
         const [yearlyResult, weeklyResult] = await Promise.all([
             prisma.bill.aggregate({
                 _sum: { totalAmount: true },
                 where: { companyId, createdAt: { gte: startOfYear, lte: endOfYear } }
-            }).catch(e => { console.error('Error yearlyResult:', e); return { _sum: { totalAmount: 0 } }; }),
+            }).catch(() => ({ _sum: { totalAmount: 0 } })),
             prisma.bill.aggregate({
                 _sum: { totalAmount: true },
                 where: { companyId, createdAt: { gte: startOfWeek, lte: endOfWeek } }
-            }).catch(e => { console.error('Error weeklyResult:', e); return { _sum: { totalAmount: 0 } }; }),
-        ]);
-        
-        const todayResult = await prisma.bill.aggregate({
-            _sum: { totalAmount: true },
-            where: { companyId, createdAt: { gte: startOfToday, lte: endOfToday } }
-        }).catch(e => { console.error('Error todayResult:', e); return { _sum: { totalAmount: 0 } }; });
-        
-        const [recentBills, allVehicles] = await Promise.all([
-            prisma.bill.findMany({
-            where: { companyId },
-            take: 5,
-            orderBy: { createdAt: 'desc' },
-            select: {
-                id: true,
-                billNumber: true,
-                customerName: true,
-                vehicleNo: true,
-                totalAmount: true,
-                createdAt: true,
-                route: true,
-                startDate: true,
-                endDate: true,
-            },
-            }).catch(e => { console.error('Error recentBills:', e); return []; }),
-            prisma.vehicle.findMany({ where: { companyId, status: 'ACTIVE' }, select: { vehicleNo: true, currentMileage: true, oilChangeInterval: true, lastOilChangeMileage: true, filterChangeInterval: true, lastFilterChangeMileage: true, washInterval: true, lastWashMileage: true, insuranceExpiry: true, revenueLicenseExpiry: true } }).catch(() => []),
+            }).catch(() => ({ _sum: { totalAmount: 0 } })),
         ]);
 
-        const maintenanceAlerts = allVehicles.filter(v => 
+        // === BATCH 3: Today revenue + occupied vehicle count (2 queries) ===
+        const [todayResult, occupiedVehicles] = await Promise.all([
+            prisma.bill.aggregate({
+                _sum: { totalAmount: true },
+                where: { companyId, createdAt: { gte: startOfToday, lte: endOfToday } }
+            }).catch(() => ({ _sum: { totalAmount: 0 } })),
+            activeVehicleNos.length > 0
+                ? prisma.vehicle.count({
+                    where: { companyId, status: 'ACTIVE', vehicleNo: { in: activeVehicleNos } }
+                }).catch(() => 0)
+                : Promise.resolve(0),
+        ]);
+
+        // === BATCH 4: Recent bills + vehicle maintenance data (2 queries) ===
+        const [recentBills, allVehicles] = await Promise.all([
+            prisma.bill.findMany({
+                where: { companyId },
+                take: 5,
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true, billNumber: true, customerName: true, vehicleNo: true,
+                    totalAmount: true, createdAt: true, route: true, startDate: true, endDate: true,
+                },
+            }).catch(() => []),
+            prisma.vehicle.findMany({
+                where: { companyId, status: 'ACTIVE' },
+                select: {
+                    vehicleNo: true, currentMileage: true,
+                    oilChangeInterval: true, lastOilChangeMileage: true,
+                    filterChangeInterval: true, lastFilterChangeMileage: true,
+                    washInterval: true, lastWashMileage: true,
+                    insuranceExpiry: true, revenueLicenseExpiry: true,
+                }
+            }).catch(() => []),
+        ]);
+
+        // Process maintenance alerts (in-memory, no DB)
+        const maintenanceAlerts = allVehicles.filter(v =>
             (v.currentMileage - v.lastOilChangeMileage >= v.oilChangeInterval - 100) ||
             (v.currentMileage - v.lastFilterChangeMileage >= v.filterChangeInterval - 100) ||
             (v.currentMileage - v.lastWashMileage >= v.washInterval) ||
@@ -120,12 +118,11 @@ export async function getDashboardStats() {
             if (v.currentMileage - v.lastWashMileage >= v.washInterval) alerts.push('Wash');
             if (v.insuranceExpiry && (v.insuranceExpiry.getTime() - now.getTime()) / (1000 * 3600 * 24) <= 30) alerts.push('Insurance Expiring');
             if (v.revenueLicenseExpiry && (v.revenueLicenseExpiry.getTime() - now.getTime()) / (1000 * 3600 * 24) <= 30) alerts.push('License Expiring');
-            
-            return { 
+            return {
                 id: `maint-${v.vehicleNo}`,
-                title: v.vehicleNo, 
+                title: v.vehicleNo,
                 message: `Maintenance needed: ${alerts.join(", ")}`,
-                type: 'MAINTENANCE' 
+                type: 'MAINTENANCE'
             };
         });
 
@@ -133,71 +130,55 @@ export async function getDashboardStats() {
         todayStart.setHours(0, 0, 0, 0);
         const dayAfterTomorrow = new Date(todayStart);
         dayAfterTomorrow.setDate(todayStart.getDate() + 2);
-
-        const relevantTours = await prisma.booking.findMany({
-            where: {
-                companyId,
-                OR: [
-                    { status: 'COMPLETED' },
-                    { status: 'CONFIRMED', startDate: { gte: todayStart, lt: dayAfterTomorrow } },
-                ],
-            },
-            select: { id: true, vehicleNo: true, customerName: true, startDate: true, status: true },
-        }).catch(() => []);
-
-        const billingAlerts = relevantTours.filter(t => t.status === 'COMPLETED').map(t => ({
-            id: `bill-${t.id}`,
-            title: t.vehicleNo,
-            message: `Trip ended for ${t.customerName}. Bill needs to be generated.`,
-            type: 'BILLING'
-        }));
-        const upcomingTours = relevantTours.filter(t => t.status === 'CONFIRMED');
-
-        const upcomingAlerts = upcomingTours.map(t => {
-            const isToday = t.startDate.getDate() === now.getDate();
-            return {
-                id: `upcoming-${t.id}`,
-                title: t.vehicleNo,
-                message: `Tour for ${t.customerName} starts ${isToday ? 'TODAY' : 'TOMORROW'}.`,
-                type: 'TOUR'
-            };
-        });
-
         const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-        const [recentExpenses, ongoingBookings] = await Promise.all([
-            prisma.vehicleExpense.findMany({
-            where: {
-                companyId,
-                createdAt: { gte: twoDaysAgo }
-            },
-            select: { id: true, vehicleNo: true, amount: true, category: true }
-            }).catch(() => []),
+
+        // === BATCH 5: Tours + expenses + ongoing bookings (2 queries) ===
+        const [relevantTours, recentExpenses] = await Promise.all([
             prisma.booking.findMany({
-                where: ongoingBookingFilter,
-                orderBy: { startDate: 'asc' },
-                take: 5,
-                select: {
-                    id: true,
-                    vehicleNo: true,
-                    customerName: true,
-                    startDate: true,
-                    endDate: true,
-                    destination: true,
-                    status: true,
+                where: {
+                    companyId,
+                    OR: [
+                        { status: 'COMPLETED' },
+                        { status: 'CONFIRMED', startDate: { gte: todayStart, lt: dayAfterTomorrow } },
+                    ],
                 },
-            }).catch(e => { console.error('Error ongoingBookings:', e); return []; }),
+                select: { id: true, vehicleNo: true, customerName: true, startDate: true, status: true },
+            }).catch(() => []),
+            prisma.vehicleExpense.findMany({
+                where: { companyId, createdAt: { gte: twoDaysAgo } },
+                select: { id: true, vehicleNo: true, amount: true, category: true }
+            }).catch(() => []),
         ]);
 
-        const expenseAlerts = recentExpenses.map(e => ({
-            id: `exp-${e.id}`,
-            title: e.vehicleNo,
-            message: `New expense logged: Rs.${e.amount} for ${e.category}.`,
-            type: 'EXPENSE'
+        // === BATCH 6: Ongoing bookings (1 query, can't pair further) ===
+        const ongoingBookings = await prisma.booking.findMany({
+            where: ongoingBookingFilter,
+            orderBy: { startDate: 'asc' },
+            take: 5,
+            select: {
+                id: true, vehicleNo: true, customerName: true,
+                startDate: true, endDate: true, destination: true, status: true,
+            },
+        }).catch(() => []);
+
+        // Process alerts (in-memory, no DB)
+        const billingAlerts = relevantTours.filter(t => t.status === 'COMPLETED').map(t => ({
+            id: `bill-${t.id}`, title: t.vehicleNo,
+            message: `Trip ended for ${t.customerName}. Bill needs to be generated.`, type: 'BILLING'
         }));
 
-        const allNotifications = [...maintenanceAlerts, ...billingAlerts, ...upcomingAlerts, ...expenseAlerts];
+        const upcomingAlerts = relevantTours.filter(t => t.status === 'CONFIRMED').map(t => ({
+            id: `upcoming-${t.id}`, title: t.vehicleNo,
+            message: `Tour for ${t.customerName} starts ${t.startDate.getDate() === now.getDate() ? 'TODAY' : 'TOMORROW'}.`,
+            type: 'TOUR'
+        }));
 
-        console.log(`[Dashboard] All queries finished in ${Date.now() - startTime}ms`);
+        const expenseAlerts = recentExpenses.map(e => ({
+            id: `exp-${e.id}`, title: e.vehicleNo,
+            message: `New expense logged: Rs.${e.amount} for ${e.category}.`, type: 'EXPENSE'
+        }));
+
+        console.log(`[Dashboard] All queries finished in ${Date.now() - startTime}ms (6 batches)`);
 
         return {
             success: true,
@@ -210,7 +191,7 @@ export async function getDashboardStats() {
                 revenueToday: todayResult._sum.totalAmount || 0,
                 recentBills,
                 ongoingBookings,
-                maintenanceAlerts: allNotifications,
+                maintenanceAlerts: [...maintenanceAlerts, ...billingAlerts, ...upcomingAlerts, ...expenseAlerts],
             }
         };
 
