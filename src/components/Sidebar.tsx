@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { logoutUser } from '@/lib/user-actions';
 import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, Sun, Moon, LogOut, UserCog, BarChart3, CalendarRange } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
@@ -148,7 +148,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => signOut({ callbackUrl: '/login' })}>
+                                <AlertDialogAction onClick={() => logoutUser()}>
                                     Sign out
                                 </AlertDialogAction>
                             </AlertDialogFooter>

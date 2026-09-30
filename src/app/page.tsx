@@ -6,9 +6,15 @@ import { DriverDashboard } from '@/components/DriverDashboard';
 import { AutoRefresh } from '@/components/AutoRefresh';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { redirect } from 'next/navigation';
 
 export default async function DashboardPage() {
   const session = await auth();
+  
+  if (!session) {
+    redirect('/login');
+  }
+
   const userRole = (session?.user as { role?: string })?.role || 'ADMIN';
   const userName = session?.user?.name || 'Driver';
 

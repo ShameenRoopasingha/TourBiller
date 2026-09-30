@@ -274,3 +274,9 @@ export async function getDrivers(): Promise<ActionResult<DriverOption[]>> {
         return { success: false, error: 'Failed to fetch drivers' };
     }
 }
+
+
+export async function logoutUser() {
+  const { signOut } = await import('@/lib/auth');
+  await signOut({ redirectTo: '/login' });
+}
