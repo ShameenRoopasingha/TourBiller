@@ -74,6 +74,31 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
   // Find max value for simple CSS bar chart scaling
   const maxVal = Math.max(...aggregatedData.map(d => Math.max(d.income, d.expense)), 100);
 
+  // Filter data for spreadsheet view based on timeframe
+  const filteredBills = useMemo(() => {
+    const now = new Date();
+    return bills.filter(b => {
+      const date = new Date(b.createdAt);
+      if (timeframe === 'daily') return date >= startOfDay(now);
+      if (timeframe === 'weekly') return date >= startOfWeek(now, { weekStartsOn: 1 });
+      if (timeframe === 'monthly') return date >= startOfMonth(now);
+      if (timeframe === 'yearly') return date >= startOfYear(now);
+      return true;
+    });
+  }, [bills, timeframe]);
+
+  const filteredExpenses = useMemo(() => {
+    const now = new Date();
+    return expenses.filter(e => {
+      const date = new Date(e.date);
+      if (timeframe === 'daily') return date >= startOfDay(now);
+      if (timeframe === 'weekly') return date >= startOfWeek(now, { weekStartsOn: 1 });
+      if (timeframe === 'monthly') return date >= startOfMonth(now);
+      if (timeframe === 'yearly') return date >= startOfYear(now);
+      return true;
+    });
+  }, [expenses, timeframe]);
+
   return (
     <div className="space-y-6 print:space-y-4">
       {/* Print-only title */}
@@ -83,7 +108,13 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
       </div>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 print:hidden">
-        {viewMode === 'dashboard' ? (
+        <div className="flex flex-col gap-2 w-full sm:w-auto">
+          {viewMode === 'spreadsheet' && (
+            <div>
+              <h2 className="text-lg font-semibold">Descriptive Spreadsheet View</h2>
+              <p className="text-sm text-muted-foreground mb-2">Showing records for the current {timeframe.replace('ly', '')}.</p>
+            </div>
+          )}
           <Tabs defaultValue="monthly" value={timeframe} onValueChange={(v: any) => setTimeframe(v)} className="w-full sm:w-auto">
             <TabsList className="grid w-full grid-cols-4 sm:w-[400px]">
               <TabsTrigger value="daily">Daily</TabsTrigger>
@@ -92,12 +123,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
               <TabsTrigger value="yearly">Yearly</TabsTrigger>
             </TabsList>
           </Tabs>
-        ) : (
-          <div>
-            <h2 className="text-lg font-semibold">Descriptive Spreadsheet View</h2>
-            <p className="text-sm text-muted-foreground">Detailed breakdown of all financial records.</p>
-          </div>
-        )}
+        </div>
         
         <div className="flex gap-2 w-full sm:w-auto">
           <Button onClick={() => setViewMode('dashboard')} variant={viewMode === 'dashboard' ? 'default' : 'outline'} size="sm" className="flex-1 sm:flex-none">
@@ -223,9 +249,9 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {bills.length === 0 ? (
-                      <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No income recorded</td></tr>
-                    ) : bills.map((b) => (
+                    {filteredBills.length === 0 ? (
+                      <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No income recorded in this period</td></tr>
+                    ) : filteredBills.map((b) => (
                       <tr key={b.id} className="border-b last:border-0 hover:bg-muted/30">
                         <td className="px-4 py-3 whitespace-nowrap">{format(new Date(b.createdAt), 'MMM dd, yyyy')}</td>
                         <td className="px-4 py-3 font-medium">{b.billNumber}</td>
@@ -239,7 +265,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
                     <tr>
                       <td colSpan={4} className="px-4 py-3 text-right">Total Income:</td>
                       <td className="px-4 py-3 text-right text-green-700">
-                        {bills.reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {filteredBills.reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                     </tr>
                   </tfoot>
@@ -266,9 +292,9 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {expenses.length === 0 ? (
-                      <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No expenses recorded</td></tr>
-                    ) : expenses.map((e) => (
+                    {filteredExpenses.length === 0 ? (
+                      <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No expenses recorded in this period</td></tr>
+                    ) : filteredExpenses.map((e) => (
                       <tr key={e.id} className="border-b last:border-0 hover:bg-muted/30">
                         <td className="px-4 py-3 whitespace-nowrap">{format(new Date(e.date), 'MMM dd, yyyy')}</td>
                         <td className="px-4 py-3 font-medium">{e.vehicleNo}</td>
@@ -282,7 +308,7 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
                     <tr>
                       <td colSpan={4} className="px-4 py-3 text-right">Total Expenses:</td>
                       <td className="px-4 py-3 text-right text-red-700">
-                        {expenses.reduce((sum, e) => sum + e.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {filteredExpenses.reduce((sum, e) => sum + e.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                     </tr>
                   </tfoot>
