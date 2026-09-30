@@ -142,33 +142,33 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
 
       {viewMode === 'dashboard' ? (
         <>
-          <div className="grid gap-4 md:grid-cols-3 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Income</CardTitle>
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 print:grid-cols-3 mb-8">
+            <Card className="print:shadow-none print:border-gray-300">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 print:pb-1">
+                <CardTitle className="text-sm font-medium print:text-black">Total Income</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-green-600 print:text-green-800">
                   Rs. {totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <Card className="print:shadow-none print:border-gray-300">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 print:pb-1">
+                <CardTitle className="text-sm font-medium print:text-black">Total Expenses</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">
+                <div className="text-2xl font-bold text-red-600 print:text-red-800">
                   Rs. {totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+            <Card className="print:shadow-none print:border-gray-300">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 print:pb-1">
+                <CardTitle className="text-sm font-medium print:text-black">Net Profit</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600 print:text-blue-800' : 'text-red-600 print:text-red-800'}`}>
                   Rs. {netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </CardContent>
@@ -223,6 +223,45 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
                       <div className="flex items-center gap-1"><div className="w-3 h-3 bg-green-500 rounded-sm"></div> Income</div>
                       <div className="flex items-center gap-1"><div className="w-3 h-3 bg-red-500 rounded-sm"></div> Expenses</div>
                     </div>
+                  </div>
+
+                  {/* Print Only Data Table for Analytical View */}
+                  <div className="hidden print:block mt-6">
+                    <table className="w-full text-sm border-collapse border border-gray-300 text-black">
+                      <thead>
+                        <tr className="bg-gray-100/50" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
+                          <th className="border border-gray-300 px-4 py-3 text-left">Period ({timeframe.charAt(0).toUpperCase() + timeframe.slice(1)})</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right">Income (Rs.)</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right">Expenses (Rs.)</th>
+                          <th className="border border-gray-300 px-4 py-3 text-right">Net Profit (Rs.)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {aggregatedData.map((d, i) => {
+                          const profit = d.income - d.expense;
+                          return (
+                            <tr key={i} className="border-b border-gray-200">
+                              <td className="border border-gray-300 px-4 py-2 font-medium">{d.label}</td>
+                              <td className="border border-gray-300 px-4 py-2 text-right text-green-800">{d.income.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                              <td className="border border-gray-300 px-4 py-2 text-right text-red-800">{d.expense.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                              <td className={`border border-gray-300 px-4 py-2 text-right font-bold ${profit >= 0 ? 'text-blue-800' : 'text-red-800'}`}>
+                                {profit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="bg-gray-100/50 font-bold" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
+                        <tr>
+                          <td className="border border-gray-300 px-4 py-3 text-left">GRAND TOTAL</td>
+                          <td className="border border-gray-300 px-4 py-3 text-right text-green-800">{totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td className="border border-gray-300 px-4 py-3 text-right text-red-800">{totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td className={`border border-gray-300 px-4 py-3 text-right ${netProfit >= 0 ? 'text-blue-800' : 'text-red-800'}`}>
+                            {netProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
                   </div>
                 </CardContent>
               </Card>
@@ -321,3 +360,6 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
     </div>
   );
 }
+
+
+
