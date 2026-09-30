@@ -235,6 +235,14 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
                       </tr>
                     ))}
                   </tbody>
+                  <tfoot className="bg-muted/50 border-t font-semibold">
+                    <tr>
+                      <td colSpan={4} className="px-4 py-3 text-right">Total Income:</td>
+                      <td className="px-4 py-3 text-right text-green-700">
+                        {bills.reduce((sum, b) => sum + b.totalAmountLKR, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </CardContent>
@@ -270,6 +278,14 @@ export function ReportsDashboard({ bills, expenses }: ReportsDashboardProps) {
                       </tr>
                     ))}
                   </tbody>
+                  <tfoot className="bg-muted/50 border-t font-semibold">
+                    <tr>
+                      <td colSpan={4} className="px-4 py-3 text-right">Total Expenses:</td>
+                      <td className="px-4 py-3 text-right text-red-700">
+                        {expenses.reduce((sum, e) => sum + e.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </CardContent>
