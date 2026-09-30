@@ -9,6 +9,7 @@ import { SessionProvider } from '@/components/SessionProvider';
 import { auth } from '@/lib/auth';
 import { PageTransition } from '@/components/PageTransition';
 import { NotificationBell } from '@/components/NotificationBell';
+import { RefreshButton } from '@/components/RefreshButton';
 import { ToastProvider } from '@/components/ToastProvider';
 
 import ChatAssistant from '@/components/ChatAssistant';
@@ -63,7 +64,8 @@ export default async function RootLayout({
                       </div>
                       
                       {/* Top Right Actions */}
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                         <RefreshButton />
                          <NotificationBell />
                       </div>
                     </header>
