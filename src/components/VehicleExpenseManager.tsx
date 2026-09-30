@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Loader2,
     Plus,
@@ -61,6 +62,7 @@ const CATEGORIES: { label: string; value: VehicleExpenseCategory; icon: React.Co
 ];
 
 export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN' }: VehicleExpenseManagerProps) {
+    const router = useRouter();
     const isDriver = userRole === 'DRIVER';
     const [expenses, setExpenses] = useState<VehicleExpense[]>([]);
     const [loading, setLoading] = useState(true);
@@ -158,7 +160,11 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
                 setShowDescription(false);
                 setSuccess(true);
                 setTimeout(() => setSuccess(false), 3000);
+                // Dispatch event to force notification bell to refresh instantly
+                window.dispatchEvent(new CustomEvent('expense-added'));
+                
                 await fetchExpenses();
+                router.refresh(); // Refresh Next.js server components so the UI updates (e.g., removing the oil icon)
             } else {
                 const message = result.error || 'Failed to add expense';
                 notify.error(message);
