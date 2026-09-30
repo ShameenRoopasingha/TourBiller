@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { VehicleFormSchema, type VehicleFormInput, type Vehicle } from '@/lib/validations';
-import { toast } from 'react-toastify';
+import { notify } from '@/lib/notifications';
 
 // For backward compatibility - alias the type
 export type VehicleFormData = VehicleFormInput;
@@ -93,17 +93,19 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                toast.success(vehicle ? 'Vehicle updated successfully' : 'Vehicle created successfully');
+                notify.success(vehicle ? 'Vehicle updated successfully' : 'Vehicle created successfully');
                 router.refresh();
                 router.push('/vehicles');
                 return;
             }
 
-            toast.error(result.error || 'Failed to save vehicle');
+            notify.error(result.error || 'Failed to save vehicle');
             setError(result.error || 'Failed to save vehicle');
         } catch (submitError) {
             console.error('Error saving vehicle:', submitError);
-            setError('Failed to save vehicle. Please try again.');
+            const message = submitError instanceof Error ? submitError.message : 'Failed to save vehicle. Please try again.';
+            notify.error(message);
+            setError(message);
         } finally {
             setIsSubmitting(false);
         }
