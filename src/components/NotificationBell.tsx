@@ -32,7 +32,14 @@ export function NotificationBell() {
 
         fetchAlerts();
         const interval = setInterval(fetchAlerts, 60000); // Poll every 60s
-        return () => clearInterval(interval);
+        
+        // Listen for custom events that should trigger an instant refresh
+        window.addEventListener('expense-added', fetchAlerts);
+        
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('expense-added', fetchAlerts);
+        };
     }, []);
 
     const unreadCount = alerts.length;
@@ -72,8 +79,7 @@ export function NotificationBell() {
                                 let href = '/dashboard';
                                 if (alert.type === 'BILLING') href = '/bills';
                                 else if (alert.type === 'TOUR') href = '/bookings';
-                                else if (alert.type === 'MAINTENANCE' && alert.entityId) href = `/vehicles/${alert.entityId}`;
-                                else if (alert.type === 'MAINTENANCE') href = '/vehicles';
+                                else if (alert.type === 'MAINTENANCE') href = `/vehicles?expenseVehicleNo=${encodeURIComponent(alert.title)}`;
                                 else if (alert.type === 'EXPENSE') href = '/reports';
 
                                 return (

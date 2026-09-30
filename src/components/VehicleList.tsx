@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Search, Car, Plus, Pencil, Trash2, Receipt, Droplets, Filter } from 'lucide-react';
 import { type Vehicle } from '@/lib/validations';
@@ -59,8 +59,29 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
         } else {
             params.delete('q');
         }
+        // Preserve expenseVehicleNo if present
+        const expenseVehicleNo = searchParams.get('expenseVehicleNo');
+        if (expenseVehicleNo) params.set('expenseVehicleNo', expenseVehicleNo);
         router.replace(`${pathname}?${params.toString()}`);
     };
+
+    // Automatically open expense sheet if linked from notification
+    useEffect(() => {
+        const expenseVehicleNo = searchParams.get('expenseVehicleNo');
+        if (expenseVehicleNo && !expenseSheetOpen && vehicles.length > 0) {
+            const targetVehicle = vehicles.find(v => v.vehicleNo === expenseVehicleNo);
+            if (targetVehicle) {
+                setSelectedVehicle(targetVehicle);
+                setExpenseSheetOpen(true);
+                
+                // Remove from URL so it doesn't reopen on refresh
+                const newParams = new URLSearchParams(searchParams.toString());
+                newParams.delete('expenseVehicleNo');
+                const newUrl = newParams.toString() ? `${pathname}?${newParams.toString()}` : pathname;
+                window.history.replaceState(null, '', newUrl);
+            }
+        }
+    }, [searchParams, vehicles, expenseSheetOpen, pathname]);
 
     const [deleting, setDeleting] = useState<string | null>(null);
 
