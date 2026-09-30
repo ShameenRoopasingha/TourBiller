@@ -21,6 +21,7 @@ export async function GET() {
             prisma.vehicle.findMany({
                 where: { companyId, status: 'ACTIVE' },
                 select: {
+                    id: true,
                     vehicleNo: true,
                     currentMileage: true,
                     oilChangeInterval: true,
@@ -59,6 +60,7 @@ export async function GET() {
             if (vehicle.revenueLicenseExpiry && (vehicle.revenueLicenseExpiry.getTime() - now.getTime()) / 86_400_000 <= 30) alerts.push('License Expiring');
             return alerts.length ? [{
                 id: `maint-${vehicle.vehicleNo}`,
+                entityId: vehicle.id,
                 title: vehicle.vehicleNo,
                 message: `Maintenance needed: ${alerts.join(', ')}`,
                 type: 'MAINTENANCE',

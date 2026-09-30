@@ -65,7 +65,7 @@ export async function getDashboardStats() {
             prisma.vehicle.findMany({
                 where: { companyId, status: 'ACTIVE' },
                 select: {
-                    vehicleNo: true, currentMileage: true,
+                    id: true, vehicleNo: true, currentMileage: true,
                     oilChangeInterval: true, lastOilChangeMileage: true,
                     filterChangeInterval: true, lastFilterChangeMileage: true,
                     washInterval: true, lastWashMileage: true,
@@ -146,6 +146,7 @@ export async function getDashboardStats() {
             if (v.revenueLicenseExpiry && (v.revenueLicenseExpiry.getTime() - now.getTime()) / (1000 * 3600 * 24) <= 30) alerts.push('License Expiring');
             return {
                 id: `maint-${v.vehicleNo}`,
+                entityId: v.id,
                 title: v.vehicleNo,
                 message: `Maintenance needed: ${alerts.join(", ")}`,
                 type: 'MAINTENANCE'

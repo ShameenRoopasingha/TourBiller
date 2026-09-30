@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-type DashboardAlert = { id: string; title: string; message: string; type: string };
+type DashboardAlert = { id: string; entityId?: string; title: string; message: string; type: string };
 
 export function NotificationBell() {
     const [alerts, setAlerts] = useState<DashboardAlert[]>([]);
@@ -72,6 +72,7 @@ export function NotificationBell() {
                                 let href = '/dashboard';
                                 if (alert.type === 'BILLING') href = '/bills';
                                 else if (alert.type === 'TOUR') href = '/bookings';
+                                else if (alert.type === 'MAINTENANCE' && alert.entityId) href = `/vehicles/${alert.entityId}`;
                                 else if (alert.type === 'MAINTENANCE') href = '/vehicles';
                                 else if (alert.type === 'EXPENSE') href = '/reports';
 

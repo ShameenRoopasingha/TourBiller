@@ -435,7 +435,18 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                     name="lastOilChangeMileage"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Last Oil Change at (KM)</FormLabel>
+                                            <FormLabel className="flex justify-between items-center">
+                                                <span>Last Oil Change at (KM)</span>
+                                                <Button 
+                                                    type="button" 
+                                                    variant="secondary" 
+                                                    size="sm" 
+                                                    className="h-6 px-2 text-xs"
+                                                    onClick={() => form.setValue('lastOilChangeMileage', form.getValues('currentMileage') || 0, { shouldDirty: true })}
+                                                >
+                                                    Set to Current
+                                                </Button>
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input type="number" {...field} value={field.value ?? ""} />
                                             </FormControl>
@@ -464,7 +475,18 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                     name="lastFilterChangeMileage"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Last Filter Change at (KM)</FormLabel>
+                                            <FormLabel className="flex justify-between items-center">
+                                                <span>Last Filter Change at (KM)</span>
+                                                <Button 
+                                                    type="button" 
+                                                    variant="secondary" 
+                                                    size="sm" 
+                                                    className="h-6 px-2 text-xs"
+                                                    onClick={() => form.setValue('lastFilterChangeMileage', form.getValues('currentMileage') || 0, { shouldDirty: true })}
+                                                >
+                                                    Set to Current
+                                                </Button>
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input type="number" {...field} value={field.value ?? ""} />
                                             </FormControl>
@@ -494,7 +516,18 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 name="lastWashMileage"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Last Body Wash at (KM)</FormLabel>
+                                        <FormLabel className="flex justify-between items-center">
+                                            <span>Last Body Wash at (KM)</span>
+                                            <Button 
+                                                type="button" 
+                                                variant="secondary" 
+                                                size="sm" 
+                                                className="h-6 px-2 text-xs"
+                                                onClick={() => form.setValue('lastWashMileage', form.getValues('currentMileage') || 0, { shouldDirty: true })}
+                                            >
+                                                Set to Current
+                                            </Button>
+                                        </FormLabel>
                                         <FormControl>
                                             <Input type="number" {...field} value={field.value ?? ""} />
                                         </FormControl>
