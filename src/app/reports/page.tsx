@@ -40,13 +40,13 @@ export default async function ReportsPage() {
     });
 
     // Fetch company profile for print letterhead
-    const company = await prisma.company.findUnique({
+    const company = await prisma.businessProfile.findUnique({
         where: { id: companyId },
-        select: { name: true, address: true, phone: true, email: true, logoUrl: true }
+        select: { companyName: true, address: true, phone: true, email: true, logoUrl: true }
     });
 
     const businessProfile = {
-        companyName: company?.name || 'VIGIL',
+        companyName: company?.companyName || 'VIGIL',
         address: company?.address || null,
         phone: company?.phone || null,
         email: company?.email || null,
