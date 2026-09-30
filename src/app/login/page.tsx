@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Waves from '../../../components/reactbits/Waves';
+import Aurora from '../../../components/reactbits/Aurora';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -47,21 +47,13 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
-            {/* Animated Background */}
-            <div className="absolute inset-0 z-0 bg-black">
-                <Waves
-                    lineColor="#00b4d8"
-                    backgroundColor="#000510"
-                    waveSpeedX={0.03}
-                    waveSpeedY={0.015}
-                    waveAmpX={50}
-                    waveAmpY={25}
-                    friction={0.9}
-                    tension={0.01}
-                    maxCursorMove={120}
-                    xGap={12}
-                    yGap={36}
+        <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-[#000510]">
+            {/* Extremely Subtle Animated Background */}
+            <div className="absolute inset-0 z-0 opacity-40 mix-blend-screen">
+                <Aurora 
+                    colorStops={["#00b4d8", "#001845", "#023e8a", "#00b4d8"]} 
+                    speed={2} 
+                    blur={120} 
                 />
             </div>
 
