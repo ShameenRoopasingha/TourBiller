@@ -133,7 +133,11 @@ ${agentKnowledge}`,
               }
 
               if (!vehicleNo) {
-                return { success: false, error: "Missing vehicle number. Please provide a valid number like CAB-1234." };
+                return { 
+                  success: true, 
+                  STATUS: "MISSING_DETAILS",
+                  SYSTEM_INSTRUCTION: "You MUST reply to the user exactly with this Sinhala text (do not output anything else): 'කරුණාකර වාහනයේ අංකය සහ වර්ගය (උදා: VAN, CAR) ඇතුළු විස්තර ලබා දෙන්න.'"
+                };
               }
 
               // Extract numbers using simple regex if not provided by LLM

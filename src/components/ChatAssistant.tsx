@@ -138,7 +138,18 @@ export default function ChatAssistant() {
             </div>
           )}
           
-          {messages.map((m) => (
+          {messages.map((m) => {
+            const hasTools = (m.parts && m.parts.some(p => p.type.startsWith('tool-'))) || (m.toolInvocations && m.toolInvocations.length > 0);
+            if (m.role === 'assistant' && !m.content && !hasTools) {
+              return (
+                <div key={m.id} className="flex justify-start">
+                  <div className="max-w-[85%] rounded-2xl px-4 py-2 bg-red-50 text-red-500 text-sm italic shadow-sm border border-red-100">
+                    (The AI encountered an internal error resolving tools. Please try asking again.)
+                  </div>
+                </div>
+              );
+            }
+            return (
             <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-[85%] rounded-2xl px-4 py-2 ${
@@ -197,7 +208,7 @@ export default function ChatAssistant() {
                 )}
               </div>
             </div>
-          ))}
+          )})}
           {error && (
             <div className="flex justify-start">
               <div className="max-w-[85%] rounded-2xl px-4 py-2 bg-red-50 border border-red-200 text-red-800 rounded-tl-sm shadow-sm text-sm">
