@@ -272,6 +272,72 @@ ${agentKnowledge}`,
               message: `Bill #${bill.billNumber} created successfully for ${customerName}!`
             };
           }
+        }),
+
+        updateVehicle: tool({
+          description: 'Update an existing vehicle.',
+          parameters: z.object({
+            vehicleNo: z.string().optional(),
+            ratePerDay: z.number().optional(),
+            status: z.string().optional()
+          }),
+          execute: async (args) => {
+            try {
+              let { vehicleNo, ratePerDay, status } = args;
+              const lastMsg = sanitizedMessages.filter((m: any) => m.role === 'user').pop()?.content || '';
+              const noMatch = lastMsg.match(/([A-Z]{2,3}-\d{4})/i) || lastMsg.match(/([A-Z]{2,3}\s\d{4})/i);
+              if (noMatch) vehicleNo = noMatch[1].toUpperCase().replace(' ', '-');
+              
+              if (!vehicleNo) return { success: false, error: "Please specify the vehicle number to update." };
+
+              const extractNum = (keyword: string) => {
+                 const regex = new RegExp(`${keyword}\\s*(?:is|:)?\\s*(\\d+)`, 'i');
+                 const match = lastMsg.match(regex);
+                 return match ? parseInt(match[1]) : undefined;
+              };
+              ratePerDay = ratePerDay || extractNum('rate') || extractNum('price');
+              if (lastMsg.toLowerCase().includes('inactive') || lastMsg.toLowerCase().includes('maintenance')) status = 'MAINTENANCE';
+
+              await prisma.vehicle.update({
+                 where: { companyId_vehicleNo: { companyId, vehicleNo } },
+                 data: {
+                    ...(ratePerDay && { ratePerDay }),
+                    ...(status && { status })
+                 }
+              });
+              return { success: true, message: `Vehicle ${vehicleNo} updated successfully!` };
+            } catch (e: any) {
+              return { success: false, error: "Vehicle not found or update failed." };
+            }
+          }
+        }),
+
+        getMonthlyEarnings: tool({
+          description: 'Get total earnings for the current month from bills.',
+          parameters: z.object({}),
+          execute: async () => {
+             const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+             const bills = await prisma.bill.findMany({
+                where: { companyId, createdAt: { gte: startOfMonth } }
+             });
+             const total = bills.reduce((sum: number, bill: any) => sum + bill.totalAmount, 0);
+             return { success: true, totalEarnings: total, currency: 'LKR', billsCount: bills.length };
+          }
+        }),
+
+        getMostUsedVehicle: tool({
+          description: 'Get the most used vehicle based on completed bills.',
+          parameters: z.object({}),
+          execute: async () => {
+             const bills = await prisma.bill.findMany({ where: { companyId } });
+             const counts = bills.reduce((acc: any, bill: any) => {
+                 acc[bill.vehicleNo] = (acc[bill.vehicleNo] || 0) + 1;
+                 return acc;
+             }, {});
+             const mostUsed = Object.entries(counts).sort((a: any, b: any) => b[1] - a[1])[0];
+             if (!mostUsed) return { success: true, message: "No bills found yet." };
+             return { success: true, vehicleNo: mostUsed[0], timesUsed: mostUsed[1] };
+          }
         })
       },
     });

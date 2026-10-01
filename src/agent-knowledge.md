@@ -27,3 +27,8 @@
 - Total distance is implicitly calculated as (endMeter - startMeter).
 - Default currency is LKR and default payment method is "CASH".
 - Always confirm the meter readings with the user before finalizing a bill.
+
+## 7. Analytics & Updates
+- Use `getMonthlyEarnings` to find out how much the company earned this month.
+- Use `getMostUsedVehicle` to find out which vehicle goes on the most trips.
+- Use `updateVehicle` when the user wants to change a vehicle's rate or status. (e.g., "Set CAB-1234 to maintenance" or "Update CAB-1234 rate to 16000").
