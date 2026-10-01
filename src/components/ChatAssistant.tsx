@@ -175,8 +175,20 @@ export default function ChatAssistant() {
                                  )}
                                </div>
                                {isDone && part.output && (
-                                 <div className="bg-white p-2 rounded border border-gray-200 overflow-auto whitespace-pre-wrap text-xs text-gray-600">
-                                   {JSON.stringify(part.output, null, 2)}
+                                 <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm mt-1">
+                                   {(part.output as any).SYSTEM_INSTRUCTION ? (
+                                      <p className="text-gray-800 font-sans leading-relaxed">
+                                        {(part.output as any).SYSTEM_INSTRUCTION}
+                                      </p>
+                                   ) : (part.output as any).message ? (
+                                      <p className="text-green-700 font-sans leading-relaxed flex items-center gap-2">
+                                        <span>✅</span> {(part.output as any).message}
+                                      </p>
+                                   ) : (
+                                      <div className="overflow-auto whitespace-pre-wrap text-xs text-gray-500 font-mono">
+                                        {JSON.stringify(part.output, null, 2)}
+                                      </div>
+                                   )}
                                  </div>
                                )}
                             </div>
