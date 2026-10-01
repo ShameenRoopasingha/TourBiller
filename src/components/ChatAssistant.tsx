@@ -11,6 +11,7 @@ export default function ChatAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   
   const { messages, sendMessage, status, error } = useChat({
     api: '/api/chat',
@@ -18,45 +19,60 @@ export default function ChatAssistant() {
   });
   const isLoading = status === 'in_progress';
   
-  const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.interimResults = false;
-        recognitionRef.current.lang = 'si-LK'; // Sinhala
-
-        recognitionRef.current.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          setInput((prev) => (prev ? prev + ' ' + transcript : transcript));
-          setIsListening(false);
-        };
-
-        recognitionRef.current.onerror = (event: any) => {
-          console.error("Speech recognition error", event.error);
-          setIsListening(false);
-        };
-
-        recognitionRef.current.onend = () => {
-          setIsListening(false);
-        };
-      }
-    }
-  }, []);
-
-  const toggleListening = () => {
+  const toggleListening = async () => {
     if (isListening) {
-      recognitionRef.current?.stop();
+      // Stop recording
+      mediaRecorderRef.current?.stop();
       setIsListening(false);
     } else {
-      if (recognitionRef.current) {
-        recognitionRef.current.start();
+      // Start recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          setIsTranscribing(true);
+          
+          try {
+            const formData = new FormData();
+            formData.append('audio', audioBlob);
+            
+            const res = await fetch('/api/transcribe', {
+              method: 'POST',
+              body: formData,
+            });
+            
+            if (res.ok) {
+              const data = await res.json();
+              if (data.text) {
+                 setInput((prev) => (prev ? prev + ' ' + data.text : data.text));
+              }
+            }
+          } catch (err) {
+            console.error("Transcription error", err);
+          } finally {
+            setIsTranscribing(false);
+            stream.getTracks().forEach(track => track.stop());
+          }
+        };
+
+        mediaRecorder.start();
         setIsListening(true);
-      } else {
-        alert("Your browser does not support Speech Recognition. Try using Google Chrome.");
+      } catch (err) {
+        console.error("Microphone access denied", err);
+        alert("Please allow microphone access to use voice commands.");
       }
     }
   };
@@ -212,13 +228,16 @@ export default function ChatAssistant() {
             <button
               type="button"
               onClick={toggleListening}
+              disabled={isTranscribing}
               className={`p-2 rounded-full transition-colors ${
                 isListening 
                   ? 'bg-red-500 text-white animate-pulse' 
+                  : isTranscribing
+                  ? 'bg-gray-200 text-gray-500'
                   : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
               }`}
             >
-              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              {isTranscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
             </button>
             <button
               type="submit"
