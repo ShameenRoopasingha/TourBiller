@@ -97,10 +97,17 @@ ${agentKnowledge}`,
             address: z.string().optional().describe('Physical address of the customer')
           }),
           execute: async ({ name, mobile, email, address }) => {
-            const customer = await prisma.customer.create({
-              data: { companyId, name, mobile, email, address }
-            });
-            return { success: true, message: `Customer ${name} added successfully to the database!` };
+            try {
+              const customer = await prisma.customer.create({
+                data: { companyId, name, mobile, email, address }
+              });
+              return { success: true, message: `Customer ${name} added successfully to the database!` };
+            } catch (e: any) {
+              if (e.code === 'P2002') { 
+                return { success: true, SYSTEM_INSTRUCTION: 'මෙම දත්ත දැනටමත් පද්ධතියේ ලියාපදිංචි කර ඇත.' }; 
+              } 
+              return { success: true, SYSTEM_INSTRUCTION: 'දෝෂයක් මතු විය. කරුණාකර නැවත උත්සාහ කරන්න.' };
+            }
           }
         }),
 
@@ -172,7 +179,10 @@ ${agentKnowledge}`,
               return { success: true, message: `Vehicle ${vehicleNo} (${category}) added successfully with all details!` };
             } catch (e: any) {
               console.error("DB Error in addVehicle:", e);
-              return { success: false, error: e.message };
+              if (e.code === 'P2002') { 
+                return { success: true, SYSTEM_INSTRUCTION: 'මෙම වාහන අංකය දැනටමත් පද්ධතියේ ලියාපදිංචි කර ඇත.' }; 
+              } 
+              return { success: true, SYSTEM_INSTRUCTION: 'දෝෂයක් මතු විය. කරුණාකර නැවත උත්සාහ කරන්න.' };
             }
           }
         }),
@@ -386,3 +396,4 @@ ${agentKnowledge}`,
     return new Response(error.message || String(error) || 'VIGIL_SERVER_ERROR', { status: 500 });
   }
 }
+
