@@ -107,34 +107,65 @@ ${agentKnowledge}`,
         addVehicle: tool({
           description: 'Add a new vehicle to the database.',
           parameters: z.object({
-            vehicleNo: z.string().optional().describe('Vehicle registration number (e.g. CAB-1234)'),
-            category: z.string().optional().describe('Category of the vehicle (e.g. CAR, VAN, SUV, BUS)'),
-            model: z.string().optional().describe('Model of the vehicle (e.g. Toyota KDH)')
+            vehicleNo: z.string().optional().describe('Vehicle registration number'),
+            category: z.string().optional().describe('Category (e.g. CAR, VAN, SUV, BUS)'),
+            model: z.string().optional().describe('Model (e.g. Toyota KDH)'),
+            seats: z.number().optional(),
+            ratePerDay: z.number().optional(),
+            kmPerDay: z.number().optional(),
+            excessKmRate: z.number().optional(),
+            extraHourRate: z.number().optional()
           }),
           execute: async (args) => {
             try {
-              let { vehicleNo, category, model } = args;
+              let { vehicleNo, category, model, seats, ratePerDay, kmPerDay, excessKmRate, extraHourRate } = args;
+              
+              const lastMsg = sanitizedMessages.filter((m: any) => m.role === 'user').pop()?.content || '';
               
               // Fallback for models that return empty arguments
               if (!vehicleNo || !category) {
-                const lastMsg = sanitizedMessages.filter((m: any) => m.role === 'user').pop()?.content || '';
                 const noMatch = lastMsg.match(/([A-Z]{2,3}-\d{4})/i) || lastMsg.match(/([A-Z]{2,3}\s\d{4})/i);
                 const catMatch = lastMsg.match(/(van|car|suv|bus|three wheeler|kdh)/i);
                 
                 if (noMatch) vehicleNo = noMatch[1].toUpperCase().replace(' ', '-');
                 if (catMatch) category = catMatch[1].toUpperCase();
-                
-                if (category === 'KDH') category = 'VAN'; // Normalization
+                if (category === 'KDH') category = 'VAN';
               }
 
               if (!vehicleNo) {
                 return { success: false, error: "Missing vehicle number. Please provide a valid number like CAB-1234." };
               }
 
+              // Extract numbers using simple regex if not provided by LLM
+              const extractNum = (keyword: string) => {
+                 const regex = new RegExp(`${keyword}\\s*(?:is|:)?\\s*(\\d+)`, 'i');
+                 const match = lastMsg.match(regex);
+                 return match ? parseInt(match[1]) : undefined;
+              };
+
+              seats = seats || extractNum('seats') || extractNum('seat') || 0;
+              ratePerDay = ratePerDay || extractNum('rate') || 0;
+              kmPerDay = kmPerDay || extractNum('km per day') || 0;
+              excessKmRate = excessKmRate || extractNum('extra km') || 0;
+              extraHourRate = extraHourRate || extractNum('extra hour') || 0;
+              
+              if (!model && category === 'VAN' && lastMsg.toLowerCase().includes('kdh')) model = 'Toyota KDH';
+
               const vehicle = await prisma.vehicle.create({
-                data: { companyId, vehicleNo, category: category || 'CAR', model, status: 'ACTIVE' }
+                data: { 
+                  companyId, 
+                  vehicleNo, 
+                  category: category || 'CAR', 
+                  model, 
+                  seats, 
+                  ratePerDay, 
+                  kmPerDay, 
+                  excessKmRate, 
+                  extraHourRate, 
+                  status: 'ACTIVE' 
+                }
               });
-              return { success: true, message: `Vehicle ${vehicleNo} (${category}) added successfully!` };
+              return { success: true, message: `Vehicle ${vehicleNo} (${category}) added successfully with all details!` };
             } catch (e: any) {
               console.error("DB Error in addVehicle:", e);
               return { success: false, error: e.message };

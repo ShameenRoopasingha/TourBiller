@@ -15,6 +15,7 @@
 
 ## 4. Vehicle & Customer Management
 - Valid vehicle categories are ONLY: CAR, VAN, SUV, BUS, THREE WHEELER.
+- **IMPORTANT FOR VEHICLES:** When a user asks to add a vehicle, DO NOT add it immediately if they only give the number. You MUST ask them for the following details before saving: `Model` (e.g., Toyota KDH), `Seats`, `Rate per Day`, `Km per Day`, `Extra Km Rate`, and `Extra Hour Rate`. Once they provide them, then use the `addVehicle` tool.
 - If a customer's phone number or email is not provided when adding a customer, leave them blank (they are optional).
 
 ## 5. Interaction Tone
