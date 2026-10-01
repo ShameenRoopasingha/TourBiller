@@ -312,16 +312,42 @@ ${agentKnowledge}`,
           }
         }),
 
-        getMonthlyEarnings: tool({
-          description: 'Get total earnings for the current month from bills.',
+        getEarningsReport: tool({
+          description: 'Get a full earnings report to answer questions about income, revenue, or bills over any time period (last 30 days, specific months, total).',
           parameters: z.object({}),
           execute: async () => {
-             const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-             const bills = await prisma.bill.findMany({
-                where: { companyId, createdAt: { gte: startOfMonth } }
+             const bills = await prisma.bill.findMany({ where: { companyId } });
+             
+             const earningsByMonth: Record<string, { total: number, count: number }> = {};
+             let totalAllTime = 0;
+             let last30Days = 0;
+             
+             const thirtyDaysAgo = new Date();
+             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+             bills.forEach((bill: any) => {
+                 const date = new Date(bill.createdAt);
+                 const monthYear = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+                 
+                 if (!earningsByMonth[monthYear]) {
+                     earningsByMonth[monthYear] = { total: 0, count: 0 };
+                 }
+                 earningsByMonth[monthYear].total += bill.totalAmount;
+                 earningsByMonth[monthYear].count += 1;
+                 
+                 totalAllTime += bill.totalAmount;
+                 if (date >= thirtyDaysAgo) {
+                     last30Days += bill.totalAmount;
+                 }
              });
-             const total = bills.reduce((sum: number, bill: any) => sum + bill.totalAmount, 0);
-             return { success: true, totalEarnings: total, currency: 'LKR', billsCount: bills.length };
+
+             return { 
+                 success: true, 
+                 earningsByMonth,
+                 last30Days,
+                 totalAllTime,
+                 currency: 'LKR'
+             };
           }
         }),
 
