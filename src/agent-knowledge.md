@@ -14,7 +14,7 @@
 - Default `numberOfPersons` is 1 unless specified by the user.
 
 ## 4. Vehicle & Customer Management
-- Valid vehicle categories are ONLY: CAR, VAN, SUV, BUS, TUK.
+- Valid vehicle categories are ONLY: CAR, VAN, SUV, BUS, THREE WHEELER.
 - If a customer's phone number or email is not provided when adding a customer, leave them blank (they are optional).
 
 ## 5. Interaction Tone
