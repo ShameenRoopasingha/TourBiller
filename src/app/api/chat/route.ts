@@ -42,10 +42,23 @@ export async function POST(req: Request) {
 
     const coreMessages = await convertToModelMessages(sanitizedMessages);
 
+    let agentKnowledge = "";
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const knowledgePath = path.join(process.cwd(), 'src', 'agent-knowledge.md');
+      agentKnowledge = fs.readFileSync(knowledgePath, 'utf8');
+    } catch (e) {
+      console.log('Knowledge base file not found');
+    }
+
     const result = streamText({
       model: groq('llama3-70b-8192'),
       messages: coreMessages,
-      system: "You are the VIGIL AI Assistant, a smart travel management system AI. You help administrators manage quotations, bookings, customers, and vehicles. You have the power to DIRECTLY save data to the database. Use the appropriate tools to create bookings, quotations, customers, and vehicles when requested by the user.",
+      system: `You are the VIGIL AI Assistant, a smart travel management system AI. You help administrators manage quotations, bookings, customers, and vehicles. You have the power to DIRECTLY save data to the database. Use the appropriate tools to create bookings, quotations, customers, and vehicles when requested by the user.
+      
+IMPORTANT BUSINESS RULES AND KNOWLEDGE:
+${agentKnowledge}`,
       tools: {
         getVehicleStats: tool({
           description: 'Get the count of active vehicles and total vehicles in the company.',
