@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
           // Enable XSS protection in older browsers
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           // Restrict browser features
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
           // Force HTTPS in production (1 year)
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
         ],
