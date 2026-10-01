@@ -107,15 +107,38 @@ ${agentKnowledge}`,
         addVehicle: tool({
           description: 'Add a new vehicle to the database.',
           parameters: z.object({
-            vehicleNo: z.string().describe('Vehicle registration number (e.g. CAB-1234)'),
-            category: z.string().describe('Category of the vehicle (e.g. CAR, VAN, SUV, BUS)'),
+            vehicleNo: z.string().optional().describe('Vehicle registration number (e.g. CAB-1234)'),
+            category: z.string().optional().describe('Category of the vehicle (e.g. CAR, VAN, SUV, BUS)'),
             model: z.string().optional().describe('Model of the vehicle (e.g. Toyota KDH)')
           }),
-          execute: async ({ vehicleNo, category, model }) => {
-            const vehicle = await prisma.vehicle.create({
-              data: { companyId, vehicleNo, category, model, status: 'ACTIVE' }
-            });
-            return { success: true, message: `Vehicle ${vehicleNo} (${category}) added successfully!` };
+          execute: async (args) => {
+            try {
+              let { vehicleNo, category, model } = args;
+              
+              // Fallback for models that return empty arguments
+              if (!vehicleNo || !category) {
+                const lastMsg = sanitizedMessages.filter((m: any) => m.role === 'user').pop()?.content || '';
+                const noMatch = lastMsg.match(/([A-Z]{2,3}-\d{4})/i) || lastMsg.match(/([A-Z]{2,3}\s\d{4})/i);
+                const catMatch = lastMsg.match(/(van|car|suv|bus|three wheeler|kdh)/i);
+                
+                if (noMatch) vehicleNo = noMatch[1].toUpperCase().replace(' ', '-');
+                if (catMatch) category = catMatch[1].toUpperCase();
+                
+                if (category === 'KDH') category = 'VAN'; // Normalization
+              }
+
+              if (!vehicleNo) {
+                return { success: false, error: "Missing vehicle number. Please provide a valid number like CAB-1234." };
+              }
+
+              const vehicle = await prisma.vehicle.create({
+                data: { companyId, vehicleNo, category: category || 'CAR', model, status: 'ACTIVE' }
+              });
+              return { success: true, message: `Vehicle ${vehicleNo} (${category}) added successfully!` };
+            } catch (e: any) {
+              console.error("DB Error in addVehicle:", e);
+              return { success: false, error: e.message };
+            }
           }
         }),
 
