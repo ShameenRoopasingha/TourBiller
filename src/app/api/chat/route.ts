@@ -183,6 +183,40 @@ ${agentKnowledge}`,
               message: `Quotation #${quotation.quotationNumber} created successfully and saved to the database!` 
             };
           }
+        }),
+
+        createBill: tool({
+          description: 'Create a new REAL bill/invoice in the database after a trip is completed.',
+          parameters: z.object({
+            customerName: z.string().describe('Name of the customer'),
+            vehicleNo: z.string().describe('Vehicle registration number'),
+            route: z.string().describe('The route taken (e.g., Colombo to Kandy)'),
+            startMeter: z.number().describe('Starting mileage/meter reading'),
+            endMeter: z.number().describe('Ending mileage/meter reading'),
+            hireRate: z.number().describe('Rate charged for the hire'),
+            totalAmount: z.number().describe('Calculated total amount for the bill')
+          }),
+          execute: async ({ customerName, vehicleNo, route, startMeter, endMeter, hireRate, totalAmount }) => {
+            const bill = await prisma.bill.create({
+              data: {
+                companyId,
+                customerName,
+                vehicleNo,
+                route,
+                startMeter,
+                endMeter,
+                hireRate,
+                totalAmount,
+                paymentMethod: 'CASH',
+                currency: 'LKR'
+              }
+            });
+            return {
+              success: true,
+              billNumber: bill.billNumber,
+              message: `Bill #${bill.billNumber} created successfully for ${customerName}!`
+            };
+          }
         })
       },
     });
