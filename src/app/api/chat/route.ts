@@ -54,6 +54,7 @@ export async function POST(req: Request) {
 
     const result = streamText({
       model: groq('openai/gpt-oss-120b'),
+      maxSteps: 5, // IMPORTANT: Allows the agent to reply AFTER using a tool
       messages: coreMessages,
       system: `You are the VIGIL AI Assistant, a smart travel management system AI. You help administrators manage quotations, bookings, customers, and vehicles. You have the power to DIRECTLY save data to the database. Use the appropriate tools to create bookings, quotations, customers, and vehicles when requested by the user.
       
