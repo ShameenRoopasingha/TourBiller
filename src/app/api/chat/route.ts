@@ -1,9 +1,15 @@
 // @ts-nocheck
-import { google } from '@ai-sdk/google';
-import { streamText, tool, convertToModelMessages, generateText } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { streamText, tool, convertToModelMessages } from 'ai';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+
+// Initialize Groq API using the OpenAI provider compatibility
+const groq = createOpenAI({
+  baseURL: 'https://api.groq.com/openai/v1',
+  apiKey: process.env.GROQ_API_KEY || '',
+});
 
 export const maxDuration = 30;
 
@@ -28,7 +34,7 @@ export async function POST(req: Request) {
       throw new Error('Messages not found in request body');
     }
 
-    // Polyfill parts array if missing, to prevent convertToModelMessages crash
+    // Polyfill parts array if missing
     const sanitizedMessages = messages.map((m: any) => ({
       ...m,
       parts: m.parts || [{ type: 'text', text: m.content || '' }]
@@ -37,9 +43,9 @@ export async function POST(req: Request) {
     const coreMessages = await convertToModelMessages(sanitizedMessages);
 
     const result = streamText({
-      model: google('gemini-flash-lite-latest'),
+      model: groq('llama3-70b-8192'),
       messages: coreMessages,
-      system: "You are the VIGIL AI Assistant, a smart travel management system AI. You help administrators manage quotations, bookings, and vehicles. When a user provides details for a trip, ALWAYS use the generateDraftQuotation tool and meticulously extract all the relevant details (like destination, days, persons, vehicle type) into the tool's parameters. NEVER leave the parameters empty if the user provided the details. If they ask about data, use the relevant database tools.",
+      system: "You are the VIGIL AI Assistant, a smart travel management system AI. You help administrators manage quotations, bookings, customers, and vehicles. You have the power to DIRECTLY save data to the database. Use the appropriate tools to create bookings, quotations, customers, and vehicles when requested by the user.",
       tools: {
         getVehicleStats: tool({
           description: 'Get the count of active vehicles and total vehicles in the company.',
@@ -52,70 +58,7 @@ export async function POST(req: Request) {
             return { totalVehicles: total, activeVehicles: active };
           },
         }),
-        getBookingStats: tool({
-          description: 'Get statistics about bookings (e.g. pending, confirmed, cancelled).',
-          parameters: z.object({
-            query: z.string().optional()
-          }),
-          execute: async () => {
-            const pending = await prisma.booking.count({ where: { companyId, status: 'PENDING' } });
-            const confirmed = await prisma.booking.count({ where: { companyId, status: 'CONFIRMED' } });
-            const cancelled = await prisma.booking.count({ where: { companyId, status: 'CANCELLED' } });
-            return { pending, confirmed, cancelled };
-          },
-        }),
-        generateDraftQuotation: tool({
-          description: "Extract quotation details from the user's prompt to auto-fill the quotation form. Always call this tool when the user asks to generate or draft a quotation.",
-          parameters: z.object({
-            customerName: z.string().describe('Name of the customer').optional(),
-            vehicleType: z.string().describe('Type or category of the vehicle (e.g. KDH, Car, Van)').optional(),
-            numberOfPersons: z.number().describe('Number of people travelling').optional(),
-            days: z.number().describe('Duration of the trip in days').optional(),
-            pickupLocation: z.string().optional(),
-            dropLocation: z.string().optional(),
-            destination: z.string().describe('Main destination of the trip').optional(),
-            hireRatePerDay: z.number().describe('Estimated hire rate per day').optional(),
-            driverCostPerDay: z.number().describe('Estimated driver cost per day').optional(),
-            notes: z.string().describe('Any other special requirements or notes').optional()
-          }),
-          execute: async (args) => {
-            let draft: any = { ...args };
-            // Fallback for weak models that return {}
-            if (Object.keys(draft).length === 0) {
-              const lastUserMsg = sanitizedMessages.filter((m: any) => m.role === 'user').pop()?.content || '';
-              
-              try {
-                // Secondary AI pass to explicitly extract all details
-                const { text } = await generateText({
-                  model: google('gemini-flash-lite-latest'),
-                  prompt: `Extract the following details from this text and return ONLY a valid JSON object. No markdown, no backticks.
-Text: "${lastUserMsg}"
-Format: { "days": number (optional), "numberOfPersons": number (optional), "destination": string (optional), "vehicleType": string (optional), "customerName": string (optional), "notes": string (optional, e.g. dates or times) }`
-                });
-                
-                let cleanJson = text.trim();
-                if (cleanJson.startsWith('\`\`\`json')) cleanJson = cleanJson.replace(/^\`\`\`json/, '');
-                if (cleanJson.startsWith('\`\`\`')) cleanJson = cleanJson.replace(/^\`\`\`/, '');
-                if (cleanJson.endsWith('\`\`\`')) cleanJson = cleanJson.replace(/\`\`\`$/, '');
-                
-                const parsed = JSON.parse(cleanJson.trim());
-                draft = { ...draft, ...parsed };
-              } catch (e) {
-                // Safe regex fallback if AI parsing fails
-                const daysMatch = lastUserMsg.match(/(\d+)\s*day/i);
-                const personsMatch = lastUserMsg.match(/(\d+)\s*(people|persons|pax)/i);
-                const destMatch = lastUserMsg.match(/to\s+([a-zA-Z\s]+?)(?:\s+for|\s*$)/i);
-                const vehicleMatch = lastUserMsg.match(/(kdh|car|van|bus)/i);
-                
-                if (daysMatch) draft.days = parseInt(daysMatch[1]);
-                if (personsMatch) draft.numberOfPersons = parseInt(personsMatch[1]);
-                if (destMatch) draft.destination = destMatch[1].trim();
-                if (vehicleMatch) draft.vehicleType = vehicleMatch[1].toUpperCase();
-              }
-            }
-            return { success: true, draft };
-          }
-        }),
+        
         searchCustomers: tool({
           description: 'Search for customers by name to get their details.',
           parameters: z.object({
@@ -130,6 +73,104 @@ Format: { "days": number (optional), "numberOfPersons": number (optional), "dest
             return { customers };
           },
         }),
+
+        addCustomer: tool({
+          description: 'Add a new customer to the database.',
+          parameters: z.object({
+            name: z.string().describe('Full name of the customer'),
+            mobile: z.string().optional().describe('Mobile phone number of the customer'),
+            email: z.string().optional().describe('Email address of the customer'),
+            address: z.string().optional().describe('Physical address of the customer')
+          }),
+          execute: async ({ name, mobile, email, address }) => {
+            const customer = await prisma.customer.create({
+              data: { companyId, name, mobile, email, address }
+            });
+            return { success: true, message: `Customer ${name} added successfully to the database!` };
+          }
+        }),
+
+        addVehicle: tool({
+          description: 'Add a new vehicle to the database.',
+          parameters: z.object({
+            vehicleNo: z.string().describe('Vehicle registration number (e.g. CAB-1234)'),
+            category: z.string().describe('Category of the vehicle (e.g. CAR, VAN, SUV, BUS)'),
+            model: z.string().optional().describe('Model of the vehicle (e.g. Toyota KDH)')
+          }),
+          execute: async ({ vehicleNo, category, model }) => {
+            const vehicle = await prisma.vehicle.create({
+              data: { companyId, vehicleNo, category, model, status: 'ACTIVE' }
+            });
+            return { success: true, message: `Vehicle ${vehicleNo} (${category}) added successfully!` };
+          }
+        }),
+
+        searchTours: tool({
+          description: 'Search for available tour schedules to get their IDs and base prices. Use this before creating a quotation if you need the tourScheduleId.',
+          parameters: z.object({
+            query: z.string().describe('The name of the tour to search for (e.g., Kandy, Galle)')
+          }),
+          execute: async ({ query }) => {
+            const tours = await prisma.tourSchedule.findMany({
+              where: { companyId, name: { contains: query, mode: 'insensitive' } },
+              take: 3,
+              select: { id: true, name: true, days: true, basePricePerPerson: true }
+            });
+            return { tours };
+          }
+        }),
+
+        createBooking: tool({
+          description: 'Create a new REAL booking in the database. Use this when the user asks to book a trip.',
+          parameters: z.object({
+            customerName: z.string().describe('Name of the customer'),
+            vehicleNo: z.string().describe('Vehicle registration number (e.g. CAB-1234). Use "TBD" if not specified.'),
+            startDate: z.string().describe('Start date in YYYY-MM-DD format'),
+            destination: z.string().describe('Main destination of the trip'),
+            notes: z.string().optional()
+          }),
+          execute: async ({ customerName, vehicleNo, startDate, destination, notes }) => {
+            const booking = await prisma.booking.create({
+              data: {
+                companyId,
+                customerName,
+                vehicleNo,
+                startDate: new Date(startDate),
+                destination,
+                notes,
+                status: 'CONFIRMED'
+              }
+            });
+            return { success: true, bookingId: booking.id, message: `Booking for ${customerName} to ${destination} successfully saved in the database!` };
+          }
+        }),
+
+        createQuotation: tool({
+          description: 'Create a new REAL quotation in the database. Call searchTours first if you do not know the tourScheduleId.',
+          parameters: z.object({
+            customerName: z.string().describe('Name of the customer'),
+            tourScheduleId: z.string().describe('The database ID of the tour schedule'),
+            numberOfPersons: z.number().describe('Number of people travelling'),
+            totalAmount: z.number().describe('Calculated total amount for the quotation')
+          }),
+          execute: async ({ customerName, tourScheduleId, numberOfPersons, totalAmount }) => {
+            const quotation = await prisma.quotation.create({
+              data: {
+                companyId,
+                customerName,
+                tourScheduleId,
+                numberOfPersons,
+                totalAmount,
+                status: 'DRAFT'
+              }
+            });
+            return { 
+              success: true, 
+              quotationNumber: quotation.quotationNumber, 
+              message: `Quotation #${quotation.quotationNumber} created successfully and saved to the database!` 
+            };
+          }
+        })
       },
     });
 
@@ -147,6 +188,3 @@ Format: { "days": number (optional), "numberOfPersons": number (optional), "dest
     return new Response(error.message || String(error) || 'VIGIL_SERVER_ERROR', { status: 500 });
   }
 }
-
-
-
