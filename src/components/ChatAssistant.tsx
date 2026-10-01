@@ -70,9 +70,9 @@ export default function ChatAssistant() {
 
         mediaRecorder.start();
         setIsListening(true);
-      } catch (err) {
-        console.error("Microphone access denied", err);
-        alert("Please allow microphone access to use voice commands.");
+      } catch (err: any) {
+        console.error("Microphone error", err);
+        alert(`Microphone Error: ${err?.name || 'Unknown'} - ${err?.message || 'Check connection/permissions'}.`);
       }
     }
   };
