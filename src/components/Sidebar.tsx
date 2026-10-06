@@ -8,6 +8,9 @@ import { logoutUser } from '@/lib/user-actions';
 import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, Sun, Moon, LogOut, UserCog, BarChart3, CalendarRange } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import { Montserrat } from 'next/font/google';
+
+const montserrat = Montserrat({ subsets: ['latin'], weight: ['700', '900'] });
 import {
     Sidebar as ShadcnSidebar,
     SidebarContent,
@@ -75,10 +78,12 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
         <ShadcnSidebar className="border-r border-border/50 bg-card/40 backdrop-blur-xl">
             <div className="p-4 border-b border-border/50 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-3">
-                    <Image src="/VIGIL-logo.png" alt="VIGIL" width={48} height={48} className="h-12 w-auto drop-shadow-sm" priority />
+                    <div className="bg-white p-1.5 rounded-xl shadow-[0_2px_10px_rgba(0,180,216,0.2)] border border-slate-200 shrink-0">
+                        <Image src="/logo-icon.png" alt="VIGIL" width={36} height={36} className="h-9 w-auto object-contain" priority />
+                    </div>
                     <div className="flex flex-col">
-                        <span className="font-bold text-2xl tracking-tight leading-none bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-1">VIGIL</span>
-                            <span className="text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase leading-none">Smart Travel Management.</span>
+                        <span className={`font-black text-2xl tracking-tight leading-none text-foreground pb-0.5 ${montserrat.className}`}>VIGIL</span>
+                        <span className="text-[0.60rem] font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase leading-none">Vehicle Hire & Travel</span>
                     </div>
                 </Link>
             </div>
