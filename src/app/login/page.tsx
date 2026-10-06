@@ -113,11 +113,11 @@ export default function LoginPage() {
                         
                         <CardHeader className="text-center space-y-4 pb-4 pt-10">
                             <div className="mx-auto flex flex-col items-center justify-center gap-4">
-                                <div className="relative bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/20">
-                                    <div className="absolute inset-0 bg-cyan-500/30 blur-xl rounded-full scale-125"></div>
-                                    <Image src="/logo-icon.png" alt="VIGIL Logo Icon" width={96} height={96} className="h-24 w-auto drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] relative z-10 object-contain" priority />
+                                <div className="relative bg-white p-4 rounded-3xl shadow-[0_8px_30px_rgba(0,180,216,0.4)] border-2 border-white/50 group hover:scale-105 transition-transform duration-300">
+                                    <div className="absolute inset-0 bg-white rounded-3xl z-0"></div>
+                                    <Image src="/logo-icon.png" alt="VIGIL Logo Icon" width={96} height={96} className="h-20 w-auto relative z-10 object-contain" priority />
                                 </div>
-                                <div className="flex flex-col items-center mt-1 drop-shadow-lg">
+                                <div className="flex flex-col items-center mt-2 drop-shadow-lg">
                                     <CardTitle className={`text-4xl font-black tracking-tight text-white pb-1 ${montserrat.className}`}>VIGIL</CardTitle>
                                     <span className="text-[10px] sm:text-xs font-bold tracking-[0.15em] text-cyan-300 uppercase leading-tight mt-1">Vehicle Hire & Travel Management</span>
                                 </div>
