@@ -106,48 +106,48 @@ export default function LoginPage() {
                 </div>
 
                 {/* Right Side: Login Form */}
-                <div className="dark w-full max-w-md shrink-0 mx-auto lg:mx-0">
-                    <Card className="w-full shadow-[0_8px_40px_rgba(0,0,0,0.5)] bg-black/70 backdrop-blur-2xl border-cyan-500/40 overflow-hidden text-slate-100 relative">
+                <div className="w-full max-w-md shrink-0 mx-auto lg:mx-0 relative z-10">
+                    <Card className="w-full shadow-[0_16px_60px_rgba(0,0,0,0.3)] bg-white/95 backdrop-blur-3xl border-white overflow-hidden text-slate-900 relative">
                         {/* Decorative glow inside card */}
-                        <div className="absolute -top-32 -right-32 w-64 h-64 bg-cyan-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+                        <div className="absolute -top-32 -right-32 w-64 h-64 bg-blue-100/50 rounded-full blur-[80px] pointer-events-none"></div>
                         
                         <CardHeader className="text-center space-y-4 pb-4 pt-10">
                             <div className="mx-auto flex flex-col items-center justify-center gap-4">
-                                <div className="relative bg-white p-4 rounded-3xl shadow-[0_8px_30px_rgba(0,180,216,0.4)] border-2 border-white/50 group hover:scale-105 transition-transform duration-300">
+                                <div className="relative bg-white p-4 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-slate-100 group hover:scale-105 transition-transform duration-300">
                                     <div className="absolute inset-0 bg-white rounded-3xl z-0"></div>
                                     <Image src="/logo-icon.png" alt="VIGIL Logo Icon" width={96} height={96} className="h-20 w-auto relative z-10 object-contain" priority />
                                 </div>
-                                <div className="flex flex-col items-center mt-2 drop-shadow-lg">
-                                    <CardTitle className={`text-4xl font-black tracking-tight text-white pb-1 ${montserrat.className}`}>VIGIL</CardTitle>
-                                    <span className="text-[10px] sm:text-xs font-bold tracking-[0.15em] text-cyan-300 uppercase leading-tight mt-1">Vehicle Hire & Travel Management</span>
+                                <div className="flex flex-col items-center mt-2">
+                                    <CardTitle className={`text-4xl font-black tracking-tight text-slate-900 pb-1 ${montserrat.className}`}>VIGIL</CardTitle>
+                                    <span className="text-[10px] sm:text-xs font-bold tracking-[0.15em] text-blue-600 uppercase leading-tight mt-1">Vehicle Hire & Travel Management</span>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="px-8 pb-10">
-                            <form onSubmit={handleSubmit} className="space-y-5">
+                            <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
                                 {error && (
-                                    <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-100 text-sm text-center font-bold shadow-sm">
+                                    <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm text-center font-bold shadow-sm">
                                         {error}
                                     </div>
                                 )}
 
                                 <div className="space-y-2.5">
-                                    <label className="text-sm font-bold text-white tracking-wide">Email Address</label>
+                                    <label className="text-sm font-bold text-slate-700 tracking-wide">Email Address</label>
                                     <Input
                                         type="email"
                                         placeholder="name@company.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
-                                        className="h-12 bg-black/50 border-cyan-500/40 text-white font-medium placeholder:text-slate-400 focus-visible:ring-cyan-500 shadow-inner"
+                                        className="h-12 bg-slate-50 border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus-visible:ring-blue-500 shadow-inner"
                                         disabled={loading}
                                     />
                                 </div>
 
                                 <div className="space-y-2.5">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-sm font-bold text-white tracking-wide">Password</label>
-                                        <Link href="/forgot-password" className="text-xs font-bold text-cyan-400 hover:text-cyan-200 transition-colors drop-shadow-sm">
+                                        <label className="text-sm font-bold text-slate-700 tracking-wide">Password</label>
+                                        <Link href="/forgot-password" className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">
                                             Forgot password?
                                         </Link>
                                     </div>
@@ -156,14 +156,14 @@ export default function LoginPage() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
-                                        className="h-12 bg-black/50 border-cyan-500/40 text-white font-medium placeholder:text-slate-400 focus-visible:ring-cyan-500 shadow-inner"
+                                        className="h-12 bg-slate-50 border-slate-200 text-slate-900 font-medium placeholder:text-slate-400 focus-visible:ring-blue-500 shadow-inner"
                                         disabled={loading}
                                     />
                                 </div>
 
                                 <Button 
                                     type="submit" 
-                                    className="w-full h-12 mt-8 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-base border border-cyan-400/50 shadow-[0_0_20px_rgba(0,180,216,0.6)] transition-all duration-300" 
+                                    className="w-full h-12 mt-8 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold text-base border-none shadow-[0_4px_15px_rgba(0,180,216,0.3)] transition-all duration-300" 
                                     disabled={loading}
                                 >
                                     {loading ? (
