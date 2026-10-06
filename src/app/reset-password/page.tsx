@@ -111,7 +111,26 @@ export default function ResetPasswordPage() {
             <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
             <div className="absolute inset-0 z-0 bg-[linear-gradient(rgba(0,180,216,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,180,216,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)]"></div>
 
-            <div className="dark w-full max-w-md shrink-0 mx-auto relative z-10">
+            <div className="relative z-10 w-full max-w-6xl flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-24 px-4 sm:px-8">
+                
+                {/* Left Side: Hero Text & Branding */}
+                <div className="hidden lg:flex flex-col w-full max-w-xl text-white space-y-8 drop-shadow-2xl">
+                    <div className="space-y-6">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-900/40 border border-cyan-400/30 text-cyan-50 text-sm font-semibold backdrop-blur-md shadow-lg">
+                            <KeyRound className="w-4 h-4 text-cyan-400" />
+                            <span>Account Recovery</span>
+                        </div>
+                        <h1 className="text-5xl xl:text-6xl font-black tracking-tight text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] leading-tight">
+                            Reset Your <br/> <span className="text-cyan-400">Secure Access.</span>
+                        </h1>
+                        <p className="text-lg xl:text-xl text-white/95 leading-relaxed font-medium max-w-lg drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                            Create a new secure password to regain access to your smart travel management platform.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Right Side */}
+                <div className="dark w-full max-w-md shrink-0 mx-auto lg:mx-0 relative z-10">
                 <Card className="w-full shadow-[0_8px_40px_rgba(0,0,0,0.5)] bg-black/70 backdrop-blur-2xl border-cyan-500/40 overflow-hidden text-slate-100 relative">
                     <div className="absolute -top-32 -right-32 w-64 h-64 bg-cyan-500/20 rounded-full blur-[80px] pointer-events-none"></div>
                     
@@ -226,6 +245,7 @@ export default function ResetPasswordPage() {
                         )}
                     </CardContent>
                 </Card>
+            </div>
             </div>
         </div>
     );
