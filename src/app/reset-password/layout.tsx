@@ -3,10 +3,10 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
-    title: 'Login - VIGIL',
+    title: 'Reset Password - VIGIL',
 };
 
-export default async function LoginLayout({
+export default async function ResetPasswordLayout({
     children,
 }: {
     children: React.ReactNode;
