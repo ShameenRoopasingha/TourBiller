@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { ReportsDashboard } from './ReportsDashboard';
 
 export const metadata = {
-  title: 'Reports | TourBiller',
+  title: 'Reports | Vigil Tour Management Platform',
   description: 'Financial reports for your business',
 };
 

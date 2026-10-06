@@ -1,4 +1,4 @@
-# TourBiller 🚐
+# Vigil Tour Management Platform 🚐
 
 A modern vehicle hire billing and tour management system built with Next.js 16, Prisma, and PostgreSQL.
 
@@ -37,8 +37,8 @@ A modern vehicle hire billing and tour management system built with Next.js 16, 
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/ShameenRoopasingha/TourBiller.git
-cd TourBiller
+git clone https://github.com/ShameenRoopasingha/Vigil Tour Management Platform.git
+cd Vigil Tour Management Platform
 npm install
 ```
 

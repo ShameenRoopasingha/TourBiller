@@ -17,7 +17,7 @@ import ChatAssistant from '@/components/ChatAssistant';
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'VIGIL | Smart Travel Management System',
+  title: 'Vigil Tour Management Platform',
   description: 'The professional solution for vehicle hire billing and travel management. Automate invoices, manage bookings, and streamline your operations with VIGIL.',
 }
 

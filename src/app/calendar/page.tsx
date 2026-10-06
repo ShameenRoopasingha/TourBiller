@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { VehicleCalendar } from './VehicleCalendar';
 
 export const metadata = {
-  title: 'Booking Calendar | TourBiller',
+  title: 'Booking Calendar | Vigil Tour Management Platform',
   description: 'Visual calendar of vehicle bookings',
 };
 

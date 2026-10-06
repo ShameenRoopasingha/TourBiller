@@ -1,8 +1,8 @@
 {
     "$schema":  "../node_modules/@tauri-apps/cli/config.schema.json",
-    "productName":  "tourbiller",
+    "productName": "Vigil Tour Management Platform",
     "version":  "0.1.0",
-    "identifier":  "com.tourbiller.app",
+    "identifier": "com.vigil.tourmanagement",
     "build":  {
                   "frontendDist":  "https://vigil-pos.vercel.app",
                   "devUrl":  "http://localhost:3000",
@@ -12,7 +12,7 @@
     "app":  {
                 "windows":  [
                                 {
-                                    "title":  "TourBiller",
+                                    "title":  "Vigil Tour Management Platform",
                                     "width":  800,
                                     "height":  600,
                                     "resizable":  true,
@@ -38,3 +38,4 @@
                                }
                }
 }
+
