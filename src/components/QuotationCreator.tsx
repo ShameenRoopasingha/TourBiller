@@ -7,6 +7,7 @@ import { Loader2, FileCheck, Calculator, Plus, Sparkles } from 'lucide-react';
 
 import { QuotationFormSchema, type QuotationFormInput, type QuotationWithSchedule, type VehicleAvailabilityConflict, type DriverAvailabilityConflict } from '@/lib/validations';
 import { notify } from '@/lib/notifications';
+import { MapDistanceCalculator } from '@/components/MapDistanceCalculator';
 
 // For backward compatibility
 export type QuotationFormData = QuotationFormInput;
@@ -825,6 +826,19 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 className="bg-muted cursor-not-allowed"
                             />
                         </div>
+                    </div>
+
+                    <div className="py-2">
+                        <MapDistanceCalculator 
+                            onDistanceCalculated={(dist, duration, start, end) => {
+                                form.setValue('pickupLocation', start.split(',')[0], { shouldDirty: true });
+                                form.setValue('dropLocation', end.split(',')[0], { shouldDirty: true });
+                                
+                                const currentNotes = form.getValues('notes');
+                                const autoNote = `Map Route: ${start.split(',')[0]} to ${end.split(',')[0]}\nEst. Distance: ${dist.toFixed(1)} km\nEst. Duration: ${duration}`;
+                                form.setValue('notes', currentNotes ? `${currentNotes}\n\n${autoNote}` : autoNote, { shouldDirty: true });
+                            }}
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

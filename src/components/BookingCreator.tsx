@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MapDistanceCalculator } from '@/components/MapDistanceCalculator';
 
 interface BookingCreatorProps {
     vehicles: Vehicle[];
@@ -295,6 +296,21 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                             <FormMessage />
                                         </FormItem>
                                     )}
+                                />
+                            </div>
+
+                            <div className="py-2">
+                                <MapDistanceCalculator 
+                                    onDistanceCalculated={(dist, duration, start, end) => {
+                                        const routeStr = `${start.split(',')[0]} to ${end.split(',')[0]}`;
+                                        const currentDest = form.getValues('destination');
+                                        if (!currentDest || currentDest.trim() === '') {
+                                            form.setValue('destination', routeStr);
+                                        }
+                                        const currentNotes = form.getValues('notes');
+                                        const autoNote = `Map Route: ${routeStr}\nEst. Distance: ${dist.toFixed(1)} km\nEst. Duration: ${duration}`;
+                                        form.setValue('notes', currentNotes ? `${currentNotes}\n\n${autoNote}` : autoNote);
+                                    }}
                                 />
                             </div>
 
