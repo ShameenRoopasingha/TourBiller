@@ -11,6 +11,9 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Aurora from '../../../components/reactbits/Aurora';
+import { Montserrat } from 'next/font/google';
+
+const montserrat = Montserrat({ subsets: ['latin'], weight: ['700', '900'] });
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -110,13 +113,13 @@ export default function LoginPage() {
                         
                         <CardHeader className="text-center space-y-4 pb-4 pt-10">
                             <div className="mx-auto flex flex-col items-center justify-center gap-4">
-                                <div className="relative">
-                                    <div className="absolute inset-0 bg-cyan-500/40 blur-2xl rounded-full scale-150"></div>
-                                    <Image src="/VIGIL-logo.png" alt="VIGIL" width={112} height={112} className="h-28 w-auto drop-shadow-[0_0_25px_rgba(0,180,216,0.8)] relative z-10" priority />
+                                <div className="relative bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/20">
+                                    <div className="absolute inset-0 bg-cyan-500/30 blur-xl rounded-full scale-125"></div>
+                                    <Image src="/logo-icon.png" alt="VIGIL Logo Icon" width={96} height={96} className="h-24 w-auto drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] relative z-10 object-contain" priority />
                                 </div>
-                                <div className="flex flex-col items-center mt-3 drop-shadow-lg">
-                                    <CardTitle className="text-4xl font-black tracking-tight text-white pb-1">VIGIL</CardTitle>
-                                    <span className="text-xs font-bold tracking-[0.2em] text-cyan-300 uppercase leading-tight mt-1">Smart Travel Management</span>
+                                <div className="flex flex-col items-center mt-1 drop-shadow-lg">
+                                    <CardTitle className={`text-4xl font-black tracking-tight text-white pb-1 ${montserrat.className}`}>VIGIL</CardTitle>
+                                    <span className="text-[10px] sm:text-xs font-bold tracking-[0.15em] text-cyan-300 uppercase leading-tight mt-1">Vehicle Hire & Travel Management</span>
                                 </div>
                             </div>
                         </CardHeader>
