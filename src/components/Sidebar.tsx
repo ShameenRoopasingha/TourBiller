@@ -83,7 +83,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                     </div>
                     <div className="flex flex-col">
                         <span className={`font-black text-2xl tracking-tight leading-none text-foreground pb-0.5 ${montserrat.className}`}>VIGIL</span>
-                        <span className="text-[0.60rem] font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase leading-none">Vehicle Hire & Travel</span>
+                        <span className="text-[0.55rem] font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase leading-tight">Vehicle Hire &<br/>Travel Management</span>
                     </div>
                 </Link>
             </div>
