@@ -76,11 +76,9 @@ export default async function DashboardPage() {
             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent">
               VIGIL
             </span>
-            <span className="text-foreground invisible sm:visible"> </span>
-            <span className="text-foreground">Precision Billing</span>
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto font-medium">
-            Smart travel management and intelligent invoicing infrastructure for modern fleets.
+          <p className="text-xs sm:text-sm max-w-xl mx-auto font-bold uppercase tracking-[0.15em] text-blue-600 dark:text-blue-400">
+            Vehicle Hire & Travel Management
           </p>
         </div>
 
