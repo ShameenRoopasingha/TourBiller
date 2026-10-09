@@ -54,7 +54,7 @@ export default async function RootLayout({
                         {/* Mobile Only Logo & Trigger */}
                         <div className="md:hidden flex items-center gap-2">
                           <SidebarTrigger className="-mr-2" />
-                          <Image src="/VIGIL-logo.png" alt="VIGIL" width={28} height={28} className="h-7 w-auto drop-shadow-sm" priority />
+                          <Image src="/logo-icon.png" alt="VIGIL" width={28} height={28} className="h-7 w-auto drop-shadow-sm object-contain" priority />
                           <div className="flex flex-col justify-center">
                             <span className="font-bold text-base tracking-tight leading-none bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-0.5">VIGIL</span>
                           </div>
