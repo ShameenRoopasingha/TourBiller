@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Montserrat } from 'next/font/google'
 import './globals.css'
 import Image from 'next/image'
 import { Sidebar } from '@/components/Sidebar';
@@ -15,6 +15,7 @@ import { ToastProvider } from '@/components/ToastProvider';
 import ChatAssistant from '@/components/ChatAssistant';
 
 const inter = Inter({ subsets: ['latin'] })
+const montserrat = Montserrat({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Vigil Tour Management Platform',
@@ -56,7 +57,7 @@ export default async function RootLayout({
                           <SidebarTrigger className="-mr-2" />
                           <Image src="/logo-icon.png" alt="VIGIL" width={28} height={28} className="h-7 w-auto drop-shadow-sm object-contain" priority />
                           <div className="flex flex-col justify-center">
-                            <span className="font-bold text-base tracking-tight leading-none bg-gradient-to-r from-blue-900 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent pb-0.5">VIGIL</span>
+                            <span className={`font-black text-xl tracking-tight leading-none text-foreground pb-0.5 ${montserrat.className}`}>VIGIL</span>
                           </div>
                         </div>
                         {/* Desktop empty spacer for left side if needed */}
