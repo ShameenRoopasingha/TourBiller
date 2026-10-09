@@ -270,6 +270,7 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                                 <th className="px-2 py-1.5 text-left w-[36px] border-r border-gray-600">Day</th>
                                 <th className="px-2 py-1.5 text-left border-r border-gray-600">Route / Description</th>
                                 <th className="px-2 py-1.5 text-right w-[40px] border-r border-gray-600">Km</th>
+                                <th className="px-2 py-1.5 text-right border-r border-gray-600">Transport</th>
                                 <th className="px-2 py-1.5 text-right border-r border-gray-600">Accomm.</th>
                                 <th className="px-2 py-1.5 text-right border-r border-gray-600">Meals</th>
                                 <th className="px-2 py-1.5 text-right border-r border-gray-600">Activities</th>
@@ -279,7 +280,10 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                         </thead>
                         <tbody>
                             {quotation.tourSchedule.items.map((item, idx) => {
-                                const dayTotal = item.accommodation + item.meals + item.activities + item.otherCosts;
+                                const dailyTransport = (quotation.transportCost / (quotation.tourSchedule.days || 1)) + (quotation.driverCostPerDay || 0);
+                                const dayTotal = dailyTransport + item.accommodation + item.meals + item.activities + item.otherCosts;
+                                const renderAmt = (val: number) => val === 0 ? '-' : fmt(val);
+                                
                                 return (
                                     <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-200`}>
                                         <td className="px-2 py-1.5 font-bold text-center border-r border-gray-200">{item.dayNumber}</td>
@@ -290,11 +294,12 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                                             )}
                                         </td>
                                         <td className="px-2 py-1.5 text-right border-r border-gray-200">{item.distanceKm}</td>
-                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{fmt(item.accommodation)}</td>
-                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{fmt(item.meals)}</td>
-                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{fmt(item.activities)}</td>
-                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{fmt(item.otherCosts)}</td>
-                                        <td className="px-2 py-1.5 text-right font-semibold">{fmt(dayTotal)}</td>
+                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(dailyTransport)}</td>
+                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.accommodation)}</td>
+                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.meals)}</td>
+                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.activities)}</td>
+                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.otherCosts)}</td>
+                                        <td className="px-2 py-1.5 text-right font-semibold">{renderAmt(dayTotal)}</td>
                                     </tr>
                                 );
                             })}
