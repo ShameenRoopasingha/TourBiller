@@ -18,8 +18,7 @@ import {
     Activity, 
     Layers, 
     Receipt, 
-    CalendarRange,
-    Sparkles
+    CalendarRange
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -84,12 +83,6 @@ export default function LoginPage() {
             x: e.clientX - rect.left,
             y: e.clientY - rect.top,
         });
-    };
-
-    const handleQuickFillDemo = () => {
-        setEmail('demo-admin@tourbiller.local');
-        setPassword('DemoPass123!');
-        setError('');
     };
 
     const handleSubmit = async (e: FormEvent) => {
@@ -332,33 +325,17 @@ export default function LoginPage() {
                             </div>
 
                             <div className="space-y-0.5">
-                                <div className="flex items-center justify-center gap-2">
-                                    <span className={`text-xl sm:text-2xl font-black tracking-tight text-white ${montserrat.className}`}>
-                                        VIGIL
-                                    </span>
-                                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest bg-blue-500/15 border border-blue-400/30 text-blue-300">
-                                        PRO
-                                    </span>
-                                </div>
-                                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-                                    Tour & Fleet Operations
+                                <span className={`text-2xl font-black tracking-tight text-white ${montserrat.className}`}>
+                                    VIGIL
+                                </span>
+                                <p className="text-[11px] font-semibold tracking-wide text-cyan-400 uppercase">
+                                    Vehicle Hire & Travel Management
                                 </p>
                             </div>
 
-                            <div className="flex items-center justify-center gap-2 pt-0.5">
-                                <span className="text-[11px] text-slate-400">
-                                    Sign in with your enterprise credentials
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={handleQuickFillDemo}
-                                    title="Auto-fill Demo Admin credentials"
-                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-400/20 transition-colors"
-                                >
-                                    <Sparkles className="w-2.5 h-2.5" />
-                                    <span>Demo Fill</span>
-                                </button>
-                            </div>
+                            <p className="text-[11px] text-slate-400 pt-0.5">
+                                Sign in to your operations workspace
+                            </p>
                         </div>
 
                         {/* Interactive Form */}
@@ -389,9 +366,8 @@ export default function LoginPage() {
 
                             {/* Email Input Field */}
                             <div className="space-y-0.5">
-                                <label htmlFor="login-email" className="text-[11px] font-semibold text-slate-300 tracking-wide flex items-center justify-between cursor-pointer">
-                                    <span>Work Email</span>
-                                    <span className="text-[9px] text-slate-400 font-normal">Workspace auto-detected</span>
+                                <label htmlFor="login-email" className="text-[11px] font-semibold text-slate-300 tracking-wide cursor-pointer">
+                                    Work Email
                                 </label>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
@@ -403,7 +379,7 @@ export default function LoginPage() {
                                         name="email"
                                         autoFocus
                                         autoComplete="email"
-                                        placeholder="user@transportcompany.com"
+                                        placeholder="admin@vigil.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
@@ -435,7 +411,7 @@ export default function LoginPage() {
                                         type={showPassword ? 'text' : 'password'}
                                         name="password"
                                         autoComplete="current-password"
-                                        placeholder="Enter account security token"
+                                        placeholder="Enter your password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
@@ -464,7 +440,7 @@ export default function LoginPage() {
                                         className="h-3.5 w-3.5 rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-blue-500/30 focus:ring-offset-0 focus:ring-1 cursor-pointer transition"
                                     />
                                     <span className="text-[10px] text-slate-400 group-hover:text-slate-300 transition-colors">
-                                        Remember workstation
+                                        Remember me
                                     </span>
                                 </label>
                                 <span className="text-[10px] text-slate-400">
@@ -484,11 +460,11 @@ export default function LoginPage() {
                                 {loading ? (
                                     <>
                                         <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
-                                        <span>Authenticating session...</span>
+                                        <span>Signing in...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <span>Access Dispatch Console</span>
+                                        <span>Sign In</span>
                                         <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                                     </>
                                 )}
@@ -496,10 +472,10 @@ export default function LoginPage() {
                         </form>
 
                         {/* Card Security Footnote */}
-                        <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-center gap-1 text-center">
+                        <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-center gap-1.5 text-center">
                             <ShieldCheck className="w-3 h-3 text-slate-400 shrink-0" />
                             <span className="text-[10px] text-slate-400">
-                                End-to-end cryptographic encryption • Authorized personnel only
+                                Enterprise-grade 256-bit SSL encryption
                             </span>
                         </div>
                     </div>
@@ -511,12 +487,12 @@ export default function LoginPage() {
                         </Link>
                         <span>•</span>
                         <Link href="/terms" className="hover:text-slate-300 transition-colors">
-                            Security Standard
+                            Terms of Service
                         </Link>
                         <span>•</span>
                         <span className="inline-flex items-center gap-1 text-slate-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                            Nominal
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Operational
                         </span>
                     </div>
                 </motion.div>
