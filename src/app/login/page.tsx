@@ -14,10 +14,11 @@ import {
     AlertCircle, 
     X, 
     Car, 
-    Clock, 
     CheckCircle2, 
     Activity, 
-    Radio
+    Layers,
+    Receipt,
+    CalendarRange
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -121,119 +122,136 @@ export default function LoginPage() {
             <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-10 xl:gap-14 my-auto py-2 sm:py-4">
                 
                 {/* ============================================================== */}
-                {/* LEFT COLUMN: BRAND PRESENCE & MISSION CONTROL TELEMETRY DECK   */}
+                {/* LEFT COLUMN: BRAND PRESENCE & MULTI-TENANT PLATFORM DECK        */}
                 {/* ============================================================== */}
                 <motion.div 
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-full lg:max-w-lg xl:max-w-xl flex flex-col space-y-4 lg:space-y-5"
+                    className="w-full lg:max-w-lg xl:max-w-xl flex flex-col space-y-3.5 lg:space-y-4"
                 >
-                    {/* Live Node Status Pill */}
+                    {/* Multi-Tenant Status Pill */}
                     <div className="inline-flex items-center gap-2.5 self-start px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-sm backdrop-blur-md">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                         </span>
                         <span className="text-[11px] font-semibold tracking-wide text-slate-300">
-                            Enterprise Gateway <span className="text-slate-500">•</span> London Core Cluster
+                            Enterprise Cloud Platform <span className="text-slate-500">•</span> Multi-Tenant Architecture
                         </span>
                     </div>
 
                     {/* Authority Headline */}
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                         <h1 className="text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight text-white leading-[1.12]">
-                            Precision fleet intelligence & tour logistics.
+                            Unified operations & billing for modern tour fleets.
                         </h1>
                         <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-lg font-normal">
-                            The unified operational command for premium chauffeur fleets, multi-day itineraries, and real-time fiscal billing.
+                            Isolated enterprise workspaces designed for tour agencies, vehicle hire operators, and chauffeur fleets of any scale.
                         </p>
                     </div>
 
-                    {/* Operational Telemetry Card (Compact Executive Monitor) */}
+                    {/* Multi-Tenant Feature Deck Card */}
                     <motion.div 
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                        className="rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800/80 p-4 sm:p-5 shadow-[0_15px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl relative overflow-hidden group"
+                        className="rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800/80 p-3.5 sm:p-4.5 shadow-[0_15px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl relative overflow-hidden group"
                     >
                         {/* Top sheen hairline */}
                         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
                         
-                        {/* Telemetry Header */}
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                        {/* Deck Header */}
+                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-800/80">
                             <div className="flex items-center gap-2">
                                 <div className="p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                                    <Radio className="w-3.5 h-3.5 animate-pulse" />
+                                    <Layers className="w-3.5 h-3.5" />
                                 </div>
                                 <div>
-                                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Live Mission Monitor</div>
-                                    <div className="text-xs sm:text-sm font-bold text-slate-200">The Savoy London ➔ Silverstone Classic Tour</div>
+                                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Platform Capabilities</div>
+                                    <div className="text-xs sm:text-sm font-bold text-slate-200">Tenant Operations Workspace</div>
                                 </div>
                             </div>
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-semibold tracking-wide">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                In Transit
+                                Tenant Partitioned
                             </span>
                         </div>
 
-                        {/* Dispatch Details Row */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 py-3 text-xs">
-                            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-900/60 border border-slate-800/60">
-                                <div className="p-1.5 rounded-lg bg-slate-800/80 text-slate-300">
-                                    <Car className="w-3.5 h-3.5" />
+                        {/* 3 Core Capability Rows */}
+                        <div className="space-y-2 py-2.5 text-xs">
+                            {/* Feature 1: Invoicing & Billing */}
+                            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-slate-900/60 border border-slate-800/60">
+                                <div className="p-1.5 rounded-lg bg-slate-800/80 text-blue-400 shrink-0 mt-0.5">
+                                    <Receipt className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="min-w-0">
-                                    <div className="text-slate-400 text-[10px] font-medium">Assigned Asset</div>
-                                    <div className="text-slate-200 font-semibold truncate text-xs">Mercedes V-Class Extra Long</div>
-                                    <div className="text-slate-500 font-mono text-[10px]">Plate: LJ73 VGL</div>
+                                    <div className="text-slate-200 font-semibold text-xs">Branded Invoicing & Meter Billing</div>
+                                    <div className="text-slate-400 text-[11px] leading-relaxed">
+                                        Custom company profiles, bank details, start/end meter tracking, excess Km charges, and dual LKR/USD currencies.
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-900/60 border border-slate-800/60">
-                                <div className="p-1.5 rounded-lg bg-slate-800/80 text-slate-300">
-                                    <Clock className="w-3.5 h-3.5" />
+                            {/* Feature 2: Day-by-Day Itineraries */}
+                            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-slate-900/60 border border-slate-800/60">
+                                <div className="p-1.5 rounded-lg bg-slate-800/80 text-cyan-400 shrink-0 mt-0.5">
+                                    <CalendarRange className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="min-w-0">
-                                    <div className="text-slate-400 text-[10px] font-medium">Chauffeur / ETA</div>
-                                    <div className="text-slate-200 font-semibold truncate text-xs">D. Sterling (Lead Driver)</div>
-                                    <div className="text-emerald-400 font-medium text-[10px]">On Schedule • ETA 10:45 AM</div>
+                                    <div className="text-slate-200 font-semibold text-xs">Day-by-Day Tour Itinerary Engine</div>
+                                    <div className="text-slate-400 text-[11px] leading-relaxed">
+                                        Multi-day tour scheduling, itemized transport, accommodation, and activity costing with instant quotation generation.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Feature 3: Fleet Maintenance & Chauffeurs */}
+                            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-slate-900/60 border border-slate-800/60">
+                                <div className="p-1.5 rounded-lg bg-slate-800/80 text-emerald-400 shrink-0 mt-0.5">
+                                    <Car className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="text-slate-200 font-semibold text-xs">Fleet Health & Driver Allocations</div>
+                                    <div className="text-slate-400 text-[11px] leading-relaxed">
+                                        Dedicated chauffeur assignments, vehicle maintenance alerts (oil, filter, license expiry), and trip activity audits.
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Telemetry Metric Badges */}
-                        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-800/80 text-center">
+                        {/* Multi-Tenant Metric Badges */}
+                        <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-slate-800/80 text-center">
                             <div className="p-1.5 rounded-lg bg-slate-950/50">
-                                <div className="text-[10px] text-slate-400 font-medium">Fleet Availability</div>
-                                <div className="text-sm sm:text-base font-bold text-white tracking-tight font-mono tabular-nums">99.8%</div>
+                                <div className="text-[10px] text-slate-400 font-medium">Tenant Isolation</div>
+                                <div className="text-xs sm:text-sm font-bold text-white tracking-tight">Strict Scoping</div>
                             </div>
                             <div className="p-1.5 rounded-lg bg-slate-950/50">
-                                <div className="text-[10px] text-slate-400 font-medium">Active Tours</div>
-                                <div className="text-sm sm:text-base font-bold text-white tracking-tight font-mono tabular-nums">18 Active</div>
+                                <div className="text-[10px] text-slate-400 font-medium">Currency Engine</div>
+                                <div className="text-xs sm:text-sm font-bold text-white tracking-tight">Multi-Currency</div>
                             </div>
                             <div className="p-1.5 rounded-lg bg-slate-950/50">
-                                <div className="text-[10px] text-slate-400 font-medium">Sync Latency</div>
-                                <div className="text-sm sm:text-base font-bold text-emerald-400 tracking-tight font-mono tabular-nums">14ms</div>
+                                <div className="text-[10px] text-slate-400 font-medium">Access Control</div>
+                                <div className="text-xs sm:text-sm font-bold text-emerald-400 tracking-tight">RBAC Enforced</div>
                             </div>
                         </div>
                     </motion.div>
 
                     {/* Trust & Compliance Strip */}
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 pt-1 text-[11px] text-slate-400">
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 pt-0.5 text-[11px] text-slate-400">
                         <div className="flex items-center gap-1.5">
                             <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                            <span>SOC-2 Type II</span>
+                            <span>Multi-Tenant Architecture</span>
                         </div>
                         <span className="text-slate-700 hidden sm:inline">•</span>
                         <div className="flex items-center gap-1.5">
                             <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
-                            <span>ISO/IEC 27001</span>
+                            <span>Automated Invoicing</span>
                         </div>
                         <span className="text-slate-700 hidden sm:inline">•</span>
                         <div className="flex items-center gap-1.5">
                             <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>99.99% SLA</span>
+                            <span>99.99% Uptime</span>
                         </div>
                     </div>
                 </motion.div>
