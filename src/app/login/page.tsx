@@ -318,14 +318,14 @@ export default function LoginPage() {
                         {/* Card Header & Brand Emblem */}
                         <div className="flex flex-col items-center text-center space-y-1.5 mb-3.5">
                             <div className="relative group">
-                                <div className="absolute -inset-1 bg-blue-500/20 rounded-2xl blur-md group-hover:bg-blue-500/30 transition-all duration-300" />
-                                <div className="relative p-1.5 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-inner">
+                                <div className="absolute -inset-1.5 bg-blue-500/25 rounded-2xl blur-md group-hover:bg-blue-400/35 transition-all duration-300" />
+                                <div className="relative p-2 rounded-2xl bg-white shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_12px_rgba(59,130,246,0.25)] border border-white shrink-0">
                                     <Image 
                                         src="/logo-icon.png" 
                                         alt="VIGIL Platform Icon" 
-                                        width={32} 
-                                        height={32} 
-                                        className="h-7 w-auto object-contain drop-shadow" 
+                                        width={36} 
+                                        height={36} 
+                                        className="h-8 w-auto object-contain" 
                                         priority 
                                     />
                                 </div>
