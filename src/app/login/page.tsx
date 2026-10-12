@@ -149,7 +149,7 @@ export default function LoginPage() {
             </div>
 
             {/* Main Stage Container - Strict Vertical Constraint */}
-            <div className="relative z-10 w-full max-w-5xl xl:max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-5 lg:gap-8 xl:gap-12 my-auto py-1 sm:py-2">
+            <div className="relative z-10 w-full max-w-5xl xl:max-w-6xl mx-auto flex flex-col lg:flex-row lg:items-stretch items-center justify-between gap-6 lg:gap-8 xl:gap-12 my-auto py-2 sm:py-3">
                 
                 {/* ============================================================== */}
                 {/* LEFT COLUMN: BRAND PRESENCE & MULTI-TENANT PLATFORM DECK        */}
@@ -158,7 +158,7 @@ export default function LoginPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-full lg:max-w-lg xl:max-w-xl flex flex-col space-y-3 lg:space-y-3.5"
+                    className="w-full lg:max-w-lg xl:max-w-xl flex flex-col justify-between space-y-3 lg:space-y-4"
                 >
                     {/* Multi-Tenant Status Pill */}
                     <div className="inline-flex items-center gap-2 self-start px-2.5 py-0.5 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-sm backdrop-blur-md">
@@ -286,13 +286,13 @@ export default function LoginPage() {
                 </motion.div>
 
                 {/* ============================================================== */}
-                {/* RIGHT COLUMN: COMPACT SOVEREIGN LOGIN TERMINAL CARD            */}
+                {/* RIGHT COLUMN: SOVEREIGN LOGIN TERMINAL CARD                    */}
                 {/* ============================================================== */}
                 <motion.div 
                     initial={{ opacity: 0, scale: 0.98, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-full max-w-sm sm:max-w-md shrink-0 relative"
+                    className="w-full max-w-sm sm:max-w-md xl:max-w-lg shrink-0 flex flex-col justify-between relative"
                 >
                     {/* Background Radial Glow */}
                     <div className="absolute -inset-1 rounded-3xl bg-gradient-to-b from-blue-500/20 via-blue-600/5 to-transparent blur-xl pointer-events-none opacity-75" />
@@ -301,7 +301,7 @@ export default function LoginPage() {
                     <div
                         ref={cardRef}
                         onMouseMove={handleMouseMove}
-                        className="relative rounded-2xl bg-[#0c121f]/90 border border-slate-700/60 p-4 sm:p-5 lg:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl overflow-hidden transition-all duration-300"
+                        className="relative flex-1 flex flex-col justify-between rounded-2xl bg-[#0c121f]/90 border border-slate-700/60 p-5 sm:p-6 lg:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl overflow-hidden transition-all duration-300"
                         style={{
                             backgroundImage: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(59, 130, 246, 0.12), transparent 50%)`,
                         }}
@@ -309,37 +309,37 @@ export default function LoginPage() {
                         <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-80" />
 
                         {/* Card Header & Brand Emblem */}
-                        <div className="flex flex-col items-center text-center space-y-1.5 mb-3.5">
+                        <div className="flex flex-col items-center text-center space-y-2 mb-2 sm:mb-3">
                             <div className="relative group">
-                                <div className="absolute -inset-1.5 bg-blue-500/25 rounded-2xl blur-md group-hover:bg-blue-400/35 transition-all duration-300" />
-                                <div className="relative p-2 rounded-2xl bg-white shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_12px_rgba(59,130,246,0.25)] border border-white shrink-0">
+                                <div className="absolute -inset-2 bg-blue-500/25 rounded-2xl blur-md group-hover:bg-blue-400/35 transition-all duration-300" />
+                                <div className="relative p-2.5 rounded-2xl bg-white shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_12px_rgba(59,130,246,0.25)] border border-white shrink-0">
                                     <Image 
                                         src="/logo-icon.png" 
                                         alt="VIGIL Platform Icon" 
-                                        width={40} 
-                                        height={40} 
-                                        className="h-9 w-auto object-contain" 
+                                        width={44} 
+                                        height={44} 
+                                        className="h-10 w-auto object-contain" 
                                         priority 
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-0.5">
-                                <span className={`text-2xl font-black tracking-tight text-white ${montserrat.className}`}>
+                                <span className={`text-2xl sm:text-3xl font-black tracking-tight text-white ${montserrat.className}`}>
                                     VIGIL
                                 </span>
-                                <p className="text-[11px] font-semibold tracking-wide text-cyan-400 uppercase">
+                                <p className="text-[11px] sm:text-xs font-semibold tracking-wider text-cyan-400 uppercase">
                                     Vehicle Hire & Travel Management
                                 </p>
                             </div>
 
-                            <p className="text-[11px] text-slate-400 pt-0.5">
+                            <p className="text-xs text-slate-400">
                                 Sign in to your operations workspace
                             </p>
                         </div>
 
                         {/* Interactive Form */}
-                        <form onSubmit={handleSubmit} className="space-y-2.5 relative z-10">
+                        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5 relative z-10 my-auto py-1">
                             {/* Error Alert Banner */}
                             <AnimatePresence mode="wait">
                                 {error && (
@@ -348,9 +348,9 @@ export default function LoginPage() {
                                         animate={{ opacity: 1, y: 0, height: 'auto' }}
                                         exit={{ opacity: 0, y: -4, height: 0 }}
                                         transition={{ duration: 0.15 }}
-                                        className="p-2 rounded-xl bg-red-950/60 border border-red-500/40 text-red-200 text-[11px] flex items-start gap-2 shadow-sm"
+                                        className="p-2.5 rounded-xl bg-red-950/60 border border-red-500/40 text-red-200 text-xs flex items-start gap-2 shadow-sm"
                                     >
-                                        <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+                                        <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                                         <div className="flex-1 font-medium leading-tight">{error}</div>
                                         <button 
                                             type="button" 
@@ -358,20 +358,20 @@ export default function LoginPage() {
                                             className="text-red-400 hover:text-red-200 transition-colors p-0.5"
                                             aria-label="Dismiss error"
                                         >
-                                            <X className="w-3 h-3" />
+                                            <X className="w-3.5 h-3.5" />
                                         </button>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
 
                             {/* Email Input Field */}
-                            <div className="space-y-0.5">
-                                <label htmlFor="login-email" className="text-[11px] font-semibold text-slate-300 tracking-wide cursor-pointer">
+                            <div className="space-y-1">
+                                <label htmlFor="login-email" className="text-xs font-semibold text-slate-300 tracking-wide cursor-pointer">
                                     Work Email
                                 </label>
                                 <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
-                                        <Mail className="w-3.5 h-3.5" />
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
+                                        <Mail className="w-4 h-4" />
                                     </div>
                                     <input
                                         id="login-email"
@@ -384,27 +384,27 @@ export default function LoginPage() {
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                         disabled={loading}
-                                        className="w-full h-9 pl-8 pr-3 rounded-xl bg-slate-900/70 border border-slate-700/70 text-slate-100 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-900/95 transition-all duration-200 shadow-inner disabled:opacity-50"
+                                        className="w-full h-10 sm:h-10.5 pl-9 pr-3 rounded-xl bg-slate-900/70 border border-slate-700/70 text-slate-100 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-900/95 transition-all duration-200 shadow-inner disabled:opacity-50"
                                     />
                                 </div>
                             </div>
 
                             {/* Password Input Field */}
-                            <div className="space-y-0.5">
+                            <div className="space-y-1">
                                 <div className="flex items-center justify-between">
-                                    <label htmlFor="login-password" className="text-[11px] font-semibold text-slate-300 tracking-wide cursor-pointer">
+                                    <label htmlFor="login-password" className="text-xs font-semibold text-slate-300 tracking-wide cursor-pointer">
                                         Password
                                     </label>
                                     <Link 
                                         href="/forgot-password" 
-                                        className="text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition-colors focus:outline-none focus:underline"
+                                        className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors focus:outline-none focus:underline"
                                     >
                                         Forgot password?
                                     </Link>
                                 </div>
                                 <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
-                                        <Lock className="w-3.5 h-3.5" />
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
+                                        <Lock className="w-4 h-4" />
                                     </div>
                                     <input
                                         id="login-password"
@@ -416,16 +416,16 @@ export default function LoginPage() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                         disabled={loading}
-                                        className="w-full h-9 pl-8 pr-9 rounded-xl bg-slate-900/70 border border-slate-700/70 text-slate-100 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-900/95 transition-all duration-200 shadow-inner disabled:opacity-50"
+                                        className="w-full h-10 sm:h-10.5 pl-9 pr-10 rounded-xl bg-slate-900/70 border border-slate-700/70 text-slate-100 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-900/95 transition-all duration-200 shadow-inner disabled:opacity-50"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-200 focus:outline-none transition-colors"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 focus:outline-none transition-colors"
                                         tabIndex={-1}
                                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     >
-                                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
                                 </div>
                             </div>
@@ -439,11 +439,11 @@ export default function LoginPage() {
                                         onChange={(e) => setRememberDevice(e.target.checked)}
                                         className="h-3.5 w-3.5 rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-blue-500/30 focus:ring-offset-0 focus:ring-1 cursor-pointer transition"
                                     />
-                                    <span className="text-[10px] text-slate-400 group-hover:text-slate-300 transition-colors">
+                                    <span className="text-[11px] text-slate-400 group-hover:text-slate-300 transition-colors">
                                         Remember me
                                     </span>
                                 </label>
-                                <span className="text-[10px] text-slate-400">
+                                <span className="text-[11px] text-slate-400">
                                     Need access?{' '}
                                     <a href="mailto:support@vigiltours.com?subject=New%20Tenant%20Workspace%20Request" className="text-blue-400 hover:underline">
                                         Request Workspace
@@ -455,33 +455,33 @@ export default function LoginPage() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full h-9 mt-2 relative group rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold text-xs sm:text-sm shadow-[0_6px_16px_rgba(37,99,235,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                                className="w-full h-10 sm:h-10.5 mt-2.5 relative group rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold text-xs sm:text-sm shadow-[0_6px_16px_rgba(37,99,235,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
                             >
                                 {loading ? (
                                     <>
-                                        <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+                                        <Loader2 className="h-4 w-4 animate-spin text-white" />
                                         <span>Signing in...</span>
                                     </>
                                 ) : (
                                     <>
                                         <span>Sign In</span>
-                                        <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                                        <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                                     </>
                                 )}
                             </button>
                         </form>
 
                         {/* Card Security Footnote */}
-                        <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-center gap-1.5 text-center">
-                            <ShieldCheck className="w-3 h-3 text-slate-400 shrink-0" />
-                            <span className="text-[10px] text-slate-400">
+                        <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-center gap-1.5 text-center">
+                            <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="text-[11px] text-slate-400">
                                 Enterprise-grade 256-bit SSL encryption
                             </span>
                         </div>
                     </div>
 
                     {/* Bottom Legal Navigation */}
-                    <div className="flex items-center justify-center gap-3 mt-2.5 text-[10px] text-slate-400 font-medium">
+                    <div className="flex items-center justify-center gap-3 mt-3 text-[11px] text-slate-400 font-medium shrink-0">
                         <Link href="/privacy" className="hover:text-slate-300 transition-colors">
                             Privacy Policy
                         </Link>
@@ -490,7 +490,7 @@ export default function LoginPage() {
                             Terms of Service
                         </Link>
                         <span>•</span>
-                        <span className="inline-flex items-center gap-1 text-slate-400">
+                        <span className="inline-flex items-center gap-1.5 text-slate-400">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                             Operational
                         </span>
