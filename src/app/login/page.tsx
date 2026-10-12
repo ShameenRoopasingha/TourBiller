@@ -323,9 +323,9 @@ export default function LoginPage() {
                                     <Image 
                                         src="/logo-icon.png" 
                                         alt="VIGIL Platform Icon" 
-                                        width={36} 
-                                        height={36} 
-                                        className="h-8 w-auto object-contain" 
+                                        width={40} 
+                                        height={40} 
+                                        className="h-9 w-auto object-contain" 
                                         priority 
                                     />
                                 </div>
