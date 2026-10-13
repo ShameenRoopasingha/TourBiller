@@ -475,7 +475,14 @@ export function QuotationTemplate({
                                         )}
                                         <div className="border-t-2 border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-2 text-sm font-bold py-0.5 items-center">
                                             <span>TOTAL AMOUNT</span>
-                                            <span className="text-right bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">{fmt(quotation.totalAmount)}</span>
+                                            <div className="text-right">
+                                                <span className="bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">{fmt(quotation.totalAmount)}</span>
+                                                {businessProfile?.usdRate && businessProfile.usdRate > 0 && (
+                                                    <div className="text-[11px] text-gray-600 font-medium mt-0.5">
+                                                        ≈ {formatCurrency(quotation.totalAmount / businessProfile.usdRate, 'USD')} <span className="text-[9px] text-gray-400 font-normal">(1 USD ≈ {fmt(businessProfile.usdRate)})</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -566,7 +573,14 @@ export function QuotationTemplate({
                                     )}
                                     <div className="border-t-2 border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-2 text-sm font-bold py-0.5 items-center">
                                         <span>TOTAL AMOUNT</span>
-                                        <span className="text-right bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">{fmt(quotation.totalAmount)}</span>
+                                        <div className="text-right">
+                                            <span className="bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">{fmt(quotation.totalAmount)}</span>
+                                            {businessProfile?.usdRate && businessProfile.usdRate > 0 && (
+                                                <div className="text-[11px] text-gray-600 font-medium mt-0.5">
+                                                    ≈ {formatCurrency(quotation.totalAmount / businessProfile.usdRate, 'USD')} <span className="text-[9px] text-gray-400 font-normal">(1 USD ≈ {fmt(businessProfile.usdRate)})</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -592,6 +606,11 @@ export function QuotationTemplate({
                             <div className="p-2.5 print:p-2 bg-green-50 border border-green-200 rounded">
                                 <span className="font-bold text-green-700">Advance Payment Required: </span>
                                 <span className="font-bold text-green-800">{fmt(quotation.advanceAmount)}</span>
+                                {businessProfile?.usdRate && businessProfile.usdRate > 0 && (
+                                    <span className="ml-1.5 text-[11px] text-green-700 font-medium">
+                                        (≈ {formatCurrency(quotation.advanceAmount / businessProfile.usdRate, 'USD')})
+                                    </span>
+                                )}
                                 {businessProfile?.bankAccountNo && (
                                     <div className="mt-0.5 text-green-700 text-[11px]">
                                         <span className="font-semibold">Bank: </span>{businessProfile.bankName || 'N/A'}

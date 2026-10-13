@@ -54,14 +54,35 @@ export function calculateTotalAmount(
 }
 
 /**
- * Format a number as currency
+ * Format a number as currency (supports LKR, USD, EUR, GBP, AUD, CAD)
  */
-export function formatCurrency(amount: number): string {
-  // Using explicit Rs. prefix as it's cleaner than the standard LKR symbol for receipts
-  return 'Rs. ' + amount.toLocaleString('en-US', {
+export function formatCurrency(amount: number, currency: string = 'LKR'): string {
+  const code = (currency || 'LKR').toUpperCase().trim();
+  const formattedNumber = (amount || 0).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
+  switch (code) {
+    case 'USD':
+    case '$':
+      return '$' + formattedNumber;
+    case 'EUR':
+    case '€':
+      return '€' + formattedNumber;
+    case 'GBP':
+    case '£':
+      return '£' + formattedNumber;
+    case 'AUD':
+      return 'A$' + formattedNumber;
+    case 'CAD':
+      return 'C$' + formattedNumber;
+    case 'LKR':
+    case 'RS':
+    case 'RS.':
+    default:
+      return 'Rs. ' + formattedNumber;
+  }
 }
 
 /**

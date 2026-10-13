@@ -448,7 +448,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                         <div className="flex items-center justify-between mb-3">
                             <div>
                                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                                    Operating Costs & Running Charges (ධාවන වියදම්)
+                                    Operating Costs & Running Charges
                                 </h3>
                                 <p className="text-xs text-muted-foreground mt-0.5">
                                     Enter routine costs to automatically compute the vehicle&apos;s true cost per kilometer and suggested extra km rate.
@@ -558,7 +558,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 <div className="flex items-center justify-between font-medium">
                                     <span className="flex items-center gap-1.5 text-foreground font-semibold">
                                         <Calculator className="w-3.5 h-3.5 text-primary" />
-                                        Running Cost Breakdown (පිරිවැය සාරාංශය)
+                                        Running Cost Breakdown
                                     </span>
                                     <span className="text-primary font-bold">
                                         Base: Rs. {costBreakdown.baseCostPerKm.toFixed(2)} / KM

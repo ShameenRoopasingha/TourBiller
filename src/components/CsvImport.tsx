@@ -79,7 +79,7 @@ export function CsvImport({ companyId }: { companyId: string }) {
 
   return (
     <div className="border rounded-lg p-4 space-y-4 bg-muted/20">
-      <h3 className="font-medium text-lg">CSV Bulk Import (අලුතෙන් Data ඇතුලත් කිරීම)</h3>
+      <h3 className="font-medium text-lg">CSV Bulk Import</h3>
       
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         <div className="w-full sm:w-48">
