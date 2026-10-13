@@ -18,6 +18,8 @@ export default auth((req) => {
         pathname.startsWith('/login') ||
         pathname.startsWith('/forgot-password') ||
         pathname.startsWith('/reset-password') ||
+        pathname.startsWith('/privacy') ||
+        pathname.startsWith('/terms') ||
         pathname.startsWith('/api/auth') ||
         pathname.startsWith('/api/keepalive') ||
         pathname.startsWith('/api/webhooks/subscription') ||
@@ -30,6 +32,9 @@ export default auth((req) => {
     // If not authenticated, redirect to login
     if (!req.auth) {
         const loginUrl = new URL('/login', req.url);
+        if (req.headers.get('x-forwarded-proto') === 'https') {
+            loginUrl.protocol = 'https:';
+        }
         loginUrl.searchParams.set('callbackUrl', pathname);
         return NextResponse.redirect(loginUrl);
     }
