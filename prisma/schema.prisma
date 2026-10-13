@@ -18,7 +18,9 @@ model BusinessProfile {
   phone           String?
   email           String?
   website         String?
-  usdRate         Float    @default(300.0)
+  currency           String   @default("LKR")
+  currencyConfigured Boolean  @default(false)
+  usdRate            Float    @default(300.0)
   logoUrl         String?
   bankName        String?  // e.g. "BOC"
   bankBranch      String?  // e.g. "Delgoda"

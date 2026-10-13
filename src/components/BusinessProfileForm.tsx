@@ -45,6 +45,8 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
             website: initialData?.website || '',
             logoUrl: initialData?.logoUrl || '',
             usdRate: initialData?.usdRate || 300,
+            currency: initialData?.currency || 'LKR',
+            currencyConfigured: initialData?.currencyConfigured ?? true,
             bankName: initialData?.bankName || '',
             bankBranch: initialData?.bankBranch || '',
             bankAccountNo: initialData?.bankAccountNo || '',
@@ -65,6 +67,8 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
         if (data.website) formData.append('website', data.website);
         if (data.logoUrl) formData.append('logoUrl', data.logoUrl);
         formData.append('usdRate', data.usdRate.toString());
+        formData.append('currency', data.currency || 'LKR');
+        formData.append('currencyConfigured', 'true');
         if (data.bankName) formData.append('bankName', data.bankName);
         if (data.bankBranch) formData.append('bankBranch', data.bankBranch);
         if (data.bankAccountNo) formData.append('bankAccountNo', data.bankAccountNo);
@@ -234,6 +238,58 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
                                 </FormItem>
                             )}
                         />
+
+                        {/* Currency & Financial Settings Section */}
+                        <div className="border-t pt-4 mt-2">
+                            <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Currency & Exchange Rates</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="currency"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Primary Operational Currency</FormLabel>
+                                            <FormControl>
+                                                <select
+                                                    {...field}
+                                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                >
+                                                    <option value="LKR" className="bg-background text-foreground">LKR (Rs.) - Sri Lankan Rupee</option>
+                                                    <option value="USD" className="bg-background text-foreground">USD ($) - US Dollar</option>
+                                                    <option value="EUR" className="bg-background text-foreground">EUR (€) - Euro</option>
+                                                    <option value="GBP" className="bg-background text-foreground">GBP (£) - British Pound</option>
+                                                    <option value="AUD" className="bg-background text-foreground">AUD (A$) - Australian Dollar</option>
+                                                    <option value="CAD" className="bg-background text-foreground">CAD (C$) - Canadian Dollar</option>
+                                                    <option value="SGD" className="bg-background text-foreground">SGD (S$) - Singapore Dollar</option>
+                                                    <option value="INR" className="bg-background text-foreground">INR (₹) - Indian Rupee</option>
+                                                </select>
+                                            </FormControl>
+                                            <FormDescription className="text-xs text-muted-foreground">
+                                                Base operational currency used for vehicles, reports, and bills.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="usdRate"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>USD Conversion Rate (1 USD in LKR)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" step="0.1" min="1" placeholder="300" {...field} />
+                                            </FormControl>
+                                            <FormDescription className="text-xs text-muted-foreground">
+                                                Used to calculate foreign tourist estimates in Quotations and Invoices.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
 
                         {/* Bank Details Section */}
                         <div className="border-t pt-4 mt-2">

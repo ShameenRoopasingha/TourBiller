@@ -390,6 +390,8 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
       website: (formData.get('website') as string) || undefined,
       logoUrl: (formData.get('logoUrl') as string) || undefined,
       usdRate: parseFloat(formData.get('usdRate') as string) || 300,
+      currency: (formData.get('currency') as string) || undefined,
+      currencyConfigured: formData.has('currencyConfigured') ? formData.get('currencyConfigured') === 'true' : undefined,
       bankName: (formData.get('bankName') as string) || undefined,
       bankBranch: (formData.get('bankBranch') as string) || undefined,
       bankAccountNo: (formData.get('bankAccountNo') as string) || undefined,
@@ -412,6 +414,33 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
       return { success: false, error: error.message };
     }
     return { success: false, error: 'Failed to update business profile' };
+  }
+}
+
+/**
+ * Configure initial currency for the company on first setup
+ */
+export async function configureInitialCurrency(currency: string, usdRate?: number): Promise<ActionResult<BusinessProfile>> {
+  try {
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error };
+    }
+
+    const profile = await prisma.businessProfile.update({
+      where: { id: authCheck.companyId },
+      data: {
+        currency: (currency || 'LKR').toUpperCase().trim(),
+        currencyConfigured: true,
+        ...(usdRate && usdRate > 0 ? { usdRate } : {}),
+      },
+    });
+
+    revalidateFor('businessProfile');
+    return { success: true, data: JSON.parse(JSON.stringify(profile)) };
+  } catch (error) {
+    console.error('Error configuring initial currency:', error);
+    return { success: false, error: 'Failed to configure initial currency' };
   }
 }
 

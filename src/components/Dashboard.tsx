@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { FileText, Printer, Plus, Activity, Banknote, Car, Edit } from 'lucide-react';
 import { getDashboardStats } from '@/lib/dashboard-actions';
+import { getBusinessProfile } from '@/lib/actions';
 import { formatCurrency } from '@/lib/calculations';
+import { FirstTimeCurrencyModal } from '@/components/FirstTimeCurrencyModal';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -26,6 +28,9 @@ export async function Dashboard() {
     const session = await auth();
     const isAdmin = (session?.user as { role?: string })?.role === 'ADMIN';
     const result = await getDashboardStats();
+    const profileResult = await getBusinessProfile();
+    const businessProfile = profileResult.success ? profileResult.data : null;
+    const showCurrencyOnboarding = isAdmin && businessProfile && !businessProfile.currencyConfigured;
 
     if (!result.success || !result.data) {
         return (
@@ -40,6 +45,14 @@ export async function Dashboard() {
 
     return (
         <div className="space-y-6">
+            {showCurrencyOnboarding && (
+                <FirstTimeCurrencyModal
+                    isOpenInitially={true}
+                    currentCurrency={businessProfile?.currency || 'LKR'}
+                    currentUsdRate={businessProfile?.usdRate || 300}
+                    companyName={businessProfile?.companyName || 'Vigil'}
+                />
+            )}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
                 <div className="flex gap-2 w-full sm:w-auto">
@@ -89,7 +102,7 @@ export async function Dashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-xl sm:text-2xl font-bold">
-                            {formatCurrency(stats.revenueWeekly)}
+                            {formatCurrency(stats.revenueWeekly, businessProfile?.currency)}
                         </div>
                         <p className="text-xs text-muted-foreground">
                             This week
@@ -106,7 +119,7 @@ export async function Dashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-xl sm:text-2xl font-bold">
-                            {formatCurrency(stats.revenueYearly)}
+                            {formatCurrency(stats.revenueYearly, businessProfile?.currency)}
                         </div>
                         <p className="text-xs text-muted-foreground">
                             Total for {new Date().getFullYear()}
@@ -156,7 +169,7 @@ export async function Dashboard() {
                                                     <div className="font-bold text-primary">#{String(bill.billNumber)}</div>
                                                     <div className="text-xs text-muted-foreground">{new Date(bill.createdAt).toLocaleDateString('en-GB')}</div>
                                                 </div>
-                                                <div className="font-bold text-primary">{formatCurrency(bill.totalAmount)}</div>
+                                                <div className="font-bold text-primary">{formatCurrency(bill.totalAmount, bill.currency || businessProfile?.currency)}</div>
                                             </div>
                                             
                                             <div className="space-y-1">
@@ -223,7 +236,7 @@ export async function Dashboard() {
                                                         {bill.endDate ? new Date(bill.endDate).toLocaleDateString('en-GB') : '-'}
                                                     </TableCell>
                                                     <TableCell className="text-right font-bold text-primary">
-                                                        {formatCurrency(bill.totalAmount)}
+                                                        {formatCurrency(bill.totalAmount, bill.currency || businessProfile?.currency)}
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-1">
