@@ -18,6 +18,9 @@ import {
     Droplets,
     Filter,
     Sparkles,
+    Disc,
+    ShieldCheck,
+    UserCheck,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { VehicleExpense, VehicleExpenseCategory } from '@/lib/validations';
@@ -58,6 +61,9 @@ const CATEGORIES: { label: string; value: VehicleExpenseCategory; icon: React.Co
     { label: 'Oil Change', value: 'OIL_CHANGE', icon: Droplets, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/40' },
     { label: 'Filters', value: 'FILTER_CHANGE', icon: Filter, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-100 dark:bg-teal-900/40' },
     { label: 'Wash', value: 'BODY_WASH', icon: Sparkles, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-100 dark:bg-cyan-900/40' },
+    { label: 'Tyre', value: 'TYRE', icon: Disc, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/40' },
+    { label: 'Insurance', value: 'INSURANCE', icon: ShieldCheck, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/40' },
+    { label: 'Driver', value: 'DRIVER', icon: UserCheck, color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-100 dark:bg-sky-900/40' },
     { label: 'Other', value: 'OTHER', icon: MoreHorizontal, color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-900/40' },
 ];
 

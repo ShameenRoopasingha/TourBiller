@@ -39,10 +39,10 @@ export default async function ReportsPage() {
         orderBy: { date: 'desc' }
     });
 
-    // Fetch company profile for print letterhead
+    // Fetch company profile for print letterhead and currency
     const company = await prisma.businessProfile.findUnique({
         where: { id: companyId },
-        select: { companyName: true, address: true, phone: true, email: true, logoUrl: true }
+        select: { companyName: true, address: true, phone: true, email: true, logoUrl: true, currency: true }
     });
 
     const businessProfile = {
@@ -50,7 +50,8 @@ export default async function ReportsPage() {
         address: company?.address || null,
         phone: company?.phone || null,
         email: company?.email || null,
-        logoUrl: company?.logoUrl || null
+        logoUrl: company?.logoUrl || null,
+        currency: company?.currency || 'LKR'
     };
 
     // Sanitize dates for passing to Client Component

@@ -397,7 +397,7 @@ export function QuotationTemplate({
                                     <div className="space-y-0.5">
                                         <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
                                             <span className="text-gray-600">Vehicle Transport ({quotation.tourSchedule.days} days{quotation.totalDistance > 0 ? ` · ${quotation.totalDistance.toFixed(0)} km` : ''})</span>
-                                            <span className="text-right font-medium">{fmt(quotation.transportCost)}</span>
+                                            <span className="text-right font-medium">{fmt(quotation.transportCost + driverTotal)}</span>
                                         </div>
                                         {finalExcessKmRate > 0 && (
                                             <div className="text-[10px] text-gray-400 italic py-0.5 leading-tight">
@@ -431,12 +431,6 @@ export function QuotationTemplate({
                                             <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
                                                 <span className="text-gray-600">Other Costs</span>
                                                 <span className="text-right font-medium">{fmt(quotation.otherCostsTotal)}</span>
-                                            </div>
-                                        )}
-                                        {driverTotal > 0 && (
-                                            <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
-                                                <span className="text-gray-600">Driver ({quotation.tourSchedule.days}d × {fmt(quotation.driverCostPerDay)})</span>
-                                                <span className="text-right font-medium">{fmt(driverTotal)}</span>
                                             </div>
                                         )}
                                     </div>
@@ -480,7 +474,7 @@ export function QuotationTemplate({
                                 <div className="space-y-0.5">
                                     <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
                                         <span className="text-gray-600">Vehicle Transport ({quotation.tourSchedule.days} days{quotation.totalDistance > 0 ? ` · ${quotation.totalDistance.toFixed(0)} km` : ''})</span>
-                                        <span className="text-right font-medium">{fmt(quotation.transportCost)}</span>
+                                        <span className="text-right font-medium">{fmt(quotation.transportCost + driverTotal)}</span>
                                     </div>
                                     {finalExcessKmRate > 0 && (
                                         <div className="text-[10px] text-gray-400 italic py-0.5 leading-tight">
@@ -514,12 +508,6 @@ export function QuotationTemplate({
                                         <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
                                             <span className="text-gray-600">Other Costs</span>
                                             <span className="text-right font-medium">{fmt(quotation.otherCostsTotal)}</span>
-                                        </div>
-                                    )}
-                                    {driverTotal > 0 && (
-                                        <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
-                                            <span className="text-gray-600">Driver ({quotation.tourSchedule.days}d × {fmt(quotation.driverCostPerDay)})</span>
-                                            <span className="text-right font-medium">{fmt(driverTotal)}</span>
                                         </div>
                                     )}
                                 </div>

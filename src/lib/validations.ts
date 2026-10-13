@@ -186,7 +186,19 @@ export const QuotationFormSchema = z.object({
 export type QuotationFormInput = z.infer<typeof QuotationFormSchema>;
 
 // Vehicle Expense form schema - RHF compatible
-export const VehicleExpenseCategoryEnum = z.enum(['REPAIR', 'BREAKDOWN', 'FUEL', 'SERVICE', 'OIL_CHANGE', 'FILTER_CHANGE', 'BODY_WASH', 'OTHER']);
+export const VehicleExpenseCategoryEnum = z.enum([
+  'REPAIR',
+  'BREAKDOWN',
+  'FUEL',
+  'SERVICE',
+  'OIL_CHANGE',
+  'FILTER_CHANGE',
+  'BODY_WASH',
+  'TYRE',
+  'INSURANCE',
+  'DRIVER',
+  'OTHER',
+]);
 export type VehicleExpenseCategory = z.infer<typeof VehicleExpenseCategoryEnum>;
 
 export const VehicleExpenseFormSchema = z.object({
