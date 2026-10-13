@@ -140,6 +140,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const [isAIChatOpen, setIsAIChatOpen] = useState(false);
     const [routingMode, setRoutingMode] = useState<'map' | 'schedule'>(initialData ? 'schedule' : 'map');
+    const [mapDays, setMapDays] = useState<number>(1);
 
     const handleApplyDraft = (draft: QuotationDraft) => {
         if (draft.customerName) form.setValue('customerName', draft.customerName, { shouldDirty: true });
@@ -409,13 +410,22 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         const ratePerDay = Number(watchedHireRate) || 0;
         const kmAllowancePerDay = Number(watchedKmPerDay) || 0;
         const excessKmRate = Number(watchedExcessKmRate) || 0;
-        const days = selectedSchedule.days;
+        const days = selectedSchedule.days || 1;
         
         // Dynamic transport cost: if package rate is 0, fall back to pure distance-based calculation
         const isPerKmMode = ratePerDay === 0;
-        const transportCost = isPerKmMode ? (itemTotals.distance * excessKmRate) : (days * ratePerDay);
-        
         const includedKm = isPerKmMode ? 0 : (days * kmAllowancePerDay);
+
+        // Calculate excess distance and charge
+        const excessKm = (!isPerKmMode && kmAllowancePerDay > 0)
+            ? Math.max(0, itemTotals.distance - includedKm)
+            : 0;
+        const excessKmCost = excessKm * excessKmRate;
+
+        // Base package transport cost
+        const baseTransportCost = isPerKmMode ? (itemTotals.distance * excessKmRate) : (days * ratePerDay);
+        const transportCost = baseTransportCost + excessKmCost;
+        
         const driverTotal = days * (Number(watchedDriverCost) || 0);
         const subtotal = transportCost + driverTotal + itemTotals.accommodation + itemTotals.meals + itemTotals.activities + itemTotals.other;
         const markupAmount = subtotal * ((Number(watchedMarkup) || 0) / 100);
@@ -424,6 +434,9 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         return {
             totalDistance: itemTotals.distance,
             includedKm,
+            excessKm,
+            excessKmCost,
+            baseTransportCost,
             transportCost,
             driverTotal,
             accommodationTotal: itemTotals.accommodation,
@@ -451,7 +464,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
 
                 const scheduleRes = await createTourSchedule({
                     name: `Transfer: ${startTown} to ${endTown}`,
-                    days: 1,
+                    days: mapDays,
                     vehicleCategory: selectedVehicle?.category || 'CAR',
                     vehicleNo: selectedVehicle?.vehicleNo || undefined,
                     ratePerDay: Number(data.hireRatePerDay) || 0,
@@ -637,11 +650,11 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                     const currentNotes = form.getValues('notes');
                                     form.setValue('notes', currentNotes ? `${currentNotes}\n\n${autoNote}` : autoNote, { shouldDirty: true });
 
-                                    // Create in-memory single-day transfer schedule
+                                    // Create in-memory transfer schedule
                                     const transferSchedule: ScheduleOption = {
                                         id: selectedSchedule?.id?.startsWith('transfer-') ? selectedSchedule.id : `transfer-${Date.now()}`,
                                         name: `Transfer: ${routeDisplay}`,
-                                        days: 1,
+                                        days: mapDays,
                                         vehicleCategory: selectedVehicle?.category || 'CAR',
                                         vehicleNo: selectedVehicle?.vehicleNo || null,
                                         ratePerDay: selectedVehicle?.ratePerDay || 0,
@@ -668,20 +681,39 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
 
                             {/* Live Route Summary Badge if route is calculated */}
                             {selectedSchedule?.id?.startsWith('transfer-') && (
-                                <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg flex flex-wrap items-center justify-between gap-2 text-sm animate-in fade-in">
+                                <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg flex flex-wrap items-center justify-between gap-3 text-sm animate-in fade-in">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                                         <span className="font-semibold text-foreground">
                                             {form.getValues('pickupLocation') || 'Origin'} ➔ {form.getValues('dropLocation') || 'Destination'}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs">
+                                    <div className="flex flex-wrap items-center gap-3 text-xs">
                                         <span className="font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-md">
                                             {selectedSchedule.items[0]?.distanceKm} km
                                         </span>
-                                        <span className="text-muted-foreground bg-muted px-2 py-1 rounded-md">
-                                            Single Day Transfer
-                                        </span>
+                                        {/* Tour Duration Selector */}
+                                        <div className="flex items-center gap-1.5 bg-background px-2.5 py-1 rounded-md border shadow-xs">
+                                            <span className="text-muted-foreground font-medium">Tour Duration:</span>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={30}
+                                                value={mapDays}
+                                                onChange={(e) => {
+                                                    const newDays = Math.max(1, parseInt(e.target.value) || 1);
+                                                    setMapDays(newDays);
+                                                    if (selectedSchedule) {
+                                                        setSelectedSchedule({
+                                                            ...selectedSchedule,
+                                                            days: newDays,
+                                                        });
+                                                    }
+                                                }}
+                                                className="w-12 h-6 text-center text-xs font-semibold border rounded bg-muted/20 text-foreground"
+                                            />
+                                            <span className="text-muted-foreground font-medium">{mapDays === 1 ? 'Day' : 'Days'}</span>
+                                        </div>
                                     </div>
                                 </div>
                             )}

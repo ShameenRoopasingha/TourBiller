@@ -3,6 +3,9 @@ import { formatCurrency } from '@/lib/calculations';
 interface QuotationCostTotals {
     totalDistance: number;
     includedKm: number;
+    excessKm?: number;
+    excessKmCost?: number;
+    baseTransportCost?: number;
     transportCost: number;
     driverTotal: number;
     accommodationTotal: number;
@@ -36,6 +39,9 @@ export function QuotationCostSummary({
     totals,
 }: QuotationCostSummaryProps) {
     const format = formatCurrency;
+    const baseHire = totals.baseTransportCost ?? (days * hireRate);
+    const excessKm = totals.excessKm ?? 0;
+    const excessKmCost = totals.excessKmCost ?? 0;
 
     return (
         <div className="mt-4 p-4 bg-muted/40 rounded-lg border">
@@ -50,13 +56,17 @@ export function QuotationCostSummary({
                     ) : (
                         <>
                             <p className="font-semibold text-primary text-sm">
-                                💰 Vehicle Hire: {days} days : {format(totals.transportCost)} for {totals.includedKm.toFixed(0)} km
+                                💰 Vehicle Hire: {days} days : {format(baseHire)} for {totals.includedKm.toFixed(0)} km
                             </p>
-                            {excessKmRate > 0 && (
+                            {excessKm > 0 ? (
+                                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">
+                                    ⚠️ Route distance ({totals.totalDistance.toFixed(1)} km) exceeds package allowance by {excessKm.toFixed(1)} km. Estimated extra charge of {format(excessKmCost)} is included in the total below.
+                                </p>
+                            ) : excessKmRate > 0 ? (
                                 <p className="text-xs text-muted-foreground mt-1">
                                     Any distance exceeding {totals.includedKm.toFixed(0)} km will be charged at Rs. {excessKmRate} per additional km.
                                 </p>
-                            )}
+                            ) : null}
                             {extraHourRate > 0 && (
                                 <p className="text-xs text-muted-foreground mt-0.5">
                                     Extra hours will be charged at Rs. {extraHourRate} per hour.
@@ -70,8 +80,16 @@ export function QuotationCostSummary({
             <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Van Hire ({days} days x {format(hireRate)}/day)</span>
-                    <span>{format(totals.transportCost)}</span>
+                    <span>{format(baseHire)}</span>
                 </div>
+                {excessKm > 0 && excessKmRate > 0 && (
+                    <div className="flex justify-between text-blue-600 dark:text-blue-400">
+                        <span className="text-muted-foreground">
+                            Est. Extra Distance ({excessKm.toFixed(1)} km @ {format(excessKmRate)}/km)
+                        </span>
+                        <span className="font-medium">+{format(excessKmCost)}</span>
+                    </div>
+                )}
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Accommodation</span>
                     <span>{format(totals.accommodationTotal)}</span>

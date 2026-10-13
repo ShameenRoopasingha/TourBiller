@@ -321,11 +321,17 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                                 <>
                                     <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
                                         <span className="text-gray-600">Vehicle Hire ({quotation.tourSchedule.days} days × {fmt(quotation.hireRatePerDay)}/day for {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km)</span>
-                                        <span className="text-right">{fmt(quotation.transportCost)}</span>
+                                        <span className="text-right">{fmt(quotation.tourSchedule.days * quotation.hireRatePerDay)}</span>
                                     </div>
+                                    {quotation.kmPerDay > 0 && quotation.totalDistance > (quotation.tourSchedule.days * quotation.kmPerDay) && finalExcessKmRate > 0 && (
+                                        <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200 text-blue-700">
+                                            <span>Est. Extra Distance ({(quotation.totalDistance - (quotation.tourSchedule.days * quotation.kmPerDay)).toFixed(1)} km @ {fmt(finalExcessKmRate)}/km)</span>
+                                            <span className="text-right font-medium">+{fmt((quotation.totalDistance - (quotation.tourSchedule.days * quotation.kmPerDay)) * finalExcessKmRate)}</span>
+                                        </div>
+                                    )}
                                     {finalExcessKmRate > 0 && (
                                         <div className="text-xs text-gray-400 italic py-0.5">
-                                            Any km exceeding {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km charged at {fmt(finalExcessKmRate)}/km
+                                            Any distance exceeding {quotation.totalDistance > (quotation.tourSchedule.days * quotation.kmPerDay) ? `${quotation.totalDistance.toFixed(0)} km (estimated)` : `${(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km`} will be charged at {fmt(finalExcessKmRate)}/km
                                         </div>
                                     )}
                                     {finalExtraHourRate > 0 && (
