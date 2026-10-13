@@ -372,9 +372,21 @@ export function QuotationTemplate({
                             {/* Column 1: Visual Tour Route Map */}
                             <div className="flex flex-col">
                                 <div className="flex items-center justify-between mb-1">
-                                    <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide flex items-center gap-1.5 print-heading">
-                                        <span>🗺️ Visual Tour Route Map</span>
-                                    </h3>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide flex items-center gap-1.5 print-heading">
+                                            <span>🗺️ Visual Tour Route Map</span>
+                                        </h3>
+                                        {routeWaypoints.length >= 3 && (
+                                            <span className="text-[9px] font-semibold flex items-center gap-2 bg-gray-100 border border-gray-300 px-1.5 py-0.5 rounded text-gray-700">
+                                                <span className="flex items-center gap-1 text-blue-700">
+                                                    <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" /> Outbound
+                                                </span>
+                                                <span className="flex items-center gap-1 text-orange-700">
+                                                    <span className="w-2 h-2 rounded-full bg-orange-600 inline-block" /> Return
+                                                </span>
+                                            </span>
+                                        )}
+                                    </div>
                                     {quotation.totalDistance > 0 && (
                                         <span className="text-[10px] text-blue-700 font-semibold font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
                                             {quotation.totalDistance.toFixed(1)} km Road Route

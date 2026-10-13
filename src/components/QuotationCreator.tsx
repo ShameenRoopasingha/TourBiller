@@ -146,12 +146,17 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const [isAIChatOpen, setIsAIChatOpen] = useState(false);
     const [routingMode, setRoutingMode] = useState<'map' | 'schedule'>(initialData ? 'schedule' : 'map');
-    const [mapDays, setMapDays] = useState<number>(1);
+    const [mapDays, setMapDays] = useState<number>(initialData?.tourSchedule?.days || 1);
 
     const handleApplyDraft = (draft: QuotationDraft) => {
         if (draft.customerName) form.setValue('customerName', draft.customerName, { shouldDirty: true });
         if (draft.numberOfPersons) form.setValue('numberOfPersons', draft.numberOfPersons, { shouldDirty: true });
-        if (draft.days) form.setValue('kmPerDay', draft.days, { shouldDirty: true });
+        if (draft.days) {
+            setMapDays(draft.days);
+            if (selectedSchedule) {
+                setSelectedSchedule({ ...selectedSchedule, days: draft.days });
+            }
+        }
         if (draft.pickupLocation) form.setValue('pickupLocation', draft.pickupLocation, { shouldDirty: true });
         if (draft.dropLocation) form.setValue('dropLocation', draft.dropLocation, { shouldDirty: true });
         if (draft.hireRatePerDay) form.setValue('hireRatePerDay', draft.hireRatePerDay, { shouldDirty: true });
@@ -246,15 +251,15 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         driverId: watchedDriverId,
     } = watchedFields;
 
-    // Auto-calculate end date when start date or schedule changes
+    // Auto-calculate end date when start date, schedule, or mapDays changes
     React.useEffect(() => {
-        if (selectedSchedule && watchedStartDate) {
+        if (watchedStartDate) {
             try {
                 const start = new Date(watchedStartDate);
                 if (!isNaN(start.getTime())) {
-                    // End date = start date + (days - 1)
+                    const currentDays = selectedSchedule?.days || mapDays || 1;
                     const end = new Date(start);
-                    end.setDate(start.getDate() + (selectedSchedule.days - 1));
+                    end.setDate(start.getDate() + (currentDays - 1));
                     form.setValue('endDate', end.toISOString().split('T')[0] as unknown as Date);
                 }
             } catch (e) {
@@ -263,7 +268,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         } else {
             form.setValue('endDate', '' as unknown as Date);
         }
-    }, [watchedStartDate, selectedSchedule, form]);
+    }, [watchedStartDate, selectedSchedule, mapDays, form]);
 
     // Check vehicle and driver availability
     React.useEffect(() => {
@@ -325,6 +330,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         setSelectedSchedule(schedule || null);
 
         if (schedule) {
+            setMapDays(schedule.days || 1);
             // Autofill rates from schedule if they exist
             if (schedule.ratePerDay > 0) form.setValue('hireRatePerDay', schedule.ratePerDay);
             if (schedule.kmPerDay > 0) form.setValue('kmPerDay', schedule.kmPerDay);
@@ -826,7 +832,36 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                             {/* Day-by-day preview */}
                             {selectedSchedule && !selectedSchedule.id.startsWith('transfer-') && (
                                 <div className="mt-4">
-                                    <h4 className="text-sm font-medium mb-2">Itinerary Preview</h4>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="text-sm font-medium">Itinerary Preview</h4>
+                                        <div className="flex items-center gap-1.5 bg-background px-2.5 py-1 rounded-md border text-xs shadow-xs">
+                                            <span className="text-muted-foreground font-medium">Tour Duration:</span>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={60}
+                                                value={mapDays}
+                                                onChange={(e) => {
+                                                    const newDays = Math.max(1, parseInt(e.target.value) || 1);
+                                                    setMapDays(newDays);
+                                                    setSelectedSchedule({
+                                                        ...selectedSchedule,
+                                                        days: newDays,
+                                                    });
+                                                    if (watchedStartDate) {
+                                                        const start = new Date(watchedStartDate);
+                                                        if (!isNaN(start.getTime())) {
+                                                            const end = new Date(start);
+                                                            end.setDate(start.getDate() + (newDays - 1));
+                                                            form.setValue('endDate', end.toISOString().split('T')[0] as unknown as Date);
+                                                        }
+                                                    }
+                                                }}
+                                                className="w-12 h-6 text-center text-xs font-semibold border rounded bg-muted/20 text-foreground"
+                                            />
+                                            <span className="text-muted-foreground font-medium">{mapDays === 1 ? 'Day' : 'Days'}</span>
+                                        </div>
+                                    </div>
                                     <div className="rounded-md border overflow-x-auto">
                                         <Table>
                                             <TableHeader>
@@ -1015,7 +1050,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <FormField
                             control={form.control}
                             name="driverId"
@@ -1046,6 +1081,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 </FormItem>
                             )}
                         />
+
                         <div className="space-y-2">
                             <Label htmlFor="numberOfPersons">Number of Guests</Label>
                             <Input
@@ -1056,6 +1092,46 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 {...form.register('numberOfPersons')}
                             />
                         </div>
+
+                        {/* Dedicated Tour Duration (Days) Field */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="tourDays" className="font-semibold text-primary">
+                                    Tour Duration (Days) *
+                                </Label>
+                                <span className="text-[11px] text-muted-foreground font-mono">
+                                    {mapDays} {mapDays === 1 ? 'Day' : 'Days'}
+                                </span>
+                            </div>
+                            <Input
+                                id="tourDays"
+                                type="number"
+                                min="1"
+                                max="60"
+                                value={mapDays}
+                                onChange={(e) => {
+                                    const newDays = Math.max(1, parseInt(e.target.value) || 1);
+                                    setMapDays(newDays);
+                                    if (selectedSchedule) {
+                                        setSelectedSchedule({
+                                            ...selectedSchedule,
+                                            days: newDays,
+                                        });
+                                    }
+                                    if (watchedStartDate) {
+                                        const start = new Date(watchedStartDate);
+                                        if (!isNaN(start.getTime())) {
+                                            const end = new Date(start);
+                                            end.setDate(start.getDate() + (newDays - 1));
+                                            form.setValue('endDate', end.toISOString().split('T')[0] as unknown as Date);
+                                        }
+                                    }
+                                }}
+                                className="font-bold border-primary/50 focus:border-primary text-base"
+                                placeholder="e.g. 1"
+                            />
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="startDate">Tour Start Date *</Label>
                             <Input
@@ -1067,19 +1143,41 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 <p className="text-sm text-destructive font-medium">{form.formState.errors.startDate.message}</p>
                             )}
                         </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="endDate" className="text-muted-foreground">Tour End Date (Auto)</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="endDate" className="text-muted-foreground">Tour End Date</Label>
+                                <span className="text-[10px] text-muted-foreground font-mono">Auto-syncs with days</span>
+                            </div>
                             <Input
                                 id="endDate"
                                 type="date"
                                 value={watchedFields.endDate ? (watchedFields.endDate instanceof Date ? watchedFields.endDate.toISOString().split('T')[0] : watchedFields.endDate) : ''}
-                                readOnly
-                                className="bg-muted cursor-not-allowed"
+                                onChange={(e) => {
+                                    const newEndVal = e.target.value;
+                                    form.setValue('endDate', newEndVal as unknown as Date);
+                                    if (watchedStartDate && newEndVal) {
+                                        const start = new Date(watchedStartDate);
+                                        const end = new Date(newEndVal);
+                                        if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
+                                            const diffTime = end.getTime() - start.getTime();
+                                            const calcDays = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1);
+                                            setMapDays(calcDays);
+                                            if (selectedSchedule) {
+                                                setSelectedSchedule({
+                                                    ...selectedSchedule,
+                                                    days: calcDays,
+                                                });
+                                            }
+                                        }
+                                    }
+                                }}
+                                className="bg-background"
                             />
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="pickupLocation">Pickup Location</Label>
                             <Input
@@ -1088,6 +1186,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 {...form.register('pickupLocation')}
                             />
                         </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="dropLocation">Drop-off Location</Label>
                             <Input
