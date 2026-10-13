@@ -151,7 +151,7 @@ export default async function PrintQuotationPage({ params }: { params: Promise<{
     const { id } = await params;
 
     return (
-        <div className="min-h-screen bg-gray-100 print:bg-white flex items-center justify-center print:items-start print:py-0">
+        <div className="min-h-screen bg-gray-100 print:bg-white flex items-center justify-center print:block print:min-h-0 print:h-auto print:p-0 print:m-0">
             <Suspense fallback={
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="h-8 w-8 animate-spin text-gray-400" />

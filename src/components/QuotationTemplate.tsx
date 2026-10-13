@@ -132,16 +132,17 @@ export function QuotationTemplate({
     const markupAmount = subtotalWithDriver * (quotation.markup / 100);
 
     return (
-        <div className="flex flex-col items-center mx-auto font-sans text-sm text-black leading-relaxed">
+        <div className="flex flex-col items-center mx-auto font-sans text-sm text-black leading-relaxed print:block print:w-full print:m-0 print:p-0">
             <style jsx global>{`
                 @media print {
                     @page {
                         size: A4 portrait;
-                        margin: 0;
+                        margin: 10mm 12mm;
                     }
-                    body {
-                        margin: 0;
-                        padding: 0;
+                    html, body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: #ffffff !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
@@ -150,13 +151,36 @@ export function QuotationTemplate({
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
+                    /* Content-friendly page break controls */
+                    .print-avoid-break {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                    }
+                    .print-heading {
+                        break-after: avoid !important;
+                        page-break-after: avoid !important;
+                    }
+                    table {
+                        break-inside: auto !important;
+                        page-break-inside: auto !important;
+                    }
+                    tr {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                    }
+                    thead {
+                        display: table-header-group !important;
+                    }
+                    tfoot {
+                        display: table-footer-group !important;
+                    }
                 }
             `}</style>
 
-            <div className="w-[190mm] mx-auto p-8 flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-10 bg-white overflow-hidden">
+            <div className="w-[190mm] mx-auto p-6 md:p-8 flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-0 print:m-0 print:w-full print:max-w-none bg-white overflow-hidden print:overflow-visible">
 
                 {/* ── Header - 3 Column Layout ── */}
-                <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-3 mb-5">
+                <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-3 mb-4 print-avoid-break">
                     {/* Column 1: Logo */}
                     <div className="flex items-start pt-1">
                         {businessProfile?.logoUrl ? (
@@ -205,7 +229,7 @@ export function QuotationTemplate({
                 </div>
 
                 {/* ── Customer & Tour Details ── */}
-                <div className="flex gap-4 mb-5">
+                <div className="flex gap-4 mb-4 print-avoid-break">
                     <div className="w-1/2 bg-gray-50 p-3 border border-gray-200 rounded">
                         <div className="grid grid-cols-[75px_1fr] gap-y-1.5 gap-x-2 text-sm">
                             <span className="font-medium text-gray-500">Customer:</span>
@@ -253,15 +277,15 @@ export function QuotationTemplate({
                 {quotation.tourSchedule.description && 
                  !quotation.tourSchedule.items.some(item => item.description === quotation.tourSchedule.description) &&
                  !quotation.tourSchedule.items.some(item => item.title === quotation.tourSchedule.description) && (
-                    <p className="text-[10px] italic text-gray-600 border-l-2 border-blue-500 pl-2 mb-3 leading-snug">
+                    <p className="text-[10px] italic text-gray-600 border-l-2 border-blue-500 pl-2 mb-3 leading-snug print-avoid-break">
                         {quotation.tourSchedule.description}
                     </p>
                 )}
 
                 {/* ── Vehicle Specifications ── */}
                 {(quotation.vehicleSeats || quotation.vehicleAcType || quotation.vehicleFeatures || quotation.vehicleInsuranceCoverage) && (
-                    <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-sm">
-                        <h3 className="text-[10px] font-bold uppercase text-blue-700 mb-1 tracking-wide">Vehicle Specifications</h3>
+                    <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-sm print-avoid-break">
+                        <h3 className="text-[10px] font-bold uppercase text-blue-700 mb-1 tracking-wide print-heading">Vehicle Specifications</h3>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[10px]">
                             {quotation.vehicleSeats && (
                                 <div><span className="text-gray-500">Seats:</span> <span className="font-semibold">{quotation.vehicleSeats}</span></div>
@@ -291,7 +315,7 @@ export function QuotationTemplate({
 
                 {/* ── Day-by-Day Itinerary ── */}
                 <div className="mb-3">
-                    <h3 className="text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-wide">Day-by-Day Itinerary</h3>
+                    <h3 className="text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-wide print-heading">Day-by-Day Itinerary</h3>
                     <table className="w-full text-xs border-collapse border border-gray-300">
                         <thead>
                             <tr className="bg-gray-800 text-white">
@@ -337,9 +361,9 @@ export function QuotationTemplate({
 
                 {/* ── Visual Tour Route Map ── */}
                 {routeCoordinates.length > 0 && (
-                    <div className="mb-4 break-inside-avoid print:break-inside-avoid">
-                        <div className="flex items-center justify-between mb-1.5">
-                            <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide flex items-center gap-1.5">
+                    <div className="mb-3 print-avoid-break">
+                        <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide flex items-center gap-1.5 print-heading">
                                 <span>🗺️ Visual Tour Route Map</span>
                             </h3>
                             {quotation.totalDistance > 0 && (
@@ -352,16 +376,16 @@ export function QuotationTemplate({
                             <OSRMRouteMap
                                 coordinates={routeCoordinates}
                                 waypoints={routeWaypoints}
-                                height="210px"
+                                height="165px"
                             />
                         </div>
                     </div>
                 )}
 
                 {/* ── Cost Summary ── */}
-                <div className="mb-3">
+                <div className="mb-3 print-avoid-break">
                     <div>
-                        <h3 className="text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-wide">Cost Summary</h3>
+                        <h3 className="text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-wide print-heading">Cost Summary</h3>
                         <div className="border border-gray-300 rounded p-3 text-sm">
                             {quotation.hireRatePerDay === 0 ? (
                                 <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
@@ -440,61 +464,64 @@ export function QuotationTemplate({
                     </div>
                 </div>
 
-                {/* ── Excluded Items ── */}
-                {quotation.excludedItems && (
-                    <div className="mb-3 text-xs">
-                        <div className="p-3 bg-red-50 border border-red-200 rounded">
-                            <span className="font-bold text-red-700">Not Included: </span>
-                            <span className="whitespace-pre-wrap text-red-600">{quotation.excludedItems}</span>
+                {/* ── Terms, Excluded Items, Advance Payment & Signatures ── */}
+                <div className="print-avoid-break space-y-3">
+                    {/* ── Excluded Items ── */}
+                    {quotation.excludedItems && (
+                        <div className="text-xs">
+                            <div className="p-3 bg-red-50 border border-red-200 rounded">
+                                <span className="font-bold text-red-700">Not Included: </span>
+                                <span className="whitespace-pre-wrap text-red-600">{quotation.excludedItems}</span>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* ── Advance Payment & Bank Details ── */}
-                {quotation.advanceAmount > 0 && (
-                    <div className="mb-3 text-xs">
-                        <div className="p-3 bg-green-50 border border-green-200 rounded">
-                            <span className="font-bold text-green-700">Advance Payment Required: </span>
-                            <span className="font-bold text-green-800 text-sm">{fmt(quotation.advanceAmount)}</span>
-                            {businessProfile?.bankAccountNo && (
-                                <div className="mt-1 text-green-700">
-                                    <span className="font-semibold">Bank: </span>{businessProfile.bankName || 'N/A'}
-                                    {businessProfile.bankBranch && <> — {businessProfile.bankBranch} Branch</>}
-                                    <br />
-                                    <span className="font-semibold">A/C No: </span>{businessProfile.bankAccountNo}
-                                    {businessProfile.bankAccountName && (
-                                        <> — <span className="font-semibold">Name: </span>{businessProfile.bankAccountName}</>
-                                    )}
+                    {/* ── Advance Payment & Bank Details ── */}
+                    {quotation.advanceAmount > 0 && (
+                        <div className="text-xs">
+                            <div className="p-3 bg-green-50 border border-green-200 rounded">
+                                <span className="font-bold text-green-700">Advance Payment Required: </span>
+                                <span className="font-bold text-green-800 text-sm">{fmt(quotation.advanceAmount)}</span>
+                                {businessProfile?.bankAccountNo && (
+                                    <div className="mt-1 text-green-700">
+                                        <span className="font-semibold">Bank: </span>{businessProfile.bankName || 'N/A'}
+                                        {businessProfile.bankBranch && <> — {businessProfile.bankBranch} Branch</>}
+                                        <br />
+                                        <span className="font-semibold">A/C No: </span>{businessProfile.bankAccountNo}
+                                        {businessProfile.bankAccountName && (
+                                            <> — <span className="font-semibold">Name: </span>{businessProfile.bankAccountName}</>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Notes & Validity ── */}
+                    {(quotation.notes || quotation.validUntil) && (
+                        <div className="text-xs space-y-1.5">
+                            {quotation.notes && (
+                                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                                    <span className="font-bold text-gray-700">Notes & Terms: </span>
+                                    <span className="whitespace-pre-wrap">{quotation.notes}</span>
                                 </div>
                             )}
+                            {quotation.validUntil && (
+                                <p className="font-bold text-red-600">
+                                    ⚠ This quotation is valid until: {new Date(quotation.validUntil).toLocaleDateString('en-GB')} {new Date(quotation.validUntil).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                            )}
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* ── Notes & Validity ── */}
-                {(quotation.notes || quotation.validUntil) && (
-                    <div className="mb-3 text-xs space-y-1.5">
-                        {quotation.notes && (
-                            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                                <span className="font-bold text-gray-700">Notes & Terms: </span>
-                                <span className="whitespace-pre-wrap">{quotation.notes}</span>
-                            </div>
-                        )}
-                        {quotation.validUntil && (
-                            <p className="font-bold text-red-600">
-                                ⚠ This quotation is valid until: {new Date(quotation.validUntil).toLocaleDateString('en-GB')} {new Date(quotation.validUntil).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                        )}
-                    </div>
-                )}
-
-                {/* ── Signatures ── */}
-                <div className="mt-auto pt-10 grid grid-cols-2 gap-8 text-xs">
-                    <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">
-                        Customer Signature
-                    </div>
-                    <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">
-                        Authorized Signature
+                    {/* ── Signatures ── */}
+                    <div className="pt-6 print:pt-4 grid grid-cols-2 gap-8 text-xs">
+                        <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">
+                            Customer Signature
+                        </div>
+                        <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">
+                            Authorized Signature
+                        </div>
                     </div>
                 </div>
 
