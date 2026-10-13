@@ -618,20 +618,29 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                     {routingMode === 'map' ? (
                         <div className="space-y-4">
                             <MapDistanceCalculator
-                                onDistanceCalculated={(dist, duration, start, end) => {
+                                onDistanceCalculated={(dist, duration, start, end, details) => {
                                     const startTown = start.split(',')[0].trim();
                                     const endTown = end.split(',')[0].trim();
                                     form.setValue('pickupLocation', startTown, { shouldDirty: true });
                                     form.setValue('dropLocation', endTown, { shouldDirty: true });
 
-                                    const autoNote = `Route: ${startTown} to ${endTown}\nEst. Distance: ${dist.toFixed(1)} km\nEst. Duration: ${duration}`;
+                                    // Build route description with intermediate stops if present
+                                    let routeDisplay = `${startTown} to ${endTown}`;
+                                    if (details?.waypoints && details.waypoints.length > 2) {
+                                        routeDisplay = details.waypoints.map(wp => wp.name.split(',')[0].trim()).join(' → ');
+                                    }
+
+                                    let autoNote = `Route: ${routeDisplay}\nEst. Distance: ${dist.toFixed(1)} km\nEst. Duration: ${duration}`;
+                                    if (details?.fuelEstimate) {
+                                        autoNote += `\nEst. Fuel: ~${details.fuelEstimate.liters} L (Rs. ${details.fuelEstimate.estimatedCost.toLocaleString()})`;
+                                    }
                                     const currentNotes = form.getValues('notes');
                                     form.setValue('notes', currentNotes ? `${currentNotes}\n\n${autoNote}` : autoNote, { shouldDirty: true });
 
                                     // Create in-memory single-day transfer schedule
                                     const transferSchedule: ScheduleOption = {
                                         id: selectedSchedule?.id?.startsWith('transfer-') ? selectedSchedule.id : `transfer-${Date.now()}`,
-                                        name: `Transfer: ${startTown} to ${endTown}`,
+                                        name: `Transfer: ${routeDisplay}`,
                                         days: 1,
                                         vehicleCategory: selectedVehicle?.category || 'CAR',
                                         vehicleNo: selectedVehicle?.vehicleNo || null,
@@ -642,7 +651,8 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                         items: [
                                             {
                                                 dayNumber: 1,
-                                                title: `${startTown} to ${endTown}`,
+                                                title: routeDisplay,
+                                                description: null,
                                                 distanceKm: Math.round(dist * 10) / 10,
                                                 accommodation: 0,
                                                 meals: 0,

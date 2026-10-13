@@ -301,14 +301,23 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
 
                             <div className="py-2">
                                 <MapDistanceCalculator 
-                                    onDistanceCalculated={(dist, duration, start, end) => {
-                                        const routeStr = `${start.split(',')[0]} to ${end.split(',')[0]}`;
+                                    onDistanceCalculated={(dist, duration, start, end, details) => {
+                                        const startTown = start.split(',')[0].trim();
+                                        const endTown = end.split(',')[0].trim();
+                                        let routeStr = `${startTown} to ${endTown}`;
+                                        if (details?.waypoints && details.waypoints.length > 2) {
+                                            routeStr = details.waypoints.map(wp => wp.name.split(',')[0].trim()).join(' → ');
+                                        }
+
                                         const currentDest = form.getValues('destination');
                                         if (!currentDest || currentDest.trim() === '') {
                                             form.setValue('destination', routeStr);
                                         }
                                         const currentNotes = form.getValues('notes');
-                                        const autoNote = `Map Route: ${routeStr}\nEst. Distance: ${dist.toFixed(1)} km\nEst. Duration: ${duration}`;
+                                        let autoNote = `Map Route: ${routeStr}\nEst. Distance: ${dist.toFixed(1)} km\nEst. Duration: ${duration}`;
+                                        if (details?.fuelEstimate) {
+                                            autoNote += `\nEst. Fuel: ~${details.fuelEstimate.liters} L (Rs. ${details.fuelEstimate.estimatedCost.toLocaleString()})`;
+                                        }
                                         form.setValue('notes', currentNotes ? `${currentNotes}\n\n${autoNote}` : autoNote);
                                     }}
                                 />

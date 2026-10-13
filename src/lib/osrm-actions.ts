@@ -7,12 +7,38 @@ export interface PlaceSuggestion {
   lon: number;
 }
 
+export interface RoutePoint {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
+export interface RouteLeg {
+  distanceKm: number;
+  durationText: string;
+  fromName: string;
+  toName: string;
+}
+
+export interface FuelEstimate {
+  liters: number;
+  estimatedCost: number; // in LKR
+  ratePerLiter: number;
+  kmPerLiter: number;
+}
+
 export interface RouteResult {
   success: boolean;
   distanceKm?: number;
   durationText?: string;
   startAddress?: string;
   endAddress?: string;
+  waypoints?: RoutePoint[];
+  legs?: RouteLeg[];
+  coordinates?: [number, number][]; // [lat, lon] pairs for Leaflet map
+  fuelEstimate?: FuelEstimate;
+  googleMapsUrl?: string;
+  wazeUrl?: string;
   error?: string;
 }
 
@@ -59,7 +85,7 @@ export async function searchPlacesOSM(query: string): Promise<PlaceSuggestion[]>
 /**
  * Geocode a place name into coordinates if not already provided
  */
-async function geocodePlace(place: string): Promise<{ lat: number; lon: number; name: string } | null> {
+export async function geocodePlace(place: string): Promise<RoutePoint | null> {
   const suggestions = await searchPlacesOSM(place);
   if (suggestions.length > 0) {
     return {
@@ -84,87 +110,237 @@ function formatDuration(seconds: number): string {
 }
 
 /**
- * Calculate driving route distance & duration using OSRM
+ * Generate a 1-click Google Maps Navigation URL with waypoints
+ */
+function generateGoogleMapsUrl(points: RoutePoint[]): string {
+  if (points.length < 2) return '';
+  const origin = `${points[0].lat},${points[0].lon}`;
+  const dest = `${points[points.length - 1].lat},${points[points.length - 1].lon}`;
+  
+  if (points.length === 2) {
+    return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`;
+  }
+
+  const intermediateWaypoints = points
+    .slice(1, -1)
+    .map((p) => `${p.lat},${p.lon}`)
+    .join('|');
+
+  return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${encodeURIComponent(
+    intermediateWaypoints
+  )}&travelmode=driving`;
+}
+
+/**
+ * Generate a 1-click Waze Navigation URL for the final destination
+ */
+function generateWazeUrl(destination: RoutePoint): string {
+  return `https://waze.com/ul?ll=${destination.lat},${destination.lon}&navigate=yes`;
+}
+
+/**
+ * Advanced Multi-Stop Route Calculation using OSRM & TSP Optimization
  */
 export async function calculateRouteOSRM(
   origin: string,
   destination: string,
-  originCoords?: { lat: number; lon: number },
-  destCoords?: { lat: number; lon: number }
+  optionsOrOriginCoords?:
+    | {
+        originCoords?: { lat: number; lon: number };
+        destCoords?: { lat: number; lon: number };
+        waypoints?: Array<{ name: string; lat?: number; lon?: number }>;
+        isRoundTrip?: boolean;
+        optimizeWaypoints?: boolean;
+        fuelKmPerLiter?: number;
+        fuelPricePerLiter?: number;
+      }
+    | {
+        lat: number;
+        lon: number;
+      },
+  legacyDestCoords?: { lat: number; lon: number }
 ): Promise<RouteResult> {
   try {
-    let startPoint = originCoords ? { ...originCoords, name: origin } : await geocodePlace(origin);
-    let endPoint = destCoords ? { ...destCoords, name: destination } : await geocodePlace(destination);
+    let options: {
+      originCoords?: { lat: number; lon: number };
+      destCoords?: { lat: number; lon: number };
+      waypoints?: Array<{ name: string; lat?: number; lon?: number }>;
+      isRoundTrip?: boolean;
+      optimizeWaypoints?: boolean;
+      fuelKmPerLiter?: number;
+      fuelPricePerLiter?: number;
+    } = {};
 
-    if (!startPoint) {
-      return {
-        success: false,
-        error: `Could not find location: "${origin}". Please check the spelling.`,
+    if (optionsOrOriginCoords && 'lat' in optionsOrOriginCoords && 'lon' in optionsOrOriginCoords) {
+      options = {
+        originCoords: { lat: optionsOrOriginCoords.lat, lon: optionsOrOriginCoords.lon },
+        destCoords: legacyDestCoords ? { lat: legacyDestCoords.lat, lon: legacyDestCoords.lon } : undefined,
       };
+    } else if (optionsOrOriginCoords) {
+      options = optionsOrOriginCoords;
     }
 
-    if (!endPoint) {
-      return {
-        success: false,
-        error: `Could not find location: "${destination}". Please check the spelling.`,
-      };
+    const originPoint = options?.originCoords
+      ? { ...options.originCoords, name: origin }
+      : await geocodePlace(origin);
+
+    const destPoint = options?.destCoords
+      ? { ...options.destCoords, name: destination }
+      : await geocodePlace(destination);
+
+    if (!originPoint) {
+      return { success: false, error: `Could not find origin: "${origin}". Please check spelling.` };
+    }
+    if (!destPoint) {
+      return { success: false, error: `Could not find destination: "${destination}". Please check spelling.` };
     }
 
-    // Call OSRM public routing API (driving profile)
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startPoint.lon},${startPoint.lat};${endPoint.lon},${endPoint.lat}?overview=false`;
+    // Geocode any intermediate waypoints
+    const intermediatePoints: RoutePoint[] = [];
+    if (options?.waypoints && options.waypoints.length > 0) {
+      for (const wp of options.waypoints) {
+        if (!wp.name?.trim()) continue;
+        if (wp.lat !== undefined && wp.lon !== undefined) {
+          intermediatePoints.push({ name: wp.name, lat: wp.lat, lon: wp.lon });
+        } else {
+          const geocoded = await geocodePlace(wp.name);
+          if (geocoded) intermediatePoints.push(geocoded);
+        }
+      }
+    }
 
-    const res = await fetch(osrmUrl, {
+    // Build complete route list of points
+    let allPoints: RoutePoint[] = [originPoint, ...intermediatePoints, destPoint];
+
+    // If round-trip requested, append origin back to the end
+    if (options?.isRoundTrip) {
+      allPoints.push({ ...originPoint, name: `${originPoint.name} (Return)` });
+    }
+
+    const shouldOptimize = options?.optimizeWaypoints && intermediatePoints.length > 1;
+
+    // Construct OSRM endpoint URL (either /trip for TSP optimization or /route)
+    const coordsParam = allPoints.map((p) => `${p.lon},${p.lat}`).join(';');
+    
+    let apiUrl = '';
+    if (shouldOptimize) {
+      apiUrl = `https://router.project-osrm.org/trip/v1/driving/${coordsParam}?source=first&destination=last&overview=full&geometries=geojson&steps=false`;
+    } else {
+      apiUrl = `https://router.project-osrm.org/route/v1/driving/${coordsParam}?overview=full&geometries=geojson&steps=false`;
+    }
+
+    const res = await fetch(apiUrl, {
       headers: {
         'User-Agent': 'VigilTourManagementPlatform/1.0',
       },
     });
 
     if (!res.ok) {
-      // Fallback: Haversine distance with road curvature factor (1.3x)
-      const distanceKm = haversineDistance(startPoint.lat, startPoint.lon, endPoint.lat, endPoint.lon) * 1.3;
-      const estimatedMins = Math.round((distanceKm / 45) * 60); // approx 45 km/h avg speed
-      return {
-        success: true,
-        distanceKm: Math.round(distanceKm * 10) / 10,
-        durationText: formatDuration(estimatedMins * 60),
-        startAddress: startPoint.name,
-        endAddress: endPoint.name,
-      };
+      return fallbackHaversineRoute(allPoints, options);
     }
 
     const data = await res.json();
+    const routeObj = shouldOptimize ? data.trips?.[0] : data.routes?.[0];
 
-    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
-      // Fallback: Haversine distance with road factor
-      const distanceKm = haversineDistance(startPoint.lat, startPoint.lon, endPoint.lat, endPoint.lon) * 1.3;
-      const estimatedMins = Math.round((distanceKm / 45) * 60);
-      return {
-        success: true,
-        distanceKm: Math.round(distanceKm * 10) / 10,
-        durationText: formatDuration(estimatedMins * 60),
-        startAddress: startPoint.name,
-        endAddress: endPoint.name,
-      };
+    if (!routeObj) {
+      return fallbackHaversineRoute(allPoints, options);
     }
 
-    const route = data.routes[0];
-    const distanceKm = Math.round((route.distance / 1000) * 10) / 10;
-    const durationText = formatDuration(route.duration);
+    // If optimized, re-order waypoints according to OSRM result
+    if (shouldOptimize && data.waypoints) {
+      const sortedPoints: RoutePoint[] = new Array(allPoints.length);
+      data.waypoints.forEach((wp: any, i: number) => {
+        sortedPoints[wp.waypoint_index] = allPoints[i];
+      });
+      allPoints = sortedPoints.filter(Boolean);
+    }
+
+    const totalDistanceKm = Math.round((routeObj.distance / 1000) * 10) / 10;
+    const durationText = formatDuration(routeObj.duration);
+
+    // Extract Leaflet-friendly [lat, lon] coordinates from GeoJSON LineString
+    const coordinates: [number, number][] = (routeObj.geometry?.coordinates || []).map(
+      ([lon, lat]: [number, number]) => [lat, lon]
+    );
+
+    // Build leg breakdown
+    const legs: RouteLeg[] = (routeObj.legs || []).map((leg: any, idx: number) => ({
+      distanceKm: Math.round((leg.distance / 1000) * 10) / 10,
+      durationText: formatDuration(leg.duration),
+      fromName: allPoints[idx]?.name || `Stop ${idx + 1}`,
+      toName: allPoints[idx + 1]?.name || `Stop ${idx + 2}`,
+    }));
+
+    // Calculate fuel consumption estimation
+    const kmPerLiter = options?.fuelKmPerLiter || 11;
+    const ratePerLiter = options?.fuelPricePerLiter || 350; // standard LKR fuel cost
+    const fuelLiters = Math.round((totalDistanceKm / kmPerLiter) * 10) / 10;
+    const estimatedFuelCost = Math.round(fuelLiters * ratePerLiter);
 
     return {
       success: true,
-      distanceKm,
+      distanceKm: totalDistanceKm,
       durationText,
-      startAddress: startPoint.name,
-      endAddress: endPoint.name,
+      startAddress: allPoints[0].name,
+      endAddress: allPoints[allPoints.length - 1].name,
+      waypoints: allPoints,
+      legs,
+      coordinates,
+      fuelEstimate: {
+        liters: fuelLiters,
+        estimatedCost: estimatedFuelCost,
+        ratePerLiter,
+        kmPerLiter,
+      },
+      googleMapsUrl: generateGoogleMapsUrl(allPoints),
+      wazeUrl: generateWazeUrl(allPoints[allPoints.length - 1]),
     };
   } catch (err: any) {
     console.error('OSRM route calculation error:', err);
     return {
       success: false,
-      error: 'Failed to calculate driving route. Please try again.',
+      error: 'Failed to calculate driving route. Please check location names.',
     };
   }
+}
+
+/**
+ * Fallback straight-line distance with 1.3x Sri Lanka road factor if OSRM is unreachable
+ */
+function fallbackHaversineRoute(
+  points: RoutePoint[],
+  options?: any
+): RouteResult {
+  let totalKm = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    totalKm += haversineDistance(points[i].lat, points[i].lon, points[i + 1].lat, points[i + 1].lon) * 1.3;
+  }
+  const distanceKm = Math.round(totalKm * 10) / 10;
+  const estimatedMins = Math.round((distanceKm / 45) * 60);
+
+  const coordinates: [number, number][] = points.map((p) => [p.lat, p.lon]);
+  const kmPerLiter = options?.fuelKmPerLiter || 11;
+  const ratePerLiter = options?.fuelPricePerLiter || 350;
+  const fuelLiters = Math.round((distanceKm / kmPerLiter) * 10) / 10;
+  const estimatedFuelCost = Math.round(fuelLiters * ratePerLiter);
+
+  return {
+    success: true,
+    distanceKm,
+    durationText: formatDuration(estimatedMins * 60),
+    startAddress: points[0].name,
+    endAddress: points[points.length - 1].name,
+    waypoints: points,
+    coordinates,
+    fuelEstimate: {
+      liters: fuelLiters,
+      estimatedCost: estimatedFuelCost,
+      ratePerLiter,
+      kmPerLiter,
+    },
+    googleMapsUrl: generateGoogleMapsUrl(points),
+    wazeUrl: generateWazeUrl(points[points.length - 1]),
+  };
 }
 
 /**
