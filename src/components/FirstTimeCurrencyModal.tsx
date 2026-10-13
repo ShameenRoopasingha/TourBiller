@@ -8,7 +8,8 @@ import {
     ArrowRight, 
     Loader2, 
     Globe2, 
-    Sparkles 
+    Sparkles,
+    RefreshCw
 } from 'lucide-react';
 import {
     Dialog,
@@ -50,7 +51,28 @@ export function FirstTimeCurrencyModal({
     const [selectedCurrency, setSelectedCurrency] = useState(currentCurrency);
     const [usdRate, setUsdRate] = useState<number | string>(currentUsdRate || 300);
     const [loading, setLoading] = useState(false);
+    const [syncingRate, setSyncingRate] = useState(false);
     const router = useRouter();
+
+    const handleSyncLiveRate = async () => {
+        setSyncingRate(true);
+        try {
+            const res = await fetch('/api/exchange-rate?from=USD&to=LKR');
+            const data = await res.json();
+            if (data.success && data.rate) {
+                const roundedRate = Math.round(data.rate * 10) / 10;
+                setUsdRate(roundedRate);
+                notify.success(`Synced live exchange rate: 1 USD = Rs. ${roundedRate}`);
+            } else {
+                notify.error('Failed to fetch live exchange rate');
+            }
+        } catch (e) {
+            console.error('Error syncing live rate:', e);
+            notify.error('Network error fetching exchange rate');
+        } finally {
+            setSyncingRate(false);
+        }
+    };
 
     if (!open) return null;
 
@@ -152,9 +174,22 @@ export function FirstTimeCurrencyModal({
                     {/* Secondary USD Exchange Rate Setting if Local LKR is chosen */}
                     {selectedCurrency === 'LKR' && (
                         <div className="p-3.5 rounded-lg bg-muted/40 border border-border/80 space-y-2 text-xs">
-                            <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                                <Globe2 className="w-4 h-4 text-primary" />
-                                <span>Foreign Tourist Quotation Conversion (USD Rate)</span>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                                    <Globe2 className="w-4 h-4 text-primary" />
+                                    <span>Foreign Tourist Quotation Conversion</span>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={syncingRate}
+                                    onClick={handleSyncLiveRate}
+                                    className="h-6 text-[11px] px-2 gap-1 text-primary hover:text-primary hover:bg-primary/10 border-primary/20"
+                                >
+                                    <RefreshCw className={`w-3 h-3 ${syncingRate ? 'animate-spin' : ''}`} />
+                                    Sync Live Rate
+                                </Button>
                             </div>
                             <p className="text-muted-foreground text-[11px]">
                                 When generating quotations for international tourists, the system automatically displays USD equivalents using this rate.

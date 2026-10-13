@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       model: groq('openai/gpt-oss-120b'),
       maxSteps: 5, // IMPORTANT: Allows the agent to reply AFTER using a tool
       messages: coreMessages,
-      system: `You are the VIGIL AI Assistant, a smart travel management system AI. You help administrators manage quotations, bookings, customers, and vehicles. You have the power to DIRECTLY save data to the database. Use the appropriate tools to create bookings, quotations, customers, and vehicles when requested by the user.
+      system: `You are the VIGIL AI Assistant, a smart travel management system AI. You help administrators manage quotations, bookings, customers, vehicles, and currency conversions for international tourists. You have the power to DIRECTLY save data to the database and query real-time live forex exchange rates (USD/LKR, EUR/LKR, etc.). When asked to quote or convert for foreign travelers, use the getLiveExchangeRate tool to provide precise, real-time rates. Use the appropriate tools to create bookings, quotations, customers, and vehicles when requested by the user.
       
 IMPORTANT BUSINESS RULES AND KNOWLEDGE:
 ${agentKnowledge}`,
@@ -377,6 +377,32 @@ ${agentKnowledge}`,
              const mostUsed = Object.entries(counts).sort((a: any, b: any) => b[1] - a[1])[0];
              if (!mostUsed) return { success: true, message: "No bills found yet." };
              return { success: true, vehicleNo: mostUsed[0], timesUsed: mostUsed[1] };
+          }
+        }),
+
+        getLiveExchangeRate: tool({
+          description: 'Get live real-time forex exchange rates (USD to LKR, EUR to LKR, GBP to LKR) or convert prices for international tourists.',
+          parameters: z.object({
+            fromCurrency: z.string().default('USD').describe('The source currency code (e.g. USD, EUR, GBP, LKR)'),
+            toCurrency: z.string().default('LKR').describe('The target currency code (e.g. LKR, USD, EUR)'),
+            amount: z.number().optional().describe('Optional amount to convert directly')
+          }),
+          execute: async ({ fromCurrency, toCurrency, amount }) => {
+            const { getLiveExchangeRate: fetchRate, convertCurrencyAmount } = await import('@/lib/exchange-rate');
+            if (amount !== undefined) {
+              const conversion = await convertCurrencyAmount(amount, fromCurrency, toCurrency);
+              return {
+                success: true,
+                ...conversion,
+                message: `${amount} ${fromCurrency.toUpperCase()} = ${conversion.convertedAmount} ${toCurrency.toUpperCase()} (at live rate 1 ${fromCurrency.toUpperCase()} = ${conversion.rate.toFixed(2)} ${toCurrency.toUpperCase()})`
+              };
+            }
+            const rateData = await fetchRate(fromCurrency, toCurrency);
+            return {
+              success: true,
+              ...rateData,
+              message: `Live exchange rate: 1 ${fromCurrency.toUpperCase()} = ${rateData.rate.toFixed(2)} ${toCurrency.toUpperCase()}`
+            };
           }
         })
       },

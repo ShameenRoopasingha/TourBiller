@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, RefreshCw } from 'lucide-react';
 import { notify } from '@/lib/notifications';
 import { BusinessProfileFormSchema, type BusinessProfileFormInput, type BusinessProfile } from '@/lib/validations';
 
@@ -30,6 +30,7 @@ interface BusinessProfileFormProps {
 
 export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSyncingRate, setIsSyncingRate] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const handleEnterKey = useEnterNavigation();
@@ -94,6 +95,26 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
             setError(message);
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleSyncLiveRate = async () => {
+        setIsSyncingRate(true);
+        try {
+            const res = await fetch('/api/exchange-rate?from=USD&to=LKR');
+            const data = await res.json();
+            if (data.success && data.rate) {
+                const roundedRate = Math.round(data.rate * 10) / 10;
+                form.setValue('usdRate', roundedRate, { shouldDirty: true });
+                notify.success(`Synced live exchange rate: 1 USD = Rs. ${roundedRate}`);
+            } else {
+                notify.error('Failed to fetch live exchange rate');
+            }
+        } catch (e) {
+            console.error('Error syncing live rate:', e);
+            notify.error('Network error fetching exchange rate');
+        } finally {
+            setIsSyncingRate(false);
         }
     };
 
@@ -277,7 +298,20 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
                                     name="usdRate"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>USD Conversion Rate (1 USD in LKR)</FormLabel>
+                                            <div className="flex items-center justify-between">
+                                                <FormLabel>USD Conversion Rate (1 USD in LKR)</FormLabel>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={isSyncingRate}
+                                                    onClick={handleSyncLiveRate}
+                                                    className="h-6 text-[11px] px-2 gap-1 text-primary hover:text-primary hover:bg-primary/10 border-primary/20"
+                                                >
+                                                    <RefreshCw className={`w-3 h-3 ${isSyncingRate ? 'animate-spin' : ''}`} />
+                                                    Sync Live Rate
+                                                </Button>
+                                            </div>
                                             <FormControl>
                                                 <Input type="number" step="0.1" min="1" placeholder="300" {...field} />
                                             </FormControl>
