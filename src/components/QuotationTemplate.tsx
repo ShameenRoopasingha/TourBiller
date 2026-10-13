@@ -1,8 +1,22 @@
 'use client';
 
 import { useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { PrintButton } from '@/components/PrintButton';
 import { formatCurrency } from '@/lib/calculations';
+import { type RoutePoint } from '@/lib/osrm-actions';
+
+const OSRMRouteMap = dynamic(
+    () => import('./OSRMRouteMap').then((mod) => mod.OSRMRouteMap),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="h-44 flex items-center justify-center bg-gray-50 border rounded text-xs text-gray-400">
+                Loading Route Map...
+            </div>
+        ),
+    }
+);
 
 interface QuotationData {
     id: string;
@@ -77,15 +91,24 @@ interface BusinessProfileData {
 interface QuotationTemplateProps {
     quotation: QuotationData;
     businessProfile?: BusinessProfileData;
+    routeCoordinates?: [number, number][];
+    routeWaypoints?: RoutePoint[];
 }
 
-export function QuotationTemplate({ quotation, businessProfile }: QuotationTemplateProps) {
+export function QuotationTemplate({
+    quotation,
+    businessProfile,
+    routeCoordinates = [],
+    routeWaypoints = [],
+}: QuotationTemplateProps) {
     useEffect(() => {
+        // Allow Leaflet map tiles and polyline adequate time to render before invoking print
+        const waitMs = routeCoordinates.length > 0 ? 1200 : 500;
         const timer = setTimeout(() => {
             window.print();
-        }, 500);
+        }, waitMs);
         return () => clearTimeout(timer);
-    }, []);
+    }, [routeCoordinates]);
 
     const companyName = businessProfile?.companyName || 'VIGILTransport';
     const address = businessProfile?.address || '';
@@ -119,6 +142,11 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                     body {
                         margin: 0;
                         padding: 0;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    .leaflet-tile-pane,
+                    .leaflet-tile {
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
@@ -306,6 +334,29 @@ export function QuotationTemplate({ quotation, businessProfile }: QuotationTempl
                         </tbody>
                     </table>
                 </div>
+
+                {/* ── Visual Tour Route Map ── */}
+                {routeCoordinates.length > 0 && (
+                    <div className="mb-4 break-inside-avoid print:break-inside-avoid">
+                        <div className="flex items-center justify-between mb-1.5">
+                            <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide flex items-center gap-1.5">
+                                <span>🗺️ Visual Tour Route Map</span>
+                            </h3>
+                            {quotation.totalDistance > 0 && (
+                                <span className="text-[10px] text-blue-700 font-semibold font-mono bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                                    {quotation.totalDistance.toFixed(1)} km Road Route
+                                </span>
+                            )}
+                        </div>
+                        <div className="rounded border border-gray-300 overflow-hidden shadow-xs print:border-gray-400">
+                            <OSRMRouteMap
+                                coordinates={routeCoordinates}
+                                waypoints={routeWaypoints}
+                                height="210px"
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {/* ── Cost Summary ── */}
                 <div className="mb-3">

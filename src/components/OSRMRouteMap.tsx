@@ -123,7 +123,7 @@ export function OSRMRouteMap({
   return (
     <div className={`relative rounded-lg overflow-hidden border border-border shadow-xs ${className}`}>
       <div ref={mapContainerRef} style={{ height, width: '100%' }} className="z-0" />
-      <div className="absolute top-2 right-2 z-[400] bg-background/90 backdrop-blur-xs px-2 py-1 rounded-md text-[10px] font-mono border text-muted-foreground shadow-xs flex items-center gap-1">
+      <div className="absolute top-2 right-2 z-[400] bg-background/90 backdrop-blur-xs px-2 py-1 rounded-md text-[10px] font-mono border text-muted-foreground shadow-xs flex items-center gap-1 print:hidden">
         <Navigation className="w-3 h-3 text-primary" />
         OSM Live Route
       </div>

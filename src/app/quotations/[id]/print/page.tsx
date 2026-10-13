@@ -4,7 +4,56 @@ import { Loader2 } from 'lucide-react';
 import { getQuotationById } from '@/lib/quotation-actions';
 import { getBusinessProfile } from '@/lib/actions';
 import { getVehicles } from '@/lib/vehicle-actions';
+import { calculateRouteOSRM, type RoutePoint } from '@/lib/osrm-actions';
 import { QuotationTemplate } from '@/components/QuotationTemplate';
+
+function extractRouteStops(quotation: {
+    pickupLocation?: string | null;
+    dropLocation?: string | null;
+    notes?: string | null;
+    tourSchedule?: {
+        items?: Array<{ title: string }>;
+    };
+}): string[] {
+    // 1. From notes (e.g., "Route: Katunayake → Pinnawala → Yala" or "Map Route: ...")
+    if (quotation.notes) {
+        const line = quotation.notes.split('\n').find((l) =>
+            l.trim().startsWith('Route:') || l.trim().startsWith('Map Route:')
+        );
+        if (line) {
+            const clean = line.replace(/^(Route|Map Route):\s*/i, '').trim();
+            const parts = clean.split(/➔|→|->|\bto\b/i).map((s) => s.trim()).filter(Boolean);
+            if (parts.length >= 2) return parts;
+        }
+    }
+
+    // 2. From items[0].title if single day / transfer
+    if (quotation.tourSchedule?.items && quotation.tourSchedule.items.length === 1) {
+        const title = quotation.tourSchedule.items[0]?.title || '';
+        const parts = title.split(/➔|→|->|\bto\b/i).map((s) => s.trim()).filter(Boolean);
+        if (parts.length >= 2) return parts;
+    }
+
+    // 3. From multi-day items
+    if (quotation.tourSchedule?.items && quotation.tourSchedule.items.length > 1) {
+        const stops: string[] = [];
+        quotation.tourSchedule.items.forEach((item, idx) => {
+            const parts = (item.title || '').split(/➔|→|->|\bto\b/i).map((s) => s.trim()).filter(Boolean);
+            if (parts.length > 0) {
+                if (idx === 0) stops.push(parts[0]);
+                if (parts.length > 1) stops.push(parts[parts.length - 1]);
+            }
+        });
+        if (stops.length >= 2) return stops;
+    }
+
+    // 4. From pickup and drop locations
+    if (quotation.pickupLocation && quotation.dropLocation) {
+        return [quotation.pickupLocation, quotation.dropLocation];
+    }
+
+    return [];
+}
 
 async function PrintQuotation({ id }: { id: string }) {
     const [quotationResult, profileResult] = await Promise.all([
@@ -68,10 +117,32 @@ async function PrintQuotation({ id }: { id: string }) {
         }
     }
 
+    // Precalculate route map coordinates for print preview
+    let routeCoordinates: [number, number][] = [];
+    let routeWaypoints: RoutePoint[] = [];
+
+    const stops = extractRouteStops(quotation);
+    if (stops.length >= 2) {
+        try {
+            const origin = stops[0];
+            const destination = stops[stops.length - 1];
+            const waypoints = stops.slice(1, -1).map((name) => ({ name }));
+            const routeRes = await calculateRouteOSRM(origin, destination, { waypoints });
+            if (routeRes.success && routeRes.coordinates) {
+                routeCoordinates = routeRes.coordinates;
+                routeWaypoints = routeRes.waypoints || [];
+            }
+        } catch (err) {
+            console.error('Failed to precompute print route map:', err);
+        }
+    }
+
     return (
         <QuotationTemplate
             quotation={{ ...fixedQuotation, ...vehicleSpecs }}
             businessProfile={profileResult.success ? profileResult.data : undefined}
+            routeCoordinates={routeCoordinates}
+            routeWaypoints={routeWaypoints}
         />
     );
 }

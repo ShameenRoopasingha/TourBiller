@@ -29,8 +29,52 @@ import {
 } from '@/components/ui/card';
 
 import { auth } from '@/lib/auth';
+import { calculateRouteOSRM, type RoutePoint } from '@/lib/osrm-actions';
+import { OSRMRouteMap } from '@/components/OSRMRouteMap';
 
-// ... other imports ...
+function extractRouteStops(quotation: {
+    pickupLocation?: string | null;
+    dropLocation?: string | null;
+    notes?: string | null;
+    tourSchedule?: {
+        items?: Array<{ title: string }>;
+    };
+}): string[] {
+    if (quotation.notes) {
+        const line = quotation.notes.split('\n').find((l) =>
+            l.trim().startsWith('Route:') || l.trim().startsWith('Map Route:')
+        );
+        if (line) {
+            const clean = line.replace(/^(Route|Map Route):\s*/i, '').trim();
+            const parts = clean.split(/➔|→|->|\bto\b/i).map((s) => s.trim()).filter(Boolean);
+            if (parts.length >= 2) return parts;
+        }
+    }
+
+    if (quotation.tourSchedule?.items && quotation.tourSchedule.items.length === 1) {
+        const title = quotation.tourSchedule.items[0]?.title || '';
+        const parts = title.split(/➔|→|->|\bto\b/i).map((s) => s.trim()).filter(Boolean);
+        if (parts.length >= 2) return parts;
+    }
+
+    if (quotation.tourSchedule?.items && quotation.tourSchedule.items.length > 1) {
+        const stops: string[] = [];
+        quotation.tourSchedule.items.forEach((item, idx) => {
+            const parts = (item.title || '').split(/➔|→|->|\bto\b/i).map((s) => s.trim()).filter(Boolean);
+            if (parts.length > 0) {
+                if (idx === 0) stops.push(parts[0]);
+                if (parts.length > 1) stops.push(parts[parts.length - 1]);
+            }
+        });
+        if (stops.length >= 2) return stops;
+    }
+
+    if (quotation.pickupLocation && quotation.dropLocation) {
+        return [quotation.pickupLocation, quotation.dropLocation];
+    }
+
+    return [];
+}
 
 export default async function ViewQuotationPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -57,6 +101,25 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
         ACCEPTED: 'bg-green-500/10 text-green-600 border-green-500/20',
         EXPIRED: 'bg-red-500/10 text-red-600 border-red-500/20',
     };
+
+    let routeCoordinates: [number, number][] = [];
+    let routeWaypoints: RoutePoint[] = [];
+
+    const stops = extractRouteStops(q);
+    if (stops.length >= 2) {
+        try {
+            const origin = stops[0];
+            const destination = stops[stops.length - 1];
+            const waypoints = stops.slice(1, -1).map((name) => ({ name }));
+            const routeRes = await calculateRouteOSRM(origin, destination, { waypoints });
+            if (routeRes.success && routeRes.coordinates) {
+                routeCoordinates = routeRes.coordinates;
+                routeWaypoints = routeRes.waypoints || [];
+            }
+        } catch (err) {
+            console.error('Failed to calculate view quotation route map:', err);
+        }
+    }
 
     return (
         <main className="container py-8 max-w-5xl">
@@ -195,6 +258,34 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                             ))}
                         </CardContent>
                     </Card>
+
+                    {/* Visual Route Map */}
+                    {routeCoordinates.length > 0 && (
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="text-lg flex items-center gap-2">
+                                            <MapPin className="h-5 w-5 text-primary" /> Visual Tour Route Map
+                                        </CardTitle>
+                                        <CardDescription>Live OpenStreetMap route with pin stops</CardDescription>
+                                    </div>
+                                    {q.totalDistance > 0 && (
+                                        <Badge variant="outline" className="font-mono text-xs">
+                                            {q.totalDistance.toFixed(1)} km Total Road Route
+                                        </Badge>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <OSRMRouteMap
+                                    coordinates={routeCoordinates}
+                                    waypoints={routeWaypoints}
+                                    height="280px"
+                                />
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Notes & Exclusions */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
