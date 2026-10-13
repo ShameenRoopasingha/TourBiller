@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Calculator, Sparkles, Wrench, Shield, Fuel, Disc } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { VehicleFormSchema, type VehicleFormInput, type Vehicle } from '@/lib/validations';
 import { notify } from '@/lib/notifications';
@@ -23,7 +23,6 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { PerKmCostCalculatorModal } from '@/components/PerKmCostCalculatorModal';
 
 interface VehicleFormProps {
     vehicle?: Vehicle;
@@ -63,8 +62,43 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
             lastFilterChangeMileage: vehicle?.lastFilterChangeMileage ?? 0,
             washInterval: vehicle?.washInterval ?? 1000,
             lastWashMileage: vehicle?.lastWashMileage ?? 0,
+            serviceCost: vehicle?.serviceCost ?? 0,
+            annualInsuranceCost: vehicle?.annualInsuranceCost ?? 0,
+            fuelEfficiency: vehicle?.fuelEfficiency ?? 0,
+            tyreCost: vehicle?.tyreCost ?? 0,
+            tyreLifespan: vehicle?.tyreLifespan ?? 40000,
         },
     });
+
+    // Live Operating Cost (VOC) calculations
+    const watchedServiceCost = Number(form.watch('serviceCost')) || 0;
+    const watchedOilInterval = Number(form.watch('oilChangeInterval')) || 5000;
+    const watchedAnnualInsurance = Number(form.watch('annualInsuranceCost')) || 0;
+    const watchedKmPerDay = Number(form.watch('kmPerDay')) || 100;
+    const watchedTyreCost = Number(form.watch('tyreCost')) || 0;
+    const watchedTyreLifespan = Number(form.watch('tyreLifespan')) || 40000;
+    const watchedFuelEfficiency = Number(form.watch('fuelEfficiency')) || 0;
+
+    const costBreakdown = useMemo(() => {
+        const servicePerKm = watchedOilInterval > 0 ? watchedServiceCost / watchedOilInterval : 0;
+        const insurancePerKm = watchedKmPerDay > 0 ? watchedAnnualInsurance / (365 * watchedKmPerDay) : 0;
+        const tyrePerKm = watchedTyreLifespan > 0 ? watchedTyreCost / watchedTyreLifespan : 0;
+        const fuelPerKm = watchedFuelEfficiency > 0 ? 370 / watchedFuelEfficiency : 0;
+        const baseCostPerKm = servicePerKm + insurancePerKm + tyrePerKm + fuelPerKm;
+        const wearReserve = baseCostPerKm > 0 ? 5 : 0;
+        const profitMargin = (baseCostPerKm + wearReserve) * 0.20; // 20% profit margin
+        const suggestedRate = baseCostPerKm > 0 ? Math.round(((baseCostPerKm + wearReserve + profitMargin) / 5)) * 5 : 0;
+
+        return {
+            servicePerKm,
+            insurancePerKm,
+            tyrePerKm,
+            fuelPerKm,
+            baseCostPerKm,
+            wearReserve,
+            suggestedRate,
+        };
+    }, [watchedServiceCost, watchedOilInterval, watchedAnnualInsurance, watchedKmPerDay, watchedTyreCost, watchedTyreLifespan, watchedFuelEfficiency]);
 
     const onSubmit = async (data: VehicleFormData) => {
         setIsSubmitting(true);
@@ -222,12 +256,17 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 <FormItem>
                                     <div className="flex items-center justify-between">
                                         <FormLabel>{rateMode === 'PER_DAY' ? 'Extra Km Charge (Rs.)' : 'Rate Per Km (Rs.)'}</FormLabel>
-                                        <PerKmCostCalculatorModal
-                                            initialServiceInterval={form.watch('oilChangeInterval') || 5000}
-                                            initialDailyMileage={form.watch('kmPerDay') || 100}
-                                            currentRate={Number(field.value) || 0}
-                                            onApplyRate={(rate) => form.setValue('excessKmRate', rate, { shouldDirty: true })}
-                                        />
+                                        {costBreakdown.suggestedRate > 0 && (
+                                            <button
+                                                type="button"
+                                                className="text-xs text-primary hover:underline flex items-center gap-1 font-medium bg-primary/10 px-2 py-0.5 rounded cursor-pointer transition-colors hover:bg-primary/20"
+                                                onClick={() => form.setValue('excessKmRate', costBreakdown.suggestedRate, { shouldDirty: true })}
+                                                title="Auto-calculate based on Service, Insurance, Tyres and Fuel costs"
+                                            >
+                                                <Sparkles className="w-3 h-3 text-primary" />
+                                                Auto-fill: Rs. {costBreakdown.suggestedRate}/km
+                                            </button>
+                                        )}
                                     </div>
                                     <FormControl>
                                         <Input type="number" step="0.01" placeholder="e.g. 120" {...field} value={field.value ?? ""} />
@@ -402,6 +441,155 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                 )}
                             />
                         </div>
+                    </div>
+
+                    {/* Operating Costs & Rate Estimator */}
+                    <div className="border-t pt-4 mt-6">
+                        <div className="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                                    Operating Costs & Running Charges (ධාවන වියදම්)
+                                </h3>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    Enter routine costs to automatically compute the vehicle&apos;s true cost per kilometer and suggested extra km rate.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="serviceCost"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-1.5">
+                                            <Wrench className="w-3.5 h-3.5 text-muted-foreground" />
+                                            Service Cost per Routine Service (Rs.)
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.01" placeholder="e.g. 35000" {...field} value={field.value ?? ""} />
+                                        </FormControl>
+                                        <p className="text-xs text-muted-foreground">
+                                            Divided by {form.watch('oilChangeInterval') || 5000} km interval = Rs. {costBreakdown.servicePerKm.toFixed(2)}/km
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="annualInsuranceCost"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-1.5">
+                                            <Shield className="w-3.5 h-3.5 text-muted-foreground" />
+                                            Annual Insurance Premium (Rs.)
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.01" placeholder="e.g. 120000" {...field} value={field.value ?? ""} />
+                                        </FormControl>
+                                        <p className="text-xs text-muted-foreground">
+                                            Divided by (365 × {form.watch('kmPerDay') || 100} km) = Rs. {costBreakdown.insurancePerKm.toFixed(2)}/km
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="tyreCost"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-1.5">
+                                            <Disc className="w-3.5 h-3.5 text-muted-foreground" />
+                                            Cost of Tyre Set (Rs.)
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.01" placeholder="e.g. 160000" {...field} value={field.value ?? ""} />
+                                        </FormControl>
+                                        <p className="text-xs text-muted-foreground">
+                                            Divided by {form.watch('tyreLifespan') || 40000} km = Rs. {costBreakdown.tyrePerKm.toFixed(2)}/km
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="tyreLifespan"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Tyre Lifespan (KM)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="1000" placeholder="e.g. 40000" {...field} value={field.value ?? ""} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="fuelEfficiency"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-1.5">
+                                            <Fuel className="w-3.5 h-3.5 text-muted-foreground" />
+                                            Fuel Efficiency (KM / Litre)
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.1" placeholder="e.g. 12" {...field} value={field.value ?? ""} />
+                                        </FormControl>
+                                        <p className="text-xs text-muted-foreground">
+                                            {costBreakdown.fuelPerKm > 0 ? `At Rs. 370/L = Rs. ${costBreakdown.fuelPerKm.toFixed(2)}/km` : 'Optional (leave 0 if customer pays fuel)'}
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        {/* Real-time VOC Breakdown Card */}
+                        {costBreakdown.baseCostPerKm > 0 && (
+                            <div className="mt-4 p-3 bg-muted/40 rounded-lg border border-border/80 text-xs space-y-2">
+                                <div className="flex items-center justify-between font-medium">
+                                    <span className="flex items-center gap-1.5 text-foreground font-semibold">
+                                        <Calculator className="w-3.5 h-3.5 text-primary" />
+                                        Running Cost Breakdown (පිරිවැය සාරාංශය)
+                                    </span>
+                                    <span className="text-primary font-bold">
+                                        Base: Rs. {costBreakdown.baseCostPerKm.toFixed(2)} / KM
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-muted-foreground pt-1">
+                                    <div>Service: <span className="font-semibold text-foreground">Rs. {costBreakdown.servicePerKm.toFixed(2)}</span></div>
+                                    <div>Insurance: <span className="font-semibold text-foreground">Rs. {costBreakdown.insurancePerKm.toFixed(2)}</span></div>
+                                    <div>Tyres: <span className="font-semibold text-foreground">Rs. {costBreakdown.tyrePerKm.toFixed(2)}</span></div>
+                                    <div>Fuel: <span className="font-semibold text-foreground">{costBreakdown.fuelPerKm > 0 ? `Rs. ${costBreakdown.fuelPerKm.toFixed(2)}` : 'Rs. 0.00'}</span></div>
+                                </div>
+                                <div className="flex flex-wrap items-center justify-between pt-2 border-t border-border/60 gap-2">
+                                    <span className="text-muted-foreground">
+                                        Suggested Rate (Base + Rs. 5 reserve + 20% margin): <strong className="text-foreground text-sm">Rs. {costBreakdown.suggestedRate}/km</strong>
+                                    </span>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-xs bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+                                        onClick={() => {
+                                            form.setValue('excessKmRate', costBreakdown.suggestedRate, { shouldDirty: true });
+                                            notify.success(`Set Extra Km Rate to Rs. ${costBreakdown.suggestedRate}`);
+                                        }}
+                                    >
+                                        <Sparkles className="w-3 h-3 mr-1" />
+                                        Apply to Extra Km Charge
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Maintenance Tracking */}

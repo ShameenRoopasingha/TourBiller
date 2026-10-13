@@ -42,6 +42,12 @@ async function NewQuotationForm() {
             acType: v.acType ?? null,
             features: v.features ?? null,
             insuranceCoverage: v.insuranceCoverage ?? null,
+            oilChangeInterval: v.oilChangeInterval ?? 5000,
+            serviceCost: v.serviceCost ?? 0,
+            annualInsuranceCost: v.annualInsuranceCost ?? 0,
+            fuelEfficiency: v.fuelEfficiency ?? 0,
+            tyreCost: v.tyreCost ?? 0,
+            tyreLifespan: v.tyreLifespan ?? 40000,
         }));
     const drivers = driversResult.success && driversResult.data ? driversResult.data : [];
 

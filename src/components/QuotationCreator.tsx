@@ -18,7 +18,6 @@ import { ComboboxField } from '@/components/ComboboxField';
 import { TourScheduleForm } from '@/components/TourScheduleForm';
 import { QuotationAIChat } from '@/components/QuotationAIChat';
 import { QuotationCostSummary } from '@/components/quotations/QuotationCostSummary';
-import { PerKmCostCalculatorModal } from '@/components/PerKmCostCalculatorModal';
 import {
     Dialog,
     DialogContent,
@@ -102,6 +101,11 @@ interface VehicleOption {
     features: string | null;
     insuranceCoverage: string | null;
     oilChangeInterval?: number | null;
+    serviceCost?: number | null;
+    annualInsuranceCost?: number | null;
+    fuelEfficiency?: number | null;
+    tyreCost?: number | null;
+    tyreLifespan?: number | null;
 }
 
 interface QuotationCreatorProps {
@@ -367,8 +371,20 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             // Prioritize schedule rates if they are set (non-zero)
             const rate = (selectedSchedule && selectedSchedule.ratePerDay > 0) ? selectedSchedule.ratePerDay : vehicle.ratePerDay;
             const km = (selectedSchedule && selectedSchedule.kmPerDay > 0) ? selectedSchedule.kmPerDay : vehicle.kmPerDay;
-            const excess = (selectedSchedule && selectedSchedule.excessKmRate) || vehicle.excessKmRate || 0;
+            let excess = (selectedSchedule && selectedSchedule.excessKmRate) || vehicle.excessKmRate || 0;
             const extraHour = (selectedSchedule && selectedSchedule.extraHourRate) || vehicle.extraHourRate || 0;
+
+            // If excessKmRate not pre-saved, auto-compute from vehicle operating costs
+            if (!excess) {
+                const sPerKm = (vehicle.serviceCost && vehicle.oilChangeInterval) ? (vehicle.serviceCost / vehicle.oilChangeInterval) : 0;
+                const iPerKm = (vehicle.annualInsuranceCost && (km || 100)) ? (vehicle.annualInsuranceCost / (365 * (km || 100))) : 0;
+                const tPerKm = (vehicle.tyreCost && (vehicle.tyreLifespan || 40000)) ? (vehicle.tyreCost / (vehicle.tyreLifespan || 40000)) : 0;
+                const fPerKm = (vehicle.fuelEfficiency && vehicle.fuelEfficiency > 0) ? (370 / vehicle.fuelEfficiency) : 0;
+                const baseCost = sPerKm + iPerKm + tPerKm + fPerKm;
+                if (baseCost > 0) {
+                    excess = Math.round(((baseCost + 5) * 1.2) / 5) * 5;
+                }
+            }
 
             form.setValue('hireRatePerDay', rate);
             form.setValue('kmPerDay', km);
@@ -379,6 +395,29 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             setSelectedVehicle(null);
         }
     };
+
+    // Live vehicle operating cost breakdown
+    const vehicleCostStats = useMemo(() => {
+        if (!selectedVehicle) return null;
+        const dailyKm = Number(watchedKmPerDay) || selectedVehicle.kmPerDay || 100;
+        const sInterval = selectedVehicle.oilChangeInterval || 5000;
+        const sCost = (selectedVehicle.serviceCost && sInterval > 0) ? (selectedVehicle.serviceCost / sInterval) : 0;
+        const insCost = (selectedVehicle.annualInsuranceCost && dailyKm > 0) ? (selectedVehicle.annualInsuranceCost / (365 * dailyKm)) : 0;
+        const tyreLifespan = selectedVehicle.tyreLifespan || 40000;
+        const tyreCost = (selectedVehicle.tyreCost && tyreLifespan > 0) ? (selectedVehicle.tyreCost / tyreLifespan) : 0;
+        const fuelCost = (selectedVehicle.fuelEfficiency && selectedVehicle.fuelEfficiency > 0) ? (370 / selectedVehicle.fuelEfficiency) : 0;
+        const baseVoc = sCost + insCost + tyreCost + fuelCost;
+        const suggestedRate = baseVoc > 0 ? Math.round(((baseVoc + 5) * 1.2) / 5) * 5 : 0;
+
+        return {
+            sCost,
+            insCost,
+            tyreCost,
+            fuelCost,
+            baseVoc,
+            suggestedRate,
+        };
+    }, [selectedVehicle, watchedKmPerDay]);
 
     // Calculate totals in real-time using single-pass reduce
     const calculatedTotals = useMemo(() => {
@@ -1083,12 +1122,17 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="excessKmRate">Extra Km Rate (Rs.)</Label>
-                                <PerKmCostCalculatorModal
-                                    initialServiceInterval={selectedVehicle?.oilChangeInterval || 5000}
-                                    initialDailyMileage={Number(form.watch('kmPerDay')) || selectedVehicle?.kmPerDay || 100}
-                                    currentRate={Number(watchedExcessKmRate) || 0}
-                                    onApplyRate={(rate) => form.setValue('excessKmRate', rate, { shouldDirty: true })}
-                                />
+                                {vehicleCostStats && vehicleCostStats.suggestedRate > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => form.setValue('excessKmRate', vehicleCostStats.suggestedRate, { shouldDirty: true })}
+                                        className="text-xs text-primary hover:underline flex items-center gap-1 font-medium bg-primary/10 px-2 py-0.5 rounded cursor-pointer transition-colors hover:bg-primary/20"
+                                        title="Auto-calculated from vehicle maintenance, insurance, tyre, and fuel costs"
+                                    >
+                                        <Sparkles className="w-3 h-3 text-primary" />
+                                        Auto Rate: Rs. {vehicleCostStats.suggestedRate}/km
+                                    </button>
+                                )}
                             </div>
                             <Input
                                 id="excessKmRate"
@@ -1097,6 +1141,25 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 placeholder="0.00"
                                 {...form.register('excessKmRate')}
                             />
+                            {/* Automated vehicle operating cost basis & tour extra calculation */}
+                            {vehicleCostStats && vehicleCostStats.baseVoc > 0 && (
+                                <div className="text-[11px] text-muted-foreground bg-muted/30 p-2 rounded border border-border/60 space-y-1">
+                                    <div className="flex flex-wrap items-center justify-between gap-1">
+                                        <span className="font-medium text-foreground">
+                                            Cost Basis ({selectedVehicle?.vehicleNo}):
+                                        </span>
+                                        <span>
+                                            Service: Rs. {vehicleCostStats.sCost.toFixed(1)} • Ins: Rs. {vehicleCostStats.insCost.toFixed(1)} • Tyres: Rs. {vehicleCostStats.tyreCost.toFixed(1)}
+                                            {vehicleCostStats.fuelCost > 0 ? ` • Fuel: Rs. ${vehicleCostStats.fuelCost.toFixed(1)}` : ''}
+                                        </span>
+                                    </div>
+                                    {calculatedTotals.excessKm > 0 && (
+                                        <div className="text-amber-600 dark:text-amber-400 font-medium">
+                                            Tour Extra: {calculatedTotals.excessKm.toFixed(0)} km × Rs. {watchedExcessKmRate || 0} = Rs. {formatCurrency(calculatedTotals.excessKmCost)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="extraHourRate">Extra Hour Rate (Rs.)</Label>

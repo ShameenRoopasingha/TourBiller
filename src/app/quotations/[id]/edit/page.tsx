@@ -59,7 +59,13 @@ export default async function EditQuotationPage({ params }: { params: Promise<{ 
                     seats: v.seats || null,
                     acType: v.acType || null,
                     features: v.features || null,
-                    insuranceCoverage: v.insuranceCoverage || null
+                    insuranceCoverage: v.insuranceCoverage || null,
+                    oilChangeInterval: v.oilChangeInterval ?? 5000,
+                    serviceCost: v.serviceCost ?? 0,
+                    annualInsuranceCost: v.annualInsuranceCost ?? 0,
+                    fuelEfficiency: v.fuelEfficiency ?? 0,
+                    tyreCost: v.tyreCost ?? 0,
+                    tyreLifespan: v.tyreLifespan ?? 40000,
                 }))}
             />
         </main>

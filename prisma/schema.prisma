@@ -108,6 +108,11 @@ model Vehicle {
   lastFilterChangeMileage Float    @default(0)
   washInterval            Float    @default(1000)
   lastWashMileage         Float    @default(0)
+  serviceCost             Float?   @default(0)   // Cost per routine service (Rs.)
+  annualInsuranceCost     Float?   @default(0)   // Annual insurance cost (Rs.)
+  fuelEfficiency          Float?   @default(0)   // KM per Litre
+  tyreCost                Float?   @default(0)   // Cost of tyre set (Rs.)
+  tyreLifespan            Float?   @default(40000) // Tyre lifespan in KM
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

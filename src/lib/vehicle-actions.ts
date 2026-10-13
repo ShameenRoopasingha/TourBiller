@@ -39,6 +39,11 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
             lastFilterChangeMileage: parseFloat(formData.get('lastFilterChangeMileage') as string) || 0,
             washInterval: parseFloat(formData.get('washInterval') as string) || 1000,
             lastWashMileage: parseFloat(formData.get('lastWashMileage') as string) || 0,
+            serviceCost: parseFloat(formData.get('serviceCost') as string) || 0,
+            annualInsuranceCost: parseFloat(formData.get('annualInsuranceCost') as string) || 0,
+            fuelEfficiency: parseFloat(formData.get('fuelEfficiency') as string) || 0,
+            tyreCost: parseFloat(formData.get('tyreCost') as string) || 0,
+            tyreLifespan: parseFloat(formData.get('tyreLifespan') as string) || 40000,
         };
 
         const validatedData = VehicleSchema.parse(rawData);
@@ -128,6 +133,11 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
             lastFilterChangeMileage: parseFloat(formData.get('lastFilterChangeMileage') as string) || 0,
             washInterval: parseFloat(formData.get('washInterval') as string) || 1000,
             lastWashMileage: parseFloat(formData.get('lastWashMileage') as string) || 0,
+            serviceCost: parseFloat(formData.get('serviceCost') as string) || 0,
+            annualInsuranceCost: parseFloat(formData.get('annualInsuranceCost') as string) || 0,
+            fuelEfficiency: parseFloat(formData.get('fuelEfficiency') as string) || 0,
+            tyreCost: parseFloat(formData.get('tyreCost') as string) || 0,
+            tyreLifespan: parseFloat(formData.get('tyreLifespan') as string) || 40000,
         };
 
         const validatedData = VehicleSchema.parse(rawData);

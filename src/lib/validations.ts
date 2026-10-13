@@ -61,6 +61,11 @@ export const VehicleFormSchema = z.object({
   lastFilterChangeMileage: z.coerce.number().min(0).default(0),
   washInterval: z.coerce.number().min(0).default(1000),
   lastWashMileage: z.coerce.number().min(0).default(0),
+  serviceCost: z.coerce.number().min(0).default(0),
+  annualInsuranceCost: z.coerce.number().min(0).default(0),
+  fuelEfficiency: z.coerce.number().min(0).default(0),
+  tyreCost: z.coerce.number().min(0).default(0),
+  tyreLifespan: z.coerce.number().min(0).default(40000),
 });
 
 export type VehicleFormInput = z.infer<typeof VehicleFormSchema>;
@@ -295,6 +300,11 @@ export const VehicleSchema = z.object({
   lastFilterChangeMileage: z.coerce.number().min(0).default(0),
   washInterval: z.coerce.number().min(0).default(1000),
   lastWashMileage: z.coerce.number().min(0).default(0),
+  serviceCost: z.coerce.number().min(0).default(0),
+  annualInsuranceCost: z.coerce.number().min(0).default(0),
+  fuelEfficiency: z.coerce.number().min(0).default(0),
+  tyreCost: z.coerce.number().min(0).default(0),
+  tyreLifespan: z.coerce.number().min(0).default(40000),
 });
 
 export type VehicleFormData = z.infer<typeof VehicleSchema>;
