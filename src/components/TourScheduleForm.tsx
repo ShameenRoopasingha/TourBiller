@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus, Trash2, MapPin } from 'lucide-react';
+import { Loader2, Plus, Trash2, MapPin, Navigation } from 'lucide-react';
 
 import { TourScheduleFormSchema, type TourScheduleFormInput, type Vehicle } from '@/lib/validations';
 import { notify } from '@/lib/notifications';
+import { DayMapRoutePlanner } from '@/components/DayMapRoutePlanner';
 
 // For backward compatibility
 export type TourScheduleFormData = TourScheduleFormInput;
@@ -83,9 +84,19 @@ export function TourScheduleForm({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [activeDayMap, setActiveDayMap] = useState<number | null>(null);
+    const [dayFromDefaults, setDayFromDefaults] = useState<Record<number, string>>({});
     const handleEnterKey = useEnterNavigation();
 
     const isEditing = !!initialData;
+
+    const getPreviousDestination = (currentIndex: number) => {
+        if (currentIndex <= 0) return '';
+        const prevTitle = form?.getValues(`items.${currentIndex - 1}.title`) || '';
+        if (prevTitle.includes('→')) return prevTitle.split('→')[1].trim();
+        if (prevTitle.includes('to')) return prevTitle.split('to')[1].trim();
+        return '';
+    };
 
     const defaultItems = initialData?.items.map((item) => ({
         dayNumber: item.dayNumber,
@@ -533,18 +544,65 @@ export function TourScheduleForm({
                                 <h4 className="font-semibold text-sm">
                                     Day {index + 1}
                                 </h4>
-                                {fields.length > 1 && (
+                                <div className="flex items-center gap-1.5">
                                     <Button
                                         type="button"
-                                        variant="ghost"
+                                        variant="outline"
                                         size="sm"
-                                        onClick={() => removeDay(index)}
-                                        className="text-destructive hover:text-destructive"
+                                        className={`h-7 px-2.5 text-xs flex items-center gap-1.5 transition-all ${
+                                            activeDayMap === index
+                                                ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+                                                : 'hover:bg-muted text-foreground'
+                                        }`}
+                                        onClick={() => setActiveDayMap(activeDayMap === index ? null : index)}
                                     >
-                                        <Trash2 className="h-4 w-4" />
+                                        <Navigation className="h-3 w-3" />
+                                        {activeDayMap === index ? 'Close Route' : 'Map Route'}
                                     </Button>
-                                )}
+                                    {fields.length > 1 && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => removeDay(index)}
+                                            className="text-destructive hover:text-destructive h-7 w-7 p-0"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
+
+                            {activeDayMap === index && (
+                                <DayMapRoutePlanner
+                                    dayNumber={index + 1}
+                                    initialFrom={
+                                        dayFromDefaults[index] ||
+                                        (index > 0 ? getPreviousDestination(index) : '')
+                                    }
+                                    initialTo=""
+                                    onApplyRoute={(routeTitle, distanceKm, durationText) => {
+                                        form.setValue(`items.${index}.title`, routeTitle, { shouldDirty: true });
+                                        form.setValue(`items.${index}.distanceKm`, distanceKm, { shouldDirty: true });
+                                        const currentDesc = form.getValues(`items.${index}.description`);
+                                        const estNote = `Est. driving time: ${durationText}`;
+                                        form.setValue(
+                                            `items.${index}.description`,
+                                            currentDesc && !currentDesc.includes('Est. driving time')
+                                                ? `${currentDesc} (${estNote})`
+                                                : estNote,
+                                            { shouldDirty: true }
+                                        );
+                                        // Carry forward destination to next day's origin
+                                        const destination = routeTitle.includes('→') ? routeTitle.split('→')[1].trim() : '';
+                                        if (destination) {
+                                            setDayFromDefaults((prev) => ({ ...prev, [index + 1]: destination }));
+                                        }
+                                        setActiveDayMap(null);
+                                    }}
+                                    onCancel={() => setActiveDayMap(null)}
+                                />
+                            )}
 
 
 
