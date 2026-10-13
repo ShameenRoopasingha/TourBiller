@@ -212,8 +212,13 @@ export async function calculateRouteOSRM(
     // Build complete route list of points
     let allPoints: RoutePoint[] = [originPoint, ...intermediatePoints, destPoint];
 
-    // If round-trip requested, append origin back to the end
-    if (options?.isRoundTrip) {
+    // Check if destination is already essentially the origin (distance < 1km or matching town name)
+    const isAlreadyReturning =
+      haversineDistance(originPoint.lat, originPoint.lon, destPoint.lat, destPoint.lon) < 1.0 ||
+      originPoint.name.split(',')[0].trim().toLowerCase() === destPoint.name.split(',')[0].trim().toLowerCase();
+
+    // If round-trip requested and destination is not already the origin, append origin back to the end
+    if (options?.isRoundTrip && !isAlreadyReturning) {
       allPoints.push({ ...originPoint, name: `${originPoint.name} (Return)` });
     }
 

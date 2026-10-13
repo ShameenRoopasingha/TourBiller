@@ -427,11 +427,13 @@ export function MapDistanceCalculator({
             <div className="flex items-center justify-between mb-1">
               <Label htmlFor="osm-dropoff" className="text-xs font-medium flex items-center gap-1.5 text-foreground">
                 <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
-                Drop-off Location (To)
+                {isRoundTrip ? 'Main Destination (Turnaround Point)' : 'Drop-off Location (To)'}
               </Label>
-              {dropoffCoords && (
+              {isRoundTrip ? (
+                <span className="text-[10px] text-blue-600 font-mono font-medium">Auto-returns to Pickup</span>
+              ) : dropoffCoords ? (
                 <span className="text-[10px] text-emerald-600 font-mono">Pinned</span>
-              )}
+              ) : null}
             </div>
             <Input
               id="osm-dropoff"
@@ -451,7 +453,11 @@ export function MapDistanceCalculator({
                   handleCalculateRoute();
                 }
               }}
-              placeholder="e.g. Kandy, Galle Fort, Ella, Mirissa..."
+              placeholder={
+                isRoundTrip
+                  ? "e.g. Kandy, Yala, Kataragama (returns to pickup)..."
+                  : "e.g. Kandy, Galle Fort, Ella, Mirissa..."
+              }
               className="bg-background text-xs sm:text-sm h-9"
               autoComplete="off"
             />
