@@ -3,11 +3,12 @@
 import React, { useState, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, FileCheck, Calculator, Plus, Sparkles } from 'lucide-react';
+import { Loader2, FileCheck, Calculator, Plus, Sparkles, Navigation, CalendarRange, MapPin } from 'lucide-react';
 
 import { QuotationFormSchema, type QuotationFormInput, type QuotationWithSchedule, type VehicleAvailabilityConflict, type DriverAvailabilityConflict } from '@/lib/validations';
 import { notify } from '@/lib/notifications';
 import { MapDistanceCalculator } from '@/components/MapDistanceCalculator';
+import { createTourSchedule } from '@/lib/tour-schedule-actions';
 
 // For backward compatibility
 export type QuotationFormData = QuotationFormInput;
@@ -138,6 +139,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
     const [driverAvailabilityConflict, setDriverAvailabilityConflict] = useState<DriverAvailabilityConflict | null>(null);
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+    const [routingMode, setRoutingMode] = useState<'map' | 'schedule'>(initialData ? 'schedule' : 'map');
 
     const handleApplyDraft = (draft: QuotationDraft) => {
         if (draft.customerName) form.setValue('customerName', draft.customerName, { shouldDirty: true });
@@ -439,9 +441,53 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         setError(null);
 
         try {
+            let finalScheduleId = data.tourScheduleId;
+
+            // In Map mode with an in-memory transfer schedule, persist it to DB first
+            if (routingMode === 'map' && (!finalScheduleId || finalScheduleId.startsWith('transfer-'))) {
+                const startTown = data.pickupLocation || 'Pickup Location';
+                const endTown = data.dropLocation || 'Drop-off Location';
+                const distanceKm = Number(selectedSchedule?.items?.[0]?.distanceKm) || 0;
+
+                const scheduleRes = await createTourSchedule({
+                    name: `Transfer: ${startTown} to ${endTown}`,
+                    days: 1,
+                    vehicleCategory: selectedVehicle?.category || 'CAR',
+                    vehicleNo: selectedVehicle?.vehicleNo || undefined,
+                    ratePerDay: Number(data.hireRatePerDay) || 0,
+                    kmPerDay: Number(data.kmPerDay) || 0,
+                    excessKmRate: Number(data.excessKmRate) || undefined,
+                    extraHourRate: Number(data.extraHourRate) || undefined,
+                    items: [
+                        {
+                            dayNumber: 1,
+                            title: `${startTown} to ${endTown}`,
+                            distanceKm: distanceKm,
+                            accommodation: 0,
+                            meals: 0,
+                            activities: 0,
+                            otherCosts: 0,
+                        }
+                    ]
+                });
+
+                if (scheduleRes.success && scheduleRes.data) {
+                    finalScheduleId = scheduleRes.data.id;
+                    form.setValue('tourScheduleId', finalScheduleId);
+                } else {
+                    const msg = scheduleRes.error || 'Failed to initialize transfer itinerary';
+                    notify.error(msg);
+                    setError(msg);
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+
             const formData = new FormData();
             Object.entries(data).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
+                if (key === 'tourScheduleId') {
+                    formData.append(key, finalScheduleId);
+                } else if (value !== undefined && value !== null) {
                     formData.append(key, value instanceof Date ? value.toISOString() : String(value));
                 }
             });
@@ -514,98 +560,206 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                 </Alert>
             )}
 
-            {/* Step 1: Select Tour Schedule */}
+            {/* Step 1: Select Routing Mode (Map Route vs Tour Schedule) */}
             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <FileCheck className="h-5 w-5" />
-                        Select Tour Schedule
-                    </CardTitle>
-                    <CardDescription>
-                        Choose an existing tour itinerary as the basis for this quotation
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor="tourScheduleId">Tour Schedule *</Label>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-8 px-2 flex items-center gap-1"
-                                onClick={() => setIsScheduleModalOpen(true)}
-                            >
-                                <Plus className="h-4 w-4" />
-                                New
-                            </Button>
+                <CardHeader className="pb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                {routingMode === 'map' ? (
+                                    <>
+                                        <Navigation className="h-5 w-5 text-primary" />
+                                        Point-to-Point Route (Map Planner)
+                                    </>
+                                ) : (
+                                    <>
+                                        <FileCheck className="h-5 w-5 text-primary" />
+                                        Tour Schedule Package
+                                    </>
+                                )}
+                            </CardTitle>
+                            <CardDescription>
+                                {routingMode === 'map' 
+                                    ? 'Calculate road distance and driving duration with live road routing'
+                                    : 'Choose a predefined multi-day tour package or create a custom itinerary'}
+                            </CardDescription>
                         </div>
-                        <ComboboxField
-                            options={schedules.map((s) => ({
-                                label: `${s.name} (${s.days} days, ${s.vehicleCategory})`,
-                                value: s.id
-                            }))}
-                            value={watchedTourScheduleId}
-                            onChange={handleScheduleChange}
-                            placeholder="Select a tour schedule..."
-                        />
-                        {form.formState.errors.tourScheduleId && (
-                            <p className="text-sm text-destructive font-medium">{form.formState.errors.tourScheduleId.message}</p>
-                        )}
+
+                        {/* Segmented Mode Selector Button Group */}
+                        <div className="inline-flex p-1 bg-muted rounded-lg border self-start sm:self-auto shrink-0 shadow-2xs">
+                            <button
+                                type="button"
+                                onClick={() => setRoutingMode('map')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                                    routingMode === 'map'
+                                        ? 'bg-background text-foreground shadow-xs'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                <Navigation className="w-3.5 h-3.5 text-primary" />
+                                Direct Map Route
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setRoutingMode('schedule')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                                    routingMode === 'schedule'
+                                        ? 'bg-background text-foreground shadow-xs'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                <CalendarRange className="w-3.5 h-3.5 text-primary" />
+                                Tour Schedule
+                            </button>
+                        </div>
                     </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {routingMode === 'map' ? (
+                        <div className="space-y-4">
+                            <MapDistanceCalculator
+                                onDistanceCalculated={(dist, duration, start, end) => {
+                                    const startTown = start.split(',')[0].trim();
+                                    const endTown = end.split(',')[0].trim();
+                                    form.setValue('pickupLocation', startTown, { shouldDirty: true });
+                                    form.setValue('dropLocation', endTown, { shouldDirty: true });
 
-                    <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
-                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                            <DialogHeader>
-                                <DialogTitle>Create New Tour Schedule</DialogTitle>
-                                <DialogDescription>
-                                    Add a new tour itinerary. It will be available for selection once saved.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <TourScheduleForm
-                                existingSchedules={schedules}
-                                hideHeader={true}
-                                onSuccess={(data) => {
-                                    setJustCreatedScheduleId(data.id);
-                                    setIsScheduleModalOpen(false);
+                                    const autoNote = `Route: ${startTown} to ${endTown}\nEst. Distance: ${dist.toFixed(1)} km\nEst. Duration: ${duration}`;
+                                    const currentNotes = form.getValues('notes');
+                                    form.setValue('notes', currentNotes ? `${currentNotes}\n\n${autoNote}` : autoNote, { shouldDirty: true });
+
+                                    // Create in-memory single-day transfer schedule
+                                    const transferSchedule: ScheduleOption = {
+                                        id: selectedSchedule?.id?.startsWith('transfer-') ? selectedSchedule.id : `transfer-${Date.now()}`,
+                                        name: `Transfer: ${startTown} to ${endTown}`,
+                                        days: 1,
+                                        vehicleCategory: selectedVehicle?.category || 'CAR',
+                                        vehicleNo: selectedVehicle?.vehicleNo || null,
+                                        ratePerDay: selectedVehicle?.ratePerDay || 0,
+                                        kmPerDay: selectedVehicle?.kmPerDay || 0,
+                                        excessKmRate: selectedVehicle?.excessKmRate || 0,
+                                        extraHourRate: selectedVehicle?.extraHourRate || 0,
+                                        items: [
+                                            {
+                                                dayNumber: 1,
+                                                title: `${startTown} to ${endTown}`,
+                                                distanceKm: Math.round(dist * 10) / 10,
+                                                accommodation: 0,
+                                                meals: 0,
+                                                activities: 0,
+                                                otherCosts: 0,
+                                            }
+                                        ]
+                                    };
+                                    setSelectedSchedule(transferSchedule);
+                                    form.setValue('tourScheduleId', transferSchedule.id, { shouldDirty: true });
                                 }}
-                                onCancel={() => setIsScheduleModalOpen(false)}
                             />
-                        </DialogContent>
-                    </Dialog>
 
-                    {/* Day-by-day preview */}
-                    {selectedSchedule && (
-                        <div className="mt-4">
-                            <h4 className="text-sm font-medium mb-2">Itinerary Preview</h4>
-                            <div className="rounded-md border overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-[60px]">Day</TableHead>
-                                            <TableHead>Route</TableHead>
-                                            <TableHead className="text-right">Km</TableHead>
-                                            <TableHead className="text-right">Accommodation</TableHead>
-                                            <TableHead className="text-right">Meals</TableHead>
-                                            <TableHead className="text-right">Activities</TableHead>
-                                            <TableHead className="text-right">Other</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {selectedSchedule.items.map((item) => (
-                                            <TableRow key={item.dayNumber}>
-                                                <TableCell className="font-medium">Day {item.dayNumber}</TableCell>
-                                                <TableCell>{item.title}</TableCell>
-                                                <TableCell className="text-right">{item.distanceKm}</TableCell>
-                                                <TableCell className="text-right">{fmt(item.accommodation)}</TableCell>
-                                                <TableCell className="text-right">{fmt(item.meals)}</TableCell>
-                                                <TableCell className="text-right">{fmt(item.activities)}</TableCell>
-                                                <TableCell className="text-right">{fmt(item.otherCosts)}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                            {/* Live Route Summary Badge if route is calculated */}
+                            {selectedSchedule?.id?.startsWith('transfer-') && (
+                                <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg flex flex-wrap items-center justify-between gap-2 text-sm animate-in fade-in">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span className="font-semibold text-foreground">
+                                            {form.getValues('pickupLocation') || 'Origin'} ➔ {form.getValues('dropLocation') || 'Destination'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span className="font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-md">
+                                            {selectedSchedule.items[0]?.distanceKm} km
+                                        </span>
+                                        <span className="text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                                            Single Day Transfer
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="tourScheduleId">Tour Schedule *</Label>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 px-2 flex items-center gap-1"
+                                        onClick={() => setIsScheduleModalOpen(true)}
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        New
+                                    </Button>
+                                </div>
+                                <ComboboxField
+                                    options={schedules.map((s) => ({
+                                        label: `${s.name} (${s.days} days, ${s.vehicleCategory})`,
+                                        value: s.id
+                                    }))}
+                                    value={watchedTourScheduleId}
+                                    onChange={handleScheduleChange}
+                                    placeholder="Select a tour schedule..."
+                                />
+                                {form.formState.errors.tourScheduleId && (
+                                    <p className="text-sm text-destructive font-medium">{form.formState.errors.tourScheduleId.message}</p>
+                                )}
                             </div>
+
+                            <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
+                                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                    <DialogHeader>
+                                        <DialogTitle>Create New Tour Schedule</DialogTitle>
+                                        <DialogDescription>
+                                            Add a new tour itinerary. It will be available for selection once saved.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <TourScheduleForm
+                                        existingSchedules={schedules}
+                                        hideHeader={true}
+                                        onSuccess={(data) => {
+                                            setJustCreatedScheduleId(data.id);
+                                            setIsScheduleModalOpen(false);
+                                        }}
+                                        onCancel={() => setIsScheduleModalOpen(false)}
+                                    />
+                                </DialogContent>
+                            </Dialog>
+
+                            {/* Day-by-day preview */}
+                            {selectedSchedule && !selectedSchedule.id.startsWith('transfer-') && (
+                                <div className="mt-4">
+                                    <h4 className="text-sm font-medium mb-2">Itinerary Preview</h4>
+                                    <div className="rounded-md border overflow-x-auto">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead className="w-[60px]">Day</TableHead>
+                                                    <TableHead>Route</TableHead>
+                                                    <TableHead className="text-right">Km</TableHead>
+                                                    <TableHead className="text-right">Accommodation</TableHead>
+                                                    <TableHead className="text-right">Meals</TableHead>
+                                                    <TableHead className="text-right">Activities</TableHead>
+                                                    <TableHead className="text-right">Other</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {selectedSchedule.items.map((item) => (
+                                                    <TableRow key={item.dayNumber}>
+                                                        <TableCell className="font-medium">Day {item.dayNumber}</TableCell>
+                                                        <TableCell>{item.title}</TableCell>
+                                                        <TableCell className="text-right">{item.distanceKm}</TableCell>
+                                                        <TableCell className="text-right">{fmt(item.accommodation)}</TableCell>
+                                                        <TableCell className="text-right">{fmt(item.meals)}</TableCell>
+                                                        <TableCell className="text-right">{fmt(item.activities)}</TableCell>
+                                                        <TableCell className="text-right">{fmt(item.otherCosts)}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </CardContent>
@@ -826,19 +980,6 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 className="bg-muted cursor-not-allowed"
                             />
                         </div>
-                    </div>
-
-                    <div className="py-2">
-                        <MapDistanceCalculator 
-                            onDistanceCalculated={(dist, duration, start, end) => {
-                                form.setValue('pickupLocation', start.split(',')[0], { shouldDirty: true });
-                                form.setValue('dropLocation', end.split(',')[0], { shouldDirty: true });
-                                
-                                const currentNotes = form.getValues('notes');
-                                const autoNote = `Map Route: ${start.split(',')[0]} to ${end.split(',')[0]}\nEst. Distance: ${dist.toFixed(1)} km\nEst. Duration: ${duration}`;
-                                form.setValue('notes', currentNotes ? `${currentNotes}\n\n${autoNote}` : autoNote, { shouldDirty: true });
-                            }}
-                        />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
