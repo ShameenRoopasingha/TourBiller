@@ -9,7 +9,7 @@ export function BackupButton({ companyId }: { companyId: string }) {
 
   const handleBackup = () => {
     setIsLoading(true);
-    // 1-2 තත්පර වලින් button එකේ loading state එක අයින් කරන්න (download එක ඉබේම browser එකෙන් පටන් ගන්න නිසා)
+    // Clear button loading state after 2s once browser download triggers
     setTimeout(() => setIsLoading(false), 2000);
     window.location.href = `/api/company/backup-zip?companyId=${companyId}`;
   };

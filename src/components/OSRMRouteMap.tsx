@@ -95,7 +95,7 @@ export function OSRMRouteMap({
       // Draw Route Polylines
       if (coordinates.length > 1) {
         if (isCircuit && splitIndex > 0) {
-          // 1. Outbound / Forward Journey (යන ගමන) - Royal Blue
+          // 1. Outbound / Forward Journey - Royal Blue
           const outboundCoords = coordinates.slice(0, splitIndex + 1);
           const outboundPolyline = L.polyline(outboundCoords, {
             color: '#2563eb', // Blue-600
@@ -104,7 +104,7 @@ export function OSRMRouteMap({
             lineJoin: 'round',
           }).addTo(map);
 
-          // 2. Return / Inbound Journey (ආපසු එන ගමන) - Vibrant Amber Orange with slight dash
+          // 2. Return / Inbound Journey - Vibrant Amber Orange with slight dash
           const returnCoords = coordinates.slice(splitIndex);
           const returnPolyline = L.polyline(returnCoords, {
             color: '#ea580c', // Orange-600
@@ -201,11 +201,11 @@ export function OSRMRouteMap({
         <div className="absolute bottom-2 left-2 z-[400] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs px-2.5 py-1 rounded-md text-[10px] border border-gray-300 dark:border-gray-700 shadow-sm flex items-center gap-3 font-semibold print:bg-white print:border-gray-400">
           <div className="flex items-center gap-1.5 text-blue-700">
             <span className="w-3 h-1 bg-blue-600 rounded-full inline-block" />
-            <span>Outbound (යන ගමන)</span>
+            <span>Outbound Route</span>
           </div>
           <div className="flex items-center gap-1.5 text-orange-700">
             <span className="w-3 h-1 bg-orange-600 border-t-2 border-orange-600 border-dashed rounded-full inline-block" />
-            <span>Return (එන ගමන)</span>
+            <span>Return Route</span>
           </div>
         </div>
       )}
