@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye } from 'lucide-react';
+import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye, Download } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
 import { notify } from '@/lib/notifications';
 
@@ -146,6 +146,66 @@ export function QuotationList({ quotations }: QuotationListProps) {
         }
     };
 
+    const exportSpreadsheet = () => {
+        if (!quotations || quotations.length === 0) {
+            notify.error('No quotations to export');
+            return;
+        }
+
+        const headers = [
+            'Quotation No',
+            'Customer Name',
+            'Customer Phone',
+            'Tour Schedule',
+            'Vehicle No',
+            'Days',
+            'Tour Distance (KM)',
+            'Transport Cost',
+            'Driver Cost',
+            'Accommodation',
+            'Meals',
+            'Activities',
+            'Other Costs',
+            'Markup (%)',
+            'Discount',
+            'Total Amount',
+            'Status',
+            'Created Date'
+        ];
+
+        const rows = filtered.map(q => [
+            `Q-${String(q.quotationNumber).padStart(4, '0')}`,
+            `"${(q.customerName || '').replace(/"/g, '""')}"`,
+            `"${(q.customerPhone || '').replace(/"/g, '""')}"`,
+            `"${(q.tourSchedule?.name || '').replace(/"/g, '""')}"`,
+            `"${(q.vehicleNo || 'TBD').replace(/"/g, '""')}"`,
+            q.tourSchedule?.days || 1,
+            q.totalDistance || 0,
+            q.transportCost || 0,
+            (q.driverCostPerDay || 0) * (q.tourSchedule?.days || 1),
+            q.accommodationTotal || 0,
+            q.mealsTotal || 0,
+            q.activitiesTotal || 0,
+            q.otherCostsTotal || 0,
+            q.markup || 0,
+            q.discount || 0,
+            q.totalAmount || 0,
+            q.status,
+            new Date(q.createdAt).toLocaleDateString('en-GB')
+        ]);
+
+        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `quotations_report_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        notify.success('Exported quotations spreadsheet successfully!');
+    };
+
     const fmt = formatCurrency;
 
     return (
@@ -161,11 +221,16 @@ export function QuotationList({ quotations }: QuotationListProps) {
                         Manage tour quotations for customers
                     </p>
                 </div>
-                <Link href="/quotations/new" className="w-full sm:w-auto">
-                    <Button className="w-full">
-                        <FileCheck className="h-4 w-4 mr-2" /> New Quotation
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button variant="outline" onClick={exportSpreadsheet} className="gap-2 flex-1 sm:flex-initial">
+                        <Download className="h-4 w-4" /> Export Spreadsheet
                     </Button>
-                </Link>
+                    <Link href="/quotations/new" className="flex-1 sm:flex-initial">
+                        <Button className="w-full">
+                            <FileCheck className="h-4 w-4 mr-2" /> New Quotation
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Search */}

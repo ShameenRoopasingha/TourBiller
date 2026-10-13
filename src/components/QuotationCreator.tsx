@@ -1254,6 +1254,11 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 placeholder="e.g. 3000"
                                 {...form.register('driverCostPerDay')}
                             />
+                            {Number(watchedDriverCost) > 0 && selectedSchedule && (
+                                <p className="text-xs text-muted-foreground">
+                                    {selectedSchedule.days} days × Rs. {Number(watchedDriverCost).toLocaleString()} = Rs. {(selectedSchedule.days * Number(watchedDriverCost)).toLocaleString()} total
+                                </p>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="advanceAmount">Advance Payment (Rs.)</Label>
