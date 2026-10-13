@@ -64,7 +64,7 @@ export function OSRMRouteMap({
           lineJoin: 'round',
         }).addTo(map);
 
-        map.fitBounds(polyline.getBounds(), { padding: [35, 35] });
+        map.fitBounds(polyline.getBounds(), { padding: [18, 18] });
       }
 
       // Add HTML DivIcon Markers for all stops (clean, avoids leaflet 404 icon bugs)

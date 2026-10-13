@@ -137,7 +137,7 @@ export function QuotationTemplate({
                 @media print {
                     @page {
                         size: A4 portrait;
-                        margin: 10mm 12mm;
+                        margin: 8mm 10mm;
                     }
                     html, body {
                         margin: 0 !important;
@@ -177,7 +177,7 @@ export function QuotationTemplate({
                 }
             `}</style>
 
-            <div className="w-[190mm] mx-auto p-6 md:p-8 flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-0 print:m-0 print:w-full print:max-w-none bg-white overflow-hidden print:overflow-visible">
+            <div className="w-[190mm] mx-auto p-6 md:p-8 flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-0 print:m-0 print:w-full print:max-w-none bg-white overflow-hidden print:overflow-visible print:block">
 
                 {/* ── Header - 3 Column Layout ── */}
                 <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-3 mb-4 print-avoid-break">
@@ -359,117 +359,221 @@ export function QuotationTemplate({
                     </table>
                 </div>
 
-                {/* ── Visual Tour Route Map ── */}
-                {routeCoordinates.length > 0 && (
-                    <div className="mb-3 print-avoid-break">
-                        <div className="flex items-center justify-between mb-1">
-                            <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide flex items-center gap-1.5 print-heading">
-                                <span>🗺️ Visual Tour Route Map</span>
-                            </h3>
-                            {quotation.totalDistance > 0 && (
-                                <span className="text-[10px] text-blue-700 font-semibold font-mono bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                                    {quotation.totalDistance.toFixed(1)} km Road Route
-                                </span>
-                            )}
-                        </div>
-                        <div className="rounded border border-gray-300 overflow-hidden shadow-xs print:border-gray-400">
-                            <OSRMRouteMap
-                                coordinates={routeCoordinates}
-                                waypoints={routeWaypoints}
-                                height="165px"
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {/* ── Cost Summary ── */}
-                <div className="mb-3 print-avoid-break">
-                    <div>
-                        <h3 className="text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-wide print-heading">Cost Summary</h3>
-                        <div className="border border-gray-300 rounded p-3 text-sm">
-                            {quotation.hireRatePerDay === 0 ? (
-                                <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
-                                    <span className="text-gray-600">Vehicle Hire ({quotation.totalDistance} km @ {fmt(finalExcessKmRate)}/km)</span>
-                                    <span className="text-right">{fmt(quotation.transportCost)}</span>
+                {/* ── Visual Route Map & Cost Summary (Side-by-side layout) ── */}
+                <div className="mb-3 print:mb-2 print-avoid-break">
+                    {routeCoordinates.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-3 items-stretch">
+                            {/* Column 1: Visual Tour Route Map */}
+                            <div className="flex flex-col">
+                                <div className="flex items-center justify-between mb-1">
+                                    <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide flex items-center gap-1.5 print-heading">
+                                        <span>🗺️ Visual Tour Route Map</span>
+                                    </h3>
+                                    {quotation.totalDistance > 0 && (
+                                        <span className="text-[10px] text-blue-700 font-semibold font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                                            {quotation.totalDistance.toFixed(1)} km Road Route
+                                        </span>
+                                    )}
                                 </div>
-                            ) : (
-                                <>
-                                    <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
-                                        <span className="text-gray-600">Vehicle Hire ({quotation.tourSchedule.days} days × {fmt(quotation.hireRatePerDay)}/day for {(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km)</span>
-                                        <span className="text-right">{fmt(quotation.tourSchedule.days * quotation.hireRatePerDay)}</span>
+                                <div className="flex-1 rounded border border-gray-300 overflow-hidden shadow-xs print:border-gray-400 min-h-[240px]">
+                                    <OSRMRouteMap
+                                        coordinates={routeCoordinates}
+                                        waypoints={routeWaypoints}
+                                        height="240px"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Column 2: Cost Summary */}
+                            <div className="flex flex-col">
+                                <h3 className="text-xs font-bold uppercase text-gray-500 mb-1 tracking-wide print-heading">Cost Summary</h3>
+                                <div className="border border-gray-300 rounded p-2.5 print:p-2 text-xs flex-1 flex flex-col justify-between">
+                                    <div className="space-y-0.5">
+                                        {quotation.hireRatePerDay === 0 ? (
+                                            <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                                <span className="text-gray-600">Vehicle Hire ({quotation.totalDistance} km @ {fmt(finalExcessKmRate)}/km)</span>
+                                                <span className="text-right font-medium">{fmt(quotation.transportCost)}</span>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                                    <span className="text-gray-600">Vehicle Hire ({quotation.tourSchedule.days}d × {fmt(quotation.hireRatePerDay)})</span>
+                                                    <span className="text-right font-medium">{fmt(quotation.tourSchedule.days * quotation.hireRatePerDay)}</span>
+                                                </div>
+                                                {quotation.kmPerDay > 0 && quotation.totalDistance > (quotation.tourSchedule.days * quotation.kmPerDay) && finalExcessKmRate > 0 && (
+                                                    <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200 text-blue-700">
+                                                        <span>Est. Extra Km ({(quotation.totalDistance - (quotation.tourSchedule.days * quotation.kmPerDay)).toFixed(1)} km)</span>
+                                                        <span className="text-right font-medium">+{fmt((quotation.totalDistance - (quotation.tourSchedule.days * quotation.kmPerDay)) * finalExcessKmRate)}</span>
+                                                    </div>
+                                                )}
+                                                {finalExcessKmRate > 0 && (
+                                                    <div className="text-[10px] text-gray-400 italic py-0.5 leading-tight">
+                                                        Any distance exceeding {quotation.totalDistance > (quotation.tourSchedule.days * quotation.kmPerDay) ? `${quotation.totalDistance.toFixed(0)} km (estimated)` : `${(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km`} will be charged at {fmt(finalExcessKmRate)}/km
+                                                    </div>
+                                                )}
+                                                {finalExtraHourRate > 0 && (
+                                                    <div className="text-[10px] text-gray-400 italic py-0.5 leading-tight">
+                                                        Extra hours charged at {fmt(finalExtraHourRate)}/hr
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                        {quotation.accommodationTotal > 0 && (
+                                            <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                                <span className="text-gray-600">Accommodation</span>
+                                                <span className="text-right font-medium">{fmt(quotation.accommodationTotal)}</span>
+                                            </div>
+                                        )}
+                                        {quotation.mealsTotal > 0 && (
+                                            <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                                <span className="text-gray-600">Meals</span>
+                                                <span className="text-right font-medium">{fmt(quotation.mealsTotal)}</span>
+                                            </div>
+                                        )}
+                                        {quotation.activitiesTotal > 0 && (
+                                            <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                                <span className="text-gray-600">Activities</span>
+                                                <span className="text-right font-medium">{fmt(quotation.activitiesTotal)}</span>
+                                            </div>
+                                        )}
+                                        {quotation.otherCostsTotal > 0 && (
+                                            <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                                <span className="text-gray-600">Other Costs</span>
+                                                <span className="text-right font-medium">{fmt(quotation.otherCostsTotal)}</span>
+                                            </div>
+                                        )}
+                                        {driverTotal > 0 && (
+                                            <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                                <span className="text-gray-600">Driver ({quotation.tourSchedule.days}d × {fmt(quotation.driverCostPerDay)})</span>
+                                                <span className="text-right font-medium">{fmt(driverTotal)}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                    {quotation.kmPerDay > 0 && quotation.totalDistance > (quotation.tourSchedule.days * quotation.kmPerDay) && finalExcessKmRate > 0 && (
-                                        <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200 text-blue-700">
-                                            <span>Est. Extra Distance ({(quotation.totalDistance - (quotation.tourSchedule.days * quotation.kmPerDay)).toFixed(1)} km @ {fmt(finalExcessKmRate)}/km)</span>
-                                            <span className="text-right font-medium">+{fmt((quotation.totalDistance - (quotation.tourSchedule.days * quotation.kmPerDay)) * finalExcessKmRate)}</span>
-                                        </div>
-                                    )}
-                                    {finalExcessKmRate > 0 && (
-                                        <div className="text-xs text-gray-400 italic py-0.5">
-                                            Any distance exceeding {quotation.totalDistance > (quotation.tourSchedule.days * quotation.kmPerDay) ? `${quotation.totalDistance.toFixed(0)} km (estimated)` : `${(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km`} will be charged at {fmt(finalExcessKmRate)}/km
-                                        </div>
-                                    )}
-                                    {finalExtraHourRate > 0 && (
-                                        <div className="text-xs text-gray-400 italic py-0.5">
-                                            Extra hours charged at {fmt(finalExtraHourRate)}/hr
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
-                                <span className="text-gray-600">Accommodation</span>
-                                <span className="text-right">{fmt(quotation.accommodationTotal)}</span>
-                            </div>
-                            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
-                                <span className="text-gray-600">Meals</span>
-                                <span className="text-right">{fmt(quotation.mealsTotal)}</span>
-                            </div>
-                            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1 border-b border-gray-200">
-                                <span className="text-gray-600">Activities</span>
-                                <span className="text-right">{fmt(quotation.activitiesTotal)}</span>
-                            </div>
-                            <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
-                                <span className="text-gray-600">Other Costs</span>
-                                <span className="text-right">{fmt(quotation.otherCostsTotal)}</span>
-                            </div>
-                            {driverTotal > 0 && (
-                                <div className="grid grid-cols-[1fr_auto] gap-x-4 py-1">
-                                    <span className="text-gray-600">Driver ({quotation.tourSchedule.days} days × {fmt(quotation.driverCostPerDay)}/day)</span>
-                                    <span className="text-right">{fmt(driverTotal)}</span>
-                                </div>
-                            )}
 
-                            <div className="border-t border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-4 py-1">
-                                <span className="text-gray-600">Subtotal</span>
-                                <span className="text-right font-medium">{fmt(subtotalWithDriver)}</span>
-                            </div>
-                            {quotation.markup > 0 && (
-                                <div className="grid grid-cols-[1fr_auto] gap-x-4 text-green-700 py-1">
-                                    <span>Markup ({quotation.markup}%)</span>
-                                    <span className="text-right">+{fmt(markupAmount)}</span>
+                                    <div className="pt-1 mt-1 border-t border-black">
+                                        <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 font-medium">
+                                            <span className="text-gray-600">Subtotal</span>
+                                            <span className="text-right">{fmt(subtotalWithDriver)}</span>
+                                        </div>
+                                        {quotation.markup > 0 && (
+                                            <div className="grid grid-cols-[1fr_auto] gap-x-2 text-green-700 py-0.5">
+                                                <span>Markup ({quotation.markup}%)</span>
+                                                <span className="text-right font-medium">+{fmt(markupAmount)}</span>
+                                            </div>
+                                        )}
+                                        {quotation.discount > 0 && (
+                                            <div className="grid grid-cols-[1fr_auto] gap-x-2 text-red-600 py-0.5">
+                                                <span>Discount</span>
+                                                <span className="text-right font-medium">-{fmt(quotation.discount)}</span>
+                                            </div>
+                                        )}
+                                        <div className="border-t-2 border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-2 text-sm font-bold py-0.5 items-center">
+                                            <span>TOTAL AMOUNT</span>
+                                            <span className="text-right bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">{fmt(quotation.totalAmount)}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                            )}
-                            {quotation.discount > 0 && (
-                                <div className="grid grid-cols-[1fr_auto] gap-x-4 text-red-600 py-1">
-                                    <span>Discount</span>
-                                    <span className="text-right">-{fmt(quotation.discount)}</span>
-                                </div>
-                            )}
-
-                            <div className="border-t-2 border-black pt-1.5 mt-1.5 grid grid-cols-[1fr_auto] gap-x-4 text-base font-bold py-1">
-                                <span>TOTAL AMOUNT</span>
-                                <span className="text-right bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">{fmt(quotation.totalAmount)}</span>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="max-w-md ml-auto">
+                            <h3 className="text-xs font-bold uppercase text-gray-500 mb-1 tracking-wide print-heading">Cost Summary</h3>
+                            <div className="border border-gray-300 rounded p-2.5 print:p-2 text-xs">
+                                <div className="space-y-0.5">
+                                    {quotation.hireRatePerDay === 0 ? (
+                                        <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                            <span className="text-gray-600">Vehicle Hire ({quotation.totalDistance} km @ {fmt(finalExcessKmRate)}/km)</span>
+                                            <span className="text-right font-medium">{fmt(quotation.transportCost)}</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                                <span className="text-gray-600">Vehicle Hire ({quotation.tourSchedule.days}d × {fmt(quotation.hireRatePerDay)})</span>
+                                                <span className="text-right font-medium">{fmt(quotation.tourSchedule.days * quotation.hireRatePerDay)}</span>
+                                            </div>
+                                            {quotation.kmPerDay > 0 && quotation.totalDistance > (quotation.tourSchedule.days * quotation.kmPerDay) && finalExcessKmRate > 0 && (
+                                                <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200 text-blue-700">
+                                                    <span>Est. Extra Km ({(quotation.totalDistance - (quotation.tourSchedule.days * quotation.kmPerDay)).toFixed(1)} km)</span>
+                                                    <span className="text-right font-medium">+{fmt((quotation.totalDistance - (quotation.tourSchedule.days * quotation.kmPerDay)) * finalExcessKmRate)}</span>
+                                                </div>
+                                            )}
+                                            {finalExcessKmRate > 0 && (
+                                                <div className="text-[10px] text-gray-400 italic py-0.5 leading-tight">
+                                                    Any distance exceeding {quotation.totalDistance > (quotation.tourSchedule.days * quotation.kmPerDay) ? `${quotation.totalDistance.toFixed(0)} km (estimated)` : `${(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km`} will be charged at {fmt(finalExcessKmRate)}/km
+                                                </div>
+                                            )}
+                                            {finalExtraHourRate > 0 && (
+                                                <div className="text-[10px] text-gray-400 italic py-0.5 leading-tight">
+                                                    Extra hours charged at {fmt(finalExtraHourRate)}/hr
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                    {quotation.accommodationTotal > 0 && (
+                                        <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                            <span className="text-gray-600">Accommodation</span>
+                                            <span className="text-right font-medium">{fmt(quotation.accommodationTotal)}</span>
+                                        </div>
+                                    )}
+                                    {quotation.mealsTotal > 0 && (
+                                        <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                            <span className="text-gray-600">Meals</span>
+                                            <span className="text-right font-medium">{fmt(quotation.mealsTotal)}</span>
+                                        </div>
+                                    )}
+                                    {quotation.activitiesTotal > 0 && (
+                                        <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                            <span className="text-gray-600">Activities</span>
+                                            <span className="text-right font-medium">{fmt(quotation.activitiesTotal)}</span>
+                                        </div>
+                                    )}
+                                    {quotation.otherCostsTotal > 0 && (
+                                        <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                            <span className="text-gray-600">Other Costs</span>
+                                            <span className="text-right font-medium">{fmt(quotation.otherCostsTotal)}</span>
+                                        </div>
+                                    )}
+                                    {driverTotal > 0 && (
+                                        <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
+                                            <span className="text-gray-600">Driver ({quotation.tourSchedule.days}d × {fmt(quotation.driverCostPerDay)})</span>
+                                            <span className="text-right font-medium">{fmt(driverTotal)}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="pt-1 mt-1 border-t border-black">
+                                    <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 font-medium">
+                                        <span className="text-gray-600">Subtotal</span>
+                                        <span className="text-right">{fmt(subtotalWithDriver)}</span>
+                                    </div>
+                                    {quotation.markup > 0 && (
+                                        <div className="grid grid-cols-[1fr_auto] gap-x-2 text-green-700 py-0.5">
+                                            <span>Markup ({quotation.markup}%)</span>
+                                            <span className="text-right font-medium">+{fmt(markupAmount)}</span>
+                                        </div>
+                                    )}
+                                    {quotation.discount > 0 && (
+                                        <div className="grid grid-cols-[1fr_auto] gap-x-2 text-red-600 py-0.5">
+                                            <span>Discount</span>
+                                            <span className="text-right font-medium">-{fmt(quotation.discount)}</span>
+                                        </div>
+                                    )}
+                                    <div className="border-t-2 border-black pt-1 mt-1 grid grid-cols-[1fr_auto] gap-x-2 text-sm font-bold py-0.5 items-center">
+                                        <span>TOTAL AMOUNT</span>
+                                        <span className="text-right bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">{fmt(quotation.totalAmount)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* ── Terms, Excluded Items, Advance Payment & Signatures ── */}
-                <div className="print-avoid-break space-y-3">
+                <div className="print-avoid-break space-y-2 print:space-y-1.5">
                     {/* ── Excluded Items ── */}
                     {quotation.excludedItems && (
                         <div className="text-xs">
-                            <div className="p-3 bg-red-50 border border-red-200 rounded">
+                            <div className="p-2.5 print:p-2 bg-red-50 border border-red-200 rounded">
                                 <span className="font-bold text-red-700">Not Included: </span>
                                 <span className="whitespace-pre-wrap text-red-600">{quotation.excludedItems}</span>
                             </div>
@@ -479,17 +583,17 @@ export function QuotationTemplate({
                     {/* ── Advance Payment & Bank Details ── */}
                     {quotation.advanceAmount > 0 && (
                         <div className="text-xs">
-                            <div className="p-3 bg-green-50 border border-green-200 rounded">
+                            <div className="p-2.5 print:p-2 bg-green-50 border border-green-200 rounded">
                                 <span className="font-bold text-green-700">Advance Payment Required: </span>
-                                <span className="font-bold text-green-800 text-sm">{fmt(quotation.advanceAmount)}</span>
+                                <span className="font-bold text-green-800">{fmt(quotation.advanceAmount)}</span>
                                 {businessProfile?.bankAccountNo && (
-                                    <div className="mt-1 text-green-700">
+                                    <div className="mt-0.5 text-green-700 text-[11px]">
                                         <span className="font-semibold">Bank: </span>{businessProfile.bankName || 'N/A'}
                                         {businessProfile.bankBranch && <> — {businessProfile.bankBranch} Branch</>}
-                                        <br />
+                                        {' | '}
                                         <span className="font-semibold">A/C No: </span>{businessProfile.bankAccountNo}
                                         {businessProfile.bankAccountName && (
-                                            <> — <span className="font-semibold">Name: </span>{businessProfile.bankAccountName}</>
+                                            <> ({businessProfile.bankAccountName})</>
                                         )}
                                     </div>
                                 )}
@@ -499,15 +603,15 @@ export function QuotationTemplate({
 
                     {/* ── Notes & Validity ── */}
                     {(quotation.notes || quotation.validUntil) && (
-                        <div className="text-xs space-y-1.5">
+                        <div className="text-xs space-y-1">
                             {quotation.notes && (
-                                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                                <div className="p-2.5 print:p-2 bg-yellow-50 border border-yellow-200 rounded">
                                     <span className="font-bold text-gray-700">Notes & Terms: </span>
                                     <span className="whitespace-pre-wrap">{quotation.notes}</span>
                                 </div>
                             )}
                             {quotation.validUntil && (
-                                <p className="font-bold text-red-600">
+                                <p className="font-bold text-red-600 text-[11px]">
                                     ⚠ This quotation is valid until: {new Date(quotation.validUntil).toLocaleDateString('en-GB')} {new Date(quotation.validUntil).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                             )}
@@ -515,21 +619,21 @@ export function QuotationTemplate({
                     )}
 
                     {/* ── Signatures ── */}
-                    <div className="pt-6 print:pt-4 grid grid-cols-2 gap-8 text-xs">
-                        <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">
+                    <div className="pt-4 print:pt-3 grid grid-cols-2 gap-8 text-xs">
+                        <div className="text-center border-t border-dotted border-black pt-1 text-gray-500">
                             Customer Signature
                         </div>
-                        <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">
+                        <div className="text-center border-t border-dotted border-black pt-1 text-gray-500">
                             Authorized Signature
                         </div>
                     </div>
-                </div>
 
-                {/* ── Footer ── */}
-                <div className="text-center text-[10px] text-gray-400 mt-4">
-                    System Generated Quotation | Thank you for choosing {companyName}!
-                    <div className="mt-1 text-[9px] opacity-70">
-                        Powered by <span className="font-semibold text-black">Bitgard PVT LTD</span> (+94 70 563 3969)
+                    {/* ── Footer ── */}
+                    <div className="text-center text-[10px] text-gray-400 pt-2 pb-1">
+                        System Generated Quotation | Thank you for choosing {companyName}!
+                        <div className="mt-0.5 text-[9px] opacity-70">
+                            Powered by <span className="font-semibold text-black">Bitgard PVT LTD</span> (+94 70 563 3969)
+                        </div>
                     </div>
                 </div>
             </div>
