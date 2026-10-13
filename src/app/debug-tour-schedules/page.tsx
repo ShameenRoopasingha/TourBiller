@@ -1,5 +1,7 @@
 import { getTourSchedules } from '@/lib/tour-schedule-actions';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DebugTourSchedulesPage() {
     // Let's hardcode an example ID for debugging
     const [schedulesResult] = await Promise.all([

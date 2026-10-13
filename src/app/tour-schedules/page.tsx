@@ -3,6 +3,8 @@ import { Loader2 } from 'lucide-react';
 import { getTourSchedules } from '@/lib/tour-schedule-actions';
 import { TourScheduleList } from '@/components/TourScheduleList';
 
+export const dynamic = 'force-dynamic';
+
 async function SchedulesList() {
     const result = await getTourSchedules();
     const schedules = result.success && result.data ? result.data : [];

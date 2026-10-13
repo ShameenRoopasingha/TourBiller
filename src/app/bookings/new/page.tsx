@@ -6,6 +6,8 @@ import { getTourSchedules } from '@/lib/tour-schedule-actions';
 import { getDrivers } from '@/lib/user-actions';
 import { BookingCreator } from '@/components/BookingCreator';
 
+export const dynamic = 'force-dynamic';
+
 async function NewBookingForm() {
     // Fetch all needed data on the server so dropdowns are instantly available
     const [vResult, cResult] = await Promise.all([

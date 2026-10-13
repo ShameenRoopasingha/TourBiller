@@ -1,6 +1,8 @@
 import { TourScheduleForm } from '@/components/TourScheduleForm';
 import { getTourSchedules } from '@/lib/tour-schedule-actions';
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewTourSchedulePage() {
     const schedulesResult = await getTourSchedules();
     const existingSchedules = schedulesResult.success ? schedulesResult.data || [] : [];

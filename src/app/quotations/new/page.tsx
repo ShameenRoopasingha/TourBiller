@@ -6,6 +6,8 @@ import { getVehicles } from '@/lib/vehicle-actions';
 import { getDrivers } from '@/lib/user-actions';
 import { QuotationCreator } from '@/components/QuotationCreator';
 
+export const dynamic = 'force-dynamic';
+
 async function NewQuotationForm() {
     // Fetch all needed data in parallel
     const [schedulesResult, customersResult] = await Promise.all([

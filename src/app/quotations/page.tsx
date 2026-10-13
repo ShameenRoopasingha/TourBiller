@@ -3,6 +3,8 @@ import { Loader2 } from 'lucide-react';
 import { getQuotations } from '@/lib/quotation-actions';
 import { QuotationList } from '@/components/QuotationList';
 
+export const dynamic = 'force-dynamic';
+
 async function QuotationsList() {
     const result = await getQuotations();
     const quotations = result.success && result.data ? result.data : [];
