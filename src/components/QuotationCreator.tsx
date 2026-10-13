@@ -18,6 +18,7 @@ import { ComboboxField } from '@/components/ComboboxField';
 import { TourScheduleForm } from '@/components/TourScheduleForm';
 import { QuotationAIChat } from '@/components/QuotationAIChat';
 import { QuotationCostSummary } from '@/components/quotations/QuotationCostSummary';
+import { PerKmCostCalculatorModal } from '@/components/PerKmCostCalculatorModal';
 import {
     Dialog,
     DialogContent,
@@ -100,6 +101,7 @@ interface VehicleOption {
     acType: string | null;
     features: string | null;
     insuranceCoverage: string | null;
+    oilChangeInterval?: number | null;
 }
 
 interface QuotationCreatorProps {
@@ -1079,7 +1081,15 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="excessKmRate">Extra Km Rate (Rs.)</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="excessKmRate">Extra Km Rate (Rs.)</Label>
+                                <PerKmCostCalculatorModal
+                                    initialServiceInterval={selectedVehicle?.oilChangeInterval || 5000}
+                                    initialDailyMileage={Number(form.watch('kmPerDay')) || selectedVehicle?.kmPerDay || 100}
+                                    currentRate={Number(watchedExcessKmRate) || 0}
+                                    onApplyRate={(rate) => form.setValue('excessKmRate', rate, { shouldDirty: true })}
+                                />
+                            </div>
                             <Input
                                 id="excessKmRate"
                                 type="number"

@@ -23,6 +23,7 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { PerKmCostCalculatorModal } from '@/components/PerKmCostCalculatorModal';
 
 interface VehicleFormProps {
     vehicle?: Vehicle;
@@ -219,7 +220,15 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                             name="excessKmRate"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{rateMode === 'PER_DAY' ? 'Extra Km Charge (Rs.)' : 'Rate Per Km (Rs.)'}</FormLabel>
+                                    <div className="flex items-center justify-between">
+                                        <FormLabel>{rateMode === 'PER_DAY' ? 'Extra Km Charge (Rs.)' : 'Rate Per Km (Rs.)'}</FormLabel>
+                                        <PerKmCostCalculatorModal
+                                            initialServiceInterval={form.watch('oilChangeInterval') || 5000}
+                                            initialDailyMileage={form.watch('kmPerDay') || 100}
+                                            currentRate={Number(field.value) || 0}
+                                            onApplyRate={(rate) => form.setValue('excessKmRate', rate, { shouldDirty: true })}
+                                        />
+                                    </div>
                                     <FormControl>
                                         <Input type="number" step="0.01" placeholder="e.g. 120" {...field} value={field.value ?? ""} />
                                     </FormControl>
