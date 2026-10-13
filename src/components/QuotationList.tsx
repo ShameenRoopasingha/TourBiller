@@ -226,7 +226,9 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                         <TableCell>
                                             <div>
                                                 <p className="text-sm">{q.tourSchedule.name}</p>
-                                                <p className="text-xs text-muted-foreground">{q.tourSchedule.days} days</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {q.tourSchedule.days} days{q.totalDistance > 0 ? ` • ${q.totalDistance.toFixed(0)} km` : ''}
+                                                </p>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right font-semibold">

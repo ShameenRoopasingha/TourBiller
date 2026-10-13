@@ -108,15 +108,18 @@ export async function generateQuotation(
         const ratePerDay = validated.hireRatePerDay || 0;
         const kmPerDay = validated.kmPerDay || 0;
         const excessKmRate = validated.excessKmRate || 0;
+        const finalDistance = (validated.totalDistance && validated.totalDistance > 0)
+            ? validated.totalDistance
+            : itemTotals.distance;
 
         const isPerKmMode = ratePerDay === 0;
         const includedKm = isPerKmMode ? 0 : (days * kmPerDay);
         const excessKm = (!isPerKmMode && kmPerDay > 0)
-            ? Math.max(0, itemTotals.distance - includedKm)
+            ? Math.max(0, finalDistance - includedKm)
             : 0;
         const excessKmCost = excessKm * excessKmRate;
 
-        const baseTransportCost = isPerKmMode ? (itemTotals.distance * excessKmRate) : (days * ratePerDay);
+        const baseTransportCost = isPerKmMode ? (finalDistance * excessKmRate) : (days * ratePerDay);
         const transportCost = baseTransportCost + excessKmCost;
 
         const driverTotal = days * (validated.driverCostPerDay || 0);
@@ -141,7 +144,7 @@ export async function generateQuotation(
                 kmPerDay: validated.kmPerDay || 0,
                 excessKmRate: validated.excessKmRate || 0,
                 extraHourRate: validated.extraHourRate || 0,
-                totalDistance: itemTotals.distance,
+                totalDistance: finalDistance,
                 transportCost,
                 accommodationTotal: itemTotals.accommodation,
                 mealsTotal: itemTotals.meals,
@@ -348,15 +351,18 @@ export async function updateQuotation(
         const ratePerDay = validated.hireRatePerDay || 0;
         const kmPerDay = validated.kmPerDay || 0;
         const excessKmRate = validated.excessKmRate || 0;
+        const finalDistance = (validated.totalDistance && validated.totalDistance > 0)
+            ? validated.totalDistance
+            : itemTotals.distance;
 
         const isPerKmMode = ratePerDay === 0;
         const includedKm = isPerKmMode ? 0 : (days * kmPerDay);
         const excessKm = (!isPerKmMode && kmPerDay > 0)
-            ? Math.max(0, itemTotals.distance - includedKm)
+            ? Math.max(0, finalDistance - includedKm)
             : 0;
         const excessKmCost = excessKm * excessKmRate;
 
-        const baseTransportCost = isPerKmMode ? (itemTotals.distance * excessKmRate) : (days * ratePerDay);
+        const baseTransportCost = isPerKmMode ? (finalDistance * excessKmRate) : (days * ratePerDay);
         const transportCost = baseTransportCost + excessKmCost;
 
         const driverTotal = days * (validated.driverCostPerDay || 0);
@@ -369,7 +375,7 @@ export async function updateQuotation(
             data: {
                 ...validated,
                 tourScheduleId,
-                totalDistance: itemTotals.distance,
+                totalDistance: finalDistance,
                 transportCost,
                 accommodationTotal: itemTotals.accommodation,
                 mealsTotal: itemTotals.meals,

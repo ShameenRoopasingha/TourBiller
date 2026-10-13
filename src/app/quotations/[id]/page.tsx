@@ -191,7 +191,15 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                                 <div>
                                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tour Schedule</label>
                                     <p className="font-medium text-lg">{q.tourSchedule.name}</p>
-                                    <p className="text-sm text-muted-foreground">{q.tourSchedule.days} Days / {q.tourSchedule.days - 1} Nights</p>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <span>{q.tourSchedule.days} Days / {q.tourSchedule.days - 1} Nights</span>
+                                        {q.totalDistance > 0 && (
+                                            <>
+                                                <span>•</span>
+                                                <span className="font-medium text-primary font-mono">{q.totalDistance.toFixed(1)} km Tour Distance</span>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>

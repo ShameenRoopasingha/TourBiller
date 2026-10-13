@@ -256,6 +256,12 @@ export function QuotationTemplate({
                             <span className="font-semibold">{quotation.tourSchedule.name}</span>
                             <span className="font-medium text-gray-500">Duration:</span>
                             <span>{quotation.tourSchedule.days} days</span>
+                            {quotation.totalDistance > 0 && (
+                                <>
+                                    <span className="font-medium text-gray-500">Distance:</span>
+                                    <span className="font-semibold text-blue-700">{quotation.totalDistance.toFixed(1)} km</span>
+                                </>
+                            )}
                             <span className="font-medium text-gray-500">Vehicle:</span>
                             <span>{quotation.vehicleNo || '—'} ({quotation.tourSchedule.vehicleCategory})</span>
                             {quotation.startDate && (

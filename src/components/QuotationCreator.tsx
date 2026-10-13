@@ -186,6 +186,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             dropLocation: initialData.dropLocation || '',
             hireRatePerDay: initialData.hireRatePerDay,
             kmPerDay: initialData.kmPerDay,
+            totalDistance: initialData.totalDistance ?? 0,
             excessKmRate: initialData.excessKmRate,
             extraHourRate: initialData.extraHourRate,
             markup: initialData.markup,
@@ -209,6 +210,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             dropLocation: '',
             hireRatePerDay: 0,
             kmPerDay: 0,
+            totalDistance: 0,
             excessKmRate: 0,
             extraHourRate: 0,
             markup: 0,
@@ -230,6 +232,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
     const {
         hireRatePerDay: watchedHireRate,
         kmPerDay: watchedKmPerDay,
+        totalDistance: watchedTotalDistance,
         markup: watchedMarkup,
         discount: watchedDiscount,
         driverCostPerDay: watchedDriverCost,
@@ -327,6 +330,12 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             if (schedule.kmPerDay > 0) form.setValue('kmPerDay', schedule.kmPerDay);
             if (schedule.excessKmRate) form.setValue('excessKmRate', schedule.excessKmRate);
             if (schedule.extraHourRate) form.setValue('extraHourRate', schedule.extraHourRate);
+
+            // Autofill total distance from schedule items
+            const schedDistance = schedule.items.reduce((sum, item) => sum + item.distanceKm, 0);
+            if (schedDistance > 0) {
+                form.setValue('totalDistance', schedDistance, { shouldDirty: true });
+            }
 
             // If schedule has a vehicle, try to select it
             if (schedule.vehicleNo) {
@@ -448,6 +457,10 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             { distance: 0, accommodation: 0, meals: 0, activities: 0, other: 0 }
         );
 
+        const effectiveDistance = (Number(watchedTotalDistance) && Number(watchedTotalDistance) > 0)
+            ? Number(watchedTotalDistance)
+            : itemTotals.distance;
+
         const ratePerDay = Number(watchedHireRate) || 0;
         const kmAllowancePerDay = Number(watchedKmPerDay) || 0;
         const excessKmRate = Number(watchedExcessKmRate) || 0;
@@ -459,12 +472,12 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
 
         // Calculate excess distance and charge
         const excessKm = (!isPerKmMode && kmAllowancePerDay > 0)
-            ? Math.max(0, itemTotals.distance - includedKm)
+            ? Math.max(0, effectiveDistance - includedKm)
             : 0;
         const excessKmCost = excessKm * excessKmRate;
 
         // Base package transport cost
-        const baseTransportCost = isPerKmMode ? (itemTotals.distance * excessKmRate) : (days * ratePerDay);
+        const baseTransportCost = isPerKmMode ? (effectiveDistance * excessKmRate) : (days * ratePerDay);
         const transportCost = baseTransportCost + excessKmCost;
         
         const driverTotal = days * (Number(watchedDriverCost) || 0);
@@ -473,7 +486,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         const totalAmount = Math.max(0, subtotal + markupAmount - (Number(watchedDiscount) || 0));
 
         return {
-            totalDistance: itemTotals.distance,
+            totalDistance: effectiveDistance,
             includedKm,
             excessKm,
             excessKmCost,
@@ -488,7 +501,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             markupAmount,
             totalAmount,
         };
-    }, [selectedSchedule, watchedHireRate, watchedKmPerDay, watchedMarkup, watchedDiscount, watchedDriverCost, watchedExcessKmRate]);
+    }, [selectedSchedule, watchedHireRate, watchedKmPerDay, watchedTotalDistance, watchedMarkup, watchedDiscount, watchedDriverCost, watchedExcessKmRate]);
 
     const onSubmit = async (data: QuotationFormData) => {
         setIsSubmitting(true);
@@ -717,6 +730,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                     };
                                     setSelectedSchedule(transferSchedule);
                                     form.setValue('tourScheduleId', transferSchedule.id, { shouldDirty: true });
+                                    form.setValue('totalDistance', Math.round(dist * 10) / 10, { shouldDirty: true });
                                 }}
                             />
 
@@ -1096,6 +1110,32 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="totalDistance">Tour Distance (KM)</Label>
+                                {selectedSchedule && selectedSchedule.items.length > 0 && (
+                                    <button
+                                        type="button"
+                                        className="text-[10px] text-primary hover:underline font-mono"
+                                        onClick={() => {
+                                            const sDist = selectedSchedule.items.reduce((s, i) => s + i.distanceKm, 0);
+                                            form.setValue('totalDistance', sDist, { shouldDirty: true });
+                                        }}
+                                        title="Reset to itinerary schedule distance"
+                                    >
+                                        Auto: {selectedSchedule.items.reduce((s, i) => s + i.distanceKm, 0)} km
+                                    </button>
+                                )}
+                            </div>
+                            <Input
+                                id="totalDistance"
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                placeholder="0.00"
+                                {...form.register('totalDistance')}
+                            />
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="hireRatePerDay">Vehicle Rate Per Day (Rs.)</Label>
                             <Input
