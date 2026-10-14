@@ -51,6 +51,8 @@ export async function Dashboard() {
                     currentCurrency={businessProfile?.currency || 'LKR'}
                     currentUsdRate={businessProfile?.usdRate || 300}
                     companyName={businessProfile?.companyName || 'Vigil'}
+                    currentCountryCode={businessProfile?.countryCode || 'lk'}
+                    currentCountryName={businessProfile?.countryName || 'Sri Lanka'}
                 />
             )}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">

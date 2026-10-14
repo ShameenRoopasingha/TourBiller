@@ -14,11 +14,11 @@ export async function GET() {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { currency, usdRate } = body;
-        const result = await configureInitialCurrency(currency, usdRate);
+        const { currency, usdRate, countryCode, countryName } = body;
+        const result = await configureInitialCurrency(currency, usdRate, countryCode, countryName);
         return NextResponse.json(result, { status: result.success ? 200 : 400 });
     } catch (error) {
-        console.error('API error configuring initial currency:', error);
+        console.error('API error configuring initial currency & country:', error);
         return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
 }

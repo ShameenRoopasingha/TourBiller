@@ -392,6 +392,8 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
       usdRate: parseFloat(formData.get('usdRate') as string) || 300,
       currency: (formData.get('currency') as string) || undefined,
       currencyConfigured: formData.has('currencyConfigured') ? formData.get('currencyConfigured') === 'true' : undefined,
+      countryCode: (formData.get('countryCode') as string) || undefined,
+      countryName: (formData.get('countryName') as string) || undefined,
       bankName: (formData.get('bankName') as string) || undefined,
       bankBranch: (formData.get('bankBranch') as string) || undefined,
       bankAccountNo: (formData.get('bankAccountNo') as string) || undefined,
@@ -418,9 +420,14 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
 }
 
 /**
- * Configure initial currency for the company on first setup
+ * Configure initial currency & operating country for the company on first setup
  */
-export async function configureInitialCurrency(currency: string, usdRate?: number): Promise<ActionResult<BusinessProfile>> {
+export async function configureInitialCurrency(
+  currency: string,
+  usdRate?: number,
+  countryCode?: string,
+  countryName?: string
+): Promise<ActionResult<BusinessProfile>> {
   try {
     const authCheck = await requireAdmin();
     if (!authCheck.authorized) {
@@ -433,6 +440,8 @@ export async function configureInitialCurrency(currency: string, usdRate?: numbe
         currency: (currency || 'LKR').toUpperCase().trim(),
         currencyConfigured: true,
         ...(usdRate && usdRate > 0 ? { usdRate } : {}),
+        ...(countryCode ? { countryCode: countryCode.toLowerCase().trim() } : {}),
+        ...(countryName ? { countryName: countryName.trim() } : {}),
       },
     });
 

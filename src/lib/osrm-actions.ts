@@ -1,5 +1,7 @@
 'use server';
 
+import { getBusinessProfile } from '@/lib/actions';
+
 export interface PlaceSuggestion {
   displayName: string;
   shortName: string;
@@ -289,49 +291,99 @@ const SRI_LANKA_LANDMARKS = [
 ];
 
 /**
- * Search places using OpenStreetMap Nominatim restricted to Sri Lanka,
- * augmented with curated high-accuracy landmark entrance coordinates.
+ * Search places using OpenStreetMap Nominatim with intelligent regional prioritization
+ * based on the tenant's configured country (e.g. lk, gb, ae, us, au, in), backed by full worldwide coverage.
  */
-export async function searchPlacesOSM(query: string): Promise<PlaceSuggestion[]> {
+export async function searchPlacesOSM(
+  query: string,
+  explicitCountryCode?: string
+): Promise<PlaceSuggestion[]> {
   if (!query || query.trim().length < 2) return [];
 
   const cleanQuery = query.trim().toLowerCase();
   const matchedCurated: PlaceSuggestion[] = [];
 
-  // 1. Check curated high-accuracy landmark entrance dictionary first
-  for (const lm of SRI_LANKA_LANDMARKS) {
-    const isDirectMatch = lm.aliases.some(
-      (a) => cleanQuery === a || cleanQuery.includes(a) || a.includes(cleanQuery)
-    );
-    if (isDirectMatch) {
-      matchedCurated.push({
-        displayName: lm.name,
-        shortName: lm.shortName,
-        lat: lm.lat,
-        lon: lm.lon,
-      });
-      if (matchedCurated.length >= 3) break;
+  // Determine active country code (explicit, or from business profile, or fallback to global)
+  let activeCountryCode = explicitCountryCode ? explicitCountryCode.toLowerCase().trim() : undefined;
+  if (!activeCountryCode) {
+    try {
+      const profileResult = await getBusinessProfile();
+      if (profileResult.success && profileResult.data?.countryCode) {
+        activeCountryCode = profileResult.data.countryCode.toLowerCase().trim();
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // If in Sri Lanka or when specifically searching a distinct Sri Lankan landmark, match exact aliases
+  if (activeCountryCode === 'lk' || !activeCountryCode) {
+    for (const lm of SRI_LANKA_LANDMARKS) {
+      const isDirectMatch = lm.aliases.some(
+        (a) => cleanQuery === a || cleanQuery.startsWith(a + ' ') || cleanQuery.endsWith(' ' + a) || (cleanQuery.includes(a) && a.length > 4)
+      );
+      if (isDirectMatch) {
+        matchedCurated.push({
+          displayName: lm.name,
+          shortName: lm.shortName,
+          lat: lm.lat,
+          lon: lm.lon,
+        });
+        if (matchedCurated.length >= 2) break;
+      }
     }
   }
 
   try {
-    // 2. Query Nominatim restricted strictly to Sri Lanka (countrycodes=lk) with viewbox bounding
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-      query.trim()
-    )}&countrycodes=lk&viewbox=79.5,9.9,81.9,5.8&bounded=0&limit=6&addressdetails=1`;
+    let data: any[] = [];
 
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'VigilTourManagementPlatform/1.0 (info@vigil.app)',
-        'Accept-Language': 'en',
-      },
-      next: { revalidate: 3600 }, // Cache search queries for 1 hour
-    });
+    // 1. If country code is configured (and not global), prioritize searches within the tenant's country
+    if (activeCountryCode && activeCountryCode !== 'global' && activeCountryCode !== 'all' && activeCountryCode !== 'eu') {
+      const countryUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        query.trim()
+      )}&countrycodes=${encodeURIComponent(activeCountryCode)}&limit=6&addressdetails=1`;
 
-    if (!res.ok) return matchedCurated;
+      const res = await fetch(countryUrl, {
+        headers: {
+          'User-Agent': 'VigilTourManagementPlatform/1.0 (info@vigil.app)',
+          'Accept-Language': 'en',
+        },
+        next: { revalidate: 3600 },
+      });
 
-    const data = await res.json();
-    if (!Array.isArray(data)) return matchedCurated;
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json) && json.length > 0) {
+          data = json;
+        }
+      }
+    }
+
+    // 2. If country search returned fewer than 3 results or no country code is set, run global search
+    if (data.length < 3) {
+      const globalUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        query.trim()
+      )}&limit=8&addressdetails=1`;
+
+      const res = await fetch(globalUrl, {
+        headers: {
+          'User-Agent': 'VigilTourManagementPlatform/1.0 (info@vigil.app)',
+          'Accept-Language': 'en',
+        },
+        next: { revalidate: 3600 },
+      });
+
+      if (res.ok) {
+        const globalJson = await res.json();
+        if (Array.isArray(globalJson)) {
+          for (const item of globalJson) {
+            if (!data.some((d) => d.place_id === item.place_id)) {
+              data.push(item);
+            }
+          }
+        }
+      }
+    }
 
     const osmResults: PlaceSuggestion[] = data.map((item: any) => {
       const parts = (item.display_name || '').split(',');
@@ -349,7 +401,7 @@ export async function searchPlacesOSM(query: string): Promise<PlaceSuggestion[]>
     for (const osm of osmResults) {
       const alreadyIncluded = combined.some(
         (c) =>
-          haversineDistance(c.lat, c.lon, osm.lat, osm.lon) < 1.0 ||
+          haversineDistance(c.lat, c.lon, osm.lat, osm.lon) < 0.5 ||
           c.shortName.toLowerCase() === osm.shortName.toLowerCase()
       );
       if (!alreadyIncluded) {
@@ -357,7 +409,7 @@ export async function searchPlacesOSM(query: string): Promise<PlaceSuggestion[]>
       }
     }
 
-    return combined.slice(0, 6);
+    return combined.slice(0, 8);
   } catch (err) {
     console.error('OSM Places search error:', err);
     return matchedCurated;
@@ -367,11 +419,10 @@ export async function searchPlacesOSM(query: string): Promise<PlaceSuggestion[]>
 /**
  * Geocode a place name into coordinates if not already provided
  */
-export async function geocodePlace(place: string): Promise<RoutePoint | null> {
-  // Check curated landmarks first for instant millimetre accuracy
+export async function geocodePlace(place: string, countryCode?: string): Promise<RoutePoint | null> {
   const clean = place.trim().toLowerCase();
   const directLandmark = SRI_LANKA_LANDMARKS.find((lm) =>
-    lm.aliases.some((a) => clean === a || clean.includes(a) || a.includes(clean))
+    lm.aliases.some((a) => clean === a || clean.startsWith(a + ' ') || clean.endsWith(' ' + a))
   );
 
   if (directLandmark) {
@@ -382,7 +433,7 @@ export async function geocodePlace(place: string): Promise<RoutePoint | null> {
     };
   }
 
-  const suggestions = await searchPlacesOSM(place);
+  const suggestions = await searchPlacesOSM(place, countryCode);
   if (suggestions.length > 0) {
     return {
       lat: suggestions[0].lat,

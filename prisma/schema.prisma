@@ -21,6 +21,8 @@ model BusinessProfile {
   currency           String   @default("LKR")
   currencyConfigured Boolean  @default(false)
   usdRate            Float    @default(300.0)
+  countryCode        String?  @default("lk")
+  countryName        String?  @default("Sri Lanka")
   logoUrl         String?
   bankName        String?  // e.g. "BOC"
   bankBranch      String?  // e.g. "Delgoda"

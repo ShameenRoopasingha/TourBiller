@@ -10,6 +10,7 @@ import { BusinessProfileFormSchema, type BusinessProfileFormInput, type Business
 // For backward compatibility
 export type BusinessProfileFormData = BusinessProfileFormInput;
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { SUPPORTED_COUNTRIES } from '@/components/FirstTimeCurrencyModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -48,6 +49,8 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
             usdRate: initialData?.usdRate || 300,
             currency: initialData?.currency || 'LKR',
             currencyConfigured: initialData?.currencyConfigured ?? true,
+            countryCode: initialData?.countryCode || 'lk',
+            countryName: initialData?.countryName || 'Sri Lanka',
             bankName: initialData?.bankName || '',
             bankBranch: initialData?.bankBranch || '',
             bankAccountNo: initialData?.bankAccountNo || '',
@@ -70,6 +73,8 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
         formData.append('usdRate', data.usdRate.toString());
         formData.append('currency', data.currency || 'LKR');
         formData.append('currencyConfigured', 'true');
+        formData.append('countryCode', data.countryCode || 'lk');
+        formData.append('countryName', data.countryName || 'Sri Lanka');
         if (data.bankName) formData.append('bankName', data.bankName);
         if (data.bankBranch) formData.append('bankBranch', data.bankBranch);
         if (data.bankAccountNo) formData.append('bankAccountNo', data.bankAccountNo);
@@ -260,10 +265,45 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
                             )}
                         />
 
-                        {/* Currency & Financial Settings Section */}
+                        {/* Currency & Regional Settings Section */}
                         <div className="border-t pt-4 mt-2">
-                            <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Currency & Exchange Rates</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Regional Map & Currency Settings</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="countryCode"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Operating Country & Map Anchor</FormLabel>
+                                            <FormControl>
+                                                <select
+                                                    {...field}
+                                                    value={field.value || 'lk'}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        field.onChange(val);
+                                                        const match = SUPPORTED_COUNTRIES.find((c) => c.code === val);
+                                                        if (match) {
+                                                            form.setValue('countryName', match.name);
+                                                        }
+                                                    }}
+                                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                >
+                                                    {SUPPORTED_COUNTRIES.map((c) => (
+                                                        <option key={c.code} value={c.code} className="bg-background text-foreground">
+                                                            {c.flag} {c.name} ({c.code.toUpperCase()})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </FormControl>
+                                            <FormDescription className="text-xs text-muted-foreground">
+                                                Prioritizes local route mapping & addresses.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
                                 <FormField
                                     control={form.control}
                                     name="currency"
@@ -279,6 +319,7 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
                                                     <option value="USD" className="bg-background text-foreground">USD ($) - US Dollar</option>
                                                     <option value="EUR" className="bg-background text-foreground">EUR (€) - Euro</option>
                                                     <option value="GBP" className="bg-background text-foreground">GBP (£) - British Pound</option>
+                                                    <option value="AED" className="bg-background text-foreground">AED (AED) - UAE Dirham</option>
                                                     <option value="AUD" className="bg-background text-foreground">AUD (A$) - Australian Dollar</option>
                                                     <option value="CAD" className="bg-background text-foreground">CAD (C$) - Canadian Dollar</option>
                                                     <option value="SGD" className="bg-background text-foreground">SGD (S$) - Singapore Dollar</option>
@@ -286,7 +327,7 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
                                                 </select>
                                             </FormControl>
                                             <FormDescription className="text-xs text-muted-foreground">
-                                                Base operational currency used for vehicles, reports, and bills.
+                                                Base operational currency for vehicles and bills.
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>

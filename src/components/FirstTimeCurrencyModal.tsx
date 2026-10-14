@@ -9,7 +9,8 @@ import {
     Loader2, 
     Globe2, 
     Sparkles,
-    RefreshCw
+    RefreshCw,
+    MapPin
 } from 'lucide-react';
 import {
     Dialog,
@@ -28,17 +29,45 @@ interface FirstTimeCurrencyModalProps {
     currentCurrency?: string;
     currentUsdRate?: number;
     companyName?: string;
+    currentCountryCode?: string;
+    currentCountryName?: string;
 }
 
+export interface CountryOption {
+    code: string;
+    name: string;
+    flag: string;
+    defaultCurrency: string;
+}
+
+export const SUPPORTED_COUNTRIES: CountryOption[] = [
+    { code: 'lk', name: 'Sri Lanka', flag: '🇱🇰', defaultCurrency: 'LKR' },
+    { code: 'gb', name: 'United Kingdom', flag: '🇬🇧', defaultCurrency: 'GBP' },
+    { code: 'ae', name: 'United Arab Emirates', flag: '🇦🇪', defaultCurrency: 'AED' },
+    { code: 'us', name: 'United States', flag: '🇺🇸', defaultCurrency: 'USD' },
+    { code: 'au', name: 'Australia', flag: '🇦🇺', defaultCurrency: 'AUD' },
+    { code: 'in', name: 'India', flag: '🇮🇳', defaultCurrency: 'INR' },
+    { code: 'ca', name: 'Canada', flag: '🇨🇦', defaultCurrency: 'CAD' },
+    { code: 'sg', name: 'Singapore', flag: '🇸🇬', defaultCurrency: 'SGD' },
+    { code: 'th', name: 'Thailand', flag: '🇹🇭', defaultCurrency: 'THB' },
+    { code: 'my', name: 'Malaysia', flag: '🇲🇾', defaultCurrency: 'MYR' },
+    { code: 'nz', name: 'New Zealand', flag: '🇳🇿', defaultCurrency: 'NZD' },
+    { code: 'de', name: 'Germany', flag: '🇩🇪', defaultCurrency: 'EUR' },
+    { code: 'fr', name: 'France', flag: '🇫🇷', defaultCurrency: 'EUR' },
+    { code: 'global', name: 'Global / Other Country', flag: '🌐', defaultCurrency: 'USD' },
+];
+
 const SUPPORTED_CURRENCIES = [
-    { code: 'LKR', symbol: 'Rs.', label: 'Sri Lankan Rupee', region: 'Sri Lanka (Domestic Hire & Local Fleet)' },
+    { code: 'LKR', symbol: 'Rs.', label: 'Sri Lankan Rupee', region: 'Sri Lanka (Domestic Hire)' },
     { code: 'USD', symbol: '$', label: 'US Dollar', region: 'Global / International Standard' },
     { code: 'EUR', symbol: '€', label: 'Euro', region: 'European Union' },
     { code: 'GBP', symbol: '£', label: 'British Pound', region: 'United Kingdom' },
+    { code: 'AED', symbol: 'AED', label: 'UAE Dirham', region: 'United Arab Emirates' },
     { code: 'AUD', symbol: 'A$', label: 'Australian Dollar', region: 'Australia' },
     { code: 'CAD', symbol: 'C$', label: 'Canadian Dollar', region: 'Canada' },
     { code: 'SGD', symbol: 'S$', label: 'Singapore Dollar', region: 'Singapore' },
     { code: 'INR', symbol: '₹', label: 'Indian Rupee', region: 'India' },
+    { code: 'THB', symbol: '฿', label: 'Thai Baht', region: 'Thailand' },
 ];
 
 export function FirstTimeCurrencyModal({
@@ -46,13 +75,38 @@ export function FirstTimeCurrencyModal({
     currentCurrency = 'LKR',
     currentUsdRate = 300,
     companyName = 'Vigil',
+    currentCountryCode = 'lk',
+    currentCountryName = 'Sri Lanka',
 }: FirstTimeCurrencyModalProps) {
     const [open, setOpen] = useState(isOpenInitially);
     const [selectedCurrency, setSelectedCurrency] = useState(currentCurrency);
+    const [selectedCountryCode, setSelectedCountryCode] = useState(currentCountryCode || 'lk');
+    const [selectedCountryName, setSelectedCountryName] = useState(currentCountryName || 'Sri Lanka');
     const [usdRate, setUsdRate] = useState<number | string>(currentUsdRate || 300);
     const [loading, setLoading] = useState(false);
     const [syncingRate, setSyncingRate] = useState(false);
     const router = useRouter();
+
+    const handleCountryChange = (countryCode: string) => {
+        setSelectedCountryCode(countryCode);
+        const country = SUPPORTED_COUNTRIES.find((c) => c.code === countryCode);
+        if (country) {
+            setSelectedCountryName(country.name);
+            setSelectedCurrency(country.defaultCurrency);
+        }
+    };
+
+    const handleCurrencySelect = (code: string) => {
+        setSelectedCurrency(code);
+        const matchedCountry = SUPPORTED_COUNTRIES.find((c) => c.defaultCurrency === code);
+        if (matchedCountry && selectedCountryCode === 'lk' && code !== 'LKR') {
+            setSelectedCountryCode(matchedCountry.code);
+            setSelectedCountryName(matchedCountry.name);
+        } else if (code === 'LKR') {
+            setSelectedCountryCode('lk');
+            setSelectedCountryName('Sri Lanka');
+        }
+    };
 
     const handleSyncLiveRate = async () => {
         setSyncingRate(true);
@@ -87,20 +141,22 @@ export function FirstTimeCurrencyModal({
                 body: JSON.stringify({
                     currency: selectedCurrency,
                     usdRate: typeof usdRate === 'number' ? usdRate : parseFloat(usdRate) || 300,
+                    countryCode: selectedCountryCode,
+                    countryName: selectedCountryName,
                 }),
             });
 
             const data = await res.json();
             if (res.ok && data.success) {
-                notify.success(`Operational currency set to ${selectedCurrency}`);
+                notify.success(`Configured for ${selectedCountryName} (${selectedCurrency})`);
                 setOpen(false);
                 router.refresh();
             } else {
-                notify.error(data.error || 'Failed to save currency configuration');
+                notify.error(data.error || 'Failed to save configuration');
             }
         } catch (error) {
-            console.error('Error saving initial currency:', error);
-            notify.error('Failed to save currency configuration. Please try again.');
+            console.error('Error saving initial configuration:', error);
+            notify.error('Failed to save configuration. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -110,21 +166,21 @@ export function FirstTimeCurrencyModal({
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent 
                 showCloseButton={true}
-                className="sm:max-w-[520px] max-h-[90vh] flex flex-col p-0 overflow-hidden border-border/80 shadow-2xl"
+                className="sm:max-w-[540px] max-h-[92vh] flex flex-col p-0 overflow-hidden border-border/80 shadow-2xl"
             >
                 {/* Header Banner - Fixed at top */}
                 <div className="shrink-0 bg-gradient-to-r from-primary/15 via-blue-500/10 to-primary/5 p-4 sm:p-5 border-b border-border/60">
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold mb-1.5">
                         <Sparkles className="w-3.5 h-3.5" />
-                        Initial Fleet Setup
+                        Initial Fleet & Regional Setup
                     </div>
                     <DialogHeader>
                         <DialogTitle className="text-lg sm:text-xl font-bold flex items-center gap-2">
-                            <Coins className="w-5 h-5 text-primary shrink-0" />
-                            Select Your Primary Currency
+                            <Globe2 className="w-5 h-5 text-primary shrink-0" />
+                            Select Your Country & Operating Currency
                         </DialogTitle>
                         <DialogDescription className="text-xs sm:text-sm text-muted-foreground mt-1">
-                            Welcome to <strong>{companyName}</strong>! Please choose your business&apos;s default operational currency. This sets the base currency for your vehicle rates, quotations, and reports.
+                            Welcome to <strong>{companyName}</strong>! Select your operating country and billing currency. This sets your default rates and optimizes live map route routing for your country.
                         </DialogDescription>
                     </DialogHeader>
                 </div>
@@ -133,6 +189,32 @@ export function FirstTimeCurrencyModal({
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
                     {/* Scrollable Body */}
                     <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 scrollbar-thin">
+                        {/* Operating Country Selection */}
+                        <div className="space-y-1.5 p-3 rounded-lg border bg-muted/20">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                    <MapPin className="w-3.5 h-3.5 text-primary" />
+                                    Operating Country / Region
+                                </span>
+                                <span className="text-[11px] font-normal text-primary font-mono uppercase">
+                                    Map Code: {selectedCountryCode}
+                                </span>
+                            </Label>
+                            <select
+                                value={selectedCountryCode}
+                                onChange={(e) => handleCountryChange(e.target.value)}
+                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-medium"
+                            >
+                                {SUPPORTED_COUNTRIES.map((country) => (
+                                    <option key={country.code} value={country.code}>
+                                        {country.flag} {country.name} ({country.code.toUpperCase()})
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-[11px] text-muted-foreground">
+                                Live route search and waypoint geocoding will prioritize <strong>{selectedCountryName}</strong> while supporting global locations.
+                            </p>
+                        </div>
                         <div className="space-y-2">
                             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                                 <span>Operational Currency</span>
@@ -146,7 +228,7 @@ export function FirstTimeCurrencyModal({
                                         <button
                                             key={curr.code}
                                             type="button"
-                                            onClick={() => setSelectedCurrency(curr.code)}
+                                            onClick={() => handleCurrencySelect(curr.code)}
                                             className={`flex items-start justify-between p-2.5 rounded-lg border text-left transition-all ${
                                                 isSelected
                                                     ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm'
