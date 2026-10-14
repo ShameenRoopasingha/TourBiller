@@ -53,7 +53,6 @@ interface QuotationRow {
     driver?: {
         id: string;
         name: string;
-        phone?: string | null;
     } | null;
     tourSchedule: {
         name: string;

@@ -199,17 +199,7 @@ export default async function BookingDetailsPage(props: {
                                             Assigned
                                         </Badge>
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t">
-                                        {booking.driver.phone && (
-                                            <div>
-                                                <p className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1 mb-0.5">
-                                                    <Phone className="h-3 w-3" /> Contact Phone
-                                                </p>
-                                                <a href={`tel:${booking.driver.phone}`} className="text-sm font-medium text-primary hover:underline">
-                                                    {booking.driver.phone}
-                                                </a>
-                                            </div>
-                                        )}
+                                    <div className="pt-3 border-t">
                                         {booking.driver.email && (
                                             <div>
                                                 <p className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1 mb-0.5">

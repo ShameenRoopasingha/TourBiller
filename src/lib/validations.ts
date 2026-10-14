@@ -413,7 +413,6 @@ export type BookingWithDriver = Booking & {
   driver?: {
     id: string;
     name: string;
-    phone: string | null;
     email: string;
   } | null;
 };
@@ -522,7 +521,6 @@ export type QuotationWithSchedule = Quotation & {
   driver?: {
     id: string;
     name: string;
-    phone: string | null;
     email: string;
   } | null;
 };

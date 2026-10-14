@@ -118,7 +118,6 @@ export async function getBookings(searchQuery?: string): Promise<ActionResult<Bo
                     select: {
                         id: true,
                         name: true,
-                        phone: true,
                         email: true,
                     },
                 },
@@ -200,7 +199,6 @@ export async function getBookingById(id: string): Promise<ActionResult<BookingWi
                     select: {
                         id: true,
                         name: true,
-                        phone: true,
                         email: true,
                     },
                 },

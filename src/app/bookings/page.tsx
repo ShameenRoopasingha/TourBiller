@@ -97,7 +97,7 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                                         {booking.driver && (
                                             <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                                                 <User className="w-3.5 h-3.5 text-primary" />
-                                                <span>Driver: <strong className="text-foreground">{booking.driver.name}</strong>{booking.driver.phone ? ` (${booking.driver.phone})` : ''}</span>
+                                                <span>Driver: <strong className="text-foreground">{booking.driver.name}</strong></span>
                                             </div>
                                         )}
                                         <div className="flex gap-4 text-xs text-muted-foreground mt-1">

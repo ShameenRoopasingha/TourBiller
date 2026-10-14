@@ -489,16 +489,6 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                                     </div>
 
                                     <div className="space-y-2 pt-1 text-sm">
-                                        {q.driver.phone && (
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-muted-foreground flex items-center gap-1.5">
-                                                    <Phone className="h-3.5 w-3.5" /> Phone
-                                                </span>
-                                                <a href={`tel:${q.driver.phone}`} className="font-medium text-primary hover:underline">
-                                                    {q.driver.phone}
-                                                </a>
-                                            </div>
-                                        )}
                                         {q.driver.email && (
                                             <div className="flex justify-between items-center">
                                                 <span className="text-muted-foreground flex items-center gap-1.5">

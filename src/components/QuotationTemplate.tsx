@@ -29,7 +29,6 @@ interface QuotationData {
     driver?: {
         id: string;
         name: string;
-        phone: string | null;
         email?: string;
     } | null;
     startDate: Date | null;
@@ -274,7 +273,7 @@ export function QuotationTemplate({
                                 <>
                                     <span className="font-medium text-gray-500">Driver:</span>
                                     <span className="font-semibold text-gray-800">
-                                        {quotation.driver.name}{quotation.driver.phone ? ` (${quotation.driver.phone})` : ''}
+                                        {quotation.driver.name}
                                     </span>
                                 </>
                             )}

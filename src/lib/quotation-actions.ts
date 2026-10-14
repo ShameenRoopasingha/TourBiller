@@ -210,7 +210,6 @@ export async function getQuotations(
                     select: {
                         id: true,
                         name: true,
-                        phone: true,
                         email: true,
                     },
                 },
@@ -247,7 +246,6 @@ export async function getQuotationById(
                     select: {
                         id: true,
                         name: true,
-                        phone: true,
                         email: true,
                     },
                 },
