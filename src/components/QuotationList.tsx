@@ -78,7 +78,7 @@ export function QuotationList({ quotations }: QuotationListProps) {
     const filtered = quotations.filter(
         (q) =>
             q.customerName.toLowerCase().includes(search.toLowerCase()) ||
-            q.tourSchedule.name.toLowerCase().includes(search.toLowerCase()) ||
+            (q.tourSchedule?.name || (q.pickupLocation && q.dropLocation ? `${q.pickupLocation} to ${q.dropLocation}` : '')).toLowerCase().includes(search.toLowerCase()) ||
             String(q.quotationNumber).includes(search)
     );
 
@@ -225,9 +225,15 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                         </TableCell>
                                         <TableCell>
                                             <div>
-                                                <p className="text-sm">{q.tourSchedule.name}</p>
+                                                <p className="text-sm font-medium">
+                                                    {q.tourSchedule?.name || (q.pickupLocation && q.dropLocation ? `${q.pickupLocation} → ${q.dropLocation}` : 'Direct Route')}
+                                                </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {q.tourSchedule.days} days{q.totalDistance > 0 ? ` • ${q.totalDistance.toFixed(0)} km` : ''}
+                                                    {q.tourSchedule?.days || (
+                                                        (q.startDate && q.endDate)
+                                                            ? Math.max(1, Math.round((new Date(q.endDate).getTime() - new Date(q.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
+                                                            : 1
+                                                    )} days{q.totalDistance > 0 ? ` • ${q.totalDistance.toFixed(0)} km` : ''}
                                                 </p>
                                             </div>
                                         </TableCell>

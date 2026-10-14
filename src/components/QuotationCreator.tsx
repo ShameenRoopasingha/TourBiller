@@ -8,7 +8,6 @@ import { Loader2, FileCheck, Calculator, Plus, Sparkles, Navigation, CalendarRan
 import { QuotationFormSchema, type QuotationFormInput, type QuotationWithSchedule, type VehicleAvailabilityConflict, type DriverAvailabilityConflict } from '@/lib/validations';
 import { notify } from '@/lib/notifications';
 import { MapDistanceCalculator } from '@/components/MapDistanceCalculator';
-import { createTourSchedule } from '@/lib/tour-schedule-actions';
 
 // For backward compatibility
 export type QuotationFormData = QuotationFormInput;
@@ -145,7 +144,9 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
     const [driverAvailabilityConflict, setDriverAvailabilityConflict] = useState<DriverAvailabilityConflict | null>(null);
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const [isAIChatOpen, setIsAIChatOpen] = useState(false);
-    const [routingMode, setRoutingMode] = useState<'map' | 'schedule'>(initialData ? 'schedule' : 'map');
+    const [routingMode, setRoutingMode] = useState<'map' | 'schedule'>(
+        initialData ? (initialData.tourScheduleId ? 'schedule' : 'map') : 'map'
+    );
     const [mapDays, setMapDays] = useState<number>(initialData?.tourSchedule?.days || 1);
 
     const handleApplyDraft = (draft: QuotationDraft) => {
@@ -200,7 +201,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             advanceAmount: initialData.advanceAmount,
             excludedItems: initialData.excludedItems || 'Highway charges, Parking fees',
             notes: initialData.notes || '',
-            tourScheduleId: initialData.tourScheduleId,
+            tourScheduleId: initialData.tourScheduleId || '',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             status: (initialData.status as any) || 'DRAFT',
             validUntil: initialData.validUntil ? new Date(initialData.validUntil).toISOString().split('T')[0] as unknown as Date : undefined,
@@ -516,50 +517,24 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         try {
             let finalScheduleId = data.tourScheduleId;
 
-            // In Map mode with an in-memory transfer schedule, persist it to DB first
-            if (routingMode === 'map' && (!finalScheduleId || finalScheduleId.startsWith('transfer-'))) {
-                const startTown = data.pickupLocation || 'Pickup Location';
-                const endTown = data.dropLocation || 'Drop-off Location';
-                const distanceKm = Number(selectedSchedule?.items?.[0]?.distanceKm) || 0;
+            // In package mode, a predefined tour schedule is required
+            if (routingMode === 'schedule' && !finalScheduleId) {
+                form.setError('tourScheduleId', { message: 'Tour schedule is required for predefined packages' });
+                setIsSubmitting(false);
+                return;
+            }
 
-                const scheduleRes = await createTourSchedule({
-                    name: `Transfer: ${startTown} to ${endTown}`,
-                    days: mapDays,
-                    vehicleCategory: selectedVehicle?.category || 'CAR',
-                    vehicleNo: selectedVehicle?.vehicleNo || undefined,
-                    ratePerDay: Number(data.hireRatePerDay) || 0,
-                    kmPerDay: Number(data.kmPerDay) || 0,
-                    excessKmRate: Number(data.excessKmRate) || undefined,
-                    extraHourRate: Number(data.extraHourRate) || undefined,
-                    items: [
-                        {
-                            dayNumber: 1,
-                            title: `${startTown} to ${endTown}`,
-                            distanceKm: distanceKm,
-                            accommodation: 0,
-                            meals: 0,
-                            activities: 0,
-                            otherCosts: 0,
-                        }
-                    ]
-                });
-
-                if (scheduleRes.success && scheduleRes.data) {
-                    finalScheduleId = scheduleRes.data.id;
-                    form.setValue('tourScheduleId', finalScheduleId);
-                } else {
-                    const msg = scheduleRes.error || 'Failed to initialize transfer itinerary';
-                    notify.error(msg);
-                    setError(msg);
-                    setIsSubmitting(false);
-                    return;
-                }
+            // In Map mode, quotations are saved directly without creating a dummy TourSchedule
+            if (routingMode === 'map' || finalScheduleId?.startsWith('transfer-')) {
+                finalScheduleId = '';
             }
 
             const formData = new FormData();
             Object.entries(data).forEach(([key, value]) => {
                 if (key === 'tourScheduleId') {
-                    formData.append(key, finalScheduleId);
+                    if (finalScheduleId) {
+                        formData.append(key, finalScheduleId);
+                    }
                 } else if (value !== undefined && value !== null) {
                     formData.append(key, value instanceof Date ? value.toISOString() : String(value));
                 }

@@ -157,7 +157,7 @@ export type TourScheduleFormInput = z.infer<typeof TourScheduleFormSchema>;
 
 // Quotation form schema - RHF compatible
 export const QuotationFormSchema = z.object({
-  tourScheduleId: z.string().min(1, "Tour schedule is required"),
+  tourScheduleId: z.string().optional().default(""),
   customerName: z.string().min(1, "Customer name is required"),
   customerEmail: z.string().email("Invalid email").or(z.literal('')).default(''),
   customerPhone: z.string().default(''),
@@ -461,7 +461,7 @@ export type TourScheduleDayItem = z.infer<typeof TourScheduleDayItemDbSchema>;
 
 // Quotation validation schema
 export const QuotationSchema = z.object({
-  tourScheduleId: z.string().min(1, "Tour schedule is required"),
+  tourScheduleId: z.string().nullish().transform(v => v || undefined),
   customerName: z.string().min(1, "Customer name is required"),
   customerEmail: z.string().email("Invalid email").nullish().or(z.literal('')).transform(v => v || undefined),
   customerPhone: z.string().nullish().transform(v => v ?? undefined),
@@ -507,9 +507,9 @@ export const QuotationDbSchema = QuotationSchema.extend({
 export type Quotation = z.infer<typeof QuotationDbSchema>;
 
 export type QuotationWithSchedule = Quotation & {
-  tourSchedule: TourSchedule & {
+  tourSchedule: (TourSchedule & {
     items: TourScheduleDayItem[];
-  };
+  }) | null;
 };
 
 // Vehicle Expense validation schema

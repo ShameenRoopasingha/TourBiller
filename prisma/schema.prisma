@@ -268,7 +268,7 @@ model Quotation {
   id                 String    @id @default(cuid())
   companyId          String
   quotationNumber    Int       @unique @default(autoincrement())
-  tourScheduleId     String
+  tourScheduleId     String?
   customerName       String
   customerEmail      String?
   customerPhone      String?
@@ -302,7 +302,7 @@ model Quotation {
   updatedAt          DateTime  @updatedAt
 
   company      BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  tourSchedule TourSchedule @relation(fields: [tourScheduleId], references: [id])
+  tourSchedule TourSchedule? @relation(fields: [tourScheduleId], references: [id], onDelete: SetNull)
   driver       User?        @relation(fields: [driverId], references: [id])
 
   @@index([companyId])

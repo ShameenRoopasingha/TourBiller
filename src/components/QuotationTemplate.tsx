@@ -50,7 +50,7 @@ interface QuotationData {
     validUntil: Date | null;
     status: string;
     createdAt: Date;
-    tourSchedule: {
+    tourSchedule?: {
         name: string;
         description: string | null;
         days: number;
@@ -65,7 +65,7 @@ interface QuotationData {
             activities: number;
             otherCosts: number;
         }[];
-    };
+    } | null;
     // Vehicle specs (optional, fetched from vehicle record)
     vehicleSeats?: number | null;
     vehicleAcType?: string | null;
@@ -127,7 +127,7 @@ export function QuotationTemplate({
         quotation.activitiesTotal +
         quotation.otherCostsTotal;
 
-    const driverTotal = quotation.tourSchedule.days * (quotation.driverCostPerDay || 0);
+    const driverTotal = tourSchedule.days * (quotation.driverCostPerDay || 0);
     const subtotalWithDriver = subtotal + driverTotal;
     const markupAmount = subtotalWithDriver * (quotation.markup / 100);
 
@@ -253,9 +253,9 @@ export function QuotationTemplate({
                     <div className="w-1/2 bg-gray-50 p-3 border border-gray-200 rounded">
                         <div className="grid grid-cols-[75px_1fr] gap-y-1.5 gap-x-2 text-sm">
                             <span className="font-medium text-gray-500">Tour:</span>
-                            <span className="font-semibold">{quotation.tourSchedule.name}</span>
+                            <span className="font-semibold">{tourSchedule.name}</span>
                             <span className="font-medium text-gray-500">Duration:</span>
-                            <span>{quotation.tourSchedule.days} days</span>
+                            <span>{tourSchedule.days} days</span>
                             {quotation.totalDistance > 0 && (
                                 <>
                                     <span className="font-medium text-gray-500">Distance:</span>
@@ -263,7 +263,7 @@ export function QuotationTemplate({
                                 </>
                             )}
                             <span className="font-medium text-gray-500">Vehicle:</span>
-                            <span>{quotation.vehicleNo || '—'} ({quotation.tourSchedule.vehicleCategory})</span>
+                            <span>{quotation.vehicleNo || '—'} ({tourSchedule.vehicleCategory})</span>
                             {quotation.startDate && (
                                 <>
                                     <span className="font-medium text-gray-500">Period:</span>
@@ -280,11 +280,11 @@ export function QuotationTemplate({
                 {/* ── Tour Description ── */}
                 {/* Only show standalone description if it differs from ALL day-item descriptions
                    to avoid duplication in the print preview */}
-                {quotation.tourSchedule.description && 
-                 !quotation.tourSchedule.items.some(item => item.description === quotation.tourSchedule.description) &&
-                 !quotation.tourSchedule.items.some(item => item.title === quotation.tourSchedule.description) && (
+                {tourSchedule.description && 
+                 !tourSchedule.items.some(item => item.description === tourSchedule.description) &&
+                 !tourSchedule.items.some(item => item.title === tourSchedule.description) && (
                     <p className="text-[10px] italic text-gray-600 border-l-2 border-blue-500 pl-2 mb-3 leading-snug print-avoid-break">
-                        {quotation.tourSchedule.description}
+                        {tourSchedule.description}
                     </p>
                 )}
 
@@ -337,8 +337,8 @@ export function QuotationTemplate({
                             </tr>
                         </thead>
                         <tbody>
-                            {quotation.tourSchedule.items.map((item, idx) => {
-                                const dailyTransport = (quotation.transportCost / (quotation.tourSchedule.days || 1)) + (quotation.driverCostPerDay || 0);
+                            {tourSchedule.items.map((item, idx) => {
+                                const dailyTransport = (quotation.transportCost / (tourSchedule.days || 1)) + (quotation.driverCostPerDay || 0);
                                 const dayTotal = dailyTransport + item.accommodation + item.meals + item.activities + item.otherCosts;
                                 const renderAmt = (val: number) => val === 0 ? '-' : fmt(val);
                                 
@@ -408,12 +408,12 @@ export function QuotationTemplate({
                                 <div className="border border-gray-300 rounded p-2.5 print:p-2 text-xs flex-1 flex flex-col justify-between">
                                     <div className="space-y-0.5">
                                         <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
-                                            <span className="text-gray-600">Vehicle Transport ({quotation.tourSchedule.days} days{quotation.totalDistance > 0 ? ` · ${quotation.totalDistance.toFixed(0)} km` : ''})</span>
+                                            <span className="text-gray-600">Vehicle Transport ({tourSchedule.days} days{quotation.totalDistance > 0 ? ` · ${quotation.totalDistance.toFixed(0)} km` : ''})</span>
                                             <span className="text-right font-medium">{fmt(quotation.transportCost + driverTotal)}</span>
                                         </div>
                                         {finalExcessKmRate > 0 && (
                                             <div className="text-[10px] text-gray-400 italic py-0.5 leading-tight">
-                                                * Any tour distance exceeding {quotation.totalDistance > 0 ? `${quotation.totalDistance.toFixed(0)} km` : `${(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km`} will be charged at {fmt(finalExcessKmRate)}/km
+                                                * Any tour distance exceeding {quotation.totalDistance > 0 ? `${quotation.totalDistance.toFixed(0)} km` : `${(tourSchedule.days * quotation.kmPerDay).toFixed(0)} km`} will be charged at {fmt(finalExcessKmRate)}/km
                                             </div>
                                         )}
                                         {finalExtraHourRate > 0 && (
@@ -485,12 +485,12 @@ export function QuotationTemplate({
                             <div className="border border-gray-300 rounded p-2.5 print:p-2 text-xs">
                                 <div className="space-y-0.5">
                                     <div className="grid grid-cols-[1fr_auto] gap-x-2 py-0.5 border-b border-gray-200">
-                                        <span className="text-gray-600">Vehicle Transport ({quotation.tourSchedule.days} days{quotation.totalDistance > 0 ? ` · ${quotation.totalDistance.toFixed(0)} km` : ''})</span>
+                                        <span className="text-gray-600">Vehicle Transport ({tourSchedule.days} days{quotation.totalDistance > 0 ? ` · ${quotation.totalDistance.toFixed(0)} km` : ''})</span>
                                         <span className="text-right font-medium">{fmt(quotation.transportCost + driverTotal)}</span>
                                     </div>
                                     {finalExcessKmRate > 0 && (
                                         <div className="text-[10px] text-gray-400 italic py-0.5 leading-tight">
-                                            * Any tour distance exceeding {quotation.totalDistance > 0 ? `${quotation.totalDistance.toFixed(0)} km` : `${(quotation.tourSchedule.days * quotation.kmPerDay).toFixed(0)} km`} will be charged at {fmt(finalExcessKmRate)}/km
+                                            * Any tour distance exceeding {quotation.totalDistance > 0 ? `${quotation.totalDistance.toFixed(0)} km` : `${(tourSchedule.days * quotation.kmPerDay).toFixed(0)} km`} will be charged at {fmt(finalExcessKmRate)}/km
                                         </div>
                                     )}
                                     {finalExtraHourRate > 0 && (

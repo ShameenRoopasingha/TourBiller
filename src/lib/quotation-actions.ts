@@ -15,7 +15,7 @@ import { checkDriverAvailability } from '@/lib/user-actions';
  * Auto-calculates totals from the schedule's day items.
  */
 export async function generateQuotation(
-    tourScheduleId: string,
+    tourScheduleId: string | null | undefined,
     formData: FormData
 ): Promise<ActionResult<string>> {
     try {
@@ -52,14 +52,13 @@ export async function generateQuotation(
 
         const validated = QuotationSchema.parse(rawData);
 
-        // Fetch the tour schedule with items to calculate totals
-        const schedule = await prisma.tourSchedule.findFirst({
-            where: { id: validated.tourScheduleId, companyId: authCheck.companyId },
-            include: { items: true },
-        });
-
-        if (!schedule) {
-            throw new Error('Tour schedule not found');
+        // Fetch the tour schedule with items to calculate totals if provided
+        let schedule = null;
+        if (validated.tourScheduleId) {
+            schedule = await prisma.tourSchedule.findFirst({
+                where: { id: validated.tourScheduleId, companyId: authCheck.companyId },
+                include: { items: true },
+            });
         }
 
         // Check vehicle availability if both vehicle and dates are provided
@@ -92,8 +91,8 @@ export async function generateQuotation(
             }
         }
 
-        // Calculate totals from day items in a single pass
-        const itemTotals = schedule.items.reduce(
+        // Calculate totals from day items in a single pass (if schedule provided)
+        const itemTotals = schedule?.items?.reduce(
             (acc, item) => ({
                 distance: acc.distance + item.distanceKm,
                 accommodation: acc.accommodation + item.accommodation,
@@ -102,9 +101,13 @@ export async function generateQuotation(
                 other: acc.other + item.otherCosts,
             }),
             { distance: 0, accommodation: 0, meals: 0, activities: 0, other: 0 }
-        );
+        ) || { distance: 0, accommodation: 0, meals: 0, activities: 0, other: 0 };
 
-        const days = schedule.days || 1;
+        const days = schedule?.days || (
+            (validated.startDate && validated.endDate)
+                ? Math.max(1, Math.round((new Date(validated.endDate).getTime() - new Date(validated.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
+                : 1
+        );
         const ratePerDay = validated.hireRatePerDay || 0;
         const kmPerDay = validated.kmPerDay || 0;
         const excessKmRate = validated.excessKmRate || 0;
@@ -130,7 +133,7 @@ export async function generateQuotation(
         const quotation = await prisma.quotation.create({
             data: {
                 companyId: authCheck.companyId,
-                tourScheduleId: validated.tourScheduleId,
+                tourScheduleId: validated.tourScheduleId || null,
                 customerName: validated.customerName,
                 customerEmail: validated.customerEmail || null,
                 customerPhone: validated.customerPhone || null,
@@ -251,7 +254,7 @@ export async function getQuotationById(
  */
 export async function updateQuotation(
     id: string,
-    tourScheduleId: string,
+    tourScheduleId: string | null | undefined,
     formData: FormData
 ): Promise<ActionResult<string>> {
     try {
@@ -325,18 +328,17 @@ export async function updateQuotation(
             }
         }
 
-        // Get schedule details for calculations
-        const schedule = await prisma.tourSchedule.findFirst({
-            where: { id: tourScheduleId, companyId: authCheck.companyId },
-            include: { items: true },
-        });
-
-        if (!schedule) {
-            return { success: false, error: 'Tour schedule not found' };
+        // Get schedule details for calculations (if provided)
+        let schedule = null;
+        if (tourScheduleId) {
+            schedule = await prisma.tourSchedule.findFirst({
+                where: { id: tourScheduleId, companyId: authCheck.companyId },
+                include: { items: true },
+            });
         }
 
         // Calculate totals
-        const itemTotals = schedule.items.reduce(
+        const itemTotals = schedule?.items?.reduce(
             (acc, item) => ({
                 distance: acc.distance + item.distanceKm,
                 accommodation: acc.accommodation + item.accommodation,
@@ -345,9 +347,13 @@ export async function updateQuotation(
                 other: acc.other + item.otherCosts,
             }),
             { distance: 0, accommodation: 0, meals: 0, activities: 0, other: 0 }
-        );
+        ) || { distance: 0, accommodation: 0, meals: 0, activities: 0, other: 0 };
 
-        const days = schedule.days || 1;
+        const days = schedule?.days || (
+            (validated.startDate && validated.endDate)
+                ? Math.max(1, Math.round((new Date(validated.endDate).getTime() - new Date(validated.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
+                : 1
+        );
         const ratePerDay = validated.hireRatePerDay || 0;
         const kmPerDay = validated.kmPerDay || 0;
         const excessKmRate = validated.excessKmRate || 0;
@@ -532,12 +538,15 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
             return { success: true, data: existingBooking.id };
         }
 
-        const tourSchedule = await prisma.tourSchedule.findFirst({
-            where: { id: quotation.tourScheduleId, companyId: authCheck.companyId },
-            select: { name: true },
-        });
-        if (!tourSchedule) {
-            throw new Error('Tour schedule not found');
+        let tourScheduleName = '';
+        if (quotation.tourScheduleId) {
+            const tourSchedule = await prisma.tourSchedule.findFirst({
+                where: { id: quotation.tourScheduleId, companyId: authCheck.companyId },
+                select: { name: true },
+            });
+            if (tourSchedule) {
+                tourScheduleName = tourSchedule.name;
+            }
         }
 
         // Keep the availability queries outside the interactive transaction so they cannot consume its timeout.
@@ -617,7 +626,7 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
                     startDate: currentQuotation.startDate!,
                     endDate: q.endDate as Date | null,
                     destination,
-                    notes: `Tour schedule: ${tourSchedule.name}\n${conversionMarker} ${currentQuotation.notes || ''}`.trim(),
+                    notes: `${tourScheduleName ? `Tour schedule: ${tourScheduleName}\n` : ''}${conversionMarker} ${currentQuotation.notes || ''}`.trim(),
                     advanceAmount: currentQuotation.advanceAmount,
                     status: 'CONFIRMED',
                 },

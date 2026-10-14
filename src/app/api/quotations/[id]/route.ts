@@ -7,10 +7,10 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
     try {
         const { id } = await params;
         const formData = await req.formData();
-        const tourScheduleId = formData.get('tourScheduleId');
-        if (typeof tourScheduleId !== 'string' || !tourScheduleId) {
-            return NextResponse.json({ success: false, error: 'Tour schedule is required' }, { status: 400 });
-        }
+        const rawScheduleId = formData.get('tourScheduleId');
+        const tourScheduleId = (typeof rawScheduleId === 'string' && rawScheduleId && !rawScheduleId.startsWith('transfer-'))
+            ? rawScheduleId
+            : null;
         const result = await updateQuotation(id, tourScheduleId, formData);
         return NextResponse.json(result, { status: result.success ? 200 : 400 });
     } catch (error) {

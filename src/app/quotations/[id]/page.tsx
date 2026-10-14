@@ -88,6 +88,27 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
     const q = result.data;
     const fmt = formatCurrency;
 
+    const tourSchedule = q.tourSchedule || {
+        id: '',
+        name: q.pickupLocation && q.dropLocation ? `${q.pickupLocation} to ${q.dropLocation}` : 'Direct Route',
+        days: (q.startDate && q.endDate)
+            ? Math.max(1, Math.round((new Date(q.endDate).getTime() - new Date(q.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
+            : 1,
+        vehicleCategory: 'Vehicle',
+        description: null,
+        items: q.pickupLocation && q.dropLocation ? [{
+            id: 'item-1',
+            dayNumber: 1,
+            title: `${q.pickupLocation} to ${q.dropLocation}`,
+            description: 'Direct Point-to-Point Route',
+            distanceKm: q.totalDistance || 0,
+            accommodation: q.accommodationTotal || 0,
+            meals: q.mealsTotal || 0,
+            activities: q.activitiesTotal || 0,
+            otherCosts: q.otherCostsTotal || 0,
+        }] : [],
+    };
+
     let vehicleContext = null;
     if (q.vehicleNo) {
         vehicleContext = await prisma.vehicle.findUnique({
@@ -190,9 +211,9 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                             <div className="space-y-3">
                                 <div>
                                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tour Schedule</label>
-                                    <p className="font-medium text-lg">{q.tourSchedule.name}</p>
+                                    <p className="font-medium text-lg">{tourSchedule.name}</p>
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                        <span>{q.tourSchedule.days} Days / {q.tourSchedule.days - 1} Nights</span>
+                                        <span>{tourSchedule.days} Days / {Math.max(0, tourSchedule.days - 1)} Nights</span>
                                         {q.totalDistance > 0 && (
                                             <>
                                                 <span>•</span>
@@ -247,7 +268,7 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                             <CardDescription>Proposed schedule for the tour</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            {q.tourSchedule.items.sort((a, b) => a.dayNumber - b.dayNumber).map((item) => (
+                            {(tourSchedule.items || []).sort((a, b) => a.dayNumber - b.dayNumber).map((item) => (
                                 <div key={item.id} className="relative pl-8 border-l pb-6 last:pb-0">
                                     <div className="absolute left-[-9px] top-0 h-4 w-4 rounded-full bg-primary border-4 border-background" />
                                     <div className="flex flex-col gap-1">
@@ -365,7 +386,7 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                                     <span className="font-bold text-2xl text-primary">{fmt(q.totalAmount)}</span>
                                 </div>
                                 <p className="text-[10px] text-muted-foreground mt-1 text-right italic">
-                                    Quoted rates based on {q.tourSchedule.days} days
+                                    Quoted rates based on {tourSchedule.days} days
                                 </p>
                             </div>
 

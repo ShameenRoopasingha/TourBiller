@@ -80,14 +80,14 @@ async function PrintQuotation({ id }: { id: string }) {
         startDate: quotation.startDate ?? null,
         endDate: quotation.endDate ?? null,
         validUntil: quotation.validUntil ?? null,
-        tourSchedule: {
+        tourSchedule: quotation.tourSchedule ? {
             ...quotation.tourSchedule,
             description: quotation.tourSchedule.description ?? null,
-            items: quotation.tourSchedule.items.map(item => ({
+            items: (quotation.tourSchedule.items || []).map(item => ({
                 ...item,
                 description: item.description ?? null,
             })),
-        },
+        } : null,
     };
 
     // Fetch vehicle specs if quotation has a vehicle
