@@ -13,7 +13,7 @@ function extractRouteStops(quotation: {
     notes?: string | null;
     tourSchedule?: {
         items?: Array<{ title: string }>;
-    };
+    } | null;
 }): string[] {
     // 1. From notes (e.g., "Route: Katunayake → Pinnawala → Yala" or "Map Route: ...")
     if (quotation.notes) {

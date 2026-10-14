@@ -2,7 +2,9 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Car, Calendar, MapPin, CreditCard, AlignLeft, User, Phone, Mail } from 'lucide-react';
 import { getBookingById } from '@/lib/booking-actions';
+import { getDrivers } from '@/lib/user-actions';
 import { CancelBookingButton } from '@/components/CancelBookingButton';
+import { BookingDriverAssigner } from '@/components/BookingDriverAssigner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -63,11 +65,17 @@ export default async function BookingDetailsPage(props: {
     }
 
     const params = await props.params;
-    const { success, data: booking } = await getBookingById(params.id);
+    const [bookingResult, driversResult] = await Promise.all([
+        getBookingById(params.id),
+        getDrivers(),
+    ]);
 
-    if (!success || !booking) {
+    if (!bookingResult.success || !bookingResult.data) {
         notFound();
     }
+
+    const booking = bookingResult.data;
+    const drivers = driversResult.success && driversResult.data ? driversResult.data : [];
 
     // Determine display status based on booking status and dates
     let displayStatus = booking.status;
@@ -181,47 +189,12 @@ export default async function BookingDetailsPage(props: {
                     </div>
 
                     {/* Assigned Driver */}
-                    <div className="space-y-4">
-                        <h3 className="font-semibold flex items-center gap-2 text-muted-foreground">
-                            <User className="h-4 w-4" /> Assigned Driver
-                        </h3>
-                        <div className="bg-muted/30 rounded-lg p-4">
-                            {booking.driver ? (
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-xs text-muted-foreground uppercase font-semibold">Driver Name</p>
-                                            <p className="font-bold text-lg text-foreground flex items-center gap-2">
-                                                {booking.driver.name}
-                                            </p>
-                                        </div>
-                                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 font-medium">
-                                            Assigned
-                                        </Badge>
-                                    </div>
-                                    <div className="pt-3 border-t">
-                                        {booking.driver.email && (
-                                            <div>
-                                                <p className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1 mb-0.5">
-                                                    <Mail className="h-3 w-3" /> Email Address
-                                                </p>
-                                                <a href={`mailto:${booking.driver.email}`} className="text-sm font-medium text-primary hover:underline truncate block">
-                                                    {booking.driver.email}
-                                                </a>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between py-1">
-                                    <span className="text-sm text-muted-foreground italic">No driver assigned to this booking</span>
-                                    <Badge variant="secondary" className="text-xs">
-                                        Unassigned
-                                    </Badge>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <BookingDriverAssigner
+                        bookingId={booking.id}
+                        currentDriver={booking.driver || null}
+                        drivers={drivers}
+                        isAdmin={auth.role === 'ADMIN' || auth.role === 'OWNER'}
+                    />
 
                     {/* Additional Notes */}
                     {booking.notes && (

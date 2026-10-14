@@ -1247,9 +1247,9 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                             {vehicleCostStats.fuelCost > 0 ? ` • Fuel: Rs. ${vehicleCostStats.fuelCost.toFixed(1)}` : ''}
                                         </span>
                                     </div>
-                                    {calculatedTotals.excessKm > 0 && (
+                                    {(calculatedTotals.excessKm || 0) > 0 && (
                                         <div className="text-amber-600 dark:text-amber-400 font-medium">
-                                            Tour Extra: {calculatedTotals.excessKm.toFixed(0)} km × Rs. {watchedExcessKmRate || 0} = Rs. {formatCurrency(calculatedTotals.excessKmCost)}
+                                            Tour Extra: {(calculatedTotals.excessKm || 0).toFixed(0)} km × Rs. {watchedExcessKmRate || 0} = Rs. {formatCurrency(calculatedTotals.excessKmCost || 0)}
                                         </div>
                                     )}
                                 </div>

@@ -103,7 +103,7 @@ export async function getDashboardStats() {
                 orderBy: { createdAt: 'desc' },
                 select: {
                     id: true, billNumber: true, customerName: true, vehicleNo: true,
-                    totalAmount: true, createdAt: true, route: true, startDate: true, endDate: true,
+                    totalAmount: true, createdAt: true, route: true, startDate: true, endDate: true, currency: true,
                 },
             }).catch(() => []),
             // 7. Relevant tours (for alerts)

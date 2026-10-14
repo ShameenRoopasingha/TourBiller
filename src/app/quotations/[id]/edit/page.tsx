@@ -3,6 +3,7 @@ import { getQuotationById } from '@/lib/quotation-actions';
 import { getTourSchedules } from '@/lib/tour-schedule-actions';
 import { getCustomers } from '@/lib/customer-actions';
 import { getVehicles } from '@/lib/vehicle-actions';
+import { getDrivers } from '@/lib/user-actions';
 import { QuotationCreator } from '@/components/QuotationCreator';
 import { getSafeItems } from '@/lib/utils';
 import { type Customer, type Vehicle } from '@/lib/validations';
@@ -15,7 +16,11 @@ export default async function EditQuotationPage({ params }: { params: Promise<{ 
         getQuotationById(id),
         getTourSchedules(),
     ]);
-    const [customersResult, vehiclesResult] = await Promise.all([getCustomers(), getVehicles()]);
+    const [customersResult, vehiclesResult, driversResult] = await Promise.all([
+        getCustomers(),
+        getVehicles(),
+        getDrivers(),
+    ]);
 
     if (!quotationResult.success || !quotationResult.data) {
         notFound();
@@ -24,6 +29,7 @@ export default async function EditQuotationPage({ params }: { params: Promise<{ 
     const schedules = getSafeItems(schedulesResult);
     const customers = getSafeItems(customersResult);
     const vehicles = getSafeItems(vehiclesResult);
+    const drivers = driversResult.success && driversResult.data ? driversResult.data : [];
 
     return (
         <main className="container py-8 max-w-5xl">
@@ -67,6 +73,7 @@ export default async function EditQuotationPage({ params }: { params: Promise<{ 
                     tyreCost: v.tyreCost ?? 0,
                     tyreLifespan: v.tyreLifespan ?? 40000,
                 }))}
+                drivers={drivers}
             />
         </main>
     );

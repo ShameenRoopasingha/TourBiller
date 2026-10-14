@@ -42,6 +42,7 @@ interface QuotationRow {
     customerName: string;
     customerPhone?: string | null;
     totalAmount: number;
+    totalDistance?: number;
     status: string;
     startDate?: Date | null;
     endDate?: Date | null;
@@ -247,7 +248,7 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                                         (q.startDate && q.endDate)
                                                             ? Math.max(1, Math.round((new Date(q.endDate).getTime() - new Date(q.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
                                                             : 1
-                                                    )} days{q.totalDistance > 0 ? ` • ${q.totalDistance.toFixed(0)} km` : ''}
+                                                    )} days{(q.totalDistance && q.totalDistance > 0) ? ` • ${q.totalDistance.toFixed(0)} km` : ''}
                                                 </p>
                                             </div>
                                         </TableCell>

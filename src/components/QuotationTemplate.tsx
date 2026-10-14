@@ -91,6 +91,8 @@ interface BusinessProfileData {
     bankBranch?: string | null;
     bankAccountNo?: string | null;
     bankAccountName?: string | null;
+    usdRate?: number | null;
+    currency?: string | null;
 }
 
 interface QuotationTemplateProps {
@@ -131,6 +133,25 @@ export function QuotationTemplate({
         quotation.mealsTotal +
         quotation.activitiesTotal +
         quotation.otherCostsTotal;
+
+    const tourSchedule = quotation.tourSchedule || {
+        name: quotation.pickupLocation && quotation.dropLocation ? `${quotation.pickupLocation} to ${quotation.dropLocation}` : 'Tour Itinerary',
+        description: null,
+        days: (quotation.startDate && quotation.endDate)
+            ? Math.max(1, Math.round((new Date(quotation.endDate).getTime() - new Date(quotation.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
+            : 1,
+        vehicleCategory: 'Vehicle',
+        items: quotation.pickupLocation && quotation.dropLocation ? [{
+            dayNumber: 1,
+            title: `${quotation.pickupLocation} to ${quotation.dropLocation}`,
+            description: 'Direct Point-to-Point Route',
+            distanceKm: quotation.totalDistance || 0,
+            accommodation: quotation.accommodationTotal || 0,
+            meals: quotation.mealsTotal || 0,
+            activities: quotation.activitiesTotal || 0,
+            otherCosts: quotation.otherCostsTotal || 0,
+        }] : [],
+    };
 
     const driverTotal = tourSchedule.days * (quotation.driverCostPerDay || 0);
     const subtotalWithDriver = subtotal + driverTotal;

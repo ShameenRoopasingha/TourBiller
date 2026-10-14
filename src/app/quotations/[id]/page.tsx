@@ -40,7 +40,7 @@ function extractRouteStops(quotation: {
     notes?: string | null;
     tourSchedule?: {
         items?: Array<{ title: string }>;
-    };
+    } | null;
 }): string[] {
     if (quotation.notes) {
         const line = quotation.notes.split('\n').find((l) =>

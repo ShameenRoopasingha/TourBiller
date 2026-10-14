@@ -215,3 +215,52 @@ export async function getBookingById(id: string): Promise<ActionResult<BookingWi
         return { success: false, error: 'Failed to fetch booking' };
     }
 }
+
+/**
+ * Assign or change a driver for an existing booking
+ */
+export async function assignDriverToBooking(bookingId: string, driverId: string | null): Promise<ActionResult<void>> {
+    try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        if (driverId) {
+            const booking = await prisma.booking.findFirst({
+                where: { id: bookingId, companyId: authCheck.companyId },
+                select: { startDate: true, endDate: true },
+            });
+            if (!booking) return { success: false, error: 'Booking not found' };
+            const endDate = booking.endDate || booking.startDate;
+            const driverAvailability = await checkDriverAvailability(
+                driverId,
+                booking.startDate,
+                endDate,
+                bookingId,
+                'Booking'
+            );
+            if (driverAvailability.success && driverAvailability.data && !driverAvailability.data.available) {
+                const conflict = driverAvailability.data.conflicts[0];
+                return {
+                    success: false,
+                    error: `Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}`
+                };
+            }
+        }
+
+        const res = await prisma.booking.updateMany({
+            where: { id: bookingId, companyId: authCheck.companyId },
+            data: { driverId: driverId || null },
+        });
+
+        if (res.count === 0) return { success: false, error: 'Booking not found or unauthorized' };
+
+        revalidateFor('booking');
+        return { success: true };
+    } catch (error) {
+        console.error('Error assigning driver to booking:', error);
+        return { success: false, error: 'Failed to assign driver' };
+    }
+}
+
