@@ -15,12 +15,12 @@ async function verifyDriver(req: Request) {
     try {
         const decoded = jwt.verify(token, JWT_SECRET) as any;
         return { driver: decoded };
-    } catch (e) {
+    } catch {
         return { error: 'Invalid token', status: 401 };
     }
 }
 
-// GET: Fetch single tour details with activities
+// GET: Fetch single tour details with activities, vehicle, and navigation info
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const auth = await verifyDriver(req);
@@ -35,6 +35,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             include: {
                 tripActivities: {
                     orderBy: { timestamp: 'desc' }
+                },
+                driverLocations: {
+                    orderBy: { timestamp: 'desc' },
+                    take: 50,
+                    select: {
+                        lat: true,
+                        lon: true,
+                        heading: true,
+                        speed: true,
+                        timestamp: true,
+                    }
                 }
             }
         });
@@ -43,7 +54,75 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             return NextResponse.json({ success: false, error: 'Tour not found or unauthorized' }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true, data: booking });
+        // Fetch vehicle details if available
+        let vehicle = null;
+        if (booking.vehicleNo) {
+            vehicle = await prisma.vehicle.findFirst({
+                where: {
+                    companyId: booking.companyId,
+                    vehicleNo: booking.vehicleNo
+                },
+                select: {
+                    vehicleNo: true,
+                    model: true,
+                    category: true,
+                    seats: true,
+                    acType: true,
+                    features: true,
+                }
+            });
+        }
+
+        // Try to find quotation itinerary for detailed day-by-day stops
+        let itineraryDays: any[] = [];
+        const quotation = await prisma.quotation.findFirst({
+            where: {
+                companyId: booking.companyId,
+                customerName: booking.customerName,
+                vehicleNo: booking.vehicleNo
+            },
+            include: {
+                tourSchedule: {
+                    include: {
+                        items: {
+                            orderBy: { dayNumber: 'asc' }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (quotation?.tourSchedule?.items) {
+            itineraryDays = quotation.tourSchedule.items.map(item => ({
+                day: item.dayNumber,
+                title: item.title,
+                description: item.description,
+                distanceKm: item.distanceKm,
+            }));
+        }
+
+        // Build navigation target: prefer dropLocation, then destination, then pickup
+        const primaryDestination = booking.dropLocation || booking.destination || booking.pickupLocation || '';
+        const googleMapsNavUrl = primaryDestination
+            ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(primaryDestination)}&travelmode=driving`
+            : null;
+        const wazeNavUrl = primaryDestination
+            ? `https://waze.com/ul?q=${encodeURIComponent(primaryDestination)}&navigate=yes`
+            : null;
+
+        return NextResponse.json({
+            success: true,
+            data: {
+                ...booking,
+                vehicle,
+                itineraryDays,
+                navigation: {
+                    target: primaryDestination,
+                    googleMapsUrl: googleMapsNavUrl,
+                    wazeUrl: wazeNavUrl
+                }
+            }
+        });
 
     } catch (error) {
         console.error('Fetch tour error:', error);
@@ -75,6 +154,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
                     where: { id: bookingId },
                     data: { status: 'ONGOING' }
                 }),
+                prisma.user.update({
+                    where: { id: driverId },
+                    data: { isLiveTracking: true }
+                }),
                 prisma.tripActivity.create({
                     data: {
                         companyId,
@@ -93,6 +176,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
                 prisma.booking.update({
                     where: { id: bookingId },
                     data: { status: 'COMPLETED' }
+                }),
+                prisma.user.update({
+                    where: { id: driverId },
+                    data: { isLiveTracking: false }
                 }),
                 prisma.tripActivity.create({
                     data: {

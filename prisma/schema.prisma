@@ -40,6 +40,7 @@ model BusinessProfile {
   quotations       Quotation[]
   vehicleExpenses  VehicleExpense[]
   tripActivities   TripActivity[]
+  driverLocations  DriverLocation[]
 
   @@map("business_profile")
 }
@@ -155,11 +156,17 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  lastLat          Float?
+  lastLon          Float?
+  lastLocationAt   DateTime?
+  isLiveTracking   Boolean          @default(false)
+
   company          BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
   bookings         Booking[]
   quotations       Quotation[]
   vehicleExpenses  VehicleExpense[]
   tripActivities   TripActivity[]
+  driverLocations  DriverLocation[]
 
   @@index([companyId])
   @@map("users")
@@ -189,12 +196,20 @@ model Booking {
   advanceAmount Float    @default(0)
   refundStatus String?   // NULL, REFUNDED, FORFEITED
   driverId     String?
+  pickupLocation  String?
+  dropLocation    String?
+  lastLat         Float?
+  lastLon         Float?
+  lastHeading     Float?
+  lastSpeed       Float?
+  lastLocationAt  DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   company      BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
   driver       User?    @relation(fields: [driverId], references: [id])
   tripActivities TripActivity[]
+  driverLocations DriverLocation[]
 
   @@index([companyId])
   @@index([status])
@@ -335,4 +350,27 @@ model TripActivity {
   @@index([bookingId])
   @@index([driverId])
   @@map("trip_activities")
+}
+
+model DriverLocation {
+  id         String   @id @default(cuid())
+  companyId  String
+  driverId   String
+  bookingId  String?
+  lat        Float
+  lon        Float
+  heading    Float?
+  speed      Float?
+  accuracy   Float?
+  battery    Float?
+  timestamp  DateTime @default(now())
+
+  company    BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  driver     User            @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  booking    Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, timestamp])
+  @@index([driverId, timestamp])
+  @@index([bookingId])
+  @@map("driver_locations")
 }

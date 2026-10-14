@@ -6,12 +6,15 @@ import { Car, MapPin, Calendar, ArrowRight, CheckCircle2, Clock } from 'lucide-r
 import { Card, CardContent } from '@/components/ui/card';
 import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
 import { QuickActionSheet } from '@/components/QuickActionSheet';
+import { DriverLiveNavigationCard } from '@/components/DriverLiveNavigationCard';
 
 interface BookingData {
     id: string;
     vehicleNo: string;
     customerName: string;
     destination: string | null;
+    pickupLocation?: string | null;
+    dropLocation?: string | null;
     startDate: string;
     endDate: string | null;
     status: string;
@@ -91,6 +94,14 @@ export function DriverTourTabs({ activeBooking, vehicle, upcomingBookings, compl
                         <>
                             {/* Tour Progress Banner */}
                             <TourBanner booking={activeBooking} vehicle={vehicle} />
+
+                            {/* GPS Live Radar & Turn-by-Turn Navigation */}
+                            <DriverLiveNavigationCard
+                                bookingId={activeBooking.id}
+                                destination={activeBooking.destination}
+                                pickupLocation={activeBooking.pickupLocation}
+                                dropLocation={activeBooking.dropLocation}
+                            />
 
                             {/* Quick Actions */}
                             <Card>

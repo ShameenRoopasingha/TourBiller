@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FileText, Printer, Plus, Activity, Banknote, Car, Edit } from 'lucide-react';
+import { FileText, Printer, Plus, Activity, Banknote, Car, Edit, Radio } from 'lucide-react';
 import { getDashboardStats } from '@/lib/dashboard-actions';
 import { getBusinessProfile } from '@/lib/actions';
 import { formatCurrency } from '@/lib/calculations';
@@ -57,7 +57,13 @@ export async function Dashboard() {
             )}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <Button variant="default" className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-initial" asChild>
+                        <Link href="/live-tracking">
+                            <Radio className="mr-2 h-4 w-4 animate-pulse" />
+                            Live Fleet Radar
+                        </Link>
+                    </Button>
                     <Button variant="outline" className="flex-1 sm:flex-initial" asChild>
                         <Link href="/bookings/new">
                             <Plus className="mr-2 h-4 w-4" />

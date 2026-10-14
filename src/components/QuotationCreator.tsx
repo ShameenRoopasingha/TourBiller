@@ -749,32 +749,13 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                             {form.getValues('pickupLocation') || 'Origin'} ➔ {form.getValues('dropLocation') || 'Destination'}
                                         </span>
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                                    <div className="flex flex-wrap items-center gap-2 text-xs">
                                         <span className="font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-md">
                                             {selectedSchedule.items[0]?.distanceKm} km
                                         </span>
-                                        {/* Tour Duration Selector */}
-                                        <div className="flex items-center gap-1.5 bg-background px-2.5 py-1 rounded-md border shadow-xs">
-                                            <span className="text-muted-foreground font-medium">Tour Duration:</span>
-                                            <input
-                                                type="number"
-                                                min={1}
-                                                max={30}
-                                                value={mapDays}
-                                                onChange={(e) => {
-                                                    const newDays = Math.max(1, parseInt(e.target.value) || 1);
-                                                    setMapDays(newDays);
-                                                    if (selectedSchedule) {
-                                                        setSelectedSchedule({
-                                                            ...selectedSchedule,
-                                                            days: newDays,
-                                                        });
-                                                    }
-                                                }}
-                                                className="w-12 h-6 text-center text-xs font-semibold border rounded bg-muted/20 text-foreground"
-                                            />
-                                            <span className="text-muted-foreground font-medium">{mapDays === 1 ? 'Day' : 'Days'}</span>
-                                        </div>
+                                        <span className="text-muted-foreground bg-background px-2.5 py-1 rounded-md border font-medium">
+                                            {mapDays} {mapDays === 1 ? 'Day' : 'Days'}
+                                        </span>
                                     </div>
                                 </div>
                             )}
@@ -834,33 +815,9 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 <div className="mt-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <h4 className="text-sm font-medium">Itinerary Preview</h4>
-                                        <div className="flex items-center gap-1.5 bg-background px-2.5 py-1 rounded-md border text-xs shadow-xs">
-                                            <span className="text-muted-foreground font-medium">Tour Duration:</span>
-                                            <input
-                                                type="number"
-                                                min={1}
-                                                max={60}
-                                                value={mapDays}
-                                                onChange={(e) => {
-                                                    const newDays = Math.max(1, parseInt(e.target.value) || 1);
-                                                    setMapDays(newDays);
-                                                    setSelectedSchedule({
-                                                        ...selectedSchedule,
-                                                        days: newDays,
-                                                    });
-                                                    if (watchedStartDate) {
-                                                        const start = new Date(watchedStartDate);
-                                                        if (!isNaN(start.getTime())) {
-                                                            const end = new Date(start);
-                                                            end.setDate(start.getDate() + (newDays - 1));
-                                                            form.setValue('endDate', end.toISOString().split('T')[0] as unknown as Date);
-                                                        }
-                                                    }
-                                                }}
-                                                className="w-12 h-6 text-center text-xs font-semibold border rounded bg-muted/20 text-foreground"
-                                            />
-                                            <span className="text-muted-foreground font-medium">{mapDays === 1 ? 'Day' : 'Days'}</span>
-                                        </div>
+                                        <span className="text-xs text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md border font-medium">
+                                            {mapDays} {mapDays === 1 ? 'Day' : 'Days'}
+                                        </span>
                                     </div>
                                     <div className="rounded-md border overflow-x-auto">
                                         <Table>
@@ -1050,7 +1007,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <FormField
                             control={form.control}
                             name="driverId"
@@ -1131,7 +1088,10 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 placeholder="e.g. 1"
                             />
                         </div>
+                    </div>
 
+                    {/* Start Date & End Date side-by-side */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="startDate">Tour Start Date *</Label>
                             <Input
@@ -1143,9 +1103,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 <p className="text-sm text-destructive font-medium">{form.formState.errors.startDate.message}</p>
                             )}
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="endDate" className="text-muted-foreground">Tour End Date</Label>
@@ -1177,25 +1135,47 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 className="bg-background"
                             />
                         </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="pickupLocation">Pickup Location</Label>
-                            <Input
-                                id="pickupLocation"
-                                placeholder="e.g. BIA / Colombo"
-                                {...form.register('pickupLocation')}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="dropLocation">Drop-off Location</Label>
-                            <Input
-                                id="dropLocation"
-                                placeholder="e.g. Hotel in Kandy"
-                                {...form.register('dropLocation')}
-                            />
-                        </div>
                     </div>
+
+                    {/* Conditional Pickup & Drop-off handling */}
+                    {routingMode === 'map' ? (
+                        /* Direct Map Route mode: Show synchronized route banner instead of duplicate input fields */
+                        (watchedFields.pickupLocation || watchedFields.dropLocation) && (
+                            <div className="p-3 bg-muted/40 rounded-xl border flex flex-wrap items-center justify-between gap-2 text-xs">
+                                <div className="flex items-center gap-2">
+                                    <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                    <span className="text-muted-foreground font-medium">Route:</span>
+                                    <span className="font-semibold text-foreground">
+                                        {watchedFields.pickupLocation || 'Origin'} ➔ {watchedFields.dropLocation || 'Destination'}
+                                    </span>
+                                </div>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                                    Auto-synced from Map Planner
+                                </span>
+                            </div>
+                        )
+                    ) : (
+                        /* Tour Schedule mode (No Map Planner): Provide manual pickup & drop inputs */
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                            <div className="space-y-2">
+                                <Label htmlFor="pickupLocation">Pickup Location</Label>
+                                <Input
+                                    id="pickupLocation"
+                                    placeholder="e.g. BIA / Colombo"
+                                    {...form.register('pickupLocation')}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="dropLocation">Drop-off Location</Label>
+                                <Input
+                                    id="dropLocation"
+                                    placeholder="e.g. Hotel in Kandy"
+                                    {...form.register('dropLocation')}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
