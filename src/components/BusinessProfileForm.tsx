@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Save, RefreshCw } from 'lucide-react';
 import { notify } from '@/lib/notifications';
+import { updateBusinessProfile } from '@/lib/actions';
 import { BusinessProfileFormSchema, type BusinessProfileFormInput, type BusinessProfile } from '@/lib/validations';
 
 // For backward compatibility
@@ -81,10 +82,9 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
         if (data.bankAccountName) formData.append('bankAccountName', data.bankAccountName);
 
         try {
-            const response = await fetch('/api/business-profile', { method: 'PUT', body: formData });
-            const result = await response.json();
+            const result = await updateBusinessProfile(formData);
 
-            if (response.ok && result.success) {
+            if (result.success) {
                 notify.success('Business profile updated successfully');
                 setSuccess(true);
                 setTimeout(() => setSuccess(false), 3000);
@@ -95,7 +95,7 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
             }
         } catch (submitError) {
             console.error('Error updating business profile:', submitError);
-            const message = 'Failed to update profile. Please try again.';
+            const message = submitError instanceof Error ? submitError.message : 'Failed to update profile. Please try again.';
             notify.error(message);
             setError(message);
         } finally {
@@ -249,7 +249,32 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
                                                     if (file) {
                                                         const reader = new FileReader();
                                                         reader.onloadend = () => {
-                                                            onChange(reader.result as string);
+                                                            const img = new Image();
+                                                            img.onload = () => {
+                                                                const maxDim = 400;
+                                                                let width = img.width;
+                                                                let height = img.height;
+                                                                if (width > maxDim || height > maxDim) {
+                                                                    if (width > height) {
+                                                                        height = Math.round((height * maxDim) / width);
+                                                                        width = maxDim;
+                                                                    } else {
+                                                                        width = Math.round((width * maxDim) / height);
+                                                                        height = maxDim;
+                                                                    }
+                                                                }
+                                                                const canvas = document.createElement('canvas');
+                                                                canvas.width = width;
+                                                                canvas.height = height;
+                                                                const ctx = canvas.getContext('2d');
+                                                                if (ctx) {
+                                                                    ctx.drawImage(img, 0, 0, width, height);
+                                                                    onChange(canvas.toDataURL('image/png'));
+                                                                } else {
+                                                                    onChange(reader.result as string);
+                                                                }
+                                                            };
+                                                            img.src = reader.result as string;
                                                         };
                                                         reader.readAsDataURL(file);
                                                     }
