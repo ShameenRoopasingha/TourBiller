@@ -152,25 +152,47 @@ export function OSRMRouteMap({
             }
           }
 
+          const roleLabel = isStart ? 'Origin' : isEnd ? 'Destination' : isCircuit && idx === waypoints.length - 2 ? 'Turnaround Stop' : `Stop ${idx}`;
+
+          // Precise SVG Teardrop Pin - tip is anchored exactly at (14, 36)
           const iconHtml = `
-            <div style="transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center;">
-              <div style="background-color: ${markerColor}; color: white; font-weight: bold; font-size: 11px; padding: 3px 6px; border-radius: 9999px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid white; display: flex; align-items: center; justify-content: center; min-width: 22px; height: 22px;">
-                ${label}
-              </div>
-              <div style="width: 2px; height: 6px; background-color: #334155;"></div>
+            <div style="position: relative; width: 28px; height: 36px;">
+              <svg width="28" height="36" viewBox="0 0 28 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
+                <path d="M14 0C6.268 0 0 6.268 0 14C0 24.5 14 36 14 36C14 36 28 24.5 28 14C28 6.268 21.732 0 14 0Z" fill="${markerColor}" stroke="#ffffff" stroke-width="2"/>
+                <circle cx="14" cy="14" r="9" fill="#ffffff"/>
+                <text x="14" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="${markerColor}" text-anchor="middle">${label}</text>
+              </svg>
             </div>
           `;
 
           const customIcon = L.divIcon({
-            className: 'custom-map-pin',
+            className: 'custom-map-pin !bg-transparent !border-0',
             html: iconHtml,
-            iconSize: [24, 28],
-            iconAnchor: [12, 28],
+            iconSize: [28, 36],
+            iconAnchor: [14, 36], // Tip of needle is at exact bottom-center
+            popupAnchor: [0, -36],
           });
 
-          L.marker([wp.lat, wp.lon], { icon: customIcon })
+          const popupHtml = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 170px; padding: 2px;">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${markerColor};"></span>
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${markerColor};">
+                  ${roleLabel}
+                </span>
+              </div>
+              <div style="font-weight: 600; font-size: 13px; color: #0f172a; line-height: 1.35; margin-bottom: 6px;">
+                ${wp.name}
+              </div>
+              <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 10px; color: #64748b; background: #f1f5f9; padding: 3px 6px; border-radius: 4px; display: inline-block; border: 1px solid #e2e8f0;">
+                GPS: ${wp.lat.toFixed(5)}, ${wp.lon.toFixed(5)}
+              </div>
+            </div>
+          `;
+
+          L.marker([wp.lat, wp.lon], { icon: customIcon, title: `${roleLabel}: ${wp.name}` })
             .addTo(map)
-            .bindPopup(`<b>${wp.name}</b><br/>${isStart ? 'Origin' : isEnd ? 'Destination' : `Stop ${idx}`}`);
+            .bindPopup(popupHtml);
         });
       }
     }

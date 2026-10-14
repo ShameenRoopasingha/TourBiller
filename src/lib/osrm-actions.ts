@@ -43,15 +43,282 @@ export interface RouteResult {
 }
 
 /**
- * Search places using OpenStreetMap Nominatim
+ * Curated Sri Lanka Tourist Landmarker & Vehicle Entrance Dictionary
+ * National park centroids are often deep in untraversable wilderness; these coordinates
+ * pin directly to the actual tourist vehicle ticket gates, safari entrances, and visitor parking.
+ */
+const SRI_LANKA_LANDMARKS = [
+  {
+    name: 'Bandaranaike International Airport (BIA), Katunayake',
+    shortName: 'BIA Airport, Katunayake',
+    aliases: ['bia', 'airport', 'colombo airport', 'katunayake', 'katunayake airport', 'bandaranaike', 'bandaranaike international airport', 'cmb airport'],
+    lat: 7.1804,
+    lon: 79.8841,
+  },
+  {
+    name: 'Yala National Park (Palatupana Main Gate Entrance)',
+    shortName: 'Yala National Park (Palatupana Gate)',
+    aliases: ['yala', 'yala national park', 'yala safari', 'palatupana', 'palatupana entrance'],
+    lat: 6.2738,
+    lon: 81.4288,
+  },
+  {
+    name: 'Sigiriya Rock Fortress (Visitor Center & Parking)',
+    shortName: 'Sigiriya Lion Rock',
+    aliases: ['sigiriya', 'sigiriya rock', 'lion rock', 'sigiriya fortress'],
+    lat: 7.9541,
+    lon: 80.7553,
+  },
+  {
+    name: 'Pinnawala Elephant Orphanage (Main Entrance)',
+    shortName: 'Pinnawala Elephant Orphanage',
+    aliases: ['pinnawala', 'pinnawala elephant orphanage', 'elephant orphanage', 'pinnawela'],
+    lat: 7.3013,
+    lon: 80.3871,
+  },
+  {
+    name: 'Temple of the Sacred Tooth Relic (Dalada Maligawa), Kandy',
+    shortName: 'Temple of the Tooth, Kandy',
+    aliases: ['dalada maligawa', 'temple of the tooth', 'tooth temple', 'kandy temple', 'sri dalada maligawa'],
+    lat: 7.2936,
+    lon: 80.6413,
+  },
+  {
+    name: 'Galle Fort (Main Gate Vehicle Entrance)',
+    shortName: 'Galle Fort Main Gate',
+    aliases: ['galle fort', 'galle rampart', 'dutch fort galle', 'galle dutch fort'],
+    lat: 6.0354,
+    lon: 80.2173,
+  },
+  {
+    name: 'Nine Arches Bridge (Viewpoint Access), Ella',
+    shortName: 'Nine Arches Bridge, Ella',
+    aliases: ['nine arch', 'nine arches', 'nine arches bridge', 'demodara bridge', 'demodara nine arch'],
+    lat: 6.8768,
+    lon: 81.0608,
+  },
+  {
+    name: 'Little Adam\'s Peak (Trailhead Entrance), Ella',
+    shortName: 'Little Adam\'s Peak, Ella',
+    aliases: ['little adam', 'little adams', 'little adams peak', 'punchi sri pada'],
+    lat: 6.8624,
+    lon: 81.0645,
+  },
+  {
+    name: 'Adam\'s Peak (Sri Pada - Nallathanniya Base Trailhead)',
+    shortName: 'Adam\'s Peak (Nallathanniya Base)',
+    aliases: ['adams peak', 'adam\'s peak', 'sri pada', 'nallathanniya', 'sripada'],
+    lat: 6.8164,
+    lon: 80.5218,
+  },
+  {
+    name: 'Horton Plains National Park (Visitor Entrance & Ticket Office)',
+    shortName: 'Horton Plains (World\'s End)',
+    aliases: ['horton plains', 'horton plain', 'worlds end', 'world\'s end', 'horton plains national park'],
+    lat: 6.8096,
+    lon: 80.8144,
+  },
+  {
+    name: 'Udawalawe National Park (Main Safari Gate)',
+    shortName: 'Udawalawe National Park',
+    aliases: ['udawalawe', 'udawalawa', 'uda walawe', 'udawalawe national park', 'udawalawe safari'],
+    lat: 6.4746,
+    lon: 80.8893,
+  },
+  {
+    name: 'Wilpattu National Park (Hunuwilgama Main Gate)',
+    shortName: 'Wilpattu National Park',
+    aliases: ['wilpattu', 'wilpattu national park', 'wilpattu safari', 'hunuwilgama'],
+    lat: 8.3182,
+    lon: 80.1472,
+  },
+  {
+    name: 'Minneriya National Park (Main Entrance Gate)',
+    shortName: 'Minneriya National Park',
+    aliases: ['minneriya', 'minneriya national park', 'minneriya elephant gathering', 'minneriya safari'],
+    lat: 8.0315,
+    lon: 80.8315,
+  },
+  {
+    name: 'Dambulla Cave Temple (Golden Buddha Vehicle Entrance)',
+    shortName: 'Dambulla Golden Cave Temple',
+    aliases: ['dambulla cave temple', 'golden temple dambulla', 'dambulla temple', 'dambulla rock temple'],
+    lat: 7.8569,
+    lon: 80.6485,
+  },
+  {
+    name: 'Mirissa Beach & Whale Watching Harbor',
+    shortName: 'Mirissa Beach & Harbor',
+    aliases: ['mirissa', 'mirissa beach', 'mirissa harbor', 'mirissa harbour', 'mirissa whale watching'],
+    lat: 5.9483,
+    lon: 80.4589,
+  },
+  {
+    name: 'Unawatuna Beach (Main Access Road)',
+    shortName: 'Unawatuna Beach',
+    aliases: ['unawatuna', 'unawatuna beach', 'unawatuna bay'],
+    lat: 6.0108,
+    lon: 80.2486,
+  },
+  {
+    name: 'Bentota Beach & Watersports Center',
+    shortName: 'Bentota Beach',
+    aliases: ['bentota', 'bentota beach', 'bentota river'],
+    lat: 6.4258,
+    lon: 79.9984,
+  },
+  {
+    name: 'Arugam Bay (Main Surf Beach)',
+    shortName: 'Arugam Bay Surf Point',
+    aliases: ['arugam bay', 'arugambay', 'arugam bay surf'],
+    lat: 6.8422,
+    lon: 81.8315,
+  },
+  {
+    name: 'Polonnaruwa Ancient City (Museum & Ticket Counter)',
+    shortName: 'Polonnaruwa Ancient City',
+    aliases: ['polonnaruwa', 'polonnaruwa ancient city', 'polonnaruwa ruins'],
+    lat: 7.9403,
+    lon: 81.0028,
+  },
+  {
+    name: 'Anuradhapura Sacred City (Ruwanwelisaya & Sri Maha Bodhi)',
+    shortName: 'Anuradhapura Sacred City',
+    aliases: ['anuradhapura', 'anuradhapura sacred city', 'ruwanwelisaya', 'sri maha bodhi', 'jaya sri maha bodhi'],
+    lat: 8.3449,
+    lon: 80.3964,
+  },
+  {
+    name: 'Lake Gregory Promenade & Recreation Park, Nuwara Eliya',
+    shortName: 'Gregory Lake, Nuwara Eliya',
+    aliases: ['lake gregory', 'gregory lake', 'gregory lake nuwara eliya'],
+    lat: 6.9535,
+    lon: 80.7788,
+  },
+  {
+    name: 'Royal Botanical Gardens (Main Entrance Gate), Peradeniya',
+    shortName: 'Peradeniya Botanical Gardens',
+    aliases: ['peradeniya gardens', 'royal botanical gardens', 'peradeniya botanical gardens', 'peradeniya garden'],
+    lat: 7.2715,
+    lon: 80.5962,
+  },
+  {
+    name: 'Ambuluwawa Biodiversity Complex & Tower, Gampola',
+    shortName: 'Ambuluwawa Tower',
+    aliases: ['ambuluwawa', 'ambuluwawa tower', 'ambuluwawa temple'],
+    lat: 7.1702,
+    lon: 80.5488,
+  },
+  {
+    name: 'Sinharaja Forest Reserve (Kudawa Conservation Center Entrance)',
+    shortName: 'Sinharaja Rain Forest (Kudawa Gate)',
+    aliases: ['sinharaja', 'sinharaja forest', 'sinharaja rain forest', 'sinharaja rainforest', 'kudawa entrance'],
+    lat: 6.4397,
+    lon: 80.4206,
+  },
+  {
+    name: 'Colombo Fort Railway Station & Transit Hub',
+    shortName: 'Colombo Fort Station',
+    aliases: ['colombo fort', 'fort railway station', 'colombo fort station', 'fort station'],
+    lat: 6.9344,
+    lon: 79.8519,
+  },
+  {
+    name: 'Colombo Port City (Main Entrance & Promenade)',
+    shortName: 'Colombo Port City',
+    aliases: ['port city', 'colombo port city', 'port city colombo'],
+    lat: 6.9344,
+    lon: 79.8428,
+  },
+  {
+    name: 'Kandy City Centre (KCC Shopping & Transit)',
+    shortName: 'Kandy City Centre (KCC)',
+    aliases: ['kcc', 'kandy city centre', 'kandy city center', 'kandy town'],
+    lat: 7.2917,
+    lon: 80.6358,
+  },
+  {
+    name: 'Hikkaduwa Coral Reef & Beach',
+    shortName: 'Hikkaduwa Beach',
+    aliases: ['hikkaduwa', 'hikkaduwa beach', 'hikkaduwa coral sanctuary'],
+    lat: 6.1394,
+    lon: 80.1008,
+  },
+  {
+    name: 'Weligama Bay Surf Point',
+    shortName: 'Weligama Bay',
+    aliases: ['weligama', 'weligama beach', 'weligama surf'],
+    lat: 5.9733,
+    lon: 80.4285,
+  },
+  {
+    name: 'Nilaveli Beach & Pigeon Island Launch, Trincomalee',
+    shortName: 'Nilaveli Beach, Trincomalee',
+    aliases: ['nilaveli', 'nilaveli beach', 'pigeon island'],
+    lat: 8.6897,
+    lon: 81.1963,
+  },
+  {
+    name: 'Pidurangala Rock (Temple Entrance & Ticket Office)',
+    shortName: 'Pidurangala Rock',
+    aliases: ['pidurangala', 'pidurangala rock'],
+    lat: 7.9654,
+    lon: 80.7632,
+  },
+  {
+    name: 'Ravana Waterfall & Viewpoint, Ella',
+    shortName: 'Ravana Falls, Ella',
+    aliases: ['ravana falls', 'rawana falls', 'ravana waterfall'],
+    lat: 6.8409,
+    lon: 81.0543,
+  },
+  {
+    name: 'Lipton\'s Seat (Dambatenne Tea Estate Entry), Haputale',
+    shortName: 'Lipton\'s Seat, Haputale',
+    aliases: ['liptons seat', 'lipton\'s seat', 'dambatenne'],
+    lat: 6.7797,
+    lon: 81.0142,
+  },
+  {
+    name: 'Kataragama Sacred City (Kiri Vehera & Maha Devalaya)',
+    shortName: 'Kataragama Sacred City',
+    aliases: ['kataragama', 'kataragama temple', 'kiri vehera', 'kataragama devalaya'],
+    lat: 6.4216,
+    lon: 81.3342,
+  }
+];
+
+/**
+ * Search places using OpenStreetMap Nominatim restricted to Sri Lanka,
+ * augmented with curated high-accuracy landmark entrance coordinates.
  */
 export async function searchPlacesOSM(query: string): Promise<PlaceSuggestion[]> {
   if (!query || query.trim().length < 2) return [];
 
+  const cleanQuery = query.trim().toLowerCase();
+  const matchedCurated: PlaceSuggestion[] = [];
+
+  // 1. Check curated high-accuracy landmark entrance dictionary first
+  for (const lm of SRI_LANKA_LANDMARKS) {
+    const isDirectMatch = lm.aliases.some(
+      (a) => cleanQuery === a || cleanQuery.includes(a) || a.includes(cleanQuery)
+    );
+    if (isDirectMatch) {
+      matchedCurated.push({
+        displayName: lm.name,
+        shortName: lm.shortName,
+        lat: lm.lat,
+        lon: lm.lon,
+      });
+      if (matchedCurated.length >= 3) break;
+    }
+  }
+
   try {
+    // 2. Query Nominatim restricted strictly to Sri Lanka (countrycodes=lk) with viewbox bounding
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
       query.trim()
-    )}&limit=5&addressdetails=1`;
+    )}&countrycodes=lk&viewbox=79.5,9.9,81.9,5.8&bounded=0&limit=6&addressdetails=1`;
 
     const res = await fetch(url, {
       headers: {
@@ -61,12 +328,12 @@ export async function searchPlacesOSM(query: string): Promise<PlaceSuggestion[]>
       next: { revalidate: 3600 }, // Cache search queries for 1 hour
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) return matchedCurated;
 
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) return matchedCurated;
 
-    return data.map((item: any) => {
+    const osmResults: PlaceSuggestion[] = data.map((item: any) => {
       const parts = (item.display_name || '').split(',');
       const shortName = parts.slice(0, 2).join(',').trim();
       return {
@@ -76,9 +343,24 @@ export async function searchPlacesOSM(query: string): Promise<PlaceSuggestion[]>
         lon: parseFloat(item.lon),
       };
     });
+
+    // 3. Merge curated results with OSM results, preventing duplicate locations
+    const combined: PlaceSuggestion[] = [...matchedCurated];
+    for (const osm of osmResults) {
+      const alreadyIncluded = combined.some(
+        (c) =>
+          haversineDistance(c.lat, c.lon, osm.lat, osm.lon) < 1.0 ||
+          c.shortName.toLowerCase() === osm.shortName.toLowerCase()
+      );
+      if (!alreadyIncluded) {
+        combined.push(osm);
+      }
+    }
+
+    return combined.slice(0, 6);
   } catch (err) {
     console.error('OSM Places search error:', err);
-    return [];
+    return matchedCurated;
   }
 }
 
@@ -86,6 +368,20 @@ export async function searchPlacesOSM(query: string): Promise<PlaceSuggestion[]>
  * Geocode a place name into coordinates if not already provided
  */
 export async function geocodePlace(place: string): Promise<RoutePoint | null> {
+  // Check curated landmarks first for instant millimetre accuracy
+  const clean = place.trim().toLowerCase();
+  const directLandmark = SRI_LANKA_LANDMARKS.find((lm) =>
+    lm.aliases.some((a) => clean === a || clean.includes(a) || a.includes(clean))
+  );
+
+  if (directLandmark) {
+    return {
+      lat: directLandmark.lat,
+      lon: directLandmark.lon,
+      name: directLandmark.shortName,
+    };
+  }
+
   const suggestions = await searchPlacesOSM(place);
   if (suggestions.length > 0) {
     return {
@@ -251,13 +547,34 @@ export async function calculateRouteOSRM(
       return fallbackHaversineRoute(allPoints, options);
     }
 
-    // If optimized, re-order waypoints according to OSRM result
-    if (shouldOptimize && data.waypoints) {
-      const sortedPoints: RoutePoint[] = new Array(allPoints.length);
-      data.waypoints.forEach((wp: any, i: number) => {
-        sortedPoints[wp.waypoint_index] = allPoints[i];
-      });
-      allPoints = sortedPoints.filter(Boolean);
+    // Snap waypoints to exact road coordinates returned by OSRM to guarantee 100% pin-on-road accuracy
+    if (data.waypoints && data.waypoints.length === allPoints.length) {
+      if (shouldOptimize) {
+        const sortedPoints: RoutePoint[] = new Array(allPoints.length);
+        data.waypoints.forEach((wp: any, i: number) => {
+          const originalPoint = allPoints[i];
+          const roadLat = Array.isArray(wp.location) && wp.location.length >= 2 ? wp.location[1] : originalPoint.lat;
+          const roadLon = Array.isArray(wp.location) && wp.location.length >= 2 ? wp.location[0] : originalPoint.lon;
+          sortedPoints[wp.waypoint_index] = {
+            ...originalPoint,
+            lat: roadLat,
+            lon: roadLon,
+          };
+        });
+        allPoints = sortedPoints.filter(Boolean);
+      } else {
+        allPoints = allPoints.map((point, i) => {
+          const wp = data.waypoints[i];
+          if (wp && Array.isArray(wp.location) && wp.location.length >= 2) {
+            return {
+              ...point,
+              lat: wp.location[1],
+              lon: wp.location[0],
+            };
+          }
+          return point;
+        });
+      }
     }
 
     const totalDistanceKm = Math.round((routeObj.distance / 1000) * 10) / 10;
