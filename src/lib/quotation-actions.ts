@@ -206,6 +206,14 @@ export async function getQuotations(
                 tourSchedule: {
                     include: { items: { orderBy: { dayNumber: 'asc' } } },
                 },
+                driver: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        email: true,
+                    },
+                },
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -234,6 +242,14 @@ export async function getQuotationById(
             include: {
                 tourSchedule: {
                     include: { items: { orderBy: { dayNumber: 'asc' } } },
+                },
+                driver: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        email: true,
+                    },
                 },
             },
         });
@@ -628,6 +644,7 @@ export async function convertQuotationToBooking(quotationId: string): Promise<Ac
                     destination,
                     notes: `${tourScheduleName ? `Tour schedule: ${tourScheduleName}\n` : ''}${conversionMarker} ${currentQuotation.notes || ''}`.trim(),
                     advanceAmount: currentQuotation.advanceAmount,
+                    driverId: currentQuotation.driverId || null,
                     status: 'CONFIRMED',
                 },
             });

@@ -18,7 +18,9 @@ import {
     ShieldCheck,
     Wind,
     Users,
-    Star
+    Star,
+    Phone,
+    Mail
 } from 'lucide-react';
 import {
     Card,
@@ -459,6 +461,69 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                             </CardContent>
                         </Card>
                     )}
+
+                    {/* Driver Details */}
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center justify-between">
+                                <span className="flex items-center gap-2">
+                                    <User className="h-5 w-5 text-primary" /> Driver Details
+                                </span>
+                                {q.driver ? (
+                                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
+                                        Assigned
+                                    </Badge>
+                                ) : (
+                                    <Badge variant="secondary" className="text-xs">
+                                        Unassigned
+                                    </Badge>
+                                )}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {q.driver ? (
+                                <>
+                                    <div className="p-3 bg-muted rounded-lg border">
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Assigned Driver</p>
+                                        <p className="font-bold text-lg leading-none">{q.driver.name}</p>
+                                    </div>
+
+                                    <div className="space-y-2 pt-1 text-sm">
+                                        {q.driver.phone && (
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-muted-foreground flex items-center gap-1.5">
+                                                    <Phone className="h-3.5 w-3.5" /> Phone
+                                                </span>
+                                                <a href={`tel:${q.driver.phone}`} className="font-medium text-primary hover:underline">
+                                                    {q.driver.phone}
+                                                </a>
+                                            </div>
+                                        )}
+                                        {q.driver.email && (
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-muted-foreground flex items-center gap-1.5">
+                                                    <Mail className="h-3.5 w-3.5" /> Email
+                                                </span>
+                                                <a href={`mailto:${q.driver.email}`} className="font-medium text-primary hover:underline truncate max-w-[170px]" title={q.driver.email}>
+                                                    {q.driver.email}
+                                                </a>
+                                            </div>
+                                        )}
+                                        {q.driverCostPerDay > 0 && (
+                                            <div className="flex justify-between items-center pt-2 border-t">
+                                                <span className="text-muted-foreground">Driver Allowance</span>
+                                                <span className="font-medium">{fmt(q.driverCostPerDay)}/day</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-sm text-muted-foreground italic py-1">
+                                    No driver assigned to this quotation
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
 
                     {/* System Info */}
                     <Card className="border-dashed">

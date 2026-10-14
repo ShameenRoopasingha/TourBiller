@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye } from 'lucide-react';
+import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye, User } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
 import { notify } from '@/lib/notifications';
 
@@ -44,12 +44,21 @@ interface QuotationRow {
     totalAmount: number;
     status: string;
     startDate?: Date | null;
+    endDate?: Date | null;
     validUntil?: Date | null;
     createdAt: Date;
+    vehicleNo?: string | null;
+    pickupLocation?: string | null;
+    dropLocation?: string | null;
+    driver?: {
+        id: string;
+        name: string;
+        phone?: string | null;
+    } | null;
     tourSchedule: {
         name: string;
         days: number;
-    };
+    } | null;
 }
 
 interface QuotationListProps {
@@ -220,6 +229,12 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                                 <p className="font-medium">{q.customerName}</p>
                                                 {q.customerPhone && (
                                                     <p className="text-xs text-muted-foreground">{q.customerPhone}</p>
+                                                )}
+                                                {q.driver && (
+                                                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                                        <User className="w-3 h-3 text-primary shrink-0" />
+                                                        <span>{q.driver.name}</span>
+                                                    </p>
                                                 )}
                                             </div>
                                         </TableCell>

@@ -2,7 +2,7 @@
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { BookingSchema, type ActionResult } from '@/lib/validations';
+import { BookingSchema, type ActionResult, type BookingWithDriver } from '@/lib/validations';
 import { type Booking } from '@prisma/client';
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAuth, requireAdmin } from '@/lib/auth-guard';
@@ -95,7 +95,7 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
 /**
  * Get all bookings
  */
-export async function getBookings(searchQuery?: string): Promise<ActionResult<Booking[]>> {
+export async function getBookings(searchQuery?: string): Promise<ActionResult<BookingWithDriver[]>> {
     try {
         const authCheck = await requireAuth();
         if (!authCheck.authorized) {
@@ -113,10 +113,20 @@ export async function getBookings(searchQuery?: string): Promise<ActionResult<Bo
                     ],
                 } : {}),
             },
+            include: {
+                driver: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        email: true,
+                    },
+                },
+            },
             orderBy: { createdAt: 'desc' },
         });
 
-        return { success: true, data: bookings as Booking[] };
+        return { success: true, data: bookings as unknown as BookingWithDriver[] };
     } catch (error) {
         console.error('Error fetching bookings:', error);
         return { success: false, error: 'Failed to fetch bookings' };
@@ -176,7 +186,7 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
 /**
  * Get a single booking by ID
  */
-export async function getBookingById(id: string): Promise<ActionResult<Booking>> {
+export async function getBookingById(id: string): Promise<ActionResult<BookingWithDriver>> {
     try {
         const authCheck = await requireAuth();
         if (!authCheck.authorized) {
@@ -185,13 +195,23 @@ export async function getBookingById(id: string): Promise<ActionResult<Booking>>
 
         const booking = await prisma.booking.findFirst({
             where: { id, companyId: authCheck.companyId },
+            include: {
+                driver: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        email: true,
+                    },
+                },
+            },
         });
 
         if (!booking) {
             return { success: false, error: 'Booking not found' };
         }
 
-        return { success: true, data: booking as Booking };
+        return { success: true, data: booking as unknown as BookingWithDriver };
     } catch (error) {
         console.error('Error fetching booking:', error);
         return { success: false, error: 'Failed to fetch booking' };

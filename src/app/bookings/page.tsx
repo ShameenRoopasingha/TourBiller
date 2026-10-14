@@ -15,7 +15,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Clock, Eye } from 'lucide-react';
+import { Plus, Clock, Eye, User } from 'lucide-react';
 import { SearchInput } from '@/components/SearchInput';
 
 function EndTourDialog({ vehicleNo, customerName, bookingId }: { vehicleNo: string, customerName: string, bookingId: string }) {
@@ -94,6 +94,12 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                                         <div className="text-sm text-muted-foreground">
                                             Customer: <span className="font-medium text-foreground">{booking.customerName}</span>
                                         </div>
+                                        {booking.driver && (
+                                            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                                <User className="w-3.5 h-3.5 text-primary" />
+                                                <span>Driver: <strong className="text-foreground">{booking.driver.name}</strong>{booking.driver.phone ? ` (${booking.driver.phone})` : ''}</span>
+                                            </div>
+                                        )}
                                         <div className="flex gap-4 text-xs text-muted-foreground mt-1">
                                             <div className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />

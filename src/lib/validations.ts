@@ -409,6 +409,15 @@ export const BookingDbSchema = BookingSchema.extend({
 
 export type Booking = z.infer<typeof BookingDbSchema>;
 
+export type BookingWithDriver = Booking & {
+  driver?: {
+    id: string;
+    name: string;
+    phone: string | null;
+    email: string;
+  } | null;
+};
+
 // Tour Schedule Day Item validation schema
 export const TourScheduleDayItemSchema = z.object({
   dayNumber: z.coerce.number().min(1, "Day number must be at least 1"),
@@ -510,6 +519,12 @@ export type QuotationWithSchedule = Quotation & {
   tourSchedule: (TourSchedule & {
     items: TourScheduleDayItem[];
   }) | null;
+  driver?: {
+    id: string;
+    name: string;
+    phone: string | null;
+    email: string;
+  } | null;
 };
 
 // Vehicle Expense validation schema

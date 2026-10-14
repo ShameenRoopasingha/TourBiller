@@ -26,6 +26,12 @@ interface QuotationData {
     customerPhone: string | null;
     vehicleNo: string | null;
     numberOfPersons: number;
+    driver?: {
+        id: string;
+        name: string;
+        phone: string | null;
+        email?: string;
+    } | null;
     startDate: Date | null;
     endDate: Date | null;
     pickupLocation: string | null;
@@ -264,6 +270,14 @@ export function QuotationTemplate({
                             )}
                             <span className="font-medium text-gray-500">Vehicle:</span>
                             <span>{quotation.vehicleNo || '—'} ({tourSchedule.vehicleCategory})</span>
+                            {quotation.driver && (
+                                <>
+                                    <span className="font-medium text-gray-500">Driver:</span>
+                                    <span className="font-semibold text-gray-800">
+                                        {quotation.driver.name}{quotation.driver.phone ? ` (${quotation.driver.phone})` : ''}
+                                    </span>
+                                </>
+                            )}
                             {quotation.startDate && (
                                 <>
                                     <span className="font-medium text-gray-500">Period:</span>

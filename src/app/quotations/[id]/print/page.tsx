@@ -80,6 +80,7 @@ async function PrintQuotation({ id }: { id: string }) {
         startDate: quotation.startDate ?? null,
         endDate: quotation.endDate ?? null,
         validUntil: quotation.validUntil ?? null,
+        driver: quotation.driver ?? null,
         tourSchedule: quotation.tourSchedule ? {
             ...quotation.tourSchedule,
             description: quotation.tourSchedule.description ?? null,
