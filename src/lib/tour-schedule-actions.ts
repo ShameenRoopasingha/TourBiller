@@ -78,6 +78,61 @@ export async function createTourSchedule(
 
         const validated = TourScheduleSchema.parse(data);
 
+        // Check if schedule with same name already exists for this company
+        const existing = await prisma.tourSchedule.findFirst({
+            where: {
+                companyId: authCheck.companyId,
+                name: validated.name,
+            },
+        });
+
+        if (existing) {
+            // For transfer schedules generated from map routing, update & reuse the existing schedule ID
+            if (validated.name.startsWith('Transfer:')) {
+                const updated = await prisma.$transaction(async (tx) => {
+                    const up = await tx.tourSchedule.update({
+                        where: { id: existing.id },
+                        data: {
+                            days: validated.days,
+                            vehicleCategory: validated.vehicleCategory,
+                            vehicleNo: validated.vehicleNo,
+                            ratePerDay: validated.ratePerDay,
+                            kmPerDay: validated.kmPerDay,
+                            excessKmRate: validated.excessKmRate,
+                            extraHourRate: validated.extraHourRate,
+                            isActive: true,
+                        }
+                    });
+                    if (validated.items && validated.items.length > 0) {
+                        await tx.tourScheduleDayItem.deleteMany({
+                            where: { tourScheduleId: existing.id }
+                        });
+                        await tx.tourScheduleDayItem.createMany({
+                            data: validated.items.map((item) => ({
+                                tourScheduleId: existing.id,
+                                dayNumber: item.dayNumber,
+                                title: item.title,
+                                description: item.description,
+                                distanceKm: item.distanceKm,
+                                accommodation: item.accommodation,
+                                meals: item.meals,
+                                activities: item.activities,
+                                otherCosts: item.otherCosts,
+                            }))
+                        });
+                    }
+                    return up;
+                });
+                revalidateFor('tourSchedule');
+                return { success: true, data: { id: updated.id, name: updated.name } };
+            }
+
+            return {
+                success: false,
+                error: `A tour schedule with the name "${validated.name}" already exists. Please choose a different name.`
+            };
+        }
+
         const schedule = await prisma.$transaction(async (tx) => {
             const created = await tx.tourSchedule.create({
                 data: {
@@ -115,8 +170,30 @@ export async function createTourSchedule(
 
         revalidateFor('tourSchedule');
         return { success: true, data: { id: schedule.id, name: schedule.name } };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating tour schedule:', error);
+        // Handle Prisma P2002 unique constraint error gracefully
+        if (error?.code === 'P2002') {
+            try {
+                const authCheck = await requireAdmin();
+                const fallbackExisting = await prisma.tourSchedule.findFirst({
+                    where: {
+                        companyId: authCheck.authorized ? authCheck.companyId : undefined,
+                        name: (data as any)?.name,
+                    },
+                    select: { id: true, name: true }
+                });
+                if (fallbackExisting) {
+                    return { success: true, data: fallbackExisting };
+                }
+            } catch {
+                // Ignore fallback error
+            }
+            return {
+                success: false,
+                error: `A tour schedule with the name "${(data as any)?.name}" already exists. Please choose a different name.`
+            };
+        }
         if (error instanceof Error) {
             return { success: false, error: error.message };
         }
