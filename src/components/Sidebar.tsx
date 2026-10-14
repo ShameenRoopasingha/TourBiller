@@ -68,7 +68,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
     const { resolvedTheme, setTheme } = useTheme();
     const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
-    const isAdmin = userRole === 'ADMIN';
+    const isAdmin = userRole === 'ADMIN' || userRole === 'OWNER';
     const isDriver = userRole === 'DRIVER';
     const visibleItems = navItems.filter(item =>
         (!item.adminOnly || isAdmin) &&

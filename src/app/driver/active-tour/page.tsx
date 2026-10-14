@@ -1,4 +1,4 @@
-﻿import { redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth-guard';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -18,11 +18,11 @@ export default async function DriverActiveTourPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Active booking
+    // Active booking (Confirmed or currently Ongoing)
     const activeBooking = await prisma.booking.findFirst({
         where: {
             driverId: authCheck.userId,
-            status: 'CONFIRMED',
+            status: { in: ['CONFIRMED', 'ONGOING'] },
             startDate: { lte: new Date() },
             OR: [
                 { endDate: null },
@@ -67,6 +67,8 @@ export default async function DriverActiveTourPage() {
         vehicleNo: b.vehicleNo,
         customerName: b.customerName,
         destination: b.destination || null,
+        pickupLocation: b.pickupLocation || null,
+        dropLocation: b.dropLocation || null,
         startDate: b.startDate.toISOString(),
         endDate: b.endDate?.toISOString() || null,
         status: b.status,

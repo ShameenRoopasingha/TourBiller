@@ -2,22 +2,44 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 
+import { auth } from '@/lib/auth';
+
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
 
-// Middleware-like function to verify driver
+// Middleware-like function to verify driver (Bearer token for Mobile App or NextAuth for Web Portal)
 async function verifyDriver(req: Request) {
+    // 1. Try Bearer token
     const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return { error: 'Unauthorized', status: 401 };
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        try {
+            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            if (decoded?.id && decoded?.companyId) {
+                return { driver: decoded };
+            }
+        } catch {
+            // Ignore and try session next
+        }
     }
 
-    const token = authHeader.split(' ')[1];
+    // 2. Try NextAuth session
     try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
-        return { driver: decoded };
+        const session = await auth();
+        const user = session?.user as { id?: string; companyId?: string; role?: string } | undefined;
+        if (user?.id && user?.companyId && user?.role === 'DRIVER') {
+            return {
+                driver: {
+                    id: user.id,
+                    companyId: user.companyId,
+                    role: user.role,
+                }
+            };
+        }
     } catch {
-        return { error: 'Invalid token', status: 401 };
+        // Session failed
     }
+
+    return { error: 'Unauthorized', status: 401 };
 }
 
 // GET: Fetch single tour details with activities, vehicle, and navigation info

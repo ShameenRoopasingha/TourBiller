@@ -1,9 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { format, differenceInCalendarDays } from 'date-fns';
-import { Car, MapPin, Calendar, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
+import { Car, MapPin, Calendar, ArrowRight, CheckCircle2, Clock, Play, Square, Loader2, Gauge } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { notify } from '@/lib/notifications';
 import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
 import { QuickActionSheet } from '@/components/QuickActionSheet';
 import { DriverLiveNavigationCard } from '@/components/DriverLiveNavigationCard';
@@ -39,6 +44,7 @@ interface DriverTourTabsProps {
 const TABS = ['Current', 'Upcoming', 'Completed'] as const;
 
 export function DriverTourTabs({ activeBooking, vehicle, upcomingBookings, completedBookings }: DriverTourTabsProps) {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<typeof TABS[number]>('Current');
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -95,12 +101,16 @@ export function DriverTourTabs({ activeBooking, vehicle, upcomingBookings, compl
                             {/* Tour Progress Banner */}
                             <TourBanner booking={activeBooking} vehicle={vehicle} />
 
+                            {/* Trip Start / End Controls */}
+                            <TripControlCard booking={activeBooking} onStatusChange={() => { router.refresh(); }} />
+
                             {/* GPS Live Radar & Turn-by-Turn Navigation */}
                             <DriverLiveNavigationCard
                                 bookingId={activeBooking.id}
                                 destination={activeBooking.destination}
                                 pickupLocation={activeBooking.pickupLocation}
                                 dropLocation={activeBooking.dropLocation}
+                                status={activeBooking.status}
                             />
 
                             {/* Quick Actions */}
@@ -280,6 +290,142 @@ function BookingCard({ booking, variant }: { booking: BookingData; variant: 'upc
                     <p className="text-xs text-muted-foreground mt-2 italic truncate">{booking.notes}</p>
                 )}
             </CardContent>
+        </Card>
+    );
+}
+
+
+function TripControlCard({ booking, onStatusChange }: { booking: BookingData; onStatusChange: () => void }) {
+    const isOngoing = booking.status === 'ONGOING';
+    const isConfirmed = booking.status === 'CONFIRMED';
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [actionType, setActionType] = useState<'START_TRIP' | 'END_TRIP'>('START_TRIP');
+    const [meterReading, setMeterReading] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleOpenModal = (type: 'START_TRIP' | 'END_TRIP') => {
+        setActionType(type);
+        setMeterReading('');
+        setIsModalOpen(true);
+    };
+
+    const handleConfirm = async () => {
+        if (!meterReading.trim()) {
+            notify.error('Please enter the dashboard meter reading');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`/api/driver/tours/${booking.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: actionType,
+                    meterReading: meterReading.trim(),
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                notify.success(actionType === 'START_TRIP' ? 'Trip started! Live GPS radar activated.' : 'Trip completed! GPS tracking stopped.');
+                setIsModalOpen(false);
+                onStatusChange();
+            } else {
+                notify.error(data.error || 'Failed to update trip status');
+            }
+        } catch {
+            notify.error('Network error updating trip status');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Card className="border border-border/60 shadow-sm overflow-hidden">
+            <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Gauge className="w-5 h-5 text-primary" />
+                        <div>
+                            <span className="text-sm font-bold text-foreground">Trip Controller</span>
+                            <div className="text-xs text-muted-foreground">
+                                {isOngoing ? 'Trip is actively in progress' : 'Trip is scheduled to start'}
+                            </div>
+                        </div>
+                    </div>
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
+                        isOngoing ? 'bg-emerald-500/15 text-emerald-600 border border-emerald-500/30' : 'bg-blue-500/15 text-blue-600 border border-blue-500/30'
+                    }`}>
+                        {booking.status}
+                    </span>
+                </div>
+
+                {isConfirmed && (
+                    <Button
+                        onClick={() => handleOpenModal('START_TRIP')}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 text-sm shadow"
+                    >
+                        <Play className="w-4 h-4 mr-2 fill-current" />
+                        Start Trip & Broadcast Live GPS
+                    </Button>
+                )}
+
+                {isOngoing && (
+                    <Button
+                        onClick={() => handleOpenModal('END_TRIP')}
+                        variant="destructive"
+                        className="w-full font-bold h-11 text-sm shadow"
+                    >
+                        <Square className="w-4 h-4 mr-2 fill-current" />
+                        End Trip & Stop GPS Tracking
+                    </Button>
+                )}
+            </CardContent>
+
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Gauge className="w-5 h-5 text-primary" />
+                            {actionType === 'START_TRIP' ? 'Start Trip' : 'End Trip'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {actionType === 'START_TRIP'
+                                ? 'Starting this trip will activate live GPS tracking and broadcast your location to the office dispatch.'
+                                : 'Ending this trip will stop GPS streaming and mark the tour as completed.'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3 py-2">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            Vehicle Dashboard Meter Reading (km) *
+                        </label>
+                        <Input
+                            type="number"
+                            inputMode="numeric"
+                            placeholder="e.g. 45280"
+                            value={meterReading}
+                            onChange={(e) => setMeterReading(e.target.value)}
+                            className="text-lg font-mono font-bold"
+                            autoFocus
+                        />
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleConfirm}
+                            disabled={isSubmitting}
+                            className={actionType === 'START_TRIP' ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold' : 'bg-red-600 hover:bg-red-700 text-white font-bold'}
+                        >
+                            {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                            Confirm & {actionType === 'START_TRIP' ? 'Start Trip' : 'End Trip'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card>
     );
 }

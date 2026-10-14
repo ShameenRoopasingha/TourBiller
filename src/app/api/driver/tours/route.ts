@@ -2,28 +2,44 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 
+import { auth } from '@/lib/auth';
+
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
 
 export async function GET(req: Request) {
     try {
+        let driverId: string | null = null;
+
+        // 1. Bearer Token check (Mobile App)
         const authHeader = req.headers.get('authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            try {
+                const decoded = jwt.verify(token, JWT_SECRET) as any;
+                if (decoded?.role === 'DRIVER' && decoded?.id) {
+                    driverId = decoded.id;
+                }
+            } catch {
+                // Ignore token error and try session
+            }
         }
 
-        const token = authHeader.split(' ')[1];
-        let decoded: any;
-        try {
-            decoded = jwt.verify(token, JWT_SECRET);
-        } catch (e) {
-            return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
+        // 2. NextAuth Session check (Web Portal)
+        if (!driverId) {
+            try {
+                const session = await auth();
+                const user = session?.user as { id?: string; role?: string } | undefined;
+                if (user?.id && user?.role === 'DRIVER') {
+                    driverId = user.id;
+                }
+            } catch {
+                // Session error
+            }
         }
 
-        if (decoded.role !== 'DRIVER') {
-            return NextResponse.json({ success: false, error: 'Not a driver' }, { status: 403 });
+        if (!driverId) {
+            return NextResponse.json({ success: false, error: 'Unauthorized: Driver access required' }, { status: 401 });
         }
-
-        const driverId = decoded.id;
         
         // Find assigned tours for this driver
         const tours = await prisma.booking.findMany({

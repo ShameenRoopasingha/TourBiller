@@ -10,6 +10,7 @@ interface DriverLiveNavigationCardProps {
     destination?: string | null;
     pickupLocation?: string | null;
     dropLocation?: string | null;
+    status?: string;
 }
 
 export function DriverLiveNavigationCard({
@@ -17,8 +18,9 @@ export function DriverLiveNavigationCard({
     destination,
     pickupLocation,
     dropLocation,
+    status = 'ONGOING',
 }: DriverLiveNavigationCardProps) {
-    const [isStreaming, setIsStreaming] = useState(true);
+    const isOngoing = status === 'ONGOING';
     const [speed, setSpeed] = useState<number>(0);
     const [lastPingTime, setLastPingTime] = useState<Date | null>(null);
     const [offlineCount, setOfflineCount] = useState<number>(0);
@@ -30,9 +32,9 @@ export function DriverLiveNavigationCard({
 
     const primaryDest = dropLocation || destination || pickupLocation || '';
 
-    // Initialize GPS tracking
+    // Initialize GPS tracking (Only when ONGOING)
     useEffect(() => {
-        if (!isStreaming || typeof window === 'undefined' || !navigator.geolocation) {
+        if (!isOngoing || typeof window === 'undefined' || !navigator.geolocation) {
             return;
         }
 
@@ -79,7 +81,7 @@ export function DriverLiveNavigationCard({
                 timerRef.current = null;
             }
         };
-    }, [isStreaming, speed, bookingId]);
+    }, [isOngoing, speed, bookingId]);
 
     // Transmit location or cache in localStorage if offline
     async function transmitLocation() {
@@ -157,49 +159,61 @@ export function DriverLiveNavigationCard({
         : null;
 
     return (
-        <Card className="border border-emerald-500/30 bg-emerald-950/20 shadow-md">
+        <Card className={`border shadow-md transition-all ${
+            isOngoing
+                ? 'border-emerald-500/30 bg-emerald-950/20'
+                : 'border-blue-500/20 bg-blue-950/10'
+        }`}>
             <CardContent className="p-4 space-y-3">
                 {/* Live Tracking Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="relative flex items-center justify-center">
-                            <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                            <span className="absolute w-5 h-5 rounded-full bg-emerald-500/40 animate-ping"></span>
-                        </div>
+                        {isOngoing ? (
+                            <div className="relative flex items-center justify-center">
+                                <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                                <span className="absolute w-5 h-5 rounded-full bg-emerald-500/40 animate-ping"></span>
+                            </div>
+                        ) : (
+                            <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                        )}
                         <div>
-                            <span className="text-sm font-bold text-emerald-400">
-                                Live GPS Radar Active
+                            <span className={`text-sm font-bold ${isOngoing ? 'text-emerald-400' : 'text-blue-400'}`}>
+                                {isOngoing ? 'Live GPS Radar Active' : 'GPS Radar Standby'}
                             </span>
                             <div className="text-[11px] text-muted-foreground">
-                                Broadcasting to office admin map
+                                {isOngoing ? 'Broadcasting to office admin map' : 'Activates when you start trip'}
                             </div>
                         </div>
                     </div>
 
-                    <div className="text-right">
-                        <span className="text-xs font-mono font-bold bg-emerald-900/60 text-emerald-300 px-2 py-0.5 rounded border border-emerald-700/60">
-                            {speed > 5 ? '20s (Moving)' : '60s (Parked)'}
-                        </span>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">
-                            {Math.round(speed)} km/h
+                    {isOngoing && (
+                        <div className="text-right">
+                            <span className="text-xs font-mono font-bold bg-emerald-900/60 text-emerald-300 px-2 py-0.5 rounded border border-emerald-700/60">
+                                {speed > 5 ? '20s (Moving)' : '60s (Parked)'}
+                            </span>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                                {Math.round(speed)} km/h
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Status or Offline Badge */}
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-emerald-900/40">
-                    <span className="text-muted-foreground">
-                        {lastPingTime
-                            ? `Last ping: ${Math.round((Date.now() - lastPingTime.getTime()) / 1000)}s ago`
-                            : 'Acquiring GPS fix...'}
-                    </span>
-                    {offlineCount > 0 && (
-                        <span className="flex items-center gap-1 text-amber-400 font-semibold bg-amber-950/40 px-2 py-0.5 rounded border border-amber-800">
-                            <WifiOff className="w-3 h-3" />
-                            {offlineCount} offline points cached
+                {isOngoing && (
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-emerald-900/40">
+                        <span className="text-muted-foreground">
+                            {lastPingTime
+                                ? `Last ping: ${Math.round((Date.now() - lastPingTime.getTime()) / 1000)}s ago`
+                                : 'Acquiring GPS fix...'}
                         </span>
-                    )}
-                </div>
+                        {offlineCount > 0 && (
+                            <span className="flex items-center gap-1 text-amber-400 font-semibold bg-amber-950/40 px-2 py-0.5 rounded border border-amber-800">
+                                <WifiOff className="w-3 h-3" />
+                                {offlineCount} offline points cached
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 {errorMsg && (
                     <div className="text-[11px] text-amber-400 flex items-center gap-1 bg-amber-950/30 p-2 rounded">
