@@ -274,7 +274,9 @@ export function ArcSpinnerNavbar() {
     if (delta > 180) delta -= 360;
     if (delta < -180) delta += 360;
 
-    velocityRef.current = delta / dt; // deg per ms
+    // Smooth weighted velocity calculation
+    const currentVelocity = delta / dt; // deg per ms
+    velocityRef.current = velocityRef.current * 0.25 + currentVelocity * 0.75;
     lastTimeRef.current = now;
     lastAngleRef.current = currentAngle;
 
@@ -286,22 +288,27 @@ export function ArcSpinnerNavbar() {
     updateActiveStep(newOffset);
   };
 
-  // Drag End (Infinite Spin Inertia & Snap to nearest item)
+  // Drag End (Low Friction Glide & Smooth Snap)
   const handlePointerUp = () => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
 
-    // Projected target angle with momentum inertia
-    const inertiaDistance = velocityRef.current * 160;
+    // Reduced friction: higher inertia multiplier (280)
+    const inertiaDistance = velocityRef.current * 280;
     const projectedOffset = animProxyRef.current.offset + inertiaDistance;
 
     // Snap to nearest discrete step (Infinite loop - no clamping!)
+    const currentStep = Math.round(-animProxyRef.current.offset / ANGLE_STEP);
     const targetStep = Math.round(-projectedOffset / ANGLE_STEP);
     const finalTargetOffset = -targetStep * ANGLE_STEP;
 
+    const stepsToTravel = Math.abs(targetStep - currentStep);
+    // Smooth dynamic duration for a butter-smooth glide
+    const duration = Math.min(1.15, Math.max(0.65, 0.5 + stepsToTravel * 0.12));
+
     gsap.to(animProxyRef.current, {
       offset: finalTargetOffset,
-      duration: 0.6,
+      duration: duration,
       ease: 'power3.out',
       onUpdate: () => {
         setRotationOffset(animProxyRef.current.offset);
