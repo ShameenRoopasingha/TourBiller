@@ -10,8 +10,12 @@
     "test": "jest --forceExit",
     "test:watch": "jest --watch --forceExit",
     "postinstall": "prisma generate",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "tauri:win": "tauri build",
+    "tauri:android": "tauri android build -d --apk -t aarch64 --ci",
+    "tauri:android:release": "tauri android build --apk -t aarch64 --ci"
   },
+
   "dependencies": {
     "@ai-sdk/google": "^4.0.80",
     "@ai-sdk/openai": "^4.0.75",

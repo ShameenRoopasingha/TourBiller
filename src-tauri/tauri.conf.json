@@ -7,8 +7,9 @@
                   "frontendDist":  "https://vigil-pos.vercel.app",
                   "devUrl":  "http://localhost:3000",
                   "beforeDevCommand":  "npm run dev",
-                  "beforeBuildCommand":  "npm run build"
+                  "beforeBuildCommand":  ""
               },
+
     "app":  {
                 "windows":  [
                                 {
