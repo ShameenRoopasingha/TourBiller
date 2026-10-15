@@ -15,6 +15,7 @@ import {
   BarChart3,
   Settings,
   Compass,
+  PanelLeft,
   X,
   ChevronRight
 } from 'lucide-react';
@@ -247,12 +248,11 @@ export function ArcSpinnerNavbar() {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs shadow-[0_0_12px_rgba(16,185,129,0.15)] active:scale-95 transition-all"
-          aria-label="Open Radial Spinner Menu"
+          className="relative size-9 rounded-full flex items-center justify-center border border-border bg-card/60 hover:bg-card text-foreground shadow-sm active:scale-90 transition-all shrink-0"
+          aria-label="Open Navigation Dial"
         >
-          <Compass className="w-4 h-4 text-emerald-400 animate-[spin_10s_linear_infinite]" />
-          <span className="text-[11px] font-black tracking-wide text-foreground">SPIN</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <PanelLeft className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
         </button>
       </div>
 

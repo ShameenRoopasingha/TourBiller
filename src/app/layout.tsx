@@ -53,16 +53,17 @@ export default async function RootLayout({
                     {/* Global Topbar */}
                     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6 print:hidden backdrop-blur-md bg-background/80 z-50 sticky top-0">
                       <div className="flex items-center gap-2">
-                        {/* Mobile Only Logo & Trigger */}
+                        {/* Mobile Only Logo */}
                         <div className="md:hidden flex items-center gap-2">
-                          <SidebarTrigger className="-mr-2" />
                           <Image src="/logo-icon.png" alt="VIGIL" width={28} height={28} className="h-7 w-auto drop-shadow-sm object-contain" priority />
                           <div className="flex flex-col justify-center">
                             <span className={`font-black text-xl tracking-tight leading-none text-foreground pb-0.5 ${montserrat.className}`}>VIGIL</span>
                           </div>
                         </div>
-                        {/* Desktop empty spacer for left side if needed */}
-                        <div className="hidden md:block"></div>
+                        {/* Desktop trigger for collapsing sidebar */}
+                        <div className="hidden md:block">
+                          <SidebarTrigger className="-ml-1" />
+                        </div>
                       </div>
                       
                       {/* Top Right Actions */}
