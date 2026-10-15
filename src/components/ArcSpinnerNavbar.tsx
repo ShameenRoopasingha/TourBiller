@@ -92,31 +92,49 @@ export function ArcSpinnerNavbar() {
     }
   }, []);
 
-  // Crisp mechanical tactile click sound (tik-tik)
+  // Crisp high-pitched mechanical watch ratchet "tiki-tiki" sound
   const playTickSound = useCallback(() => {
     try {
       initAudio();
       const ctx = audioCtxRef.current;
       if (!ctx) return;
 
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      // High crisp mechanical tick
-      osc.type = 'triangle';
       const now = ctx.currentTime;
-      osc.frequency.setValueAtTime(1600, now);
-      osc.frequency.exponentialRampToValueAtTime(450, now + 0.014);
 
-      // Short sharp click envelope
-      gain.gain.setValueAtTime(0.09, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.014);
+      // Primary crisp high-metallic click (~4800Hz)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
 
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(4800, now);
+      osc1.frequency.exponentialRampToValueAtTime(3200, now + 0.007);
 
-      osc.start(now);
-      osc.stop(now + 0.016);
+      gain1.gain.setValueAtTime(0.09, now);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.007);
+
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+
+      osc1.start(now);
+      osc1.stop(now + 0.008);
+
+      // Secondary micro-click at +3ms (creates the distinct crisp "tiki" gear tooth snap)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(6500, now + 0.003);
+      osc2.frequency.exponentialRampToValueAtTime(4400, now + 0.009);
+
+      gain2.gain.setValueAtTime(0, now);
+      gain2.gain.setValueAtTime(0.06, now + 0.003);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.009);
+
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+
+      osc2.start(now + 0.003);
+      osc2.stop(now + 0.010);
     } catch {
       // Silently ignore if audio context is blocked
     }
