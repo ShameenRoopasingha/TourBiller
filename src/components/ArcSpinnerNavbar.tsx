@@ -96,7 +96,7 @@ export function ArcSpinnerNavbar() {
     }
   }, [isOpen, pathname]);
 
-  // GSAP Open / Close Animation
+  // GSAP Open / Close Animation (Zoom In from top right / Zoom Out to top right)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -105,35 +105,34 @@ export function ArcSpinnerNavbar() {
       gsap.fromTo(
         backdropRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+        { opacity: 1, duration: 0.25, ease: 'power2.out' }
       );
 
-      // Quarter-circle spring reveal from top-right corner
+      // Clean Zoom In from Top Right
       gsap.fromTo(
         menuRef.current,
         {
           scale: 0,
           opacity: 0,
-          rotation: -45,
           transformOrigin: 'top right',
         },
         {
           scale: 1,
           opacity: 1,
-          rotation: 0,
-          duration: 0.5,
-          ease: 'back.out(1.5)',
+          duration: 0.35,
+          ease: 'back.out(1.2)',
         }
       );
     }
   }, [isOpen]);
 
-  const closeMenu = useCallback(() => {
+  const closeMenu = useCallback((onFinished?: () => void) => {
     if (menuRef.current && backdropRef.current) {
+      // Clean Zoom Out to Top Right
       gsap.to(menuRef.current, {
         scale: 0,
         opacity: 0,
-        rotation: -30,
+        transformOrigin: 'top right',
         duration: 0.25,
         ease: 'power3.in',
       });
@@ -141,10 +140,14 @@ export function ArcSpinnerNavbar() {
         opacity: 0,
         duration: 0.25,
         ease: 'power2.in',
-        onComplete: () => setIsOpen(false),
+        onComplete: () => {
+          setIsOpen(false);
+          if (onFinished) onFinished();
+        },
       });
     } else {
       setIsOpen(false);
+      if (onFinished) onFinished();
     }
   }, []);
 
@@ -269,8 +272,9 @@ export function ArcSpinnerNavbar() {
       ease: 'power3.out',
       onUpdate: () => setRotationOffset(animProxyRef.current.offset),
       onComplete: () => {
-        closeMenu();
-        router.push(href);
+        closeMenu(() => {
+          router.push(href);
+        });
       },
     });
   };
@@ -296,7 +300,7 @@ export function ArcSpinnerNavbar() {
           {/* Frosted Backdrop */}
           <div
             ref={backdropRef}
-            onClick={closeMenu}
+            onClick={() => closeMenu()}
             className={`absolute inset-0 transition-opacity ${
               isDark ? 'bg-black/75 backdrop-blur-md' : 'bg-slate-900/40 backdrop-blur-md'
             }`}
@@ -307,6 +311,7 @@ export function ArcSpinnerNavbar() {
             ref={menuRef}
             className="absolute top-0 right-0 w-[320px] h-[320px] overflow-visible"
             style={{
+              transformOrigin: 'top right',
               borderBottomLeftRadius: '100%',
               background: isDark
                 ? 'radial-gradient(circle at top right, rgba(15, 23, 42, 0.98) 0%, rgba(2, 6, 23, 0.96) 75%, rgba(6, 78, 59, 0.25) 100%)'
@@ -488,8 +493,9 @@ export function ArcSpinnerNavbar() {
               {ARC_NAV_ITEMS[activeIndex] && (
                 <div
                   onClick={() => {
-                    closeMenu();
-                    router.push(ARC_NAV_ITEMS[activeIndex].href);
+                    closeMenu(() => {
+                      router.push(ARC_NAV_ITEMS[activeIndex].href);
+                    });
                   }}
                   className={`backdrop-blur-xl border rounded-2xl p-3 shadow-2xl flex items-center gap-3 cursor-pointer active:scale-95 transition-transform ${
                     isDark
