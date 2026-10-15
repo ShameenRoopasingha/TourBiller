@@ -23,6 +23,12 @@ interface BookingDriverAssignerProps {
         email?: string | null;
     }[];
     isAdmin?: boolean;
+    pendingHandoverRequest?: {
+        reason?: string;
+        meterReading?: string;
+        note?: string;
+        timestamp?: Date | string;
+    } | null;
 }
 
 export function BookingDriverAssigner({
@@ -31,24 +37,34 @@ export function BookingDriverAssigner({
     currentDriver,
     drivers,
     isAdmin = true,
+    pendingHandoverRequest,
 }: BookingDriverAssignerProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(!!pendingHandoverRequest);
     const [selectedDriverId, setSelectedDriverId] = useState(currentDriver?.id || '');
-    const [handoverReason, setHandoverReason] = useState('Medical / Sickness');
-    const [handoverMeterReading, setHandoverMeterReading] = useState('');
-    const [handoverNotes, setHandoverNotes] = useState('');
+    const [handoverReason, setHandoverReason] = useState(pendingHandoverRequest?.reason || 'Medical / Sickness');
+    const [handoverMeterReading, setHandoverMeterReading] = useState(pendingHandoverRequest?.meterReading || '');
+    const [handoverNotes, setHandoverNotes] = useState(pendingHandoverRequest?.note || '');
     const [error, setError] = useState<string | null>(null);
 
     const isOngoing = bookingStatus === 'ONGOING';
 
     const handleSave = () => {
         setError(null);
+
+        // Strictly enforce mandatory handover meter reading for ONGOING tours
+        if (isOngoing && selectedDriverId !== currentDriver?.id) {
+            if (!handoverMeterReading.trim()) {
+                setError('Handover Odometer / Meter Reading is strictly required.');
+                return;
+            }
+        }
+
         startTransition(async () => {
             const handoverOptions = isOngoing && selectedDriverId !== currentDriver?.id ? {
                 reason: handoverReason,
-                handoverMeterReading: handoverMeterReading.trim() || undefined,
+                handoverMeterReading: handoverMeterReading.trim(),
                 notes: handoverNotes.trim() || undefined,
             } : undefined;
 
@@ -155,7 +171,7 @@ export function BookingDriverAssigner({
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">
-                                            Handover Odometer (KM)
+                                            Handover Odometer (KM) <span className="text-destructive font-bold">* (Required)</span>
                                         </label>
                                         <input
                                             type="text"

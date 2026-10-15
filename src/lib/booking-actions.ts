@@ -285,6 +285,16 @@ export async function assignDriverToBooking(
             if (newDriver) newDriverName = newDriver.name;
         }
 
+        // Validate mandatory handover meter reading for ONGOING tours
+        if (booking.status === 'ONGOING' && previousDriverId && previousDriverId !== driverId) {
+            if (!handoverOptions?.handoverMeterReading?.trim()) {
+                return { 
+                    success: false, 
+                    error: 'Handover Odometer / Meter Reading is strictly required for a mid-tour driver handover.' 
+                };
+            }
+        }
+
         // Execute update in transaction
         await prisma.$transaction(async (tx) => {
             // 1. Update booking driver

@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Car, Calendar, MapPin, CreditCard, AlignLeft, User, Phone, Mail, Activity } from 'lucide-react';
+import { ArrowLeft, Car, Calendar, MapPin, CreditCard, AlignLeft, User, Phone, Mail, Activity, AlertTriangle } from 'lucide-react';
 import { getBookingById } from '@/lib/booking-actions';
 import { getDrivers } from '@/lib/user-actions';
 import { CancelBookingButton } from '@/components/CancelBookingButton';
@@ -93,8 +93,54 @@ export default async function BookingDetailsPage(props: {
 
     const isOngoing = displayStatus === 'ONGOING' || displayStatus === 'OVERDUE';
 
+    // Check if there is an unresolved handover request from the driver
+    const handoverReqActivity = booking.tripActivities?.find(a => a.type === 'HANDOVER_REQUESTED');
+    let pendingHandoverRequest: { reason: string; meterReading: string; note: string; timestamp: Date | string } | null = null;
+    if (handoverReqActivity && isOngoing) {
+        const noteText = handoverReqActivity.note || '';
+        const reasonMatch = noteText.match(/Reason:\s*([^|]+)/i);
+        const meterMatch = noteText.match(/Meter:\s*([0-9.]+)/i);
+        const locationMatch = noteText.match(/(?:Location\/Note|Note):\s*(.+)/i);
+
+        pendingHandoverRequest = {
+            reason: reasonMatch ? reasonMatch[1].trim() : 'Driver Request',
+            meterReading: meterMatch ? meterMatch[1].trim() : '',
+            note: locationMatch ? locationMatch[1].trim() : '',
+            timestamp: handoverReqActivity.timestamp,
+        };
+    }
+
     return (
         <div className="container mx-auto py-10 max-w-3xl">
+            {pendingHandoverRequest && (
+                <div className="bg-red-500/10 border-2 border-red-500/30 rounded-xl p-4 mb-6 shadow-sm flex items-start gap-3">
+                    <div className="p-2 bg-red-500/20 rounded-lg text-red-600 dark:text-red-400">
+                        <AlertTriangle className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1 flex-1">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-red-700 dark:text-red-400 text-base">
+                                🚨 Driver Handover Requested
+                            </h3>
+                            <span className="text-xs text-red-600 dark:text-red-400 font-medium">
+                                {new Date(pendingHandoverRequest.timestamp).toLocaleTimeString('en-GB')}
+                            </span>
+                        </div>
+                        <p className="text-sm text-foreground">
+                            Driver <strong>{booking.driver?.name}</strong> requested a mid-tour handover: 
+                            <span className="font-semibold text-red-600 dark:text-red-400"> {pendingHandoverRequest.reason}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            Reported Meter: <strong className="text-foreground">{pendingHandoverRequest.meterReading || 'N/A'} km</strong>
+                            {pendingHandoverRequest.note && ` • Location/Note: ${pendingHandoverRequest.note}`}
+                        </p>
+                        <p className="text-xs text-amber-700 dark:text-amber-300 font-medium pt-1">
+                            👇 Use the Assigned Driver card below to confirm the replacement driver. The meter reading and reason have been pre-filled.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <div className="flex items-center justify-between mb-6">
                 <Button variant="ghost" asChild className="pl-0 hover:bg-transparent">
                     <Link href="/bookings" className="text-muted-foreground hover:text-foreground">
@@ -195,6 +241,7 @@ export default async function BookingDetailsPage(props: {
                         currentDriver={booking.driver || null}
                         drivers={drivers}
                         isAdmin={auth.role === 'ADMIN' || auth.role === 'OWNER'}
+                        pendingHandoverRequest={pendingHandoverRequest}
                     />
 
                     {/* Trip Activities & Handover Audit */}

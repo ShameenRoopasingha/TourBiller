@@ -270,6 +270,39 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             return NextResponse.json({ success: true, message: 'Tour takeover confirmed' });
         }
 
+        if (action === 'REQUEST_HANDOVER') {
+            const { reason, note } = body;
+            if (!meterReading || !meterReading.toString().trim()) {
+                return NextResponse.json({ 
+                    success: false, 
+                    error: 'Current odometer / meter reading is strictly required to request a handover.' 
+                }, { status: 400 });
+            }
+
+            const handoverReason = reason || 'Driver Request';
+            const details = [
+                `Reason: ${handoverReason}`,
+                `Meter: ${meterReading} km`,
+                note ? `Location/Note: ${note}` : null
+            ].filter(Boolean).join(' | ');
+
+            const activity = await prisma.tripActivity.create({
+                data: {
+                    companyId,
+                    bookingId,
+                    driverId,
+                    type: 'HANDOVER_REQUESTED',
+                    note: `Handover Requested by Driver: ${details}`,
+                }
+            });
+
+            return NextResponse.json({ 
+                success: true, 
+                message: 'Handover request logged and transmitted to dispatch.',
+                data: activity 
+            });
+        }
+
         if (action === 'ADD_ACTIVITY') {
             const activity = await prisma.tripActivity.create({
                 data: {

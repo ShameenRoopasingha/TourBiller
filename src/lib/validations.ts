@@ -545,7 +545,7 @@ export const VehicleExpenseDbSchema = VehicleExpenseSchema.extend({
 
 export type VehicleExpense = z.infer<typeof VehicleExpenseDbSchema>;
 
-export type TripActivityType = 'START' | 'END' | 'HANDOVER' | 'TAKEOVER' | 'FUEL_FILL' | 'FLAT_TIRE' | 'STOP' | 'HOTEL_CHECKIN' | 'RESUME' | 'BREAKDOWN' | 'NOTE';
+export type TripActivityType = 'START' | 'END' | 'HANDOVER_REQUESTED' | 'HANDOVER' | 'TAKEOVER' | 'FUEL_FILL' | 'FLAT_TIRE' | 'STOP' | 'HOTEL_CHECKIN' | 'RESUME' | 'BREAKDOWN' | 'NOTE';
 
 export interface TripActivity {
   id: string;
