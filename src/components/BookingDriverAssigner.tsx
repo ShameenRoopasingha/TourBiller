@@ -11,6 +11,7 @@ import { notify } from '@/lib/notifications';
 
 interface BookingDriverAssignerProps {
     bookingId: string;
+    bookingStatus?: string;
     currentDriver: {
         id: string;
         name: string;
@@ -26,6 +27,7 @@ interface BookingDriverAssignerProps {
 
 export function BookingDriverAssigner({
     bookingId,
+    bookingStatus,
     currentDriver,
     drivers,
     isAdmin = true,
@@ -34,14 +36,31 @@ export function BookingDriverAssigner({
     const [isPending, startTransition] = useTransition();
     const [isEditing, setIsEditing] = useState(false);
     const [selectedDriverId, setSelectedDriverId] = useState(currentDriver?.id || '');
+    const [handoverReason, setHandoverReason] = useState('Medical / Sickness');
+    const [handoverMeterReading, setHandoverMeterReading] = useState('');
+    const [handoverNotes, setHandoverNotes] = useState('');
     const [error, setError] = useState<string | null>(null);
+
+    const isOngoing = bookingStatus === 'ONGOING';
 
     const handleSave = () => {
         setError(null);
         startTransition(async () => {
-            const res = await assignDriverToBooking(bookingId, selectedDriverId || null);
+            const handoverOptions = isOngoing && selectedDriverId !== currentDriver?.id ? {
+                reason: handoverReason,
+                handoverMeterReading: handoverMeterReading.trim() || undefined,
+                notes: handoverNotes.trim() || undefined,
+            } : undefined;
+
+            const res = await assignDriverToBooking(bookingId, selectedDriverId || null, handoverOptions);
             if (res.success) {
-                notify.success(selectedDriverId ? 'Driver assigned successfully' : 'Driver unassigned');
+                notify.success(
+                    isOngoing && selectedDriverId !== currentDriver?.id
+                        ? 'Mid-tour driver handover recorded successfully'
+                        : selectedDriverId 
+                            ? 'Driver assigned successfully' 
+                            : 'Driver unassigned'
+                );
                 setIsEditing(false);
                 router.refresh();
             } else {
@@ -53,6 +72,9 @@ export function BookingDriverAssigner({
 
     const handleCancel = () => {
         setSelectedDriverId(currentDriver?.id || '');
+        setHandoverReason('Medical / Sickness');
+        setHandoverMeterReading('');
+        setHandoverNotes('');
         setError(null);
         setIsEditing(false);
     };
@@ -73,23 +95,34 @@ export function BookingDriverAssigner({
                 </h3>
                 {isAdmin && !isEditing && (
                     <Button
-                        variant="ghost"
+                        variant={isOngoing ? "default" : "ghost"}
                         size="sm"
-                        className="h-8 text-xs text-primary hover:text-primary/80 gap-1"
+                        className={`h-8 text-xs gap-1.5 ${isOngoing ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'text-primary hover:text-primary/80'}`}
                         onClick={() => setIsEditing(true)}
                     >
                         <Edit2 className="h-3 w-3" />
-                        {currentDriver ? 'Change Driver' : 'Assign Driver'}
+                        {isOngoing ? '⚡ Mid-Tour Handover' : currentDriver ? 'Change Driver' : 'Assign Driver'}
                     </Button>
                 )}
             </div>
 
             <div className="bg-muted/30 rounded-lg p-4">
                 {isEditing ? (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
+                        {isOngoing && (
+                            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-md text-xs text-amber-800 dark:text-amber-300">
+                                <p className="font-semibold flex items-center gap-1 mb-1">
+                                    ⚠️ Tour in Progress (Mid-Tour Reassignment)
+                                </p>
+                                <p>
+                                    Reassigning will stop live tracking for <strong>{currentDriver?.name || 'current driver'}</strong> and record an official handover event with odometer reading for billing and audit accuracy.
+                                </p>
+                            </div>
+                        )}
+
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-muted-foreground uppercase">
-                                Select Driver
+                                {isOngoing ? 'Select Replacement Driver' : 'Select Driver'}
                             </label>
                             <ComboboxField
                                 options={driverOptions}
@@ -98,6 +131,55 @@ export function BookingDriverAssigner({
                                 placeholder="Choose a driver..."
                             />
                         </div>
+
+                        {isOngoing && selectedDriverId && selectedDriverId !== currentDriver?.id && (
+                            <div className="space-y-3 pt-2 border-t border-muted/50">
+                                <div>
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">
+                                        Handover Reason
+                                    </label>
+                                    <select
+                                        value={handoverReason}
+                                        onChange={(e) => setHandoverReason(e.target.value)}
+                                        className="w-full text-xs rounded-md border border-input bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                                    >
+                                        <option value="Medical / Sickness">Medical / Driver Sickness</option>
+                                        <option value="Emergency">Family / Personal Emergency</option>
+                                        <option value="Shift Change">Scheduled Shift Handover</option>
+                                        <option value="Vehicle Breakdown">Vehicle Breakdown / Exchange</option>
+                                        <option value="Customer Request">Customer Request</option>
+                                        <option value="Operational">Other Operational Reason</option>
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">
+                                            Handover Odometer (KM)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={handoverMeterReading}
+                                            onChange={(e) => setHandoverMeterReading(e.target.value)}
+                                            placeholder="e.g. 45350"
+                                            className="w-full text-xs rounded-md border border-input bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">
+                                            Handover Location / Note
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={handoverNotes}
+                                            onChange={(e) => setHandoverNotes(e.target.value)}
+                                            placeholder="e.g. Handover at Kandy Clock Tower"
+                                            className="w-full text-xs rounded-md border border-input bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {error && (
                             <p className="text-xs text-destructive font-medium">{error}</p>
@@ -108,14 +190,14 @@ export function BookingDriverAssigner({
                                 size="sm"
                                 onClick={handleSave}
                                 disabled={isPending}
-                                className="h-8 text-xs gap-1"
+                                className={`h-8 text-xs gap-1 ${isOngoing ? 'bg-amber-600 hover:bg-amber-700' : ''}`}
                             >
                                 {isPending ? (
                                     <Loader2 className="h-3 w-3 animate-spin" />
                                 ) : (
                                     <Check className="h-3 w-3" />
                                 )}
-                                Save
+                                {isOngoing ? 'Confirm Handover' : 'Save'}
                             </Button>
                             <Button
                                 variant="outline"

@@ -202,6 +202,14 @@ export async function getBookingById(id: string): Promise<ActionResult<BookingWi
                         email: true,
                     },
                 },
+                tripActivities: {
+                    orderBy: { timestamp: 'desc' },
+                    include: {
+                        driver: {
+                            select: { name: true }
+                        }
+                    }
+                }
             },
         });
 
@@ -216,22 +224,40 @@ export async function getBookingById(id: string): Promise<ActionResult<BookingWi
     }
 }
 
+export interface DriverHandoverOptions {
+    reason?: string;
+    handoverMeterReading?: string;
+    notes?: string;
+}
+
 /**
- * Assign or change a driver for an existing booking
+ * Assign, change, or handover a driver for an existing booking
  */
-export async function assignDriverToBooking(bookingId: string, driverId: string | null): Promise<ActionResult<void>> {
+export async function assignDriverToBooking(
+    bookingId: string, 
+    driverId: string | null,
+    handoverOptions?: DriverHandoverOptions
+): Promise<ActionResult<void>> {
     try {
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
 
+        const booking = await prisma.booking.findFirst({
+            where: { id: bookingId, companyId: authCheck.companyId },
+            include: {
+                driver: {
+                    select: { id: true, name: true }
+                }
+            }
+        });
+        if (!booking) return { success: false, error: 'Booking not found' };
+
+        const previousDriverId = booking.driverId;
+        const previousDriverName = booking.driver?.name || 'Previous Driver';
+
         if (driverId) {
-            const booking = await prisma.booking.findFirst({
-                where: { id: bookingId, companyId: authCheck.companyId },
-                select: { startDate: true, endDate: true },
-            });
-            if (!booking) return { success: false, error: 'Booking not found' };
             const endDate = booking.endDate || booking.startDate;
             const driverAvailability = await checkDriverAvailability(
                 driverId,
@@ -249,12 +275,59 @@ export async function assignDriverToBooking(bookingId: string, driverId: string 
             }
         }
 
-        const res = await prisma.booking.updateMany({
-            where: { id: bookingId, companyId: authCheck.companyId },
-            data: { driverId: driverId || null },
-        });
+        // Fetch new driver name if assigned
+        let newDriverName = 'Unassigned';
+        if (driverId) {
+            const newDriver = await prisma.user.findUnique({
+                where: { id: driverId },
+                select: { name: true }
+            });
+            if (newDriver) newDriverName = newDriver.name;
+        }
 
-        if (res.count === 0) return { success: false, error: 'Booking not found or unauthorized' };
+        // Execute update in transaction
+        await prisma.$transaction(async (tx) => {
+            // 1. Update booking driver
+            await tx.booking.update({
+                where: { id: bookingId },
+                data: { driverId: driverId || null },
+            });
+
+            // 2. If tour is ONGOING and driver is changing, record HANDOVER TripActivity
+            if (booking.status === 'ONGOING' && previousDriverId && previousDriverId !== driverId) {
+                const meterText = handoverOptions?.handoverMeterReading ? `Meter: ${handoverOptions.handoverMeterReading} km` : null;
+                const reasonText = handoverOptions?.reason ? `Reason: ${handoverOptions.reason}` : null;
+                const notesText = handoverOptions?.notes ? `Notes: ${handoverOptions.notes}` : null;
+                
+                const details = [meterText, reasonText, notesText].filter(Boolean).join(' | ');
+                const handoverNote = `Mid-Tour Handover: Reassigned from ${previousDriverName} to ${newDriverName}.${details ? ` (${details})` : ''}`;
+
+                await tx.tripActivity.create({
+                    data: {
+                        companyId: authCheck.companyId!,
+                        bookingId,
+                        driverId: previousDriverId,
+                        type: 'HANDOVER',
+                        note: handoverNote,
+                    }
+                });
+
+                // Check if previous driver has any other ONGOING bookings
+                const otherOngoing = await tx.booking.count({
+                    where: {
+                        driverId: previousDriverId,
+                        status: 'ONGOING',
+                        id: { not: bookingId }
+                    }
+                });
+                if (otherOngoing === 0) {
+                    await tx.user.update({
+                        where: { id: previousDriverId },
+                        data: { isLiveTracking: false }
+                    });
+                }
+            }
+        });
 
         revalidateFor('booking');
         return { success: true };

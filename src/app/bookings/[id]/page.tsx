@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Car, Calendar, MapPin, CreditCard, AlignLeft, User, Phone, Mail } from 'lucide-react';
+import { ArrowLeft, Car, Calendar, MapPin, CreditCard, AlignLeft, User, Phone, Mail, Activity } from 'lucide-react';
 import { getBookingById } from '@/lib/booking-actions';
 import { getDrivers } from '@/lib/user-actions';
 import { CancelBookingButton } from '@/components/CancelBookingButton';
@@ -191,10 +191,55 @@ export default async function BookingDetailsPage(props: {
                     {/* Assigned Driver */}
                     <BookingDriverAssigner
                         bookingId={booking.id}
+                        bookingStatus={displayStatus}
                         currentDriver={booking.driver || null}
                         drivers={drivers}
                         isAdmin={auth.role === 'ADMIN' || auth.role === 'OWNER'}
                     />
+
+                    {/* Trip Activities & Handover Audit */}
+                    {booking.tripActivities && booking.tripActivities.length > 0 && (
+                        <div className="space-y-3 pt-4 border-t">
+                            <h3 className="font-semibold flex items-center gap-2 text-muted-foreground">
+                                <Activity className="h-4 w-4" /> Trip Activity & Handover History
+                            </h3>
+                            <div className="space-y-2">
+                                {booking.tripActivities.map((act) => {
+                                    const isHandover = act.type === 'HANDOVER';
+                                    const isTakeover = act.type === 'TAKEOVER';
+                                    const isStart = act.type === 'START';
+                                    const isEnd = act.type === 'END';
+
+                                    const badgeClass = isHandover ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30' :
+                                        isTakeover ? 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30' :
+                                        isStart ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30' :
+                                        isEnd ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30' :
+                                        'bg-muted text-muted-foreground';
+
+                                    return (
+                                        <div key={act.id} className="p-3 bg-muted/20 border rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="outline" className={`font-bold text-[10px] uppercase ${badgeClass}`}>
+                                                        {act.type}
+                                                    </Badge>
+                                                    {act.driver?.name && (
+                                                        <span className="text-muted-foreground font-medium">
+                                                            by <strong className="text-foreground">{act.driver.name}</strong>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-foreground text-sm font-medium">{act.note}</p>
+                                            </div>
+                                            <span className="text-muted-foreground shrink-0">
+                                                {new Date(act.timestamp).toLocaleString('en-GB')}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Additional Notes */}
                     {booking.notes && (

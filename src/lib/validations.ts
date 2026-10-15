@@ -415,6 +415,15 @@ export type BookingWithDriver = Booking & {
     name: string;
     email: string;
   } | null;
+  tripActivities?: {
+    id: string;
+    type: string;
+    note: string | null;
+    timestamp: Date | string;
+    driver?: {
+      name: string;
+    } | null;
+  }[];
 };
 
 // Tour Schedule Day Item validation schema
@@ -536,7 +545,7 @@ export const VehicleExpenseDbSchema = VehicleExpenseSchema.extend({
 
 export type VehicleExpense = z.infer<typeof VehicleExpenseDbSchema>;
 
-export type TripActivityType = 'FUEL_FILL' | 'FLAT_TIRE' | 'STOP' | 'HOTEL_CHECKIN' | 'RESUME' | 'BREAKDOWN' | 'NOTE';
+export type TripActivityType = 'START' | 'END' | 'HANDOVER' | 'TAKEOVER' | 'FUEL_FILL' | 'FLAT_TIRE' | 'STOP' | 'HOTEL_CHECKIN' | 'RESUME' | 'BREAKDOWN' | 'NOTE';
 
 export interface TripActivity {
   id: string;

@@ -67,7 +67,19 @@ export async function POST(req: Request) {
             }>;
 
             let activeBookingId = body.bookingId;
-            if (!activeBookingId) {
+            if (activeBookingId) {
+                const booking = await prisma.booking.findFirst({
+                    where: { id: activeBookingId, companyId },
+                    select: { id: true, driverId: true }
+                });
+                if (booking && booking.driverId !== driverId) {
+                    return NextResponse.json({
+                        success: false,
+                        code: 'TOUR_HANDED_OVER',
+                        error: 'This tour has been reassigned to another driver by dispatch.'
+                    }, { status: 403 });
+                }
+            } else {
                 const currentBooking = await prisma.booking.findFirst({
                     where: { driverId, status: 'ONGOING' },
                     select: { id: true }
@@ -137,7 +149,19 @@ export async function POST(req: Request) {
 
         // Find active booking if not explicitly provided
         let activeBookingId = bookingId;
-        if (!activeBookingId) {
+        if (activeBookingId) {
+            const booking = await prisma.booking.findFirst({
+                where: { id: activeBookingId, companyId },
+                select: { id: true, driverId: true }
+            });
+            if (booking && booking.driverId !== driverId) {
+                return NextResponse.json({
+                    success: false,
+                    code: 'TOUR_HANDED_OVER',
+                    error: 'This tour has been reassigned to another driver by dispatch.'
+                }, { status: 403 });
+            }
+        } else {
             const currentBooking = await prisma.booking.findFirst({
                 where: {
                     driverId: driverId,

@@ -247,6 +247,29 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             return NextResponse.json({ success: true });
         }
 
+        if (action === 'TAKEOVER') {
+            await prisma.$transaction([
+                prisma.booking.update({
+                    where: { id: bookingId },
+                    data: { status: 'ONGOING' }
+                }),
+                prisma.user.update({
+                    where: { id: driverId },
+                    data: { isLiveTracking: true }
+                }),
+                prisma.tripActivity.create({
+                    data: {
+                        companyId,
+                        bookingId,
+                        driverId,
+                        type: 'TAKEOVER',
+                        note: meterReading ? `Tour Taken Over. Takeover Meter: ${meterReading}` : 'Tour Taken Over by Driver'
+                    }
+                })
+            ]);
+            return NextResponse.json({ success: true, message: 'Tour takeover confirmed' });
+        }
+
         if (action === 'ADD_ACTIVITY') {
             const activity = await prisma.tripActivity.create({
                 data: {
