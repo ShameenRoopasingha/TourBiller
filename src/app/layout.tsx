@@ -68,9 +68,9 @@ export default async function RootLayout({
                       
                       {/* Top Right Actions */}
                       <div className="flex items-center gap-2">
-                         <ArcSpinnerNavbar />
                          <RefreshButton />
                          <NotificationBell />
+                         <ArcSpinnerNavbar />
                       </div>
                     </header>
 
