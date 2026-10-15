@@ -11,6 +11,7 @@ import { PageTransition } from '@/components/PageTransition';
 import { NotificationBell } from '@/components/NotificationBell';
 import { RefreshButton } from '@/components/RefreshButton';
 import { ToastProvider } from '@/components/ToastProvider';
+import { ArcSpinnerNavbar } from '@/components/ArcSpinnerNavbar';
 
 import ChatAssistant from '@/components/ChatAssistant';
 
@@ -66,6 +67,7 @@ export default async function RootLayout({
                       
                       {/* Top Right Actions */}
                       <div className="flex items-center gap-2">
+                         <ArcSpinnerNavbar />
                          <RefreshButton />
                          <NotificationBell />
                       </div>
