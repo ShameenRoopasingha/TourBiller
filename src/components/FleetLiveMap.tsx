@@ -30,6 +30,7 @@ interface FleetLiveMapProps {
     selectedVehicleId: string | null;
     onSelectVehicle?: (id: string) => void;
     height?: string;
+    fitAllTrigger?: number;
 }
 
 export function FleetLiveMap({
@@ -37,10 +38,13 @@ export function FleetLiveMap({
     selectedVehicleId,
     onSelectVehicle,
     height = '100%',
+    fitAllTrigger,
 }: FleetLiveMapProps) {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<any>(null);
     const markersRef = useRef<Map<string, any>>(new Map());
+    const initialFitDoneRef = useRef<boolean>(false);
+    const leafletLibRef = useRef<any>(null);
 
     // Initialize Map
     useEffect(() => {
@@ -49,6 +53,7 @@ export function FleetLiveMap({
         async function initMap() {
             if (!mapContainerRef.current) return;
             const L = (await import('leaflet')).default;
+            leafletLibRef.current = L;
 
             if (mapInstanceRef.current) {
                 mapInstanceRef.current.remove();
@@ -87,11 +92,61 @@ export function FleetLiveMap({
         };
     }, []);
 
+    // Responsive ResizeObserver to keep map tiles crisp on mobile tab switches or window resize
+    useEffect(() => {
+        if (!mapContainerRef.current) return;
+
+        const handleResize = () => {
+            if (mapInstanceRef.current) {
+                mapInstanceRef.current.invalidateSize();
+            }
+        };
+
+        let resizeObserver: ResizeObserver | null = null;
+        if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(() => {
+                handleResize();
+            });
+            resizeObserver.observe(mapContainerRef.current);
+        }
+
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            if (resizeObserver) resizeObserver.disconnect();
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+
+    // Fit all bounds when trigger changes
+    useEffect(() => {
+        if (fitAllTrigger && fitAllTrigger > 0 && mapInstanceRef.current && leafletLibRef.current) {
+            fitAll();
+        }
+    }, [fitAllTrigger]);
+
+    const fitAll = () => {
+        if (!mapInstanceRef.current || !leafletLibRef.current) return;
+        const L = leafletLibRef.current;
+        const bounds = L.latLngBounds([]);
+        let hasPoints = false;
+        vehicles.forEach((v) => {
+            if (v.lat !== null && v.lon !== null) {
+                bounds.extend([v.lat, v.lon]);
+                hasPoints = true;
+            }
+        });
+        if (hasPoints) {
+            mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+        }
+    };
+
     // Update Markers when vehicles change
     useEffect(() => {
         async function refresh() {
             if (!mapInstanceRef.current) return;
-            const L = (await import('leaflet')).default;
+            const L = leafletLibRef.current || (await import('leaflet')).default;
+            leafletLibRef.current = L;
             updateMarkers(L, mapInstanceRef.current);
         }
         refresh();
@@ -228,9 +283,10 @@ export function FleetLiveMap({
             markersRef.current.set(v.id, marker);
         });
 
-        // If no selected vehicle and multiple points exist on initial load, fit bounds
-        if (!selectedVehicleId && hasPoints) {
+        // Fit bounds only on initial load so we don't disrupt user's custom zoom/pan on polling
+        if (!selectedVehicleId && hasPoints && !initialFitDoneRef.current) {
             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+            initialFitDoneRef.current = true;
         }
     }
 
@@ -243,8 +299,29 @@ export function FleetLiveMap({
                         opacity: 0;
                     }
                 }
+                .leaflet-touch .leaflet-bar a {
+                    width: 36px !important;
+                    height: 36px !important;
+                    line-height: 36px !important;
+                    font-size: 16px !important;
+                }
+                .leaflet-popup-content {
+                    margin: 12px 14px !important;
+                }
             `}</style>
             <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
+
+            {/* Floating Fit All / Reset View Button */}
+            <button
+                type="button"
+                onClick={fitAll}
+                className="absolute bottom-6 right-4 z-[900] flex items-center gap-1.5 px-3 py-2 bg-slate-900/90 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg border border-slate-700 shadow-xl backdrop-blur transition active:scale-95"
+                title="Fit all active vehicles into view"
+            >
+                <span>🎯</span>
+                <span className="hidden sm:inline">Fit All Vehicles</span>
+                <span className="sm:hidden">Fit All</span>
+            </button>
         </div>
     );
 }

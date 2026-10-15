@@ -8,22 +8,31 @@ import {
     Car, 
     User, 
     MapPin, 
-    Gauge, 
     Clock, 
-    ShieldAlert, 
     Radio, 
-    CheckCircle2, 
     AlertCircle,
     ChevronRight,
-    Search
+    Search,
+    Map as MapIcon,
+    ListFilter,
+    X,
+    ExternalLink,
+    Compass
 } from 'lucide-react';
 import { ActiveTourVehicle } from '@/components/FleetLiveMap';
 
 // Dynamically import FleetLiveMap to avoid SSR leaflet window errors
 const FleetLiveMap = dynamic(
     () => import('@/components/FleetLiveMap').then((mod) => mod.FleetLiveMap),
-    { ssr: false, loading: () => <div className="h-full w-full bg-slate-900 flex items-center justify-center text-slate-400">Loading Fleet Map...</div> }
+    { ssr: false, loading: () => (
+        <div className="h-full w-full bg-slate-950 flex flex-col items-center justify-center text-slate-400 gap-3">
+            <Radio className="w-8 h-8 text-emerald-400 animate-pulse" />
+            <span className="text-xs font-medium">Loading Fleet Radar Map...</span>
+        </div>
+    ) }
 );
+
+type StatusFilter = 'all' | 'moving' | 'parked' | 'offline';
 
 export default function LiveTrackingPage() {
     const [vehicles, setVehicles] = useState<ActiveTourVehicle[]>([]);
@@ -32,7 +41,10 @@ export default function LiveTrackingPage() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+    const [mobileTab, setMobileTab] = useState<'map' | 'list'>('map');
     const [error, setError] = useState<string | null>(null);
+    const [fitAllTrigger, setFitAllTrigger] = useState<number>(0);
 
     const fetchLiveLocations = useCallback(async (manual = false) => {
         if (manual) setIsRefreshing(true);
@@ -65,120 +77,250 @@ export default function LiveTrackingPage() {
         return () => clearInterval(interval);
     }, [fetchLiveLocations]);
 
-    const filteredVehicles = vehicles.filter(v => 
-        v.vehicleNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.driverName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (v.destination && v.destination.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-
-    const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId) || null;
-
     // Aggregate statistics
     const totalTours = vehicles.length;
     const movingCount = vehicles.filter(v => v.isFresh && v.speed > 5).length;
     const stationaryCount = vehicles.filter(v => v.isFresh && v.speed <= 5).length;
     const offlineCount = vehicles.filter(v => !v.isFresh || v.lat === null).length;
 
+    // Filter vehicles by search query & status filter
+    const filteredVehicles = vehicles.filter(v => {
+        const query = searchQuery.trim().toLowerCase();
+        const matchesSearch = !query || 
+            v.vehicleNo.toLowerCase().includes(query) ||
+            v.driverName.toLowerCase().includes(query) ||
+            v.customerName.toLowerCase().includes(query) ||
+            (v.destination && v.destination.toLowerCase().includes(query));
+
+        if (!matchesSearch) return false;
+
+        if (statusFilter === 'moving') return v.isFresh && v.speed > 5;
+        if (statusFilter === 'parked') return v.isFresh && v.speed <= 5;
+        if (statusFilter === 'offline') return !v.isFresh || v.lat === null;
+        return true;
+    });
+
+    const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId) || null;
+
+    const handleSelectVehicle = (id: string) => {
+        setSelectedVehicleId(id);
+        // On mobile, automatically show the map when a vehicle is selected from the list
+        setMobileTab('map');
+    };
+
     return (
-        <div className="flex flex-col h-[calc(100vh-64px)] w-full overflow-hidden bg-slate-950 text-slate-100">
+        <div className="-m-2 sm:-m-4 md:-m-8 h-[calc(100dvh-4rem)] flex flex-col overflow-hidden bg-slate-950 text-slate-100">
             {/* Top Command Bar */}
-            <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0 z-20">
-                <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400">
-                        <Radio className="w-5 h-5 animate-pulse" />
-                    </div>
-                    <div>
-                        <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                            Fleet Live Tracking
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800">
-                                LIVE RADAR
-                            </span>
-                        </h1>
-                        <p className="text-xs text-slate-400">
-                            Real-time GPS tracking for active tours and drivers
-                        </p>
-                    </div>
-                </div>
-
-                {/* Quick KPI stats */}
-                <div className="flex items-center gap-2 text-xs">
-                    <div className="bg-slate-800/80 px-3 py-1.5 rounded-md border border-slate-700 flex items-center gap-2">
-                        <span className="text-slate-400">Total Active:</span>
-                        <span className="font-bold text-white text-sm">{totalTours}</span>
-                    </div>
-                    <div className="bg-emerald-950/40 px-3 py-1.5 rounded-md border border-emerald-800/50 flex items-center gap-2 text-emerald-300">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                        <span>Moving:</span>
-                        <span className="font-bold text-sm">{movingCount}</span>
-                    </div>
-                    <div className="bg-blue-950/40 px-3 py-1.5 rounded-md border border-blue-800/50 flex items-center gap-2 text-blue-300">
-                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                        <span>Parked/Idle:</span>
-                        <span className="font-bold text-sm">{stationaryCount}</span>
-                    </div>
-                    {offlineCount > 0 && (
-                        <div className="bg-amber-950/40 px-3 py-1.5 rounded-md border border-amber-800/50 flex items-center gap-2 text-amber-300">
-                            <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Signal Idle:</span>
-                            <span className="font-bold text-sm">{offlineCount}</span>
+            <header className="bg-slate-900 border-b border-slate-800 px-3 sm:px-4 py-2 sm:py-2.5 shrink-0 z-20">
+                <div className="flex items-center justify-between gap-2">
+                    {/* Brand / Title */}
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <div className="p-1.5 sm:p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 shrink-0">
+                            <Radio className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
                         </div>
-                    )}
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                                <h1 className="text-sm sm:text-base font-bold text-white tracking-tight truncate">
+                                    Fleet Live Tracking
+                                </h1>
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 shrink-0">
+                                    LIVE
+                                </span>
+                            </div>
+                            <p className="text-[11px] text-slate-400 hidden sm:block truncate">
+                                Real-time GPS tracking for active tours and drivers
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Mobile Segmented Tab Switch (Map vs Tours List) */}
+                    <div className="flex md:hidden items-center bg-slate-950 p-1 rounded-lg border border-slate-800 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setMobileTab('map')}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+                                mobileTab === 'map'
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'text-slate-400 hover:text-white'
+                            }`}
+                        >
+                            <MapIcon className="w-3.5 h-3.5" />
+                            <span>Map</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMobileTab('list')}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+                                mobileTab === 'list'
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'text-slate-400 hover:text-white'
+                            }`}
+                        >
+                            <ListFilter className="w-3.5 h-3.5" />
+                            <span>Tours</span>
+                            {totalTours > 0 && (
+                                <span className={`text-[10px] px-1 rounded-full ${
+                                    mobileTab === 'list' ? 'bg-emerald-800 text-white' : 'bg-slate-800 text-slate-300'
+                                }`}>
+                                    {totalTours}
+                                </span>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Actions: Refresh & Time */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[11px] text-slate-400 hidden lg:inline">
+                            {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : 'Connecting...'}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => fetchLiveLocations(true)}
+                            disabled={isRefreshing}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition active:scale-95 disabled:opacity-50"
+                            title="Refresh GPS positions"
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-400' : ''}`} />
+                            <span className="hidden sm:inline">Refresh</span>
+                        </button>
+                    </div>
                 </div>
 
-                {/* Refresh and Time Info */}
-                <div className="flex items-center gap-3">
-                    <span className="text-xs text-slate-400 hidden sm:inline">
-                        {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : 'Connecting...'}
+                {/* Filter KPI Chips (Horizontal scrollable on mobile) */}
+                <div className="flex items-center gap-1.5 sm:gap-2 mt-2 pt-2 border-t border-slate-800/80 overflow-x-auto no-scrollbar text-xs">
+                    <span className="text-[11px] font-medium text-slate-400 mr-1 shrink-0 hidden sm:inline">
+                        Filter:
                     </span>
                     <button
-                        onClick={() => fetchLiveLocations(true)}
-                        disabled={isRefreshing}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition"
+                        type="button"
+                        onClick={() => setStatusFilter('all')}
+                        className={`px-2.5 py-1 rounded-full border transition flex items-center gap-1.5 shrink-0 ${
+                            statusFilter === 'all'
+                                ? 'bg-slate-700 border-slate-500 text-white font-bold'
+                                : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800'
+                        }`}
                     >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-400' : ''}`} />
-                        <span>Refresh</span>
+                        <span>All</span>
+                        <span className="px-1.5 py-0.2 bg-slate-900 rounded-full text-[10px] text-white">
+                            {totalTours}
+                        </span>
                     </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setStatusFilter('moving')}
+                        className={`px-2.5 py-1 rounded-full border transition flex items-center gap-1.5 shrink-0 ${
+                            statusFilter === 'moving'
+                                ? 'bg-emerald-950 border-emerald-500 text-emerald-200 font-bold'
+                                : 'bg-emerald-950/40 border-emerald-800/50 text-emerald-300 hover:bg-emerald-950/70'
+                        }`}
+                    >
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                        <span>Moving</span>
+                        <span className="px-1.5 py-0.2 bg-emerald-900 rounded-full text-[10px] font-bold text-emerald-200">
+                            {movingCount}
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setStatusFilter('parked')}
+                        className={`px-2.5 py-1 rounded-full border transition flex items-center gap-1.5 shrink-0 ${
+                            statusFilter === 'parked'
+                                ? 'bg-blue-950 border-blue-500 text-blue-200 font-bold'
+                                : 'bg-blue-950/40 border-blue-800/50 text-blue-300 hover:bg-blue-950/70'
+                        }`}
+                    >
+                        <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+                        <span>Parked</span>
+                        <span className="px-1.5 py-0.2 bg-blue-900 rounded-full text-[10px] font-bold text-blue-200">
+                            {stationaryCount}
+                        </span>
+                    </button>
+
+                    {offlineCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('offline')}
+                            className={`px-2.5 py-1 rounded-full border transition flex items-center gap-1.5 shrink-0 ${
+                                statusFilter === 'offline'
+                                    ? 'bg-amber-950 border-amber-500 text-amber-200 font-bold'
+                                    : 'bg-amber-950/40 border-amber-800/50 text-amber-300 hover:bg-amber-950/70'
+                            }`}
+                        >
+                            <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />
+                            <span>Signal Idle</span>
+                            <span className="px-1.5 py-0.2 bg-amber-900 rounded-full text-[10px] font-bold text-amber-200">
+                                {offlineCount}
+                            </span>
+                        </button>
+                    )}
                 </div>
-            </div>
+            </header>
 
             {/* Error Banner */}
             {error && (
                 <div className="bg-amber-900/60 border-b border-amber-700/60 px-4 py-2 text-xs text-amber-200 flex items-center gap-2 shrink-0">
                     <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{error}</span>
+                    <span className="truncate">{error}</span>
                 </div>
             )}
 
             {/* Main Content Area */}
             <div className="flex-1 flex overflow-hidden relative">
-                {/* Left Tour/Vehicle List Panel */}
-                <div className="w-80 md:w-96 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 z-10">
+                {/* Tour/Vehicle List Panel: Full width on mobile when tab='list', Sidebar on desktop */}
+                <aside className={`
+                    ${mobileTab === 'list' ? 'flex w-full' : 'hidden'}
+                    md:flex md:w-80 lg:w-96 bg-slate-900 border-r border-slate-800 flex-col shrink-0 z-10 h-full overflow-hidden
+                `}>
                     {/* Search Bar */}
-                    <div className="p-3 border-b border-slate-800">
+                    <div className="p-3 border-b border-slate-800 shrink-0">
                         <div className="relative">
                             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
                             <input
                                 type="text"
-                                placeholder="Search vehicle, driver, customer..."
+                                placeholder="Search vehicle, driver, destination..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
                             />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
                         </div>
                     </div>
 
                     {/* Vehicle List */}
-                    <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60">
+                    <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60 touch-pan-y">
                         {isLoading ? (
-                            <div className="p-8 text-center text-xs text-slate-500">
-                                Loading active tours and GPS signals...
+                            <div className="p-8 text-center text-xs text-slate-500 space-y-2">
+                                <RefreshCw className="w-5 h-5 mx-auto animate-spin text-emerald-500" />
+                                <p>Loading active tours and GPS signals...</p>
                             </div>
                         ) : filteredVehicles.length === 0 ? (
                             <div className="p-8 text-center text-slate-500">
-                                <Car className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                                <p className="text-sm font-semibold text-slate-400">No Active Ongoing Tours</p>
-                                <p className="text-xs mt-1">When a driver starts a trip from the mobile app, their vehicle and live radar location will appear here automatically.</p>
+                                <Car className="w-10 h-10 mx-auto mb-2 opacity-30 text-slate-400" />
+                                <p className="text-sm font-semibold text-slate-400">
+                                    {vehicles.length === 0 ? 'No Active Ongoing Tours' : 'No Matching Vehicles'}
+                                </p>
+                                <p className="text-xs mt-1 text-slate-500">
+                                    {vehicles.length === 0 
+                                        ? 'When a driver starts a trip from the mobile app, their vehicle and live radar location will appear here automatically.'
+                                        : 'Try adjusting your search query or filter status above.'}
+                                </p>
+                                {statusFilter !== 'all' && (
+                                    <button
+                                        onClick={() => setStatusFilter('all')}
+                                        className="mt-3 px-3 py-1 bg-slate-800 text-emerald-400 text-xs rounded-md border border-slate-700 hover:bg-slate-700"
+                                    >
+                                        Show All Tours
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             filteredVehicles.map((tour) => {
@@ -187,37 +329,37 @@ export default function LiveTrackingPage() {
                                 return (
                                     <div
                                         key={tour.id}
-                                        onClick={() => setSelectedVehicleId(tour.id)}
-                                        className={`p-3.5 cursor-pointer transition flex flex-col gap-2 ${
+                                        onClick={() => handleSelectVehicle(tour.id)}
+                                        className={`p-3 sm:p-3.5 cursor-pointer transition flex flex-col gap-2 ${
                                             isSelected 
                                                 ? 'bg-slate-800/90 border-l-4 border-amber-400' 
-                                                : 'hover:bg-slate-800/50'
+                                                : 'hover:bg-slate-800/50 active:bg-slate-800/70'
                                         }`}
                                     >
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`p-2 rounded-lg ${
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className={`p-2 rounded-lg shrink-0 ${
                                                     tour.isFresh 
                                                         ? (isMoving ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400')
                                                         : 'bg-slate-800 text-slate-400'
                                                 }`}>
                                                     <Car className="w-4 h-4" />
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-sm text-white flex items-center gap-1.5">
-                                                        {tour.vehicleNo}
-                                                        <span className="text-[10px] font-normal text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-sm text-white flex items-center gap-1.5 truncate">
+                                                        <span>{tour.vehicleNo}</span>
+                                                        <span className="text-[10px] font-normal text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded truncate">
                                                             {tour.vehicleModel || 'Vehicle'}
                                                         </span>
                                                     </div>
-                                                    <div className="text-xs text-slate-300 flex items-center gap-1">
-                                                        <User className="w-3 h-3 text-slate-400" />
-                                                        <span>{tour.driverName}</span>
+                                                    <div className="text-xs text-slate-300 flex items-center gap-1 truncate">
+                                                        <User className="w-3 h-3 text-slate-400 shrink-0" />
+                                                        <span className="truncate">{tour.driverName}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="text-right">
+                                            <div className="text-right shrink-0">
                                                 <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                                     tour.isFresh 
                                                         ? (isMoving ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-blue-950 text-blue-300 border border-blue-800')
@@ -235,25 +377,26 @@ export default function LiveTrackingPage() {
 
                                         <div className="text-xs text-slate-400 space-y-0.5 pl-1">
                                             <div className="truncate">
-                                                <strong className="text-slate-300">Customer:</strong> {tour.customerName}
+                                                <span className="text-slate-500 font-medium">Customer:</span>{' '}
+                                                <span className="text-slate-300">{tour.customerName}</span>
                                             </div>
                                             {tour.destination && (
                                                 <div className="truncate flex items-center gap-1">
                                                     <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-                                                    <span className="truncate">{tour.destination}</span>
+                                                    <span className="truncate text-slate-300">{tour.destination}</span>
                                                 </div>
                                             )}
                                         </div>
 
-                                        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
+                                        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1.5 border-t border-slate-800/80">
                                             <span className="flex items-center gap-1">
-                                                <Clock className="w-3 h-3 text-slate-400" />
+                                                <Clock className="w-3 h-3 text-slate-500" />
                                                 {tour.lastLocationAt
                                                     ? `${Math.round((Date.now() - new Date(tour.lastLocationAt).getTime()) / 1000)}s ago`
                                                     : 'Never synced'}
                                             </span>
-                                            <span className="text-emerald-400 font-medium flex items-center gap-0.5">
-                                                Locate <ChevronRight className="w-3 h-3" />
+                                            <span className="text-emerald-400 font-semibold flex items-center gap-0.5 text-xs">
+                                                View on Map <ChevronRight className="w-3.5 h-3.5" />
                                             </span>
                                         </div>
                                     </div>
@@ -262,80 +405,125 @@ export default function LiveTrackingPage() {
                         )}
                     </div>
 
-                    {/* Bottom Status Help */}
-                    <div className="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
-                        <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                            <span>Green: Moving (20s GPS interval)</span>
+                    {/* Bottom Status / Legend */}
+                    <div className="p-2.5 sm:p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex flex-wrap gap-x-4 gap-y-1 shrink-0">
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                            <span>Green: Moving (20s GPS)</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                            <span>Blue: Parked/Stationary (60s GPS interval)</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-blue-500" />
+                            <span>Blue: Parked (60s GPS)</span>
                         </div>
                     </div>
-                </div>
+                </aside>
 
-                {/* Center / Fullscreen Map */}
-                <div className="flex-1 h-full relative">
+                {/* Center / Fullscreen Map Area: Visible when tab='map' on mobile, always on desktop */}
+                <main className={`
+                    ${mobileTab === 'map' ? 'flex flex-1' : 'hidden md:flex md:flex-1'}
+                    h-full relative overflow-hidden
+                `}>
                     <FleetLiveMap
                         vehicles={filteredVehicles}
                         selectedVehicleId={selectedVehicleId}
                         onSelectVehicle={(id) => setSelectedVehicleId(id)}
+                        fitAllTrigger={fitAllTrigger}
                     />
 
-                    {/* Float Tour Info Card if selected */}
+                    {/* Mobile Floating Action Button: Quick view list */}
+                    <div className="md:hidden absolute top-3 left-3 z-[900]">
+                        <button
+                            type="button"
+                            onClick={() => setMobileTab('list')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/90 text-white rounded-full border border-slate-700 shadow-xl backdrop-blur text-xs font-semibold active:scale-95 transition"
+                        >
+                            <ListFilter className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Tours ({filteredVehicles.length})</span>
+                        </button>
+                    </div>
+
+                    {/* Responsive Selected Tour Info: Mobile Bottom Sheet / Desktop Floating Card */}
                     {selectedVehicle && (
-                        <div className="absolute top-4 right-4 z-[1000] w-80 bg-slate-900/95 backdrop-blur border border-slate-700/80 rounded-xl p-4 shadow-2xl text-slate-200">
-                            <div className="flex items-start justify-between border-b border-slate-800 pb-2 mb-3">
+                        <div className={`
+                            fixed bottom-0 inset-x-0 z-[1000] bg-slate-900/95 backdrop-blur-md border-t border-slate-700/80 rounded-t-2xl p-4 shadow-2xl max-h-[75vh] overflow-y-auto
+                            md:absolute md:top-4 md:right-4 md:bottom-auto md:inset-x-auto md:w-80 md:rounded-xl md:border md:border-slate-700/80 md:p-4 md:max-h-none
+                            text-slate-200 transition-all
+                        `}>
+                            {/* Mobile Drag Handle */}
+                            <div 
+                                className="w-12 h-1 bg-slate-600 rounded-full mx-auto mb-3 md:hidden cursor-pointer"
+                                onClick={() => setSelectedVehicleId(null)}
+                            />
+
+                            {/* Header */}
+                            <div className="flex items-start justify-between border-b border-slate-800 pb-2.5 mb-3">
                                 <div>
                                     <div className="text-base font-bold text-white flex items-center gap-2">
-                                        {selectedVehicle.vehicleNo}
-                                        <span className="text-xs font-normal text-slate-400">
-                                            {selectedVehicle.vehicleModel}
+                                        <span>{selectedVehicle.vehicleNo}</span>
+                                        <span className="text-xs font-normal text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
+                                            {selectedVehicle.vehicleModel || 'Vehicle'}
                                         </span>
                                     </div>
-                                    <div className="text-xs text-emerald-400 font-medium">
-                                        ● Tour in Progress
+                                    <div className="text-xs text-emerald-400 font-medium flex items-center gap-1.5 mt-0.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                        <span>Tour in Progress</span>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setSelectedVehicleId(null)}
-                                    className="text-slate-400 hover:text-white text-xs bg-slate-800 px-2 py-1 rounded"
+                                    className="text-slate-400 hover:text-white text-xs bg-slate-800 hover:bg-slate-700 p-1.5 rounded-lg transition"
+                                    title="Close details"
                                 >
-                                    ✕
+                                    <X className="w-4 h-4" />
                                 </button>
                             </div>
 
-                            <div className="space-y-2 text-xs">
+                            {/* Details List */}
+                            <div className="space-y-2.5 text-xs">
                                 <div>
-                                    <span className="text-slate-400">Driver:</span>
-                                    <div className="font-semibold text-white">{selectedVehicle.driverName}</div>
+                                    <span className="text-slate-400 text-[11px]">DRIVER</span>
+                                    <div className="font-semibold text-white text-sm flex items-center gap-1.5 mt-0.5">
+                                        <User className="w-3.5 h-3.5 text-slate-400" />
+                                        <span>{selectedVehicle.driverName}</span>
+                                    </div>
                                 </div>
+
                                 <div>
-                                    <span className="text-slate-400">Customer:</span>
-                                    <div className="font-semibold text-white">{selectedVehicle.customerName}</div>
+                                    <span className="text-slate-400 text-[11px]">CUSTOMER</span>
+                                    <div className="font-semibold text-white mt-0.5">{selectedVehicle.customerName}</div>
                                 </div>
+
                                 {selectedVehicle.pickupLocation && (
                                     <div>
-                                        <span className="text-slate-400">Pickup:</span>
-                                        <div className="text-white truncate">{selectedVehicle.pickupLocation}</div>
-                                    </div>
-                                )}
-                                {selectedVehicle.destination && (
-                                    <div>
-                                        <span className="text-slate-400">Destination:</span>
-                                        <div className="text-white truncate">{selectedVehicle.destination}</div>
-                                    </div>
-                                )}
-                                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
-                                    <div className="bg-slate-950 p-2 rounded">
-                                        <div className="text-slate-400 text-[10px]">CURRENT SPEED</div>
-                                        <div className="text-base font-bold text-emerald-400">
-                                            {Math.round(selectedVehicle.speed)} <span className="text-xs font-normal">km/h</span>
+                                        <span className="text-slate-400 text-[11px]">PICKUP</span>
+                                        <div className="text-slate-200 truncate mt-0.5 flex items-center gap-1">
+                                            <Compass className="w-3 h-3 text-blue-400 shrink-0" />
+                                            <span className="truncate">{selectedVehicle.pickupLocation}</span>
                                         </div>
                                     </div>
-                                    <div className="bg-slate-950 p-2 rounded">
-                                        <div className="text-slate-400 text-[10px]">LAST PING</div>
+                                )}
+
+                                {selectedVehicle.destination && (
+                                    <div>
+                                        <span className="text-slate-400 text-[11px]">DESTINATION</span>
+                                        <div className="text-slate-200 truncate mt-0.5 flex items-center gap-1">
+                                            <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                                            <span className="truncate">{selectedVehicle.destination}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Speed & Last Ping Card */}
+                                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                                    <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80">
+                                        <div className="text-slate-400 text-[10px] font-semibold tracking-wider">CURRENT SPEED</div>
+                                        <div className="text-lg font-black text-emerald-400 mt-0.5">
+                                            {Math.round(selectedVehicle.speed)}{' '}
+                                            <span className="text-xs font-normal text-slate-400">km/h</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80">
+                                        <div className="text-slate-400 text-[10px] font-semibold tracking-wider">LAST GPS PING</div>
                                         <div className="text-xs font-semibold text-slate-200 mt-1">
                                             {selectedVehicle.lastLocationAt 
                                                 ? `${Math.round((Date.now() - new Date(selectedVehicle.lastLocationAt).getTime()) / 1000)}s ago`
@@ -343,10 +531,25 @@ export default function LiveTrackingPage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* External Navigation / Actions */}
+                                {selectedVehicle.lat !== null && selectedVehicle.lon !== null && (
+                                    <div className="pt-2">
+                                        <a
+                                            href={`https://www.google.com/maps?q=${selectedVehicle.lat},${selectedVehicle.lon}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                                            <span>Open in Google Maps</span>
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
-                </div>
+                </main>
             </div>
         </div>
     );
