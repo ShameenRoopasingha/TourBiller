@@ -44,7 +44,9 @@ export async function POST(req: Request) {
                     id: user.id,
                     name: user.name,
                     email: user.email,
-                    companyName: user.company.companyName
+                    companyId: user.company?.id,
+                    companyName: user.company?.companyName || 'Transport Company',
+                    companyLogoUrl: user.company?.logoUrl || null,
                 }
             }
         });

@@ -55,6 +55,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         const booking = await prisma.booking.findUnique({
             where: { id: bookingId },
             include: {
+                company: {
+                    select: {
+                        id: true,
+                        companyName: true,
+                        logoUrl: true,
+                        phone: true,
+                    }
+                },
                 tripActivities: {
                     orderBy: { timestamp: 'desc' }
                 },

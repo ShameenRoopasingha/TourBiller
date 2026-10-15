@@ -42,21 +42,44 @@ export async function GET(req: Request) {
         }
         
         // Find assigned tours for this driver
-        const tours = await prisma.booking.findMany({
-            where: {
-                driverId: driverId,
-                status: {
-                    in: ['CONFIRMED', 'PENDING', 'ONGOING'] // Ongoing or upcoming
+        const [tours, driverUser] = await Promise.all([
+            prisma.booking.findMany({
+                where: {
+                    driverId: driverId,
+                    status: {
+                        in: ['CONFIRMED', 'PENDING', 'ONGOING'] // Ongoing or upcoming
+                    }
+                },
+                orderBy: {
+                    startDate: 'asc'
                 }
-            },
-            orderBy: {
-                startDate: 'asc'
-            }
-        });
+            }),
+            prisma.user.findUnique({
+                where: { id: driverId },
+                include: {
+                    company: {
+                        select: {
+                            id: true,
+                            companyName: true,
+                            logoUrl: true,
+                            phone: true,
+                        }
+                    }
+                }
+            })
+        ]);
 
         return NextResponse.json({
             success: true,
-            data: tours
+            data: tours,
+            driver: driverUser ? {
+                id: driverUser.id,
+                name: driverUser.name,
+                email: driverUser.email,
+                companyId: driverUser.company?.id,
+                companyName: driverUser.company?.companyName || 'Transport Company',
+                companyLogoUrl: driverUser.company?.logoUrl || null,
+            } : null
         });
     } catch (error) {
         console.error('Driver tours error:', error);
