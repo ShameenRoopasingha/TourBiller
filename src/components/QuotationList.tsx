@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye, User } from 'lucide-react';
+import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye, User, CheckCircle2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
 import { notify } from '@/lib/notifications';
 import { ConvertQuotationDialog } from '@/components/ConvertQuotationDialog';
@@ -75,6 +75,7 @@ const STATUS_COLORS: Record<string, string> = {
     DRAFT: 'bg-muted text-muted-foreground border-border',
     SENT: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
     ACCEPTED: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
+    CONVERTED: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-semibold',
     EXPIRED: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
 };
 
@@ -316,6 +317,19 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                                                             </Button>
                                                         }
                                                     />
+                                                )}
+
+                                                {q.status === 'CONVERTED' && (
+                                                    <Link href="/bookings">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            title="Converted to Booking (View in Bookings)"
+                                                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                        >
+                                                            <CheckCircle2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </Link>
                                                 )}
 
                                                 <AlertDialog>

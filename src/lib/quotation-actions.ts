@@ -432,7 +432,7 @@ export async function updateQuotationStatus(
             return { success: false, error: authCheck.error };
         }
 
-        const validStatuses = ['DRAFT', 'SENT', 'ACCEPTED', 'EXPIRED'];
+        const validStatuses = ['DRAFT', 'SENT', 'ACCEPTED', 'CONVERTED', 'EXPIRED'];
         if (!validStatuses.includes(status)) {
             return { success: false, error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` };
         }
@@ -535,6 +535,9 @@ export async function convertQuotationToBooking(
         if (!quotation) {
             throw new Error('Quotation not found');
         }
+        if (quotation.status === 'CONVERTED') {
+            throw new Error('This quotation has already been converted to a booking.');
+        }
         if (quotation.status !== 'ACCEPTED') {
             throw new Error('Quotation must be accepted before it can be converted to a booking');
         }
@@ -558,7 +561,11 @@ export async function convertQuotationToBooking(
             select: { id: true },
         });
         if (existingBooking) {
-            return { success: true, data: existingBooking.id };
+            await prisma.quotation.updateMany({
+                where: { id: quotationId, companyId: authCheck.companyId },
+                data: { status: 'CONVERTED' },
+            });
+            throw new Error('This quotation has already been converted to a booking.');
         }
 
         let tourScheduleName = '';
@@ -623,7 +630,11 @@ export async function convertQuotationToBooking(
                 select: { id: true },
             });
             if (existingBooking) {
-                return existingBooking.id;
+                await tx.quotation.updateMany({
+                    where: { id: quotationId, companyId: authCheck.companyId },
+                    data: { status: 'CONVERTED' },
+                });
+                throw new Error('This quotation has already been converted to a booking.');
             }
 
             if (
@@ -665,7 +676,7 @@ export async function convertQuotationToBooking(
             await tx.quotation.updateMany({
                 where: { id: quotationId, companyId: authCheck.companyId },
                 data: {
-                    status: 'ACCEPTED',
+                    status: 'CONVERTED',
                     driverId: finalDriverId,
                 },
             });

@@ -243,7 +243,8 @@ export function QuotationTemplate({
                             Date: {new Date(quotation.createdAt).toLocaleDateString('en-GB')}
                         </div>
                         <div className="mt-1">
-                            <span className={`font-bold border px-2.5 py-1 text-xs uppercase rounded-sm ${quotation.status === 'ACCEPTED' ? 'border-green-600 text-green-700' :
+                            <span className={`font-bold border px-2.5 py-1 text-xs uppercase rounded-sm ${quotation.status === 'CONVERTED' ? 'border-emerald-600 text-emerald-700 bg-emerald-50' :
+                                quotation.status === 'ACCEPTED' ? 'border-green-600 text-green-700' :
                                 quotation.status === 'SENT' ? 'border-blue-600 text-blue-700' :
                                     quotation.status === 'EXPIRED' ? 'border-red-600 text-red-700' :
                                         'border-black text-black'
