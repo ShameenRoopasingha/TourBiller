@@ -123,6 +123,35 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             }));
         }
 
+        // Try to find customer phone / email from Customer or Quotation
+        let customerPhone: string | null = null;
+        let customerEmail: string | null = null;
+
+        const customer = await prisma.customer.findFirst({
+            where: {
+                companyId: booking.companyId,
+                name: booking.customerName,
+            },
+            select: {
+                mobile: true,
+                email: true,
+            }
+        });
+
+        if (customer) {
+            customerPhone = customer.mobile;
+            customerEmail = customer.email;
+        }
+
+        if (quotation) {
+            if (!customerPhone && quotation.customerPhone) {
+                customerPhone = quotation.customerPhone;
+            }
+            if (!customerEmail && quotation.customerEmail) {
+                customerEmail = quotation.customerEmail;
+            }
+        }
+
         // Build navigation target: prefer dropLocation, then destination, then pickup
         const primaryDestination = booking.dropLocation || booking.destination || booking.pickupLocation || '';
         const googleMapsNavUrl = primaryDestination
@@ -136,6 +165,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             success: true,
             data: {
                 ...booking,
+                customerPhone,
+                customerEmail,
                 vehicle,
                 itineraryDays,
                 navigation: {

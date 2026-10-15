@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { getQuotationById } from '@/lib/quotation-actions';
+import { getDrivers } from '@/lib/user-actions';
 import { formatCurrency } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ConvertQuotationDialog } from '@/components/ConvertQuotationDialog';
 import Link from 'next/link';
 import {
     Printer,
@@ -81,13 +83,17 @@ function extractRouteStops(quotation: {
 export default async function ViewQuotationPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const session = await auth();
-    const result = await getQuotationById(id);
+    const [result, driversResult] = await Promise.all([
+        getQuotationById(id),
+        getDrivers(),
+    ]);
 
     if (!result.success || !result.data) {
         notFound();
     }
 
     const q = result.data;
+    const drivers = driversResult.success && driversResult.data ? driversResult.data : [];
     const fmt = formatCurrency;
 
     const tourSchedule = q.tourSchedule || {
@@ -170,6 +176,12 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                 </div>
 
                 <div className="flex flex-wrap gap-2">
+                    {q.status === 'ACCEPTED' && (
+                        <ConvertQuotationDialog
+                            quotation={q}
+                            drivers={drivers}
+                        />
+                    )}
                     <Link href={`/quotations/${q.id}/edit`}>
                         <Button variant="outline">
                             <Pencil className="h-4 w-4 mr-2" /> Edit

@@ -1,14 +1,19 @@
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import { getQuotations } from '@/lib/quotation-actions';
+import { getDrivers } from '@/lib/user-actions';
 import { QuotationList } from '@/components/QuotationList';
 
 export const dynamic = 'force-dynamic';
 
 async function QuotationsList() {
-    const result = await getQuotations();
-    const quotations = result.success && result.data ? result.data : [];
-    return <QuotationList quotations={quotations} />;
+    const [quotationsResult, driversResult] = await Promise.all([
+        getQuotations(),
+        getDrivers(),
+    ]);
+    const quotations = quotationsResult.success && quotationsResult.data ? quotationsResult.data : [];
+    const drivers = driversResult.success && driversResult.data ? driversResult.data : [];
+    return <QuotationList quotations={quotations} drivers={drivers} />;
 }
 
 export default function QuotationsPage() {

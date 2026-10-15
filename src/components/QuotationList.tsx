@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye, User } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
 import { notify } from '@/lib/notifications';
+import { ConvertQuotationDialog } from '@/components/ConvertQuotationDialog';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,6 +64,11 @@ interface QuotationRow {
 
 interface QuotationListProps {
     quotations: QuotationRow[];
+    drivers?: {
+        id: string;
+        name: string;
+        email?: string | null;
+    }[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -77,7 +83,7 @@ const NEXT_STATUS: Record<string, string> = {
     SENT: 'ACCEPTED',
 };
 
-export function QuotationList({ quotations }: QuotationListProps) {
+export function QuotationList({ quotations, drivers = [] }: QuotationListProps) {
     const router = useRouter();
     const [search, setSearch] = useState('');
     const [updating, setUpdating] = useState<string | null>(null);
@@ -296,36 +302,20 @@ export function QuotationList({ quotations }: QuotationListProps) {
                                                 )}
 
                                                 {q.status === 'ACCEPTED' && (
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
+                                                    <ConvertQuotationDialog
+                                                        quotation={q}
+                                                        drivers={drivers}
+                                                        trigger={
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                disabled={converting === q.id || updating === q.id}
-                                                                title="Convert to Booking"
+                                                                title="Convert to Booking (Assign Driver)"
                                                                 className="text-green-600 hover:text-green-700 hover:bg-green-50"
                                                             >
                                                                 <ArrowRightLeft className="h-4 w-4" />
                                                             </Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>Convert to Booking</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    Are you sure you want to convert this quotation into a confirmed booking?
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction
-                                                                    className="bg-green-600 hover:bg-green-700"
-                                                                    onClick={() => executeConvertToBooking(q.id)}
-                                                                >
-                                                                    Convert to Booking
-                                                                </AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
+                                                        }
+                                                    />
                                                 )}
 
                                                 <AlertDialog>

@@ -94,10 +94,18 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                                         <div className="text-sm text-muted-foreground">
                                             Customer: <span className="font-medium text-foreground">{booking.customerName}</span>
                                         </div>
-                                        {booking.driver && (
+                                        {booking.driver ? (
                                             <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                                                 <User className="w-3.5 h-3.5 text-primary" />
                                                 <span>Driver: <strong className="text-foreground">{booking.driver.name}</strong></span>
+                                            </div>
+                                        ) : (
+                                            <div className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                                <User className="w-3.5 h-3.5" />
+                                                <span className="font-medium">No Driver Assigned</span>
+                                                <Link href={`/bookings/${booking.id}`} className="underline text-[11px] font-semibold text-primary hover:opacity-80 ml-1">
+                                                    (Assign Driver)
+                                                </Link>
                                             </div>
                                         )}
                                         <div className="flex gap-4 text-xs text-muted-foreground mt-1">
