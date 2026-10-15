@@ -72,6 +72,69 @@ export function ArcSpinnerNavbar() {
   const velocityRef = useRef(0);
   const lastTimeRef = useRef(0);
   const animProxyRef = useRef({ offset: 0 });
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const lastStepRef = useRef(0);
+
+  // Initialize or resume Web Audio Context on user interaction
+  const initAudio = useCallback(() => {
+    try {
+      if (!audioCtxRef.current && typeof window !== 'undefined') {
+        const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtxRef.current = new AudioContextClass();
+        }
+      }
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
+    } catch {
+      // Ignore audio init restrictions
+    }
+  }, []);
+
+  // Crisp mechanical tactile click sound (tik-tik)
+  const playTickSound = useCallback(() => {
+    try {
+      initAudio();
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      // High crisp mechanical tick
+      osc.type = 'triangle';
+      const now = ctx.currentTime;
+      osc.frequency.setValueAtTime(1600, now);
+      osc.frequency.exponentialRampToValueAtTime(450, now + 0.014);
+
+      // Short sharp click envelope
+      gain.gain.setValueAtTime(0.09, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.014);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.016);
+    } catch {
+      // Silently ignore if audio context is blocked
+    }
+  }, [initAudio]);
+
+  // Update step, active index, play sound and haptic vibration
+  const updateActiveStep = useCallback((offset: number) => {
+    const currentStep = Math.round(-offset / ANGLE_STEP);
+    if (currentStep !== lastStepRef.current) {
+      lastStepRef.current = currentStep;
+      const wrappedIdx = ((currentStep % TOTAL_ITEMS) + TOTAL_ITEMS) % TOTAL_ITEMS;
+      setActiveIndex(wrappedIdx);
+      playTickSound();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(8);
+      }
+    }
+  }, [ANGLE_STEP, TOTAL_ITEMS, playTickSound]);
 
   useEffect(() => {
     setMounted(true);
@@ -89,6 +152,7 @@ export function ArcSpinnerNavbar() {
         if (diffSteps < -TOTAL_ITEMS / 2) diffSteps += TOTAL_ITEMS;
 
         const targetOffset = -(currentStep + diffSteps) * ANGLE_STEP;
+        lastStepRef.current = Math.round(-targetOffset / ANGLE_STEP);
         animProxyRef.current.offset = targetOffset;
         setRotationOffset(targetOffset);
         setActiveIndex(currentIdx);
@@ -167,6 +231,7 @@ export function ArcSpinnerNavbar() {
 
   // Drag Start (Touch / Mouse)
   const handlePointerDown = (clientX: number, clientY: number) => {
+    initAudio();
     isDraggingRef.current = true;
     const currentAngle = getAngleFromEvent(clientX, clientY);
     startTouchAngleRef.current = currentAngle;
@@ -174,6 +239,7 @@ export function ArcSpinnerNavbar() {
     lastAngleRef.current = currentAngle;
     lastTimeRef.current = performance.now();
     velocityRef.current = 0;
+    lastStepRef.current = Math.round(-rotationOffset / ANGLE_STEP);
     gsap.killTweensOf(animProxyRef.current);
   };
 
@@ -199,16 +265,7 @@ export function ArcSpinnerNavbar() {
 
     animProxyRef.current.offset = newOffset;
     setRotationOffset(newOffset);
-
-    // Continuous Infinite Modulo Index
-    const stepCount = Math.round(-newOffset / ANGLE_STEP);
-    const wrappedIdx = ((stepCount % TOTAL_ITEMS) + TOTAL_ITEMS) % TOTAL_ITEMS;
-    if (wrappedIdx !== activeIndex) {
-      setActiveIndex(wrappedIdx);
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(8);
-      }
-    }
+    updateActiveStep(newOffset);
   };
 
   // Drag End (Infinite Spin Inertia & Snap to nearest item)
@@ -224,15 +281,13 @@ export function ArcSpinnerNavbar() {
     const targetStep = Math.round(-projectedOffset / ANGLE_STEP);
     const finalTargetOffset = -targetStep * ANGLE_STEP;
 
-    const targetIdx = ((targetStep % TOTAL_ITEMS) + TOTAL_ITEMS) % TOTAL_ITEMS;
-    setActiveIndex(targetIdx);
-
     gsap.to(animProxyRef.current, {
       offset: finalTargetOffset,
       duration: 0.6,
       ease: 'power3.out',
       onUpdate: () => {
         setRotationOffset(animProxyRef.current.offset);
+        updateActiveStep(animProxyRef.current.offset);
       },
     });
   };
@@ -240,37 +295,42 @@ export function ArcSpinnerNavbar() {
   // Mouse wheel rotation support
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
+    initAudio();
     const deltaSteps = e.deltaY > 0 ? 1 : -1;
     const currentStep = Math.round(-rotationOffset / ANGLE_STEP);
     const nextStep = currentStep + deltaSteps;
     const targetOffset = -nextStep * ANGLE_STEP;
-    const targetIdx = ((nextStep % TOTAL_ITEMS) + TOTAL_ITEMS) % TOTAL_ITEMS;
 
-    setActiveIndex(targetIdx);
     gsap.killTweensOf(animProxyRef.current);
     gsap.to(animProxyRef.current, {
       offset: targetOffset,
       duration: 0.35,
       ease: 'power2.out',
-      onUpdate: () => setRotationOffset(animProxyRef.current.offset),
+      onUpdate: () => {
+        setRotationOffset(animProxyRef.current.offset);
+        updateActiveStep(animProxyRef.current.offset);
+      },
     });
   };
 
   // Snap directly to an item along the shortest circular path when clicked
   const handleItemClick = (idx: number, href: string) => {
+    initAudio();
     // Compute current angular distance of this item from focal point
     let diff = (idx * ANGLE_STEP + animProxyRef.current.offset) % 360;
     if (diff > 180) diff -= 360;
     if (diff < -180) diff += 360;
 
     const targetOffset = animProxyRef.current.offset - diff;
-    setActiveIndex(idx);
 
     gsap.to(animProxyRef.current, {
       offset: targetOffset,
       duration: 0.35,
       ease: 'power3.out',
-      onUpdate: () => setRotationOffset(animProxyRef.current.offset),
+      onUpdate: () => {
+        setRotationOffset(animProxyRef.current.offset);
+        updateActiveStep(animProxyRef.current.offset);
+      },
       onComplete: () => {
         closeMenu(() => {
           router.push(href);
@@ -285,7 +345,10 @@ export function ArcSpinnerNavbar() {
       <div className="md:hidden flex items-center">
         <button
           type="button"
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            initAudio();
+            setIsOpen(true);
+          }}
           className="relative size-9 rounded-full flex items-center justify-center border border-border bg-card/80 hover:bg-card text-foreground shadow-sm active:scale-90 transition-all shrink-0"
           aria-label="Open Navigation Dial"
         >
