@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import gsap from 'gsap';
 import {
   LayoutDashboard,
@@ -14,7 +15,6 @@ import {
   FileCheck,
   BarChart3,
   Settings,
-  Compass,
   PanelLeft,
   X,
   ChevronRight
@@ -25,30 +25,34 @@ interface ArcItem {
   name: string;
   href: string;
   icon: React.ElementType;
-  color: string;
+  lightColor: string;
+  darkColor: string;
   badge?: string;
 }
 
 const ARC_NAV_ITEMS: ArcItem[] = [
-  { id: 'dashboard', name: 'Dashboard', href: '/', icon: LayoutDashboard, color: '#38bdf8' },
-  { id: 'tracking', name: 'Live Radar', href: '/live-tracking', icon: Radio, color: '#10b981', badge: 'LIVE' },
-  { id: 'vehicles', name: 'Fleet Vehicles', href: '/vehicles', icon: Car, color: '#f59e0b' },
-  { id: 'bookings', name: 'Tour Bookings', href: '/bookings', icon: CalendarDays, color: '#6366f1' },
-  { id: 'calendar', name: 'Calendar View', href: '/calendar', icon: CalendarRange, color: '#ec4899' },
-  { id: 'customers', name: 'Customers', href: '/customers', icon: Users, color: '#06b6d4' },
-  { id: 'quotations', name: 'Quotations', href: '/quotations', icon: FileCheck, color: '#8b5cf6' },
-  { id: 'reports', name: 'Reports', href: '/reports', icon: BarChart3, color: '#14b8a6' },
-  { id: 'settings', name: 'Settings', href: '/settings', icon: Settings, color: '#94a3b8' },
+  { id: 'dashboard', name: 'Dashboard', href: '/', icon: LayoutDashboard, lightColor: '#0284c7', darkColor: '#38bdf8' },
+  { id: 'tracking', name: 'Live Radar', href: '/live-tracking', icon: Radio, lightColor: '#059669', darkColor: '#10b981', badge: 'LIVE' },
+  { id: 'vehicles', name: 'Fleet Vehicles', href: '/vehicles', icon: Car, lightColor: '#d97706', darkColor: '#fbbf24' },
+  { id: 'bookings', name: 'Tour Bookings', href: '/bookings', icon: CalendarDays, lightColor: '#4f46e5', darkColor: '#818cf8' },
+  { id: 'calendar', name: 'Calendar View', href: '/calendar', icon: CalendarRange, lightColor: '#db2777', darkColor: '#f472b6' },
+  { id: 'customers', name: 'Customers', href: '/customers', icon: Users, lightColor: '#0891b2', darkColor: '#22d3ee' },
+  { id: 'quotations', name: 'Quotations', href: '/quotations', icon: FileCheck, lightColor: '#7c3aed', darkColor: '#a78bfa' },
+  { id: 'reports', name: 'Reports', href: '/reports', icon: BarChart3, lightColor: '#0d9488', darkColor: '#2dd4bf' },
+  { id: 'settings', name: 'Settings', href: '/settings', icon: Settings, lightColor: '#475569', darkColor: '#94a3b8' },
 ];
 
 export function ArcSpinnerNavbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { resolvedTheme } = useTheme();
 
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [rotationOffset, setRotationOffset] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const isDark = resolvedTheme === 'dark';
 
   // Constants for Quarter Circle Geometry
   const CONTAINER_SIZE = 320; // 320px x 320px quarter circle
@@ -146,7 +150,6 @@ export function ArcSpinnerNavbar() {
 
     const dx = clientX - cornerX;
     const dy = clientY - cornerY;
-    // atan2 returns radians from -PI to PI
     let deg = Math.atan2(dy, dx) * (180 / Math.PI);
     if (deg < 0) deg += 360;
     return deg;
@@ -248,11 +251,11 @@ export function ArcSpinnerNavbar() {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="relative size-9 rounded-full flex items-center justify-center border border-border bg-card/60 hover:bg-card text-foreground shadow-sm active:scale-90 transition-all shrink-0"
+          className="relative size-9 rounded-full flex items-center justify-center border border-border bg-card/80 hover:bg-card text-foreground shadow-sm active:scale-90 transition-all shrink-0"
           aria-label="Open Navigation Dial"
         >
-          <PanelLeft className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <PanelLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
         </button>
       </div>
 
@@ -263,7 +266,9 @@ export function ArcSpinnerNavbar() {
           <div
             ref={backdropRef}
             onClick={closeMenu}
-            className="absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity"
+            className={`absolute inset-0 transition-opacity ${
+              isDark ? 'bg-black/75 backdrop-blur-md' : 'bg-slate-900/40 backdrop-blur-md'
+            }`}
           />
 
           {/* Interactive Quarter-Circle Arc Container */}
@@ -272,10 +277,18 @@ export function ArcSpinnerNavbar() {
             className="absolute top-0 right-0 w-[320px] h-[320px] overflow-visible"
             style={{
               borderBottomLeftRadius: '100%',
-              background: 'radial-gradient(circle at top right, rgba(15, 23, 42, 0.98) 0%, rgba(2, 6, 23, 0.96) 75%, rgba(6, 78, 59, 0.25) 100%)',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(16, 185, 129, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.05)',
-              borderLeft: '1.5px solid rgba(16, 185, 129, 0.3)',
-              borderBottom: '1.5px solid rgba(16, 185, 129, 0.3)',
+              background: isDark
+                ? 'radial-gradient(circle at top right, rgba(15, 23, 42, 0.98) 0%, rgba(2, 6, 23, 0.96) 75%, rgba(6, 78, 59, 0.25) 100%)'
+                : 'radial-gradient(circle at top right, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.97) 75%, rgba(209, 250, 229, 0.5) 100%)',
+              boxShadow: isDark
+                ? '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(16, 185, 129, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.05)'
+                : '0 20px 45px rgba(15, 23, 42, 0.18), 0 0 25px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.9)',
+              borderLeft: isDark
+                ? '1.5px solid rgba(16, 185, 129, 0.3)'
+                : '1.5px solid rgba(16, 185, 129, 0.4)',
+              borderBottom: isDark
+                ? '1.5px solid rgba(16, 185, 129, 0.3)'
+                : '1.5px solid rgba(16, 185, 129, 0.4)',
             }}
             onTouchStart={(e) => handlePointerDown(e.touches[0].clientX, e.touches[0].clientY)}
             onTouchMove={(e) => handlePointerMove(e.touches[0].clientX, e.touches[0].clientY)}
@@ -303,7 +316,7 @@ export function ArcSpinnerNavbar() {
                 cy="0"
                 r="150"
                 fill="none"
-                stroke="rgba(255, 255, 255, 0.08)"
+                stroke={isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.08)'}
                 strokeWidth="1"
               />
               <defs>
@@ -317,16 +330,28 @@ export function ArcSpinnerNavbar() {
             {/* Corner Hub: Close Button & Brand */}
             <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
               <div className="flex flex-col items-end mr-1 pointer-events-none">
-                <span className="text-[10px] font-black tracking-widest text-emerald-400 uppercase">VIGIL DIAL</span>
-                <span className="text-[9px] text-slate-400 font-semibold">Spin along arc</span>
+                <span className={`text-[10px] font-black tracking-widest uppercase ${
+                  isDark ? 'text-emerald-400' : 'text-emerald-600'
+                }`}>
+                  VIGIL DIAL
+                </span>
+                <span className={`text-[9px] font-semibold ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}>
+                  Spin along arc
+                </span>
               </div>
               <button
                 type="button"
                 onClick={closeMenu}
-                className="w-10 h-10 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform border ${
+                  isDark
+                    ? 'bg-slate-800/90 hover:bg-slate-700 border-slate-700 text-slate-200'
+                    : 'bg-white/95 hover:bg-slate-100 border-slate-200 text-slate-700 shadow-slate-200/50'
+                }`}
                 aria-label="Close"
               >
-                <X className="w-5 h-5 text-emerald-400" />
+                <X className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
               </button>
             </div>
 
@@ -339,8 +364,8 @@ export function ArcSpinnerNavbar() {
                 width: '36px',
                 height: '36px',
                 borderRadius: '9999px',
-                border: '2px solid rgba(16, 185, 129, 0.7)',
-                boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)',
+                border: isDark ? '2px solid rgba(16, 185, 129, 0.7)' : '2px solid rgba(16, 185, 129, 0.85)',
+                boxShadow: isDark ? '0 0 15px rgba(16, 185, 129, 0.4)' : '0 0 15px rgba(16, 185, 129, 0.3)',
               }}
             />
 
@@ -365,6 +390,7 @@ export function ArcSpinnerNavbar() {
 
               const Icon = item.icon;
               const isActiveRoute = pathname === item.href;
+              const itemColor = isDark ? item.darkColor : item.lightColor;
 
               return (
                 <div
@@ -391,18 +417,22 @@ export function ArcSpinnerNavbar() {
                       isFocused
                         ? 'bg-emerald-500 text-white border-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.6)]'
                         : isActiveRoute
-                        ? 'bg-slate-800 text-emerald-400 border-emerald-500/50'
-                        : 'bg-slate-900/90 text-slate-300 border-slate-700/80 hover:bg-slate-800'
+                        ? isDark
+                          ? 'bg-slate-800 text-emerald-400 border-emerald-500/50'
+                          : 'bg-emerald-50 text-emerald-700 border-emerald-400 shadow-sm'
+                        : isDark
+                        ? 'bg-slate-900/90 text-slate-300 border-slate-700/80 hover:bg-slate-800'
+                        : 'bg-white text-slate-700 border-slate-200/90 shadow-md hover:bg-slate-50'
                     }`}
                     style={{
-                      // Counter-rotation to keep the icon upright at all times
-                      transform: `rotate(${-angleDeg + 90}deg)`,
+                      // Keep icon and card strictly upright & level with screen
+                      transform: 'none',
                     }}
                   >
-                    <Icon className="w-5 h-5" style={{ color: isFocused ? '#ffffff' : item.color }} />
+                    <Icon className="w-5 h-5" style={{ color: isFocused ? '#ffffff' : itemColor }} />
 
                     {item.badge && (
-                      <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.2 bg-emerald-500 text-slate-950 font-black text-[9px] rounded-full shadow-sm">
+                      <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.2 bg-emerald-500 text-white font-black text-[9px] rounded-full shadow-sm">
                         {item.badge}
                       </span>
                     )}
@@ -425,25 +455,35 @@ export function ArcSpinnerNavbar() {
                     closeMenu();
                     router.push(ARC_NAV_ITEMS[activeIndex].href);
                   }}
-                  className="bg-slate-900/95 backdrop-blur-xl border border-emerald-500/40 rounded-2xl p-3 shadow-2xl flex items-center gap-3 cursor-pointer active:scale-95 transition-transform"
+                  className={`backdrop-blur-xl border rounded-2xl p-3 shadow-2xl flex items-center gap-3 cursor-pointer active:scale-95 transition-transform ${
+                    isDark
+                      ? 'bg-slate-900/95 border-emerald-500/40 text-white'
+                      : 'bg-white/95 border-emerald-500/40 text-slate-900 shadow-slate-300/40'
+                  }`}
                 >
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: `${ARC_NAV_ITEMS[activeIndex].color}20` }}
+                    style={{
+                      backgroundColor: `${isDark ? ARC_NAV_ITEMS[activeIndex].darkColor : ARC_NAV_ITEMS[activeIndex].lightColor}20`
+                    }}
                   >
                     {React.createElement(ARC_NAV_ITEMS[activeIndex].icon, {
                       className: 'w-5 h-5',
-                      style: { color: ARC_NAV_ITEMS[activeIndex].color },
+                      style: {
+                        color: isDark ? ARC_NAV_ITEMS[activeIndex].darkColor : ARC_NAV_ITEMS[activeIndex].lightColor
+                      },
                     })}
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-black text-white">
+                      <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
                         {ARC_NAV_ITEMS[activeIndex].name}
                       </span>
-                      <ChevronRight className="w-4 h-4 text-emerald-400" />
+                      <ChevronRight className={`w-4 h-4 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
                     </div>
-                    <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider ${
+                      isDark ? 'text-emerald-400' : 'text-emerald-600'
+                    }`}>
                       Tap to open
                     </span>
                   </div>
