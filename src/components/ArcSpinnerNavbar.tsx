@@ -54,13 +54,14 @@ export function ArcSpinnerNavbar() {
 
   const isDark = resolvedTheme === 'dark';
 
-  // Constants for Quarter Circle Geometry
+  // Constants for Quarter Circle Geometry & Infinite 360° Loop
   const CONTAINER_SIZE = 320; // 320px x 320px quarter circle
   const ORIGIN_X = 320; // Top-right corner
   const ORIGIN_Y = 0;   // Top-right corner
   const RADIUS = 210;   // Distance of icons from top-right corner
   const FOCAL_ANGLE = 135; // 135 degrees = 45 degrees down-left (focal thumb zone)
-  const ANGLE_STEP = 34; // Angular spacing between items in degrees
+  const TOTAL_ITEMS = ARC_NAV_ITEMS.length; // 9 items
+  const ANGLE_STEP = 360 / TOTAL_ITEMS; // Exactly 40 degrees per item for seamless 360° wheel
 
   const menuRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -76,12 +77,18 @@ export function ArcSpinnerNavbar() {
     setMounted(true);
   }, []);
 
-  // Update active item based on current route when opening
+  // Update active item based on current route when opening (shortest rotation)
   useEffect(() => {
     if (isOpen) {
       const currentIdx = ARC_NAV_ITEMS.findIndex(item => item.href === pathname);
       if (currentIdx !== -1) {
-        const targetOffset = -currentIdx * ANGLE_STEP;
+        const currentStep = Math.round(-rotationOffset / ANGLE_STEP);
+        const currentWrapped = ((currentStep % TOTAL_ITEMS) + TOTAL_ITEMS) % TOTAL_ITEMS;
+        let diffSteps = currentIdx - currentWrapped;
+        if (diffSteps > TOTAL_ITEMS / 2) diffSteps -= TOTAL_ITEMS;
+        if (diffSteps < -TOTAL_ITEMS / 2) diffSteps += TOTAL_ITEMS;
+
+        const targetOffset = -(currentStep + diffSteps) * ANGLE_STEP;
         animProxyRef.current.offset = targetOffset;
         setRotationOffset(targetOffset);
         setActiveIndex(currentIdx);
@@ -190,51 +197,75 @@ export function ArcSpinnerNavbar() {
     animProxyRef.current.offset = newOffset;
     setRotationOffset(newOffset);
 
-    // Find closest index
-    const closestIdx = Math.round(-newOffset / ANGLE_STEP);
-    const clampedIdx = Math.max(0, Math.min(ARC_NAV_ITEMS.length - 1, closestIdx));
-    if (clampedIdx !== activeIndex) {
-      setActiveIndex(clampedIdx);
+    // Continuous Infinite Modulo Index
+    const stepCount = Math.round(-newOffset / ANGLE_STEP);
+    const wrappedIdx = ((stepCount % TOTAL_ITEMS) + TOTAL_ITEMS) % TOTAL_ITEMS;
+    if (wrappedIdx !== activeIndex) {
+      setActiveIndex(wrappedIdx);
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate(8);
       }
     }
   };
 
-  // Drag End (Spin Inertia & Snap to item)
+  // Drag End (Infinite Spin Inertia & Snap to nearest item)
   const handlePointerUp = () => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
 
-    // Projected target angle with inertia
+    // Projected target angle with momentum inertia
     const inertiaDistance = velocityRef.current * 160;
     const projectedOffset = animProxyRef.current.offset + inertiaDistance;
 
-    // Snap to nearest item index
-    let targetIdx = Math.round(-projectedOffset / ANGLE_STEP);
-    targetIdx = Math.max(0, Math.min(ARC_NAV_ITEMS.length - 1, targetIdx));
+    // Snap to nearest discrete step (Infinite loop - no clamping!)
+    const targetStep = Math.round(-projectedOffset / ANGLE_STEP);
+    const finalTargetOffset = -targetStep * ANGLE_STEP;
 
-    const finalTargetOffset = -targetIdx * ANGLE_STEP;
+    const targetIdx = ((targetStep % TOTAL_ITEMS) + TOTAL_ITEMS) % TOTAL_ITEMS;
     setActiveIndex(targetIdx);
 
     gsap.to(animProxyRef.current, {
       offset: finalTargetOffset,
-      duration: 0.55,
-      ease: 'elastic.out(1, 0.75)',
+      duration: 0.6,
+      ease: 'power3.out',
       onUpdate: () => {
         setRotationOffset(animProxyRef.current.offset);
       },
     });
   };
 
-  // Snap directly to an item when clicked
+  // Mouse wheel rotation support
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const deltaSteps = e.deltaY > 0 ? 1 : -1;
+    const currentStep = Math.round(-rotationOffset / ANGLE_STEP);
+    const nextStep = currentStep + deltaSteps;
+    const targetOffset = -nextStep * ANGLE_STEP;
+    const targetIdx = ((nextStep % TOTAL_ITEMS) + TOTAL_ITEMS) % TOTAL_ITEMS;
+
+    setActiveIndex(targetIdx);
+    gsap.killTweensOf(animProxyRef.current);
+    gsap.to(animProxyRef.current, {
+      offset: targetOffset,
+      duration: 0.35,
+      ease: 'power2.out',
+      onUpdate: () => setRotationOffset(animProxyRef.current.offset),
+    });
+  };
+
+  // Snap directly to an item along the shortest circular path when clicked
   const handleItemClick = (idx: number, href: string) => {
-    const targetOffset = -idx * ANGLE_STEP;
+    // Compute current angular distance of this item from focal point
+    let diff = (idx * ANGLE_STEP + animProxyRef.current.offset) % 360;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+
+    const targetOffset = animProxyRef.current.offset - diff;
     setActiveIndex(idx);
 
     gsap.to(animProxyRef.current, {
       offset: targetOffset,
-      duration: 0.4,
+      duration: 0.35,
       ease: 'power3.out',
       onUpdate: () => setRotationOffset(animProxyRef.current.offset),
       onComplete: () => {
@@ -296,6 +327,7 @@ export function ArcSpinnerNavbar() {
             onMouseDown={(e) => handlePointerDown(e.clientX, e.clientY)}
             onMouseMove={(e) => handlePointerMove(e.clientX, e.clientY)}
             onMouseUp={handlePointerUp}
+            onWheel={handleWheel}
           >
             {/* Decorative Arc Guidelines SVG */}
             <svg
@@ -338,7 +370,7 @@ export function ArcSpinnerNavbar() {
                 <span className={`text-[9px] font-semibold ${
                   isDark ? 'text-slate-400' : 'text-slate-500'
                 }`}>
-                  Spin along arc
+                  Infinite 360° • Spin
                 </span>
               </div>
               <button
@@ -369,24 +401,28 @@ export function ArcSpinnerNavbar() {
               }}
             />
 
-            {/* Render Spinnable Icons along the Arc */}
+            {/* Render Spinnable Icons along the 360° Infinite Arc */}
             {ARC_NAV_ITEMS.map((item, idx) => {
-              // Calculate angle for this item
-              const angleDeg = FOCAL_ANGLE + (idx * ANGLE_STEP) + rotationOffset;
+              // Modulo shortest angular displacement relative to focal angle (135°)
+              let diff = (idx * ANGLE_STEP + rotationOffset) % 360;
+              if (diff > 180) diff -= 360;
+              if (diff < -180) diff += 360;
+
+              // Actual angle in degrees on screen plane
+              const angleDeg = FOCAL_ANGLE + diff;
               const angleRad = (angleDeg * Math.PI) / 180;
 
               // Compute X and Y positions on the arc
               const x = ORIGIN_X + RADIUS * Math.cos(angleRad) - 24; // center 48px width
               const y = ORIGIN_Y + RADIUS * Math.sin(angleRad) - 24; // center 48px height
 
-              // Angular distance from focal center (135 deg)
-              const distFromCenter = Math.abs(angleDeg - FOCAL_ANGLE);
+              const distFromCenter = Math.abs(diff);
               const isFocused = idx === activeIndex;
 
-              // Visibility & scale calculations
-              const isVisible = angleDeg >= 80 && angleDeg <= 190;
-              const scale = isFocused ? 1.25 : Math.max(0.8, 1 - distFromCenter / 120);
-              const opacity = isVisible ? Math.max(0.2, 1 - distFromCenter / 70) : 0;
+              // Seamless visibility & smooth opacity fade-out at edges of quarter circle
+              const isVisible = angleDeg >= 70 && angleDeg <= 200;
+              const scale = isFocused ? 1.25 : Math.max(0.78, 1 - distFromCenter / 140);
+              const opacity = isVisible ? Math.max(0, 1 - Math.max(0, distFromCenter - 25) / 50) : 0;
 
               const Icon = item.icon;
               const isActiveRoute = pathname === item.href;
@@ -408,7 +444,7 @@ export function ArcSpinnerNavbar() {
                     opacity: opacity,
                     transform: `scale(${scale})`,
                     zIndex: isFocused ? 25 : 15,
-                    pointerEvents: isVisible ? 'auto' : 'none',
+                    pointerEvents: isVisible && opacity > 0.1 ? 'auto' : 'none',
                     display: isVisible ? 'flex' : 'none',
                   }}
                 >
@@ -425,7 +461,7 @@ export function ArcSpinnerNavbar() {
                         : 'bg-white text-slate-700 border-slate-200/90 shadow-md hover:bg-slate-50'
                     }`}
                     style={{
-                      // Keep icon and card strictly upright & level with screen
+                      // Strictly upright, level with screen
                       transform: 'none',
                     }}
                   >
