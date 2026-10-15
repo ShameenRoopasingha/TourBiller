@@ -2,12 +2,14 @@
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { BookingSchema, type ActionResult, type BookingWithDriver } from '@/lib/validations';
+import { BookingSchema, type ActionResult, type BookingWithDriver, type EmergencyVehicleSwapOptions } from '@/lib/validations';
 import { type Booking } from '@prisma/client';
 import { revalidateFor } from '@/lib/revalidation';
+import { revalidatePath } from 'next/cache';
 import { requireAuth, requireAdmin } from '@/lib/auth-guard';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { checkDriverAvailability } from '@/lib/user-actions';
+
 
 /**
  * Generate a quotation from tour schedule and customer data
@@ -346,4 +348,190 @@ export async function assignDriverToBooking(
         return { success: false, error: 'Failed to assign driver' };
     }
 }
+
+/**
+ * Perform an emergency vehicle swap for an active or confirmed booking
+ * Supports both Company Fleet Vehicles and Third-Party / External Hire Vehicles
+ */
+export async function swapBookingVehicle(
+    bookingId: string,
+    options: EmergencyVehicleSwapOptions
+): Promise<ActionResult<void>> {
+    try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const companyId = authCheck.companyId!;
+        const booking = await prisma.booking.findFirst({
+            where: { id: bookingId, companyId },
+            include: { driver: true }
+        });
+
+        if (!booking) {
+            return { success: false, error: 'Booking not found' };
+        }
+
+        const oldVehicleNo = booking.vehicleNo.trim().toUpperCase();
+        const newVehicleNo = options.newVehicleNo.trim().toUpperCase();
+
+        if (!newVehicleNo) {
+            return { success: false, error: 'Replacement vehicle number is required.' };
+        }
+
+        if (newVehicleNo === oldVehicleNo) {
+            return { success: false, error: 'Replacement vehicle number must be different from current vehicle.' };
+        }
+
+        if (!options.breakdownMeterReading?.trim()) {
+            return { success: false, error: 'Old vehicle breakdown odometer reading is strictly required.' };
+        }
+
+        if (!options.newVehicleStartMeter?.trim()) {
+            return { success: false, error: 'New vehicle initial odometer reading is strictly required.' };
+        }
+
+        if (!options.location?.trim()) {
+            return { success: false, error: 'Breakdown location is required.' };
+        }
+
+        if (!options.reason?.trim()) {
+            return { success: false, error: 'Breakdown reason / issue description is required.' };
+        }
+
+        // Validate Fleet vehicle availability if choosing company vehicle
+        if (options.swapType === 'FLEET') {
+            const fleetVehicle = await prisma.vehicle.findUnique({
+                where: {
+                    companyId_vehicleNo: {
+                        companyId,
+                        vehicleNo: newVehicleNo
+                    }
+                }
+            });
+
+            if (!fleetVehicle) {
+                return { success: false, error: `Vehicle ${newVehicleNo} not found in company fleet.` };
+            }
+
+            if (fleetVehicle.status === 'RETIRED') {
+                return { success: false, error: `Vehicle ${newVehicleNo} is retired and cannot be assigned.` };
+            }
+
+            const endDate = booking.endDate || booking.startDate;
+            const availability = await checkVehicleAvailability(
+                newVehicleNo,
+                booking.startDate,
+                endDate,
+                bookingId,
+                'Booking'
+            );
+
+            if (availability.success && availability.data && !availability.data.available) {
+                const conflict = availability.data.conflicts[0];
+                return {
+                    success: false,
+                    error: `Fleet vehicle ${newVehicleNo} is already occupied by ${conflict.customer} (${conflict.type}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}`
+                };
+            }
+        }
+
+        const oldMeterNum = parseFloat(options.breakdownMeterReading);
+        const newMeterNum = parseFloat(options.newVehicleStartMeter);
+
+        // Execute transaction
+        await prisma.$transaction(async (tx) => {
+            // 1. Update booking vehicle number
+            await tx.booking.update({
+                where: { id: bookingId },
+                data: { vehicleNo: newVehicleNo }
+            });
+
+            // 2. If external hire and cost provided, create VehicleExpense
+            if (options.swapType === 'EXTERNAL' && options.hireCost && options.hireCost > 0) {
+                await tx.vehicleExpense.create({
+                    data: {
+                        companyId,
+                        vehicleNo: newVehicleNo,
+                        amount: options.hireCost,
+                        category: 'BREAKDOWN',
+                        expenseType: options.expenseType || 'COMPANY',
+                        bookingId,
+                        driverId: booking.driverId || undefined,
+                        description: `Emergency replacement vehicle hired from ${options.supplierName || 'External Supplier'}${options.supplierPhone ? ` (Contact: ${options.supplierPhone})` : ''} due to breakdown of ${oldVehicleNo}. Reason: ${options.reason}`,
+                    }
+                });
+            }
+
+            // 3. Mark old fleet vehicle as MAINTENANCE and update its mileage
+            if (options.markOldVehicleMaintenance !== false) {
+                const oldFleetVehicle = await tx.vehicle.findUnique({
+                    where: {
+                        companyId_vehicleNo: {
+                            companyId,
+                            vehicleNo: oldVehicleNo
+                        }
+                    }
+                });
+
+                if (oldFleetVehicle) {
+                    await tx.vehicle.update({
+                        where: { id: oldFleetVehicle.id },
+                        data: {
+                            status: 'MAINTENANCE',
+                            ...(isNaN(oldMeterNum) ? {} : {
+                                currentMileage: Math.max(oldFleetVehicle.currentMileage, oldMeterNum)
+                            })
+                        }
+                    });
+                }
+            }
+
+            // 4. Update new fleet vehicle's mileage if applicable
+            if (options.swapType === 'FLEET' && !isNaN(newMeterNum)) {
+                const newFleetVehicle = await tx.vehicle.findUnique({
+                    where: {
+                        companyId_vehicleNo: {
+                            companyId,
+                            vehicleNo: newVehicleNo
+                        }
+                    }
+                });
+
+                if (newFleetVehicle && newMeterNum > newFleetVehicle.currentMileage) {
+                    await tx.vehicle.update({
+                        where: { id: newFleetVehicle.id },
+                        data: { currentMileage: newMeterNum }
+                    });
+                }
+            }
+
+            // 5. Record TripActivity audit record
+            const swapTypeLabel = options.swapType === 'FLEET' ? 'Company Fleet Vehicle' : 'External Third-Party Hire';
+            const supplierInfo = options.supplierName ? ` | Supplier: ${options.supplierName}${options.hireCost ? ` (Rs. ${options.hireCost.toLocaleString()})` : ''}` : '';
+            const noteText = `Emergency Vehicle Swap: ${oldVehicleNo} (Breakdown Meter: ${options.breakdownMeterReading} km) ➔ ${newVehicleNo} (Start Meter: ${options.newVehicleStartMeter} km) | Type: ${swapTypeLabel} | Location: ${options.location} | Issue: ${options.reason}${supplierInfo}${options.notes ? ` | Notes: ${options.notes}` : ''}`;
+
+            await tx.tripActivity.create({
+                data: {
+                    companyId,
+                    bookingId,
+                    driverId: booking.driverId || authCheck.userId!,
+                    type: 'VEHICLE_SWAPPED',
+                    note: noteText,
+                }
+            });
+        });
+
+        revalidateFor('booking');
+        revalidateFor('vehicle');
+        revalidatePath(`/bookings/${bookingId}`);
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error swapping booking vehicle:', error);
+        return { success: false, error: 'Failed to complete emergency vehicle swap' };
+    }
+}
+
 

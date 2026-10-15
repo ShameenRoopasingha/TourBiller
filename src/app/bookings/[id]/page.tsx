@@ -1,10 +1,12 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Car, Calendar, MapPin, CreditCard, AlignLeft, User, Phone, Mail, Activity, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Car, Calendar, MapPin, CreditCard, AlignLeft, User, Phone, Mail, Activity, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { getBookingById } from '@/lib/booking-actions';
 import { getDrivers } from '@/lib/user-actions';
+import { getActiveVehicles } from '@/lib/vehicle-actions';
 import { CancelBookingButton } from '@/components/CancelBookingButton';
 import { BookingDriverAssigner } from '@/components/BookingDriverAssigner';
+import { BookingVehicleSwapper } from '@/components/BookingVehicleSwapper';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -65,9 +67,10 @@ export default async function BookingDetailsPage(props: {
     }
 
     const params = await props.params;
-    const [bookingResult, driversResult] = await Promise.all([
+    const [bookingResult, driversResult, vehiclesResult] = await Promise.all([
         getBookingById(params.id),
         getDrivers(),
+        getActiveVehicles(),
     ]);
 
     if (!bookingResult.success || !bookingResult.data) {
@@ -76,6 +79,7 @@ export default async function BookingDetailsPage(props: {
 
     const booking = bookingResult.data;
     const drivers = driversResult.success && driversResult.data ? driversResult.data : [];
+    const fleetVehicles = vehiclesResult.success && vehiclesResult.data ? vehiclesResult.data : [];
 
     // Determine display status based on booking status and dates
     let displayStatus = booking.status;
@@ -110,25 +114,77 @@ export default async function BookingDetailsPage(props: {
         };
     }
 
+    // Check if there is an unresolved vehicle breakdown report from the driver
+    const breakdownReqActivity = booking.tripActivities?.find(a => a.type === 'BREAKDOWN_REPORTED');
+    const swappedActivity = booking.tripActivities?.find(a => a.type === 'VEHICLE_SWAPPED');
+    let pendingBreakdownReport: { reason: string; meterReading: string; location: string; note: string; timestamp: Date | string } | null = null;
+    if (breakdownReqActivity && isOngoing && (!swappedActivity || new Date(breakdownReqActivity.timestamp) > new Date(swappedActivity.timestamp))) {
+        const noteText = breakdownReqActivity.note || '';
+        const issueMatch = noteText.match(/Issue:\s*([^|]+)/i);
+        const meterMatch = noteText.match(/Meter:\s*([0-9.]+)/i);
+        const locMatch = noteText.match(/Location:\s*([^|]+)/i);
+        const notesMatch = noteText.match(/Notes:\s*(.+)/i);
+
+        pendingBreakdownReport = {
+            reason: issueMatch ? issueMatch[1].trim() : 'Vehicle Breakdown',
+            meterReading: meterMatch ? meterMatch[1].trim() : '',
+            location: locMatch ? locMatch[1].trim() : '',
+            note: notesMatch ? notesMatch[1].trim() : '',
+            timestamp: breakdownReqActivity.timestamp,
+        };
+    }
+
     return (
         <div className="container mx-auto py-10 max-w-3xl">
-            {pendingHandoverRequest && (
-                <div className="bg-red-500/10 border-2 border-red-500/30 rounded-xl p-4 mb-6 shadow-sm flex items-start gap-3">
-                    <div className="p-2 bg-red-500/20 rounded-lg text-red-600 dark:text-red-400">
-                        <AlertTriangle className="h-6 w-6" />
+            {/* Emergency Vehicle Breakdown Alert Banner */}
+            {pendingBreakdownReport && (
+                <div className="bg-red-600/10 border-2 border-red-600/40 rounded-xl p-4 mb-4 shadow-sm flex items-start gap-3">
+                    <div className="p-2 bg-red-600/20 rounded-lg text-red-600 dark:text-red-400">
+                        <ShieldAlert className="h-6 w-6" />
                     </div>
                     <div className="space-y-1 flex-1">
                         <div className="flex items-center justify-between">
                             <h3 className="font-bold text-red-700 dark:text-red-400 text-base">
-                                🚨 Driver Handover Requested
+                                🚨 Emergency Vehicle Breakdown Reported
                             </h3>
                             <span className="text-xs text-red-600 dark:text-red-400 font-medium">
+                                {new Date(pendingBreakdownReport.timestamp).toLocaleTimeString('en-GB')}
+                            </span>
+                        </div>
+                        <p className="text-sm text-foreground">
+                            Driver <strong>{booking.driver?.name}</strong> reported a vehicle defect on <strong>{booking.vehicleNo}</strong>: 
+                            <span className="font-semibold text-red-600 dark:text-red-400"> {pendingBreakdownReport.reason}</span>
+                            {pendingBreakdownReport.location && ` at ${pendingBreakdownReport.location}`}.
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            Reported Meter: <strong className="text-foreground">{pendingBreakdownReport.meterReading || 'N/A'} km</strong>
+                            {pendingBreakdownReport.note && ` • Notes: ${pendingBreakdownReport.note}`}
+                        </p>
+                        <p className="text-xs text-red-700 dark:text-red-300 font-medium pt-1">
+                            👇 Use the Assigned Vehicle card below to dispatch a replacement fleet vehicle or outsource a third-party hire.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Driver Handover Alert Banner */}
+            {pendingHandoverRequest && (
+                <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-xl p-4 mb-6 shadow-sm flex items-start gap-3">
+                    <div className="p-2 bg-amber-500/20 rounded-lg text-amber-600 dark:text-amber-400">
+                        <AlertTriangle className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1 flex-1">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-amber-700 dark:text-amber-400 text-base">
+                                ⚠️ Driver Handover Requested
+                            </h3>
+                            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
                                 {new Date(pendingHandoverRequest.timestamp).toLocaleTimeString('en-GB')}
                             </span>
                         </div>
                         <p className="text-sm text-foreground">
                             Driver <strong>{booking.driver?.name}</strong> requested a mid-tour handover: 
-                            <span className="font-semibold text-red-600 dark:text-red-400"> {pendingHandoverRequest.reason}</span>
+                            <span className="font-semibold text-amber-600 dark:text-amber-400"> {pendingHandoverRequest.reason}</span>
                         </p>
                         <p className="text-xs text-muted-foreground">
                             Reported Meter: <strong className="text-foreground">{pendingHandoverRequest.meterReading || 'N/A'} km</strong>
@@ -140,6 +196,7 @@ export default async function BookingDetailsPage(props: {
                     </div>
                 </div>
             )}
+
 
             <div className="flex items-center justify-between mb-6">
                 <Button variant="ghost" asChild className="pl-0 hover:bg-transparent">
@@ -234,6 +291,16 @@ export default async function BookingDetailsPage(props: {
                         </div>
                     </div>
 
+                    {/* Assigned Vehicle & Emergency Swap */}
+                    <BookingVehicleSwapper
+                        bookingId={booking.id}
+                        currentVehicleNo={booking.vehicleNo}
+                        bookingStatus={displayStatus}
+                        fleetVehicles={fleetVehicles}
+                        isAdmin={auth.role === 'ADMIN' || auth.role === 'OWNER'}
+                        pendingBreakdownReport={pendingBreakdownReport}
+                    />
+
                     {/* Assigned Driver */}
                     <BookingDriverAssigner
                         bookingId={booking.id}
@@ -248,7 +315,7 @@ export default async function BookingDetailsPage(props: {
                     {booking.tripActivities && booking.tripActivities.length > 0 && (
                         <div className="space-y-3 pt-4 border-t">
                             <h3 className="font-semibold flex items-center gap-2 text-muted-foreground">
-                                <Activity className="h-4 w-4" /> Trip Activity & Handover History
+                                <Activity className="h-4 w-4" /> Trip Activity, Handover & Breakdown History
                             </h3>
                             <div className="space-y-2">
                                 {booking.tripActivities.map((act) => {
@@ -256,8 +323,12 @@ export default async function BookingDetailsPage(props: {
                                     const isTakeover = act.type === 'TAKEOVER';
                                     const isStart = act.type === 'START';
                                     const isEnd = act.type === 'END';
+                                    const isBreakdown = act.type === 'BREAKDOWN_REPORTED' || act.type === 'BREAKDOWN';
+                                    const isVehicleSwapped = act.type === 'VEHICLE_SWAPPED';
 
-                                    const badgeClass = isHandover ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30' :
+                                    const badgeClass = isBreakdown ? 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30' :
+                                        isVehicleSwapped ? 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30' :
+                                        isHandover ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30' :
                                         isTakeover ? 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30' :
                                         isStart ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30' :
                                         isEnd ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30' :
@@ -287,6 +358,7 @@ export default async function BookingDetailsPage(props: {
                             </div>
                         </div>
                     )}
+
 
                     {/* Additional Notes */}
                     {booking.notes && (

@@ -361,3 +361,48 @@ export async function checkVehicleAvailability(
         return { success: false, error: 'Failed to check availability' };
     }
 }
+
+/**
+ * Fetch all active company fleet vehicles (for dropdowns / assignment / emergency swap)
+ */
+export async function getActiveVehicles(): Promise<ActionResult<{
+    id: string;
+    vehicleNo: string;
+    model: string | null;
+    category: string;
+    status: string;
+    seats: number | null;
+    currentMileage: number;
+}[]>> {
+    try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const vehicles = await prisma.vehicle.findMany({
+            where: {
+                companyId: authCheck.companyId,
+                status: { not: 'RETIRED' }
+            },
+            select: {
+                id: true,
+                vehicleNo: true,
+                model: true,
+                category: true,
+                status: true,
+                seats: true,
+                currentMileage: true,
+            },
+            orderBy: {
+                vehicleNo: 'asc'
+            }
+        });
+
+        return { success: true, data: vehicles };
+    } catch (error) {
+        console.error('Error fetching active vehicles:', error);
+        return { success: false, error: 'Failed to fetch vehicles' };
+    }
+}
+

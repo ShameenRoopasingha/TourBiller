@@ -93,7 +93,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                     features: true,
                 }
             });
+
+            // If vehicle is an external hire not in the company fleet database
+            if (!vehicle) {
+                vehicle = {
+                    vehicleNo: booking.vehicleNo,
+                    model: 'External Hire Vehicle',
+                    category: 'HIRE',
+                    seats: 4,
+                    acType: 'A/C',
+                    features: 'Outsourced emergency replacement vehicle',
+                };
+            }
         }
+
 
         // Try to find quotation itinerary for detailed day-by-day stops
         let itineraryDays: any[] = [];
@@ -303,7 +316,42 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             });
         }
 
+        if (action === 'REPORT_BREAKDOWN') {
+            const { reason, location, note } = body;
+            if (!meterReading || !meterReading.toString().trim()) {
+                return NextResponse.json({ 
+                    success: false, 
+                    error: 'Current odometer / meter reading is strictly required to report a breakdown.' 
+                }, { status: 400 });
+            }
+
+            const breakdownReason = reason || 'Vehicle Breakdown';
+            const details = [
+                `Issue: ${breakdownReason}`,
+                `Meter: ${meterReading} km`,
+                location ? `Location: ${location}` : null,
+                note ? `Notes: ${note}` : null
+            ].filter(Boolean).join(' | ');
+
+            const activity = await prisma.tripActivity.create({
+                data: {
+                    companyId,
+                    bookingId,
+                    driverId,
+                    type: 'BREAKDOWN_REPORTED',
+                    note: `Vehicle Breakdown Reported by Driver: ${details}`,
+                }
+            });
+
+            return NextResponse.json({ 
+                success: true, 
+                message: 'Vehicle breakdown report logged and transmitted to dispatch.',
+                data: activity 
+            });
+        }
+
         if (action === 'ADD_ACTIVITY') {
+
             const activity = await prisma.tripActivity.create({
                 data: {
                     companyId,

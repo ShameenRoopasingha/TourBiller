@@ -99,9 +99,11 @@ export async function GET(req: Request) {
                 bookingId: b.id,
                 customerName: b.customerName,
                 vehicleNo: b.vehicleNo,
-                vehicleModel: vehicleInfo?.model || b.vehicleNo,
-                vehicleCategory: vehicleInfo?.category || 'CAR',
+                vehicleModel: vehicleInfo?.model || `${b.vehicleNo} (External Hire)`,
+                vehicleCategory: vehicleInfo?.category || 'HIRE',
+                isExternalVehicle: !vehicleInfo,
                 driverId: b.driverId,
+
                 driverName: b.driver?.name || 'Unassigned',
                 driverEmail: b.driver?.email || '',
                 pickupLocation: b.pickupLocation,

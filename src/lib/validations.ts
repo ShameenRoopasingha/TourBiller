@@ -545,7 +545,7 @@ export const VehicleExpenseDbSchema = VehicleExpenseSchema.extend({
 
 export type VehicleExpense = z.infer<typeof VehicleExpenseDbSchema>;
 
-export type TripActivityType = 'START' | 'END' | 'HANDOVER_REQUESTED' | 'HANDOVER' | 'TAKEOVER' | 'FUEL_FILL' | 'FLAT_TIRE' | 'STOP' | 'HOTEL_CHECKIN' | 'RESUME' | 'BREAKDOWN' | 'NOTE';
+export type TripActivityType = 'START' | 'END' | 'HANDOVER_REQUESTED' | 'HANDOVER' | 'TAKEOVER' | 'FUEL_FILL' | 'FLAT_TIRE' | 'STOP' | 'HOTEL_CHECKIN' | 'RESUME' | 'BREAKDOWN' | 'BREAKDOWN_REPORTED' | 'VEHICLE_SWAPPED' | 'NOTE';
 
 export interface TripActivity {
   id: string;
@@ -556,3 +556,19 @@ export interface TripActivity {
   expenseId: string | null;
   timestamp: Date | string;
 }
+
+export interface EmergencyVehicleSwapOptions {
+  swapType: 'FLEET' | 'EXTERNAL';
+  newVehicleNo: string;
+  breakdownMeterReading: string;
+  newVehicleStartMeter: string;
+  location: string;
+  reason: string;
+  notes?: string;
+  supplierName?: string;
+  supplierPhone?: string;
+  hireCost?: number;
+  expenseType?: 'COMPANY' | 'CUSTOMER';
+  markOldVehicleMaintenance?: boolean;
+}
+
