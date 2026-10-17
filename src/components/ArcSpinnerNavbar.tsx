@@ -459,7 +459,7 @@ export function ArcSpinnerNavbar() {
             </svg>
 
             {/* Corner Hub: Close Button & Brand */}
-            <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
+            <div className="absolute top-notch-safe right-3 flex items-center gap-2 z-30">
               <div className="flex flex-col items-end mr-1 pointer-events-none">
                 <span className={`text-[10px] font-black tracking-widest uppercase ${
                   isDark ? 'text-emerald-400' : 'text-emerald-600'

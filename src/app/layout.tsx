@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Montserrat } from 'next/font/google'
 import './globals.css'
 import Image from 'next/image'
@@ -21,6 +21,16 @@ const montserrat = Montserrat({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Vigil Tour Management Platform',
   description: 'The professional solution for vehicle hire billing and travel management. Automate invoices, manage bookings, and streamline your operations with VIGIL.',
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#09090b' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default async function RootLayout({
@@ -51,7 +61,7 @@ export default async function RootLayout({
 
                   <SidebarInset className="flex flex-1 min-w-0 flex-col bg-transparent relative">
                     {/* Global Topbar */}
-                    <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6 print:hidden backdrop-blur-md bg-background/80 z-50 sticky top-0">
+                    <header className="flex min-h-16 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6 print:hidden backdrop-blur-md bg-background/80 z-50 sticky top-0 pt-notch-safe pb-3 md:pt-0 md:pb-0 md:h-16">
                       <div className="flex items-center gap-2">
                         {/* Mobile Only Logo */}
                         <div className="md:hidden flex items-center gap-2">

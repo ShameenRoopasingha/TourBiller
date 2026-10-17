@@ -176,3 +176,12 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 }
+
+/* Mobile device top notch & status bar safe spacing */
+.pt-notch-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 2rem);
+}
+
+.top-notch-safe {
+  top: max(env(safe-area-inset-top, 0px), 1.5rem);
+}
