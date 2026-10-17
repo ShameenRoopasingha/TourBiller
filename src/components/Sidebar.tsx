@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { Montserrat } from 'next/font/google';
 
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['700', '900'] });
-import { ThemeSwitcher } from '@/components/layout/theme-switcher';
 import {
     Sidebar as ShadcnSidebar,
     SidebarContent,
@@ -169,17 +168,6 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                         </TooltipContent>
                     </Tooltip>
 
-                    {/* Theme Toggle */}
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div>
-                                <ThemeSwitcher />
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" align="center">
-                            Toggle Theme
-                        </TooltipContent>
-                    </Tooltip>
 
                     {/* Settings */}
                     <Tooltip>
@@ -248,13 +236,12 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                         </AlertDialog>
                     </div>
 
-                    {/* Theme toggle + Settings */}
+                    {/* Settings & Version */}
                     <div className="flex items-center justify-between">
                         <div className="text-xs text-muted-foreground">
                             <span className="font-semibold">VIGIL</span> v0.1
                         </div>
                         <div className="flex items-center gap-1">
-                            <ThemeSwitcher />
                             <Link href="/settings" aria-label="Settings">
                                 <div className={cn(
                                     "p-2 rounded-full transition-colors",
