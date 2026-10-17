@@ -20,7 +20,6 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarRail,
-    SidebarTrigger,
     useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -93,7 +92,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
         >
             <div className={cn(
                 "p-3.5 border-b border-border/50 flex items-center transition-all duration-200",
-                "group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center justify-between"
+                "group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center justify-start"
             )}>
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -112,11 +111,6 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                         <div className="text-[10px] text-muted-foreground">Vehicle Hire & Travel Management</div>
                     </TooltipContent>
                 </Tooltip>
-
-                {/* Collapse trigger button inside sidebar header (visible when expanded on desktop) */}
-                <div className="group-data-[collapsible=icon]:hidden">
-                    <SidebarTrigger className="h-7 w-7 text-muted-foreground hover:text-foreground" />
-                </div>
             </div>
 
             <SidebarContent className="p-2">
