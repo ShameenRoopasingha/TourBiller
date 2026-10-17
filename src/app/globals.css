@@ -177,11 +177,23 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Mobile device top notch & status bar safe spacing */
-.pt-notch-safe {
-  padding-top: max(env(safe-area-inset-top, 0px), 2rem);
+/* Mobile device top notch & status bar safe spacing (Mobile screens only) */
+@media (max-width: 767px) {
+  .pt-notch-safe {
+    padding-top: max(env(safe-area-inset-top, 0px), 1.25rem);
+  }
+
+  .top-notch-safe {
+    top: max(env(safe-area-inset-top, 0px), 1.25rem);
+  }
 }
 
-.top-notch-safe {
-  top: max(env(safe-area-inset-top, 0px), 1.5rem);
+@media (min-width: 768px) {
+  .pt-notch-safe {
+    padding-top: 0 !important;
+  }
+
+  .top-notch-safe {
+    top: 0.75rem !important;
+  }
 }
