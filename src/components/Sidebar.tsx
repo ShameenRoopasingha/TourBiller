@@ -113,9 +113,9 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                 </Tooltip>
             </div>
 
-            <SidebarContent className="p-2">
-                <SidebarGroup>
-                    <SidebarMenu className="space-y-1.5">
+            <SidebarContent className="p-2 group-data-[collapsible=icon]:p-1.5 group-data-[collapsible=icon]:py-2">
+                <SidebarGroup className="p-0">
+                    <SidebarMenu className="space-y-1.5 group-data-[collapsible=icon]:space-y-1">
                         {visibleItems.map((item) => {
                             const isActive = pathname === item.href;
                             return (
@@ -125,7 +125,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                                         isActive={isActive}
                                         tooltip={item.name}
                                         className={cn(
-                                            "h-10 transition-colors group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0",
+                                            "h-10 transition-colors group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0",
                                             isActive
                                                 ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground"
                                                 : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
@@ -148,16 +148,16 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="p-3 border-t border-border/50 group-data-[collapsible=icon]:p-2">
+            <SidebarFooter className="p-3 border-t border-border/50 group-data-[collapsible=icon]:p-1.5">
                 {/* Collapsed Mode Footer Icons */}
-                <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center gap-2 py-1">
+                <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center gap-1.5 py-1">
                     {/* User Avatar */}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Link
                                 href="/settings"
                                 className={cn(
-                                    "w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-transform hover:scale-105 shadow-sm",
+                                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-transform hover:scale-105 shadow-sm",
                                     isAdmin ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
                                 )}
                             >
@@ -176,7 +176,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                             <TooltipTrigger asChild>
                                 <button
                                     onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-                                    className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                                     aria-label="Toggle theme"
                                 >
                                     {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -194,7 +194,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                             <Link
                                 href="/settings"
                                 className={cn(
-                                    "p-2 rounded-lg transition-colors",
+                                    "p-1.5 rounded-lg transition-colors",
                                     pathname === '/settings'
                                         ? "bg-primary/10 text-primary"
                                         : "hover:bg-muted text-muted-foreground hover:text-foreground"
