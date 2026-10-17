@@ -25,10 +25,25 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           // Enable XSS protection in older browsers
           { key: 'X-XSS-Protection', value: '1; mode=block' },
-          // Restrict browser features
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
+          // Restrict browser features (permit geolocation for driver GPS tracking)
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
           // Force HTTPS in production (1 year)
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+          // Content Security Policy against XSS and malicious script injection
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+              "style-src 'self' 'unsafe-inline' https:",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data: https:",
+              "connect-src 'self' https: ws: wss:",
+              "frame-ancestors 'self'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
         ],
       },
     ];

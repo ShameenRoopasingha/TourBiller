@@ -215,14 +215,21 @@ export const VehicleExpenseFormSchema = z.object({
 export type VehicleExpenseFormInput = z.infer<typeof VehicleExpenseFormSchema>;
 export type VehicleExpenseFormData = VehicleExpenseFormInput; // Alias for backward compatibility
 
+// Safe URL validator against XSS/javascript pseudo-protocol
+export const isSafeUrl = (url?: string | null) => {
+  if (!url) return true;
+  const trimmed = url.trim().toLowerCase();
+  return !trimmed.startsWith('javascript:') && !trimmed.startsWith('vbscript:') && !trimmed.startsWith('data:text/html');
+};
+
 // Business Profile form schema - RHF compatible
 export const BusinessProfileFormSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   address: z.string().default(''),
   phone: z.string().default(''),
   email: z.string().email("Invalid email").or(z.literal('')).default(''),
-  website: z.string().default(''),
-  logoUrl: z.string().default(''),
+  website: z.string().refine(isSafeUrl, "Unsafe URL protocol not allowed").default(''),
+  logoUrl: z.string().refine(isSafeUrl, "Unsafe URL protocol not allowed").default(''),
   usdRate: z.coerce.number().min(0).default(300),
   currency: z.string().default('LKR'),
   currencyConfigured: z.boolean().default(false),
@@ -341,8 +348,8 @@ export const BusinessProfileSchema = z.object({
   address: z.string().nullish().transform(v => v ?? undefined),
   phone: z.string().nullish().transform(v => v ?? undefined),
   email: z.string().email("Invalid email").nullish().or(z.literal('')).transform(v => v || undefined),
-  website: z.string().nullish().transform(v => v ?? undefined),
-  logoUrl: z.string().nullish().or(z.literal('')).transform(v => v || undefined),
+  website: z.string().refine(isSafeUrl, "Unsafe URL protocol not allowed").nullish().transform(v => v ?? undefined),
+  logoUrl: z.string().refine(isSafeUrl, "Unsafe URL protocol not allowed").nullish().or(z.literal('')).transform(v => v || undefined),
   usdRate: z.coerce.number().min(0).default(300),
   currency: z.string().default('LKR'),
   currencyConfigured: z.boolean().default(false),
