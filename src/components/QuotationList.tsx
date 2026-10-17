@@ -212,162 +212,320 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                             </Link>
                         </div>
                     ) : (
-                        <div className="rounded-md border overflow-x-auto">
-                            <Table className="min-w-[600px]">
-                                <TableHeader>
-                                <TableRow>
-                                    <TableHead>Q No.</TableHead>
-                                    <TableHead>Customer</TableHead>
-                                    <TableHead>Tour</TableHead>
-                                    <TableHead className="text-right">Total</TableHead>
-                                    <TableHead className="text-center">Status</TableHead>
-                                    <TableHead className="text-center">Date</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filtered.map((q) => (
-                                    <TableRow key={q.id}>
-                                        <TableCell className="font-mono font-medium">
-                                            Q-{String(q.quotationNumber).padStart(4, '0')}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div>
-                                                <p className="font-medium">{q.customerName}</p>
-                                                {q.customerPhone && (
-                                                    <p className="text-xs text-muted-foreground">{q.customerPhone}</p>
-                                                )}
-                                                {q.driver && (
-                                                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                                        <User className="w-3 h-3 text-primary shrink-0" />
-                                                        <span>{q.driver.name}</span>
+                        <>
+                            {/* Mobile View (Card-based) */}
+                            <div className="grid gap-3 md:hidden">
+                                {filtered.map((q) => {
+                                    const tourTitle = q.tourSchedule?.name || (q.pickupLocation && q.dropLocation ? `${q.pickupLocation} → ${q.dropLocation}` : 'Direct Route');
+                                    const tourDays = q.tourSchedule?.days || (
+                                        (q.startDate && q.endDate)
+                                            ? Math.max(1, Math.round((new Date(q.endDate).getTime() - new Date(q.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
+                                            : 1
+                                    );
+
+                                    return (
+                                        <Card key={q.id} className="p-4 space-y-3">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-mono font-bold text-sm bg-muted px-2 py-0.5 rounded">
+                                                            Q-{String(q.quotationNumber).padStart(4, '0')}
+                                                        </span>
+                                                        <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[q.status] || ''}`}>
+                                                            {q.status}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        {new Date(q.createdAt).toLocaleDateString('en-GB')}
                                                     </p>
-                                                )}
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-base font-bold text-primary block">
+                                                        {fmt(q.totalAmount)}
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div>
-                                                <p className="text-sm font-medium">
-                                                    {q.tourSchedule?.name || (q.pickupLocation && q.dropLocation ? `${q.pickupLocation} → ${q.dropLocation}` : 'Direct Route')}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {q.tourSchedule?.days || (
-                                                        (q.startDate && q.endDate)
-                                                            ? Math.max(1, Math.round((new Date(q.endDate).getTime() - new Date(q.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
-                                                            : 1
-                                                    )} days{(q.totalDistance && q.totalDistance > 0) ? ` • ${q.totalDistance.toFixed(0)} km` : ''}
-                                                </p>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right font-semibold">
-                                            {fmt(q.totalAmount)}
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <span className={`text-xs px-2 py-1 rounded border ${STATUS_COLORS[q.status] || ''}`}>
-                                                {q.status}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-center text-sm">
-                                            {new Date(q.createdAt).toLocaleDateString('en-GB')}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <Link href={`/quotations/${q.id}`}>
-                                                    <Button variant="ghost" size="sm" title="View Details">
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
-                                                </Link>
 
-                                                <Link href={`/quotations/${q.id}/edit`}>
-                                                    <Button variant="ghost" size="sm" title="Edit">
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                </Link>
-
-                                                <Link href={`/quotations/${q.id}/print`}>
-                                                    <Button variant="ghost" size="sm" title="Print">
-                                                        <Printer className="h-4 w-4" />
-                                                    </Button>
-                                                </Link>
-
-                                                {NEXT_STATUS[q.status] && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleStatusUpdate(q.id, NEXT_STATUS[q.status])}
-                                                        disabled={updating === q.id || converting === q.id}
-                                                        title={`Mark as ${NEXT_STATUS[q.status]}`}
-                                                    >
-                                                        <ArrowRight className="h-4 w-4" />
-                                                    </Button>
+                                            <div className="space-y-1 py-2 border-y border-border/50 text-xs">
+                                                <div>
+                                                    <span className="font-semibold text-foreground text-sm">{q.customerName}</span>
+                                                    {q.customerPhone && (
+                                                        <span className="text-muted-foreground ml-1.5 font-normal">({q.customerPhone})</span>
+                                                    )}
+                                                </div>
+                                                {q.driver && (
+                                                    <div className="text-muted-foreground flex items-center gap-1">
+                                                        <User className="w-3 h-3 text-primary shrink-0" />
+                                                        <span>Driver: <strong className="text-foreground">{q.driver.name}</strong></span>
+                                                    </div>
                                                 )}
+                                                <div className="text-muted-foreground pt-0.5">
+                                                    <span className="text-foreground font-medium">{tourTitle}</span>
+                                                    <span className="ml-1 text-[11px]">({tourDays} day{tourDays !== 1 ? 's' : ''}{(q.totalDistance && q.totalDistance > 0) ? ` • ${q.totalDistance.toFixed(0)} km` : ''})</span>
+                                                </div>
+                                            </div>
 
-                                                {q.status === 'ACCEPTED' && (
-                                                    <ConvertQuotationDialog
-                                                        quotation={q}
-                                                        drivers={drivers}
-                                                        trigger={
+                                            <div className="flex items-center justify-between gap-1 pt-1">
+                                                <div className="flex items-center gap-1">
+                                                    <Link href={`/quotations/${q.id}`}>
+                                                        <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
+                                                            <Eye className="h-3.5 w-3.5 mr-1" />
+                                                            View
+                                                        </Button>
+                                                    </Link>
+                                                    <Link href={`/quotations/${q.id}/print`}>
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Print">
+                                                            <Printer className="h-4 w-4" />
+                                                        </Button>
+                                                    </Link>
+                                                    <Link href={`/quotations/${q.id}/edit`}>
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Edit">
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+
+                                                <div className="flex items-center gap-1">
+                                                    {NEXT_STATUS[q.status] && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 px-2 text-xs"
+                                                            onClick={() => handleStatusUpdate(q.id, NEXT_STATUS[q.status])}
+                                                            disabled={updating === q.id || converting === q.id}
+                                                            title={`Mark as ${NEXT_STATUS[q.status]}`}
+                                                        >
+                                                            <ArrowRight className="h-3.5 w-3.5 mr-1" />
+                                                            {NEXT_STATUS[q.status]}
+                                                        </Button>
+                                                    )}
+
+                                                    {q.status === 'ACCEPTED' && (
+                                                        <ConvertQuotationDialog
+                                                            quotation={q}
+                                                            drivers={drivers}
+                                                            trigger={
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    title="Convert to Booking"
+                                                                    className="h-8 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                >
+                                                                    <ArrowRightLeft className="h-3.5 w-3.5 mr-1" />
+                                                                    Book
+                                                                </Button>
+                                                            }
+                                                        />
+                                                    )}
+
+                                                    {q.status === 'CONVERTED' && (
+                                                        <Link href="/bookings">
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                title="Convert to Booking (Assign Driver)"
-                                                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                title="View Booking"
+                                                                className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700"
                                                             >
-                                                                <ArrowRightLeft className="h-4 w-4" />
+                                                                <CheckCircle2 className="h-4 w-4" />
                                                             </Button>
-                                                        }
-                                                    />
-                                                )}
+                                                        </Link>
+                                                    )}
 
-                                                {q.status === 'CONVERTED' && (
-                                                    <Link href="/bookings">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            title="Converted to Booking (View in Bookings)"
-                                                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                                                        >
-                                                            <CheckCircle2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </Link>
-                                                )}
-
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-destructive hover:text-destructive hover:bg-red-50"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Delete Quotation</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                Are you sure you want to delete quotation Q-{String(q.quotationNumber).padStart(4, '0')}?
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction
-                                                                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                                                                onClick={() => executeDelete(q.id)}
-                                                                disabled={deleting === q.id}
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                                                             >
-                                                                {deleting === q.id ? 'Deleting...' : 'Delete'}
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                                <Trash2 className="h-4 w-4" />
+                                                                <span className="sr-only">Delete</span>
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Quotation</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    Are you sure you want to delete quotation Q-{String(q.quotationNumber).padStart(4, '0')}?
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                                                                    onClick={() => executeDelete(q.id)}
+                                                                    disabled={deleting === q.id}
+                                                                >
+                                                                    {deleting === q.id ? 'Deleting...' : 'Delete'}
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
                                             </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                        </div>
+                                        </Card>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Desktop View (Table-based) */}
+                            <div className="hidden md:block rounded-md border overflow-x-auto">
+                                <Table className="min-w-[600px]">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Q No.</TableHead>
+                                            <TableHead>Customer</TableHead>
+                                            <TableHead>Tour</TableHead>
+                                            <TableHead className="text-right">Total</TableHead>
+                                            <TableHead className="text-center">Status</TableHead>
+                                            <TableHead className="text-center">Date</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filtered.map((q) => (
+                                            <TableRow key={q.id}>
+                                                <TableCell className="font-mono font-medium">
+                                                    Q-{String(q.quotationNumber).padStart(4, '0')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div>
+                                                        <p className="font-medium">{q.customerName}</p>
+                                                        {q.customerPhone && (
+                                                            <p className="text-xs text-muted-foreground">{q.customerPhone}</p>
+                                                        )}
+                                                        {q.driver && (
+                                                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                                                <User className="w-3 h-3 text-primary shrink-0" />
+                                                                <span>{q.driver.name}</span>
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div>
+                                                        <p className="text-sm font-medium">
+                                                            {q.tourSchedule?.name || (q.pickupLocation && q.dropLocation ? `${q.pickupLocation} → ${q.dropLocation}` : 'Direct Route')}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {q.tourSchedule?.days || (
+                                                                (q.startDate && q.endDate)
+                                                                    ? Math.max(1, Math.round((new Date(q.endDate).getTime() - new Date(q.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
+                                                                    : 1
+                                                            )} days{(q.totalDistance && q.totalDistance > 0) ? ` • ${q.totalDistance.toFixed(0)} km` : ''}
+                                                        </p>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right font-semibold">
+                                                    {fmt(q.totalAmount)}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <span className={`text-xs px-2 py-1 rounded border ${STATUS_COLORS[q.status] || ''}`}>
+                                                        {q.status}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {new Date(q.createdAt).toLocaleDateString('en-GB')}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end gap-1">
+                                                        <Link href={`/quotations/${q.id}`}>
+                                                            <Button variant="ghost" size="sm" title="View Details">
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+
+                                                        <Link href={`/quotations/${q.id}/edit`}>
+                                                            <Button variant="ghost" size="sm" title="Edit">
+                                                                <Pencil className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+
+                                                        <Link href={`/quotations/${q.id}/print`}>
+                                                            <Button variant="ghost" size="sm" title="Print">
+                                                                <Printer className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+
+                                                        {NEXT_STATUS[q.status] && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleStatusUpdate(q.id, NEXT_STATUS[q.status])}
+                                                                disabled={updating === q.id || converting === q.id}
+                                                                title={`Mark as ${NEXT_STATUS[q.status]}`}
+                                                            >
+                                                                <ArrowRight className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+
+                                                        {q.status === 'ACCEPTED' && (
+                                                            <ConvertQuotationDialog
+                                                                quotation={q}
+                                                                drivers={drivers}
+                                                                trigger={
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        title="Convert to Booking (Assign Driver)"
+                                                                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                    >
+                                                                        <ArrowRightLeft className="h-4 w-4" />
+                                                                    </Button>
+                                                                }
+                                                            />
+                                                        )}
+
+                                                        {q.status === 'CONVERTED' && (
+                                                            <Link href="/bookings">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    title="Converted to Booking (View in Bookings)"
+                                                                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                                >
+                                                                    <CheckCircle2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="text-destructive hover:text-destructive hover:bg-red-50"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Delete Quotation</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        Are you sure you want to delete quotation Q-{String(q.quotationNumber).padStart(4, '0')}?
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction
+                                                                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                                                                        onClick={() => executeDelete(q.id)}
+                                                                        disabled={deleting === q.id}
+                                                                    >
+                                                                        {deleting === q.id ? 'Deleting...' : 'Delete'}
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>

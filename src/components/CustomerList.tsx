@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Loader2, Search, Users, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, Search, Users, Plus, Pencil, Trash2, Phone, Mail, MapPin } from 'lucide-react';
 import { type Customer } from '@/lib/validations';
 import { notify } from '@/lib/notifications';
 import { Input } from '@/components/ui/input';
@@ -153,26 +153,24 @@ export function CustomerList() {
                             <p className="text-sm">Add a new customer to get started.</p>
                         </div>
                     ) : (
-                        <div className="rounded-md border overflow-x-auto">
-                            <Table className="min-w-[500px]">
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Mobile</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Address</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {customers.map((customer) => (
-                                        <TableRow key={customer.id}>
-                                            <TableCell className="font-medium">{customer.name}</TableCell>
-                                            <TableCell>{customer.mobile}</TableCell>
-                                            <TableCell>{customer.email || '-'}</TableCell>
-                                            <TableCell>{customer.address || '-'}</TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm" asChild className="mr-2">
+                        <>
+                            {/* Mobile View (Card-based) */}
+                            <div className="grid gap-3 md:hidden">
+                                {customers.map((customer) => (
+                                    <Card key={customer.id} className="p-4 space-y-2.5">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <h3 className="font-semibold text-base text-foreground">{customer.name}</h3>
+                                                <a 
+                                                    href={`tel:${customer.mobile}`}
+                                                    className="inline-flex items-center gap-1.5 text-xs text-primary font-medium hover:underline mt-1 bg-primary/10 px-2 py-1 rounded"
+                                                >
+                                                    <Phone className="h-3.5 w-3.5 shrink-0" />
+                                                    {customer.mobile}
+                                                </a>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
                                                     <Link href={`/customers/${customer.id}`}>
                                                         <Pencil className="h-4 w-4" />
                                                         <span className="sr-only">Edit</span>
@@ -180,7 +178,7 @@ export function CustomerList() {
                                                 </Button>
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30">
                                                             <Trash2 className="h-4 w-4" />
                                                             <span className="sr-only">Delete</span>
                                                         </Button>
@@ -204,12 +202,88 @@ export function CustomerList() {
                                                         </AlertDialogFooter>
                                                     </AlertDialogContent>
                                                 </AlertDialog>
-                                            </TableCell>
+                                            </div>
+                                        </div>
+
+                                        {(customer.email || customer.address) && (
+                                            <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-border/50">
+                                                {customer.email && (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Mail className="h-3.5 w-3.5 shrink-0" />
+                                                        <span className="truncate">{customer.email}</span>
+                                                    </div>
+                                                )}
+                                                {customer.address && (
+                                                    <div className="flex items-start gap-1.5">
+                                                        <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                                                        <span className="line-clamp-2">{customer.address}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </Card>
+                                ))}
+                            </div>
+
+                            {/* Desktop View (Table-based) */}
+                            <div className="hidden md:block rounded-md border overflow-x-auto">
+                                <Table className="min-w-[500px]">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Name</TableHead>
+                                            <TableHead>Mobile</TableHead>
+                                            <TableHead>Email</TableHead>
+                                            <TableHead>Address</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {customers.map((customer) => (
+                                            <TableRow key={customer.id}>
+                                                <TableCell className="font-medium">{customer.name}</TableCell>
+                                                <TableCell>{customer.mobile}</TableCell>
+                                                <TableCell>{customer.email || '-'}</TableCell>
+                                                <TableCell>{customer.address || '-'}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="sm" asChild className="mr-2">
+                                                        <Link href={`/customers/${customer.id}`}>
+                                                            <Pencil className="h-4 w-4" />
+                                                            <span className="sr-only">Edit</span>
+                                                        </Link>
+                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                                                                <Trash2 className="h-4 w-4" />
+                                                                <span className="sr-only">Delete</span>
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    Are you sure you want to delete {customer.name}? This action cannot be undone.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    onClick={() => executeDelete(customer.id)}
+                                                                    className="bg-red-600 hover:bg-red-700"
+                                                                    disabled={deleting === customer.id}
+                                                                >
+                                                                    {deleting === customer.id ? 'Deleting...' : 'Delete'}
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>

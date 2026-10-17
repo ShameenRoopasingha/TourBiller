@@ -100,12 +100,12 @@ export function VehicleCalendar({ vehicles, bookings }: VehicleCalendarProps) {
 
   return (
     <Card className="w-full min-w-0 border-border/50 shadow-sm overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between pb-4 bg-muted/20 border-b">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 bg-muted/20 border-b">
         <CardTitle className="flex items-center gap-2">
           <CalendarIcon className="h-5 w-5 text-primary" />
           {format(currentDate, 'MMMM yyyy')}
         </CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           <Button variant="outline" size="sm" onClick={today}>Today</Button>
           <div className="flex items-center rounded-md border">
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border-r" onClick={prevMonth}>
@@ -121,7 +121,7 @@ export function VehicleCalendar({ vehicles, bookings }: VehicleCalendarProps) {
         <div className="min-w-max w-full">
           {/* Header Row: Days */}
           <div className="flex border-b bg-muted/10">
-            <div className="w-48 flex-shrink-0 p-3 border-r font-semibold text-sm flex items-center bg-muted/20">
+            <div className="w-48 flex-shrink-0 p-3 border-r font-semibold text-sm flex items-center bg-background/95 backdrop-blur sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
               Vehicle
             </div>
             <div className="flex-grow flex relative">
@@ -163,7 +163,7 @@ export function VehicleCalendar({ vehicles, bookings }: VehicleCalendarProps) {
               return (
                 <div key={vehicle.vehicleNo} className="flex hover:bg-muted/5 transition-colors">
                   {/* Left Column: Vehicle Info */}
-                  <div className="w-48 flex-shrink-0 p-3 border-r flex flex-col justify-center bg-card z-20 relative">
+                  <div className="w-48 flex-shrink-0 p-3 border-r flex flex-col justify-center bg-card/95 backdrop-blur sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                     <span className="font-bold text-sm">{vehicle.vehicleNo}</span>
                     <span className="text-[10px] text-muted-foreground uppercase">{vehicle.category}</span>
                   </div>

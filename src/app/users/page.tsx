@@ -219,14 +219,14 @@ export default function UsersPage() {
                 </AlertDialogContent>
             </AlertDialog>
 
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-                    <p className="text-muted-foreground">Manage admin and driver accounts</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Users</h1>
+                    <p className="text-muted-foreground text-sm">Manage admin and driver accounts</p>
                 </div>
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button className="w-full sm:w-auto">
                             <Plus className="mr-2 h-4 w-4" />
                             Add User
                         </Button>
@@ -328,22 +328,30 @@ export default function UsersPage() {
                             No users found.
                         </div>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Created</TableHead>
-                                    <TableHead className="w-[60px]">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
+                        <>
+                            {/* Mobile View (Card-based) */}
+                            <div className="grid gap-3 md:hidden">
                                 {users.map((user) => (
-                                    <TableRow key={user.id}>
-                                        <TableCell className="font-medium">{user.name}</TableCell>
-                                        <TableCell>{user.email}</TableCell>
-                                        <TableCell>
+                                    <Card key={user.id} className="p-4 space-y-2.5">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <h3 className="font-semibold text-base text-foreground">{user.name}</h3>
+                                                <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 h-8 w-8 shrink-0"
+                                                onClick={() => {
+                                                    setUserToDelete({ id: user.id, name: user.name });
+                                                    setDeleteDialogOpen(true);
+                                                }}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+
+                                        <div className="flex items-center justify-between text-xs pt-2 border-t border-border/50">
                                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                                                 user.role === 'ADMIN'
                                                     ? 'bg-primary/10 text-primary'
@@ -356,27 +364,68 @@ export default function UsersPage() {
                                                 )}
                                                 {user.role}
                                             </span>
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground text-sm">
-                                            {new Date(user.createdAt).toLocaleDateString('en-GB')}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                onClick={() => {
-                                                    setUserToDelete({ id: user.id, name: user.name });
-                                                    setDeleteDialogOpen(true);
-                                                }}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
+
+                                            <span className="text-muted-foreground text-[11px]">
+                                                {new Date(user.createdAt).toLocaleDateString('en-GB')}
+                                            </span>
+                                        </div>
+                                    </Card>
                                 ))}
-                            </TableBody>
-                        </Table>
+                            </div>
+
+                            {/* Desktop View (Table-based) */}
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Name</TableHead>
+                                            <TableHead>Email</TableHead>
+                                            <TableHead>Role</TableHead>
+                                            <TableHead>Created</TableHead>
+                                            <TableHead className="w-[60px]">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {users.map((user) => (
+                                            <TableRow key={user.id}>
+                                                <TableCell className="font-medium">{user.name}</TableCell>
+                                                <TableCell>{user.email}</TableCell>
+                                                <TableCell>
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                                        user.role === 'ADMIN'
+                                                            ? 'bg-primary/10 text-primary'
+                                                            : 'bg-secondary text-secondary-foreground'
+                                                    }`}>
+                                                        {user.role === 'ADMIN' ? (
+                                                            <Shield className="h-3 w-3" />
+                                                        ) : (
+                                                            <Truck className="h-3 w-3" />
+                                                        )}
+                                                        {user.role}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground text-sm">
+                                                    {new Date(user.createdAt).toLocaleDateString('en-GB')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                        onClick={() => {
+                                                            setUserToDelete({ id: user.id, name: user.name });
+                                                            setDeleteDialogOpen(true);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>

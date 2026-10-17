@@ -146,100 +146,193 @@ export function TourScheduleList({ schedules }: TourScheduleListProps) {
                             </Link>
                         </div>
                     ) : (
-                        <div className="rounded-md border overflow-x-auto">
-                            <Table className="min-w-[600px]">
-                                <TableHeader>
-                                <TableRow>
-                                    <TableHead>Tour Name</TableHead>
-                                    <TableHead className="text-center">Days</TableHead>
-                                    <TableHead className="text-center">Vehicle</TableHead>
-                                    <TableHead className="text-right">Distance</TableHead>
-                                    <TableHead className="text-right">Est. Cost</TableHead>
-                                    <TableHead className="text-center">Quotes</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filtered.map((schedule) => (
-                                    <TableRow key={schedule.id}>
-                                        <TableCell>
-                                            <div>
-                                                <p className="font-medium">{schedule.name}</p>
-                                                {schedule.description && (
-                                                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                                        {schedule.description}
-                                                    </p>
-                                                )}
+                        <>
+                            {/* Mobile View (Card-based) */}
+                            <div className="grid gap-3 md:hidden">
+                                {filtered.map((schedule) => {
+                                    const total = calculateTotal(schedule.items);
+                                    const distance = calculateDistance(schedule.items);
+                                    return (
+                                        <Card key={schedule.id} className="p-4 space-y-3">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <h3 className="font-semibold text-base text-foreground">{schedule.name}</h3>
+                                                    {schedule.description && (
+                                                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                                                            {schedule.description}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded font-medium shrink-0">
+                                                    {schedule.vehicleCategory.replace('_', ' ')}
+                                                </span>
                                             </div>
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <span className="inline-flex items-center gap-1 text-sm">
-                                                <Calendar className="h-3 w-3" />
-                                                {schedule.days}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <span className="text-xs bg-secondary px-2 py-1 rounded">
-                                                {schedule.vehicleCategory.replace('_', ' ')}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {calculateDistance(schedule.items).toFixed(0)} km
-                                        </TableCell>
-                                        <TableCell className="text-right font-medium">
-                                            Rs. {calculateTotal(schedule.items).toLocaleString('en-US')}
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            {schedule._count?.quotations || 0}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <Link href={`/tour-schedules/${schedule.id}`}>
-                                                    <Button variant="ghost" size="sm" title="View Details">
-                                                        <Eye className="h-4 w-4" />
+
+                                            <div className="flex items-center justify-between text-xs py-2 px-3 bg-muted/20 rounded-md">
+                                                <span className="inline-flex items-center gap-1.5 text-muted-foreground font-medium">
+                                                    <Calendar className="h-3.5 w-3.5 text-primary" />
+                                                    {schedule.days} Day{schedule.days !== 1 ? 's' : ''}
+                                                </span>
+                                                <span className="text-muted-foreground">
+                                                    {distance.toFixed(0)} km
+                                                </span>
+                                                <span className="font-bold text-foreground text-sm">
+                                                    Rs. {total.toLocaleString('en-US')}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between text-xs pt-1 border-t border-border/50">
+                                                <span className="text-muted-foreground text-[11px]">
+                                                    {schedule._count?.quotations || 0} quote(s)
+                                                </span>
+
+                                                <div className="flex items-center gap-1">
+                                                    <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0" title="View Details">
+                                                        <Link href={`/tour-schedules/${schedule.id}`}>
+                                                            <Eye className="h-4 w-4" />
+                                                            <span className="sr-only">View</span>
+                                                        </Link>
                                                     </Button>
-                                                </Link>
-                                                <Link href={`/tour-schedules/${schedule.id}/edit`}>
-                                                    <Button variant="ghost" size="sm" title="Edit Schedule">
-                                                        <Edit className="h-4 w-4" />
+                                                    <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0" title="Edit Schedule">
+                                                        <Link href={`/tour-schedules/${schedule.id}/edit`}>
+                                                            <Edit className="h-4 w-4" />
+                                                            <span className="sr-only">Edit</span>
+                                                        </Link>
                                                     </Button>
-                                                </Link>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-destructive hover:text-destructive"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Delete Tour Schedule</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                Are you sure you want to delete &quot;{schedule.name}&quot;?
-                                                                This will hide the schedule from the list.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction
-                                                                onClick={() => handleDelete(schedule.id)}
-                                                                disabled={deleting === schedule.id}
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                title="Delete Schedule"
                                                             >
-                                                                {deleting === schedule.id ? 'Deleting...' : 'Delete'}
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                                <Trash2 className="h-4 w-4" />
+                                                                <span className="sr-only">Delete</span>
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Tour Schedule</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    Are you sure you want to delete &quot;{schedule.name}&quot;?
+                                                                    This will hide the schedule from the list.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    onClick={() => handleDelete(schedule.id)}
+                                                                    disabled={deleting === schedule.id}
+                                                                >
+                                                                    {deleting === schedule.id ? 'Deleting...' : 'Delete'}
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
                                             </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                        </div>
+                                        </Card>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Desktop View (Table-based) */}
+                            <div className="hidden md:block rounded-md border overflow-x-auto">
+                                <Table className="min-w-[600px]">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Tour Name</TableHead>
+                                            <TableHead className="text-center">Days</TableHead>
+                                            <TableHead className="text-center">Vehicle</TableHead>
+                                            <TableHead className="text-right">Distance</TableHead>
+                                            <TableHead className="text-right">Est. Cost</TableHead>
+                                            <TableHead className="text-center">Quotes</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filtered.map((schedule) => (
+                                            <TableRow key={schedule.id}>
+                                                <TableCell>
+                                                    <div>
+                                                        <p className="font-medium">{schedule.name}</p>
+                                                        {schedule.description && (
+                                                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                                                {schedule.description}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <span className="inline-flex items-center gap-1 text-sm">
+                                                        <Calendar className="h-3 w-3" />
+                                                        {schedule.days}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <span className="text-xs bg-secondary px-2 py-1 rounded">
+                                                        {schedule.vehicleCategory.replace('_', ' ')}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {calculateDistance(schedule.items).toFixed(0)} km
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium">
+                                                    Rs. {calculateTotal(schedule.items).toLocaleString('en-US')}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {schedule._count?.quotations || 0}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end gap-1">
+                                                        <Link href={`/tour-schedules/${schedule.id}`}>
+                                                            <Button variant="ghost" size="sm" title="View Details">
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+                                                        <Link href={`/tour-schedules/${schedule.id}/edit`}>
+                                                            <Button variant="ghost" size="sm" title="Edit Schedule">
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="text-destructive hover:text-destructive"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Delete Tour Schedule</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        Are you sure you want to delete &quot;{schedule.name}&quot;?
+                                                                        This will hide the schedule from the list.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction
+                                                                        onClick={() => handleDelete(schedule.id)}
+                                                                        disabled={deleting === schedule.id}
+                                                                    >
+                                                                        {deleting === schedule.id ? 'Deleting...' : 'Delete'}
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>

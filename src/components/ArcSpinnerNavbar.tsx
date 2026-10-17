@@ -468,7 +468,7 @@ export function ArcSpinnerNavbar() {
               </div>
               <button
                 type="button"
-                onClick={closeMenu}
+                onClick={() => closeMenu()}
                 className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform border ${
                   isDark
                     ? 'bg-slate-800/90 hover:bg-slate-700 border-slate-700 text-slate-200'

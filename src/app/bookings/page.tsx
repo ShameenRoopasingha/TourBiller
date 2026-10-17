@@ -78,7 +78,7 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
 
                         return (
                             <Card key={booking.id} className="overflow-hidden">
-                                <div className="p-4 flex items-center justify-between">
+                                <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2">
                                             <span className="font-bold text-lg">{booking.vehicleNo}</span>
@@ -127,7 +127,7 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                                         )}
                                     </div>
 
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap sm:flex-nowrap gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 justify-end items-center">
                                         {(displayStatus === 'ONGOING' || displayStatus === 'OVERDUE') && (
                                             <EndTourDialog vehicleNo={booking.vehicleNo} customerName={booking.customerName} bookingId={booking.id} />
                                         )}
