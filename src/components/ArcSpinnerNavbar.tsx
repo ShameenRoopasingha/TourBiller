@@ -380,11 +380,11 @@ export function ArcSpinnerNavbar() {
             initAudio();
             setIsOpen(true);
           }}
-          className="relative size-9 rounded-full flex items-center justify-center border border-border bg-card/80 hover:bg-card text-foreground shadow-sm active:scale-90 transition-all shrink-0"
+          className="relative size-9 rounded-full flex items-center justify-center border border-border/80 bg-secondary/80 hover:bg-accent text-foreground shadow-[inset_0_1px_0_0_var(--border-specular)] hover:border-emerald-500/40 active:scale-95 transition-all shrink-0 cursor-pointer"
           aria-label="Open Navigation Dial"
         >
           <PanelLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10B981] animate-pulse" />
         </button>
       </div>
 

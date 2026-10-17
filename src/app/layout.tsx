@@ -105,8 +105,8 @@ export default async function RootLayout({
                       <div className="flex items-center gap-2">
                          <RefreshButton />
                          <NotificationBell />
-                         <ArcSpinnerNavbar />
                          <ThemeSwitcher />
+                         <ArcSpinnerNavbar />
                          <div className="hidden md:flex items-center pl-1 border-l border-border/60 ml-0.5">
                             <SignOutButton />
                          </div>

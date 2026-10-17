@@ -3,14 +3,15 @@
 import { useTheme } from 'next-themes';
 import { Sun, Moon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
 
-export function ThemeSwitcher() {
+export function ThemeSwitcher({ className }: { className?: string } = {}) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
   if (!mounted) {
-    return <div className="h-9 w-9 rounded-xl bg-secondary/50 animate-pulse" />;
+    return <div className={cn("h-9 w-9 rounded-full bg-secondary/50 animate-pulse", className)} />;
   }
 
   const isDark = resolvedTheme === 'dark';
@@ -31,7 +32,10 @@ export function ThemeSwitcher() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="group relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/80 border border-border/80 shadow-[inset_0_1px_0_0_var(--border-specular)] hover:border-primary/40 hover:bg-accent transition-all duration-200 active:scale-95 cursor-pointer"
+      className={cn(
+        "group relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary/80 border border-border/80 shadow-[inset_0_1px_0_0_var(--border-specular)] hover:border-primary/40 hover:bg-accent transition-all duration-200 active:scale-95 cursor-pointer",
+        className
+      )}
       aria-label="Toggle color theme"
     >
       <Sun className="h-4 w-4 text-amber-500 dark:text-amber-400 transition-all duration-300 rotate-0 scale-100 dark:-rotate-90 dark:scale-0" />
