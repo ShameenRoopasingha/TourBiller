@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
-
 import { auth } from '@/lib/auth';
+import { DriverTourActionSchema } from '@/lib/validations';
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
 
@@ -215,7 +215,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const { companyId, id: driverId } = auth.driver;
         
         const body = await req.json();
-        const { action, note, meterReading } = body;
+        const parsed = DriverTourActionSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message || 'Invalid action' }, { status: 400 });
+        }
+        const { action, note, meterReading, reason, location } = parsed.data;
 
         const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
         if (!booking || booking.driverId !== driverId) {
@@ -292,7 +296,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         }
 
         if (action === 'REQUEST_HANDOVER') {
-            const { reason, note } = body;
             if (!meterReading || !meterReading.toString().trim()) {
                 return NextResponse.json({ 
                     success: false, 
@@ -325,7 +328,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         }
 
         if (action === 'REPORT_BREAKDOWN') {
-            const { reason, location, note } = body;
             if (!meterReading || !meterReading.toString().trim()) {
                 return NextResponse.json({ 
                     success: false, 

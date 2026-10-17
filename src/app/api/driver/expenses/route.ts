@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import { DriverExpenseApiSchema } from '@/lib/validations';
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
 
@@ -21,18 +22,19 @@ export async function POST(req: Request) {
 
         const { id: driverId, companyId } = decoded;
         const body = await req.json();
-        const { vehicleNo, amount, category, description, bookingId, expenseType } = body;
-
-        if (!vehicleNo || !amount || !category) {
-            return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+        const parsed = DriverExpenseApiSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message || 'Missing required fields' }, { status: 400 });
         }
+
+        const { vehicleNo, amount, category, description, bookingId, expenseType } = parsed.data;
 
         const expense = await prisma.vehicleExpense.create({
             data: {
                 companyId,
                 driverId,
                 vehicleNo,
-                amount: parseFloat(amount),
+                amount,
                 category,
                 description,
                 bookingId,

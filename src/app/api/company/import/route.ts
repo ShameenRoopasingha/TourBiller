@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth-guard';
+import { CompanyImportSchema } from '@/lib/validations';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { companyId, entityType, data } = body;
-
-    if (!companyId || !entityType || !data || !Array.isArray(data)) {
-      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    const parsed = CompanyImportSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid payload' }, { status: 400 });
     }
+    const { companyId, entityType, data } = parsed.data;
 
     const authCheck = await requireAdmin();
     if (!authCheck.authorized || authCheck.companyId !== companyId) {

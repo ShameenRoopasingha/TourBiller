@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { DriverLoginSchema } from '@/lib/validations';
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
 
@@ -9,11 +10,11 @@ export async function POST(req: Request) {
     console.log("REACHED /api/driver/login ROUTE!");
     try {
         const body = await req.json();
-        const { email, password } = body;
-
-        if (!email || !password) {
-            return NextResponse.json({ success: false, error: 'Email and password are required' }, { status: 400 });
+        const parsed = DriverLoginSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message || 'Email and password are required' }, { status: 400 });
         }
+        const { email, password } = parsed.data;
 
         const user = await prisma.user.findUnique({
             where: { email },

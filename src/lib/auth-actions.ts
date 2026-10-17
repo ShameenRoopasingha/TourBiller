@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
-import { type ActionResult } from '@/lib/validations';
+import { type ActionResult, PasswordResetRequestSchema, PasswordResetConfirmSchema } from '@/lib/validations';
 import crypto from 'crypto';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -11,11 +11,12 @@ import { rateLimit } from '@/lib/rate-limit';
  */
 export async function requestPasswordReset(formData: FormData): Promise<ActionResult<void>> {
     try {
-        const email = formData.get('email') as string;
-        
-        if (!email) {
-            return { success: false, error: 'Email is required' };
+        const raw = { email: formData.get('email') };
+        const parsed = PasswordResetRequestSchema.safeParse(raw);
+        if (!parsed.success) {
+            return { success: false, error: parsed.error.issues[0]?.message || 'Email is required' };
         }
+        const { email } = parsed.data;
 
         // Rate limit: 5 password reset requests per email per 15 minutes
         const { limited, retryAfterMs } = rateLimit(`pwd-reset:${email}`, 5, 15 * 60 * 1000);
@@ -100,16 +101,17 @@ export async function verifyResetToken(token: string): Promise<boolean> {
  */
 export async function resetPassword(formData: FormData): Promise<ActionResult<void>> {
     try {
-        const token = formData.get('token') as string;
-        const password = formData.get('password') as string;
+        const raw = {
+            token: formData.get('token'),
+            password: formData.get('password'),
+        };
 
-        if (!token || !password) {
-            return { success: false, error: 'Missing required fields' };
+        const parsed = PasswordResetConfirmSchema.safeParse(raw);
+        if (!parsed.success) {
+            return { success: false, error: parsed.error.issues[0]?.message || 'Missing required fields' };
         }
 
-        if (password.length < 6) {
-            return { success: false, error: 'Password must be at least 6 characters' };
-        }
+        const { token, password } = parsed.data;
 
         // Rate limit: 5 reset attempts per token per 15 minutes
         const { limited, retryAfterMs } = rateLimit(`pwd-token:${token}`, 5, 15 * 60 * 1000);

@@ -3,7 +3,7 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
-import { type ActionResult } from '@/lib/validations';
+import { type ActionResult, ProfileUpdateSchema, PasswordChangeSchema } from '@/lib/validations';
 
 /**
  * Update the logged-in user's profile information (name/email)
@@ -15,12 +15,17 @@ export async function updateProfile(formData: FormData): Promise<ActionResult<vo
             return { success: false, error: 'Unauthorized' };
         }
 
-        const name = formData.get('name') as string;
-        const email = formData.get('email') as string;
+        const raw = {
+            name: formData.get('name'),
+            email: formData.get('email'),
+        };
 
-        if (!name || !email) {
-            return { success: false, error: 'Name and email are required' };
+        const parsed = ProfileUpdateSchema.safeParse(raw);
+        if (!parsed.success) {
+            return { success: false, error: parsed.error.issues[0]?.message || 'Invalid profile data' };
         }
+
+        const { name, email } = parsed.data;
 
         // Check if email is being changed to one that already exists
         const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -50,12 +55,17 @@ export async function updatePassword(formData: FormData): Promise<ActionResult<v
             return { success: false, error: 'Unauthorized' };
         }
 
-        const currentPassword = formData.get('currentPassword') as string;
-        const newPassword = formData.get('newPassword') as string;
+        const raw = {
+            currentPassword: formData.get('currentPassword'),
+            newPassword: formData.get('newPassword'),
+        };
 
-        if (!currentPassword || !newPassword) {
-            return { success: false, error: 'Both current and new passwords are required' };
+        const parsed = PasswordChangeSchema.safeParse(raw);
+        if (!parsed.success) {
+            return { success: false, error: parsed.error.issues[0]?.message || 'Invalid password data' };
         }
+
+        const { currentPassword, newPassword } = parsed.data;
 
         const user = await prisma.user.findUnique({
             where: { id: session.user.id }
@@ -68,10 +78,6 @@ export async function updatePassword(formData: FormData): Promise<ActionResult<v
         const isValidPassword = await bcrypt.compare(currentPassword, user.password);
         if (!isValidPassword) {
             return { success: false, error: 'Incorrect current password' };
-        }
-
-        if (newPassword.length < 6) {
-            return { success: false, error: 'New password must be at least 6 characters' };
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);

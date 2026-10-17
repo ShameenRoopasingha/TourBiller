@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteQuotation, updateQuotation, updateQuotationStatus } from '@/lib/quotation-actions';
+import { QuotationStatusUpdateSchema } from '@/lib/validations';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -33,11 +34,12 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
 export async function PATCH(req: NextRequest, { params }: RouteContext) {
     try {
         const { id } = await params;
-        const body = await req.json() as { status?: string };
-        if (!body.status) {
-            return NextResponse.json({ success: false, error: 'Status is required' }, { status: 400 });
+        const body = await req.json();
+        const parsed = QuotationStatusUpdateSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message || 'Status is required' }, { status: 400 });
         }
-        const result = await updateQuotationStatus(id, body.status);
+        const result = await updateQuotationStatus(id, parsed.data.status);
         return NextResponse.json(result, { status: result.success ? 200 : 400 });
     } catch (error) {
         console.error('API error updating quotation status:', error);

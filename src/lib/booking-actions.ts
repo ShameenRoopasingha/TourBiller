@@ -2,7 +2,15 @@
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { BookingSchema, type ActionResult, type BookingWithDriver, type EmergencyVehicleSwapOptions } from '@/lib/validations';
+import { 
+    BookingSchema, 
+    type ActionResult, 
+    type BookingWithDriver, 
+    type EmergencyVehicleSwapOptions, 
+    EmergencyVehicleSwapSchema,
+    type DriverHandoverOptions,
+    DriverHandoverOptionsSchema
+} from '@/lib/validations';
 import { type Booking } from '@prisma/client';
 import { revalidateFor } from '@/lib/revalidation';
 import { revalidatePath } from 'next/cache';
@@ -226,12 +234,6 @@ export async function getBookingById(id: string): Promise<ActionResult<BookingWi
     }
 }
 
-export interface DriverHandoverOptions {
-    reason?: string;
-    handoverMeterReading?: string;
-    notes?: string;
-}
-
 /**
  * Assign, change, or handover a driver for an existing booking
  */
@@ -285,6 +287,13 @@ export async function assignDriverToBooking(
                 select: { name: true }
             });
             if (newDriver) newDriverName = newDriver.name;
+        }
+
+        if (handoverOptions) {
+            const parsedHandover = DriverHandoverOptionsSchema.safeParse(handoverOptions);
+            if (!parsedHandover.success) {
+                return { success: false, error: parsedHandover.error.issues[0]?.message || 'Invalid handover options' };
+            }
         }
 
         // Validate mandatory handover meter reading for ONGOING tours
@@ -373,35 +382,21 @@ export async function swapBookingVehicle(
             return { success: false, error: 'Booking not found' };
         }
 
-        const oldVehicleNo = booking.vehicleNo.trim().toUpperCase();
-        const newVehicleNo = options.newVehicleNo.trim().toUpperCase();
-
-        if (!newVehicleNo) {
-            return { success: false, error: 'Replacement vehicle number is required.' };
+        const parsedOptions = EmergencyVehicleSwapSchema.safeParse(options);
+        if (!parsedOptions.success) {
+            return { success: false, error: parsedOptions.error.issues[0]?.message || 'Invalid swap options' };
         }
+        const validOptions = parsedOptions.data;
+
+        const oldVehicleNo = booking.vehicleNo.trim().toUpperCase();
+        const newVehicleNo = validOptions.newVehicleNo.trim().toUpperCase();
 
         if (newVehicleNo === oldVehicleNo) {
             return { success: false, error: 'Replacement vehicle number must be different from current vehicle.' };
         }
 
-        if (!options.breakdownMeterReading?.trim()) {
-            return { success: false, error: 'Old vehicle breakdown odometer reading is strictly required.' };
-        }
-
-        if (!options.newVehicleStartMeter?.trim()) {
-            return { success: false, error: 'New vehicle initial odometer reading is strictly required.' };
-        }
-
-        if (!options.location?.trim()) {
-            return { success: false, error: 'Breakdown location is required.' };
-        }
-
-        if (!options.reason?.trim()) {
-            return { success: false, error: 'Breakdown reason / issue description is required.' };
-        }
-
         // Validate Fleet vehicle availability if choosing company vehicle
-        if (options.swapType === 'FLEET') {
+        if (validOptions.swapType === 'FLEET') {
             const fleetVehicle = await prisma.vehicle.findUnique({
                 where: {
                     companyId_vehicleNo: {
@@ -437,8 +432,8 @@ export async function swapBookingVehicle(
             }
         }
 
-        const oldMeterNum = parseFloat(options.breakdownMeterReading);
-        const newMeterNum = parseFloat(options.newVehicleStartMeter);
+        const oldMeterNum = parseFloat(validOptions.breakdownMeterReading);
+        const newMeterNum = parseFloat(validOptions.newVehicleStartMeter);
 
         // Execute transaction
         await prisma.$transaction(async (tx) => {
@@ -449,23 +444,23 @@ export async function swapBookingVehicle(
             });
 
             // 2. If external hire and cost provided, create VehicleExpense
-            if (options.swapType === 'EXTERNAL' && options.hireCost && options.hireCost > 0) {
+            if (validOptions.swapType === 'EXTERNAL' && validOptions.hireCost && validOptions.hireCost > 0) {
                 await tx.vehicleExpense.create({
                     data: {
                         companyId,
                         vehicleNo: newVehicleNo,
-                        amount: options.hireCost,
+                        amount: validOptions.hireCost,
                         category: 'BREAKDOWN',
-                        expenseType: options.expenseType || 'COMPANY',
+                        expenseType: validOptions.expenseType || 'COMPANY',
                         bookingId,
                         driverId: booking.driverId || undefined,
-                        description: `Emergency replacement vehicle hired from ${options.supplierName || 'External Supplier'}${options.supplierPhone ? ` (Contact: ${options.supplierPhone})` : ''} due to breakdown of ${oldVehicleNo}. Reason: ${options.reason}`,
+                        description: `Emergency replacement vehicle hired from ${validOptions.supplierName || 'External Supplier'}${validOptions.supplierPhone ? ` (Contact: ${validOptions.supplierPhone})` : ''} due to breakdown of ${oldVehicleNo}. Reason: ${validOptions.reason}`,
                     }
                 });
             }
 
             // 3. Mark old fleet vehicle as MAINTENANCE and update its mileage
-            if (options.markOldVehicleMaintenance !== false) {
+            if (validOptions.markOldVehicleMaintenance !== false) {
                 const oldFleetVehicle = await tx.vehicle.findUnique({
                     where: {
                         companyId_vehicleNo: {
@@ -489,7 +484,7 @@ export async function swapBookingVehicle(
             }
 
             // 4. Update new fleet vehicle's mileage if applicable
-            if (options.swapType === 'FLEET' && !isNaN(newMeterNum)) {
+            if (validOptions.swapType === 'FLEET' && !isNaN(newMeterNum)) {
                 const newFleetVehicle = await tx.vehicle.findUnique({
                     where: {
                         companyId_vehicleNo: {
@@ -508,9 +503,9 @@ export async function swapBookingVehicle(
             }
 
             // 5. Record TripActivity audit record
-            const swapTypeLabel = options.swapType === 'FLEET' ? 'Company Fleet Vehicle' : 'External Third-Party Hire';
-            const supplierInfo = options.supplierName ? ` | Supplier: ${options.supplierName}${options.hireCost ? ` (Rs. ${options.hireCost.toLocaleString()})` : ''}` : '';
-            const noteText = `Emergency Vehicle Swap: ${oldVehicleNo} (Breakdown Meter: ${options.breakdownMeterReading} km) ➔ ${newVehicleNo} (Start Meter: ${options.newVehicleStartMeter} km) | Type: ${swapTypeLabel} | Location: ${options.location} | Issue: ${options.reason}${supplierInfo}${options.notes ? ` | Notes: ${options.notes}` : ''}`;
+            const swapTypeLabel = validOptions.swapType === 'FLEET' ? 'Company Fleet Vehicle' : 'External Third-Party Hire';
+            const supplierInfo = validOptions.supplierName ? ` | Supplier: ${validOptions.supplierName}${validOptions.hireCost ? ` (Rs. ${validOptions.hireCost.toLocaleString()})` : ''}` : '';
+            const noteText = `Emergency Vehicle Swap: ${oldVehicleNo} (Breakdown Meter: ${validOptions.breakdownMeterReading} km) ➔ ${newVehicleNo} (Start Meter: ${validOptions.newVehicleStartMeter} km) | Type: ${swapTypeLabel} | Location: ${validOptions.location} | Issue: ${validOptions.reason}${supplierInfo}${validOptions.notes ? ` | Notes: ${validOptions.notes}` : ''}`;
 
             await tx.tripActivity.create({
                 data: {

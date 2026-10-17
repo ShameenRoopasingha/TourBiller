@@ -545,7 +545,24 @@ export const VehicleExpenseDbSchema = VehicleExpenseSchema.extend({
 
 export type VehicleExpense = z.infer<typeof VehicleExpenseDbSchema>;
 
-export type TripActivityType = 'START' | 'END' | 'HANDOVER_REQUESTED' | 'HANDOVER' | 'TAKEOVER' | 'FUEL_FILL' | 'FLAT_TIRE' | 'STOP' | 'HOTEL_CHECKIN' | 'RESUME' | 'BREAKDOWN' | 'BREAKDOWN_REPORTED' | 'VEHICLE_SWAPPED' | 'NOTE';
+export const TripActivityTypeEnum = z.enum([
+  'START',
+  'END',
+  'HANDOVER_REQUESTED',
+  'HANDOVER',
+  'TAKEOVER',
+  'FUEL_FILL',
+  'FLAT_TIRE',
+  'STOP',
+  'HOTEL_CHECKIN',
+  'RESUME',
+  'BREAKDOWN',
+  'BREAKDOWN_REPORTED',
+  'VEHICLE_SWAPPED',
+  'NOTE',
+]);
+
+export type TripActivityType = z.infer<typeof TripActivityTypeEnum>;
 
 export interface TripActivity {
   id: string;
@@ -557,18 +574,150 @@ export interface TripActivity {
   timestamp: Date | string;
 }
 
-export interface EmergencyVehicleSwapOptions {
-  swapType: 'FLEET' | 'EXTERNAL';
-  newVehicleNo: string;
-  breakdownMeterReading: string;
-  newVehicleStartMeter: string;
-  location: string;
-  reason: string;
-  notes?: string;
-  supplierName?: string;
-  supplierPhone?: string;
-  hireCost?: number;
-  expenseType?: 'COMPANY' | 'CUSTOMER';
-  markOldVehicleMaintenance?: boolean;
-}
+export const TripActivityLogSchema = z.object({
+  bookingId: z.string().min(1, 'Booking ID is required'),
+  type: TripActivityTypeEnum,
+  note: z.string().nullish().transform(v => v || undefined),
+  expenseId: z.string().nullish().transform(v => v || undefined),
+});
+
+export type TripActivityLogInput = z.infer<typeof TripActivityLogSchema>;
+
+// Emergency Vehicle Swap Schema
+export const EmergencyVehicleSwapSchema = z.object({
+  swapType: z.enum(['FLEET', 'EXTERNAL']),
+  newVehicleNo: z.string().min(1, 'Replacement vehicle number is required'),
+  breakdownMeterReading: z.string().min(1, 'Breakdown odometer reading is required'),
+  newVehicleStartMeter: z.string().min(1, 'New vehicle initial odometer reading is required'),
+  location: z.string().min(1, 'Breakdown location is required'),
+  reason: z.string().min(1, 'Breakdown reason is required'),
+  notes: z.string().optional(),
+  supplierName: z.string().optional(),
+  supplierPhone: z.string().optional(),
+  hireCost: z.coerce.number().min(0).optional(),
+  expenseType: z.enum(['COMPANY', 'CUSTOMER']).optional(),
+  markOldVehicleMaintenance: z.boolean().optional(),
+});
+
+export type EmergencyVehicleSwapOptions = z.infer<typeof EmergencyVehicleSwapSchema>;
+
+// User creation
+export const UserCreateSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Valid email is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  role: z.enum(['ADMIN', 'DRIVER', 'STAFF', 'MODERATOR', 'SUPERADMIN', 'OWNER']).or(z.string()).default('DRIVER'),
+});
+
+export type UserCreateInput = z.infer<typeof UserCreateSchema>;
+
+// Profile update
+export const ProfileUpdateSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Valid email is required'),
+});
+
+export type ProfileUpdateInput = z.infer<typeof ProfileUpdateSchema>;
+
+// Password change
+export const PasswordChangeSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+});
+
+export type PasswordChangeInput = z.infer<typeof PasswordChangeSchema>;
+
+// Password reset request & confirm
+export const PasswordResetRequestSchema = z.object({
+  email: z.string().email('Valid email is required'),
+});
+
+export type PasswordResetRequestInput = z.infer<typeof PasswordResetRequestSchema>;
+
+export const PasswordResetConfirmSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+export type PasswordResetConfirmInput = z.infer<typeof PasswordResetConfirmSchema>;
+
+// Driver login
+export const DriverLoginSchema = z.object({
+  email: z.string().email('Valid email is required'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+export type DriverLoginInput = z.infer<typeof DriverLoginSchema>;
+
+// Driver expense API
+export const DriverExpenseApiSchema = z.object({
+  vehicleNo: z.string().min(1, 'Vehicle number is required'),
+  amount: z.coerce.number().positive('Amount must be greater than 0'),
+  category: z.string().min(1, 'Category is required'),
+  description: z.string().nullish().transform(v => v || undefined),
+  bookingId: z.string().nullish().transform(v => v || undefined),
+  expenseType: z.enum(['COMPANY', 'CUSTOMER']).nullish().transform(v => v || 'COMPANY'),
+});
+
+export type DriverExpenseApiInput = z.infer<typeof DriverExpenseApiSchema>;
+
+// Driver location schemas
+export const DriverLocationPointSchema = z.object({
+  lat: z.coerce.number().min(-90, 'Latitude must be between -90 and 90').max(90, 'Latitude must be between -90 and 90'),
+  lon: z.coerce.number().min(-180, 'Longitude must be between -180 and 180').max(180, 'Longitude must be between -180 and 180'),
+  heading: z.coerce.number().nullish().transform(v => v ?? null),
+  speed: z.coerce.number().nullish().transform(v => v ?? null),
+  accuracy: z.coerce.number().nullish().transform(v => v ?? null),
+  battery: z.coerce.number().nullish().transform(v => v ?? null),
+  timestamp: z.union([z.string(), z.number(), z.date()]).nullish().transform(v => (v ? new Date(v) : new Date())),
+});
+
+export const DriverLocationPingSchema = DriverLocationPointSchema.omit({ timestamp: true }).extend({
+  bookingId: z.string().nullish().transform(v => v || null),
+});
+
+export const DriverLocationBatchSchema = z.object({
+  bookingId: z.string().nullish().transform(v => v || null),
+  batch: z.array(DriverLocationPointSchema).min(1, 'Batch points array cannot be empty'),
+});
+
+// Quotation status update
+export const QuotationStatusUpdateSchema = z.object({
+  status: z.enum(['DRAFT', 'SENT', 'ACCEPTED', 'CONVERTED', 'EXPIRED']),
+});
+
+export type QuotationStatusUpdateInput = z.infer<typeof QuotationStatusUpdateSchema>;
+
+// Company CSV / Excel import
+export const CompanyImportSchema = z.object({
+  companyId: z.string().min(1, 'Company ID is required'),
+  entityType: z.enum(['customers', 'vehicles'], {
+    errorMap: () => ({ message: 'Unsupported entity type. Must be customers or vehicles' }),
+  }),
+  data: z.array(z.record(z.any())).min(1, 'Data array must not be empty'),
+});
+
+export type CompanyImportInput = z.infer<typeof CompanyImportSchema>;
+
+// Driver Tour Actions
+export const DriverTourActionSchema = z.object({
+  action: z.enum(['START_TRIP', 'END_TRIP', 'TAKEOVER', 'REQUEST_HANDOVER', 'REPORT_BREAKDOWN', 'ADD_ACTIVITY']),
+  note: z.string().nullish().transform(v => v || undefined),
+  meterReading: z.union([z.string(), z.number()]).nullish().transform(v => (v !== undefined && v !== null ? String(v) : undefined)),
+  reason: z.string().nullish().transform(v => v || undefined),
+  location: z.string().nullish().transform(v => v || undefined),
+});
+
+export type DriverTourActionInput = z.infer<typeof DriverTourActionSchema>;
+
+// Mid-Tour Driver Handover Options
+export const DriverHandoverOptionsSchema = z.object({
+  reason: z.string().optional(),
+  handoverMeterReading: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export type DriverHandoverOptions = z.infer<typeof DriverHandoverOptionsSchema>;
+
+
 

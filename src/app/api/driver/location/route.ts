@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import { auth } from '@/lib/auth';
+import { DriverLocationPingSchema, DriverLocationBatchSchema } from '@/lib/validations';
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
 
@@ -55,18 +56,15 @@ export async function POST(req: Request) {
         const companyId = authUser.companyId;
 
         // Check if this is an offline batch sync
-        if (Array.isArray(body.batch) && body.batch.length > 0) {
-            const batchPoints = body.batch as Array<{
-                lat: number;
-                lon: number;
-                heading?: number;
-                speed?: number;
-                accuracy?: number;
-                battery?: number;
-                timestamp?: string | number;
-            }>;
+        if (body.batch !== undefined && Array.isArray(body.batch)) {
+            const parsedBatch = DriverLocationBatchSchema.safeParse(body);
+            if (!parsedBatch.success) {
+                return NextResponse.json({ success: false, error: parsedBatch.error.issues[0]?.message || 'Invalid batch payload' }, { status: 400 });
+            }
 
-            let activeBookingId = body.bookingId;
+            const batchPoints = parsedBatch.data.batch;
+            let activeBookingId = parsedBatch.data.bookingId;
+
             if (activeBookingId) {
                 const booking = await prisma.booking.findFirst({
                     where: { id: activeBookingId, companyId },
@@ -87,20 +85,18 @@ export async function POST(req: Request) {
                 activeBookingId = currentBooking?.id || null;
             }
 
-            const validRecords = batchPoints
-                .filter(p => typeof p.lat === 'number' && typeof p.lon === 'number')
-                .map(p => ({
-                    companyId,
-                    driverId,
-                    bookingId: activeBookingId,
-                    lat: p.lat,
-                    lon: p.lon,
-                    heading: typeof p.heading === 'number' ? p.heading : null,
-                    speed: typeof p.speed === 'number' ? p.speed : null,
-                    accuracy: typeof p.accuracy === 'number' ? p.accuracy : null,
-                    battery: typeof p.battery === 'number' ? p.battery : null,
-                    timestamp: p.timestamp ? new Date(p.timestamp) : new Date(),
-                }));
+            const validRecords = batchPoints.map(p => ({
+                companyId,
+                driverId,
+                bookingId: activeBookingId,
+                lat: p.lat,
+                lon: p.lon,
+                heading: p.heading,
+                speed: p.speed,
+                accuracy: p.accuracy,
+                battery: p.battery,
+                timestamp: p.timestamp,
+            }));
 
             if (validRecords.length > 0) {
                 await prisma.driverLocation.createMany({
@@ -141,11 +137,12 @@ export async function POST(req: Request) {
         }
 
         // Single GPS Ping
-        const { bookingId, lat, lon, heading, speed, accuracy, battery } = body;
-
-        if (typeof lat !== 'number' || typeof lon !== 'number') {
-            return NextResponse.json({ success: false, error: 'Valid latitude and longitude are required' }, { status: 400 });
+        const parsedPing = DriverLocationPingSchema.safeParse(body);
+        if (!parsedPing.success) {
+            return NextResponse.json({ success: false, error: parsedPing.error.issues[0]?.message || 'Valid latitude and longitude are required' }, { status: 400 });
         }
+
+        const { bookingId, lat, lon, heading, speed, accuracy, battery } = parsedPing.data;
 
         // Find active booking if not explicitly provided
         let activeBookingId = bookingId;

@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-guard';
-import { type ActionResult, type TripActivity, type TripActivityType } from '@/lib/validations';
+import { type ActionResult, type TripActivity, type TripActivityType, TripActivityLogSchema } from '@/lib/validations';
 
 /**
  * Log a trip activity (driver only, must have active booking)
@@ -14,6 +14,11 @@ export async function logTripActivity(
     expenseId?: string
 ): Promise<ActionResult<string>> {
     try {
+        const parsed = TripActivityLogSchema.safeParse({ bookingId, type, note, expenseId });
+        if (!parsed.success) {
+            return { success: false, error: parsed.error.issues[0]?.message || 'Invalid trip activity payload' };
+        }
+
         const authCheck = await requireAuth();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };

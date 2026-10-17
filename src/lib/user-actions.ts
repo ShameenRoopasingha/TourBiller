@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireAuth, requireAdmin } from '@/lib/auth-guard';
 import bcrypt from 'bcrypt';
-import { type ActionResult, type DriverAvailabilityConflict } from '@/lib/validations';
+import { type ActionResult, type DriverAvailabilityConflict, UserCreateSchema } from '@/lib/validations';
 import { revalidatePath } from 'next/cache';
 
 /**
@@ -163,18 +163,19 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
         }
         const { companyId } = authCheck;
 
-        const name = formData.get('name') as string;
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
-        const role = formData.get('role') as string || 'DRIVER';
+        const rawData = {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            password: formData.get('password'),
+            role: formData.get('role') || 'DRIVER',
+        };
 
-        if (!name || !email || !password) {
-            return { success: false, error: 'Name, email, and password are required' };
+        const parsed = UserCreateSchema.safeParse(rawData);
+        if (!parsed.success) {
+            return { success: false, error: parsed.error.issues[0]?.message || 'Invalid user data' };
         }
 
-        if (password.length < 6) {
-            return { success: false, error: 'Password must be at least 6 characters' };
-        }
+        const { name, email, password, role } = parsed.data;
 
         // Check if email already exists
         const existing = await prisma.user.findFirst({ where: { email, companyId } });
