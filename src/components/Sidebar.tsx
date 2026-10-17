@@ -19,7 +19,15 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarRail,
+    SidebarTrigger,
+    useSidebar,
 } from '@/components/ui/sidebar';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -61,12 +69,15 @@ const navItems: NavItem[] = [
 interface SidebarProps {
     userRole?: string;
     userName?: string;
+    className?: string;
 }
 
-export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps) {
+export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: SidebarProps) {
     const pathname = usePathname();
     const { resolvedTheme, setTheme } = useTheme();
     const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+    const { state, isMobile } = useSidebar();
+    const isCollapsed = state === 'collapsed' && !isMobile;
 
     const isAdmin = userRole === 'ADMIN' || userRole === 'OWNER';
     const isDriver = userRole === 'DRIVER';
@@ -76,22 +87,41 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
     );
 
     return (
-        <ShadcnSidebar className="border-r border-border/50 bg-card/40 backdrop-blur-xl">
-            <div className="p-4 border-b border-border/50 flex items-center justify-between">
-                <Link href="/" className="flex items-center gap-3">
-                    <div className="bg-white p-1.5 rounded-xl shadow-[0_2px_10px_rgba(0,180,216,0.2)] border border-slate-200 shrink-0">
-                        <Image src="/logo-icon.png" alt="VIGIL" width={36} height={36} className="h-9 w-auto object-contain" priority />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className={`font-black text-2xl tracking-tight leading-none text-foreground pb-0.5 ${montserrat.className}`}>VIGIL</span>
-                        <span className="text-[0.55rem] font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase leading-tight">Vehicle Hire &<br/>Travel Management</span>
-                    </div>
-                </Link>
+        <ShadcnSidebar
+            collapsible="icon"
+            className={cn("border-r border-border/50 bg-card/40 backdrop-blur-xl transition-[width] duration-200", className)}
+        >
+            <div className={cn(
+                "p-3.5 border-b border-border/50 flex items-center transition-all duration-200",
+                "group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center justify-between"
+            )}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Link href="/" className="flex items-center gap-3 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center min-w-0">
+                            <div className="bg-white p-1.5 rounded-xl shadow-[0_2px_10px_rgba(0,180,216,0.2)] border border-slate-200 shrink-0">
+                                <Image src="/logo-icon.png" alt="VIGIL" width={32} height={32} className="h-8 w-auto object-contain" priority />
+                            </div>
+                            <div className="flex flex-col group-data-[collapsible=icon]:hidden transition-opacity min-w-0">
+                                <span className={`font-black text-2xl tracking-tight leading-none text-foreground pb-0.5 ${montserrat.className}`}>VIGIL</span>
+                                <span className="text-[0.55rem] font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase leading-tight truncate">Vehicle Hire &<br/>Travel Management</span>
+                            </div>
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="hidden group-data-[collapsible=icon]:block">
+                        <div className="font-bold text-xs">VIGIL</div>
+                        <div className="text-[10px] text-muted-foreground">Vehicle Hire & Travel Management</div>
+                    </TooltipContent>
+                </Tooltip>
+
+                {/* Collapse trigger button inside sidebar header (visible when expanded on desktop) */}
+                <div className="group-data-[collapsible=icon]:hidden">
+                    <SidebarTrigger className="h-7 w-7 text-muted-foreground hover:text-foreground" />
+                </div>
             </div>
 
             <SidebarContent className="p-2">
                 <SidebarGroup>
-                    <SidebarMenu className="space-y-2">
+                    <SidebarMenu className="space-y-1.5">
                         {visibleItems.map((item) => {
                             const isActive = pathname === item.href;
                             return (
@@ -99,16 +129,22 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                                     <SidebarMenuButton
                                         asChild
                                         isActive={isActive}
+                                        tooltip={item.name}
                                         className={cn(
-                                            "h-10 transition-colors",
+                                            "h-10 transition-colors group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0",
                                             isActive
                                                 ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground"
                                                 : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
                                         )}
                                     >
-                                        <Link href={item.href} className="flex items-center gap-3 px-2 w-full">
-                                            <item.icon className="h-5 w-5" />
-                                            <span className="font-medium text-base">{item.name}</span>
+                                        <Link
+                                            href={item.href}
+                                            className="flex items-center gap-3 px-2.5 w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+                                        >
+                                            <item.icon className="h-5 w-5 shrink-0" />
+                                            <span className="font-medium text-sm group-data-[collapsible=icon]:hidden transition-opacity">
+                                                {item.name}
+                                            </span>
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
@@ -118,33 +154,84 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="p-4 border-t border-border/50 space-y-3">
-                <div className="flex items-center gap-2 px-1">
-                    <div className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
-                        isAdmin ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                    )}>
-                        {userName.charAt(0).toUpperCase()}
-                    </div>
-                    <Link href="/settings" className="flex-1 min-w-0 hover:opacity-80 transition-opacity cursor-pointer">
-                        <div className="text-sm font-medium truncate">{userName}</div>
-                        <div className={cn(
-                            "text-[10px] font-bold uppercase",
-                            isAdmin ? "text-primary" : "text-secondary-foreground"
-                        )}>
-                            {userRole}
-                        </div>
-                    </Link>
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <button
-                                className="p-2 rounded-full transition-colors hover:bg-red-50 text-muted-foreground hover:text-red-600 shrink-0"
-                                aria-label="Sign out"
-                                title="Sign out"
+            <SidebarFooter className="p-3 border-t border-border/50 group-data-[collapsible=icon]:p-2">
+                {/* Collapsed Mode Footer Icons */}
+                <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center gap-2 py-1">
+                    {/* User Avatar */}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Link
+                                href="/settings"
+                                className={cn(
+                                    "w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-transform hover:scale-105 shadow-sm",
+                                    isAdmin ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                                )}
                             >
-                                <LogOut className="h-4 w-4" />
-                            </button>
-                        </AlertDialogTrigger>
+                                {userName.charAt(0).toUpperCase()}
+                            </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" align="center">
+                            <div className="font-semibold text-xs">{userName}</div>
+                            <div className="text-[10px] text-muted-foreground uppercase">{userRole}</div>
+                        </TooltipContent>
+                    </Tooltip>
+
+                    {/* Theme Toggle */}
+                    {mounted && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                                    className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                    aria-label="Toggle theme"
+                                >
+                                    {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" align="center">
+                                Toggle {resolvedTheme === 'dark' ? 'Light' : 'Dark'} Mode
+                            </TooltipContent>
+                        </Tooltip>
+                    )}
+
+                    {/* Settings */}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Link
+                                href="/settings"
+                                className={cn(
+                                    "p-2 rounded-lg transition-colors",
+                                    pathname === '/settings'
+                                        ? "bg-primary/10 text-primary"
+                                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                                )}
+                                aria-label="Settings"
+                            >
+                                <Settings className="h-4 w-4" />
+                            </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" align="center">
+                            Settings
+                        </TooltipContent>
+                    </Tooltip>
+
+                    {/* Sign Out */}
+                    <AlertDialog>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <AlertDialogTrigger asChild>
+                                    <button
+                                        className="p-2 rounded-lg transition-colors hover:bg-red-500/10 text-muted-foreground hover:text-red-600 shrink-0"
+                                        aria-label="Sign out"
+                                    >
+                                        <LogOut className="h-4 w-4" />
+                                    </button>
+                                </AlertDialogTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" align="center">
+                                Sign out
+                            </TooltipContent>
+                        </Tooltip>
                         <AlertDialogContent>
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Sign out?</AlertDialogTitle>
@@ -162,36 +249,83 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User' }: SidebarProps)
                     </AlertDialog>
                 </div>
 
-                {/* Theme toggle + Settings */}
-                <div className="flex items-center justify-between">
-                    <div className="text-xs text-muted-foreground">
-                        <span className="font-semibold">VIGIL</span> v0.1
-                    </div>
-                    <div className="flex items-center gap-1">
-                        {mounted ? (
-                            <button
-                                onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-                                className="p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
-                                aria-label="Toggle theme"
-                            >
-                                {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                            </button>
-                        ) : (
-                            <div className="p-2 h-9 w-9" />
-                        )}
-                        <Link href="/settings" aria-label="Settings">
+                {/* Expanded Mode Footer */}
+                <div className="group-data-[collapsible=icon]:hidden space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                        <div className={cn(
+                            "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                            isAdmin ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                        )}>
+                            {userName.charAt(0).toUpperCase()}
+                        </div>
+                        <Link href="/settings" className="flex-1 min-w-0 hover:opacity-80 transition-opacity cursor-pointer">
+                            <div className="text-sm font-medium truncate">{userName}</div>
                             <div className={cn(
-                                "p-2 rounded-full transition-colors",
-                                pathname === '/settings'
-                                    ? "bg-primary/10 text-primary"
-                                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                                "text-[10px] font-bold uppercase",
+                                isAdmin ? "text-primary" : "text-secondary-foreground"
                             )}>
-                                <Settings className="h-5 w-5" />
+                                {userRole}
                             </div>
                         </Link>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <button
+                                    className="p-2 rounded-full transition-colors hover:bg-red-50 text-muted-foreground hover:text-red-600 shrink-0"
+                                    aria-label="Sign out"
+                                    title="Sign out"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Are you sure you want to sign out of your account?
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => logoutUser()}>
+                                        Sign out
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+
+                    {/* Theme toggle + Settings */}
+                    <div className="flex items-center justify-between">
+                        <div className="text-xs text-muted-foreground">
+                            <span className="font-semibold">VIGIL</span> v0.1
+                        </div>
+                        <div className="flex items-center gap-1">
+                            {mounted ? (
+                                <button
+                                    onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                                    className="p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
+                                    aria-label="Toggle theme"
+                                >
+                                    {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                                </button>
+                            ) : (
+                                <div className="p-2 h-9 w-9" />
+                            )}
+                            <Link href="/settings" aria-label="Settings">
+                                <div className={cn(
+                                    "p-2 rounded-full transition-colors",
+                                    pathname === '/settings'
+                                        ? "bg-primary/10 text-primary"
+                                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                                )}>
+                                    <Settings className="h-5 w-5" />
+                                </div>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </SidebarFooter>
+            <SidebarRail />
         </ShadcnSidebar>
     );
 }

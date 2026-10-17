@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Montserrat } from 'next/font/google'
 import './globals.css'
 import Image from 'next/image'
+import { cookies } from 'next/headers'
 import { Sidebar } from '@/components/Sidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -39,6 +40,8 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   const session = await auth();
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
 
   return (
     <html lang="en-GB" suppressHydrationWarning>
@@ -46,7 +49,7 @@ export default async function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           {session ? (
             <SessionProvider>
-              <SidebarProvider>
+              <SidebarProvider defaultOpen={defaultOpen}>
                 <div className="flex min-h-screen bg-background relative selection:bg-primary/20 w-full">
                   {/* Aurora Background Elements */}
                   <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -55,13 +58,13 @@ export default async function RootLayout({
                     <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] rounded-full bg-purple-500/10 blur-[120px]" />
                   </div>
 
-                  <div className="print:hidden z-40">
+                  <div className="print:hidden z-40 shrink-0">
                     <Sidebar userRole={(session.user as { role?: string })?.role} userName={session.user?.name || 'User'} />
                   </div>
 
                   <SidebarInset className="flex flex-1 min-w-0 flex-col bg-transparent relative">
                     {/* Global Topbar */}
-                    <header className="flex h-auto md:h-16 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6 print:hidden backdrop-blur-md bg-background/80 z-50 sticky top-0 pt-notch-safe pb-2.5 md:pt-0 md:pb-0">
+                    <header className="flex h-auto md:h-16 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6 print:hidden backdrop-blur-md bg-background/80 z-30 sticky top-0 pt-notch-safe pb-2.5 md:pt-0 md:pb-0">
                       <div className="flex items-center gap-2">
                         {/* Mobile Only Logo */}
                         <div className="md:hidden flex items-center gap-2">
@@ -72,7 +75,7 @@ export default async function RootLayout({
                         </div>
                         {/* Desktop trigger for collapsing sidebar */}
                         <div className="hidden md:block">
-                          <SidebarTrigger className="-ml-1" />
+                          <SidebarTrigger className="-ml-1 hover:bg-muted/80 text-muted-foreground hover:text-foreground" />
                         </div>
                       </div>
                       
