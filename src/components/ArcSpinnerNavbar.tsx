@@ -17,7 +17,10 @@ import {
   Settings,
   PanelLeft,
   X,
-  ChevronRight
+  ChevronRight,
+  Map,
+  FileText,
+  UserCog
 } from 'lucide-react';
 
 interface ArcItem {
@@ -36,9 +39,12 @@ const ARC_NAV_ITEMS: ArcItem[] = [
   { id: 'vehicles', name: 'Fleet Vehicles', href: '/vehicles', icon: Car, lightColor: '#d97706', darkColor: '#fbbf24' },
   { id: 'bookings', name: 'Tour Bookings', href: '/bookings', icon: CalendarDays, lightColor: '#4f46e5', darkColor: '#818cf8' },
   { id: 'calendar', name: 'Calendar View', href: '/calendar', icon: CalendarRange, lightColor: '#db2777', darkColor: '#f472b6' },
-  { id: 'customers', name: 'Customers', href: '/customers', icon: Users, lightColor: '#0891b2', darkColor: '#22d3ee' },
+  { id: 'tour-schedules', name: 'Tour Schedules', href: '/tour-schedules', icon: Map, lightColor: '#06b6d4', darkColor: '#22d3ee' },
   { id: 'quotations', name: 'Quotations', href: '/quotations', icon: FileCheck, lightColor: '#7c3aed', darkColor: '#a78bfa' },
+  { id: 'bills', name: 'Billing / Bills', href: '/bills', icon: FileText, lightColor: '#10b981', darkColor: '#34d399' },
+  { id: 'customers', name: 'Customers', href: '/customers', icon: Users, lightColor: '#0891b2', darkColor: '#38bdf8' },
   { id: 'reports', name: 'Reports', href: '/reports', icon: BarChart3, lightColor: '#0d9488', darkColor: '#2dd4bf' },
+  { id: 'users', name: 'User Accounts', href: '/users', icon: UserCog, lightColor: '#e11d48', darkColor: '#fb7185' },
   { id: 'settings', name: 'Settings', href: '/settings', icon: Settings, lightColor: '#475569', darkColor: '#94a3b8' },
 ];
 
