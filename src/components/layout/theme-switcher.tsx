@@ -33,7 +33,7 @@ export function ThemeSwitcher({ className }: { className?: string } = {}) {
       type="button"
       onClick={toggleTheme}
       className={cn(
-        "group relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary/80 border border-border/80 shadow-[inset_0_1px_0_0_var(--border-specular)] hover:border-primary/40 hover:bg-accent transition-all duration-200 active:scale-95 cursor-pointer",
+        "group relative inline-flex h-9 w-9 items-center justify-center rounded-full btn-tactile-secondary cursor-pointer",
         className
       )}
       aria-label="Toggle color theme"

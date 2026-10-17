@@ -11,7 +11,7 @@
   --foreground: hsl(240 10% 4%);
   --card: hsl(0 0% 100%);
   --card-foreground: hsl(240 10% 4%);
-  --popover: hsl(0 0% 100% / 0.88);
+  --popover: hsl(0 0% 100% / 0.90);
   --popover-foreground: hsl(240 10% 4%);
   --primary: hsl(252 88% 56%);
   --primary-glow: hsl(252 88% 56% / 0.25);
@@ -44,6 +44,19 @@
   --sidebar-ring: hsl(252 88% 56%);
   --sidebar-width: 16.5rem;
   --sidebar-width-icon: 4.25rem;
+
+  /* Tactile Hardware Skeuomorphic Tokens (Light Mode) */
+  --btn-secondary-bg: linear-gradient(180deg, #FFFFFF 0%, #F4F4F5 100%);
+  --btn-secondary-border: #D4D4D8;
+  --btn-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 #FFFFFF, inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+
+  --surface-recessed-bg: hsl(240 6% 95%);
+  --surface-recessed-border: hsl(240 6% 88%);
+  --surface-recessed-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06), 0 1px 0 0 rgba(255, 255, 255, 0.8);
+
+  --badge-plate-bg: linear-gradient(180deg, #FAFAFA 0%, #E4E4E7 100%);
+  --badge-plate-border: #A1A1AA;
+  --badge-plate-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .dark {
@@ -52,7 +65,7 @@
   --foreground: hsl(0 0% 98%);
   --card: hsl(240 12% 6.5%);
   --card-foreground: hsl(240 5% 96%);
-  --popover: hsl(240 12% 8% / 0.85);
+  --popover: hsl(240 12% 8% / 0.88);
   --popover-foreground: hsl(0 0% 98%);
   --primary: hsl(252 92% 67%);
   --primary-glow: hsl(252 92% 67% / 0.35);
@@ -81,6 +94,19 @@
   --sidebar-ring: hsl(252 92% 67%);
   --sidebar-width: 16.5rem;
   --sidebar-width-icon: 4.25rem;
+
+  /* Tactile Hardware Skeuomorphic Tokens (Dark Mode) */
+  --btn-secondary-bg: linear-gradient(180deg, #27272A 0%, #18181B 100%);
+  --btn-secondary-border: #3F3F46;
+  --btn-secondary-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+
+  --surface-recessed-bg: hsl(240 15% 2.5%);
+  --surface-recessed-border: hsl(240 8% 12%);
+  --surface-recessed-shadow: inset 0 2px 5px 0 rgba(0, 0, 0, 0.65), 0 1px 0 0 rgba(255, 255, 255, 0.05);
+
+  --badge-plate-bg: linear-gradient(180deg, #27272A 0%, #18181B 100%);
+  --badge-plate-border: #3F3F46;
+  --badge-plate-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 @theme inline {
@@ -138,6 +164,23 @@
   }
 }
 
+/* =========================================================================
+   Atmospheric Glass & Tactile Neo-Skeuomorphic Utilities
+   ========================================================================= */
+
+@utility card-specular {
+  background-color: color-mix(in srgb, var(--card) 85%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 2px 8px -2px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 0 var(--border-specular);
+  transition:
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
 @utility card-luxury {
   background-color: color-mix(in srgb, var(--card) 85%, transparent);
   backdrop-filter: blur(12px);
@@ -149,6 +192,64 @@
     transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.2s ease,
     box-shadow 0.2s ease;
+}
+
+@utility btn-tactile-primary {
+  background: linear-gradient(180deg, hsl(252 92% 64%) 0%, hsl(250 84% 54%) 100%);
+  color: #FFFFFF;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 4px 12px -2px hsl(250 84% 54% / 0.4),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 0 0 rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    transform: translateY(1px);
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.2),
+      inset 0 2px 3px 0 rgba(0, 0, 0, 0.35);
+  }
+}
+
+@utility btn-tactile-secondary {
+  background: var(--btn-secondary-bg);
+  border: 1px solid var(--btn-secondary-border);
+  box-shadow: var(--btn-secondary-shadow);
+  color: var(--foreground);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+@utility surface-recessed {
+  background-color: var(--surface-recessed-bg);
+  border: 1px solid var(--surface-recessed-border);
+  box-shadow: var(--surface-recessed-shadow);
+}
+
+@utility badge-license-plate {
+  background: var(--badge-plate-bg);
+  border: 1px solid var(--badge-plate-border);
+  box-shadow: var(--badge-plate-shadow);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: -0.02em;
+}
+
+@utility ticket-perforated {
+  position: relative;
+  background-color: color-mix(in srgb, var(--card) 90%, transparent);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 4px 20px -4px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 0 var(--border-specular);
+  mask-image: radial-gradient(circle at 0% var(--tear-y, 68%), transparent 10px, black 10.5px),
+              radial-gradient(circle at 100% var(--tear-y, 68%), transparent 10px, black 10.5px);
+  -webkit-mask-image: radial-gradient(circle at 0% var(--tear-y, 68%), transparent 10px, black 10.5px),
+                      radial-gradient(circle at 100% var(--tear-y, 68%), transparent 10px, black 10.5px);
 }
 
 @utility telemetry-plate {
@@ -209,6 +310,13 @@
   body {
     background-color: #FFFFFF !important;
     color: #000000 !important;
+  }
+
+  .ticket-perforated {
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+    border: 1px solid #000000 !important;
+    box-shadow: none !important;
   }
 
   .print-a4-wrapper {
