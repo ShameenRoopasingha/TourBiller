@@ -13,6 +13,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { RefreshButton } from '@/components/RefreshButton';
 import { ToastProvider } from '@/components/ToastProvider';
 import { ArcSpinnerNavbar } from '@/components/ArcSpinnerNavbar';
+import { SignOutButton } from '@/components/SignOutButton';
 
 import ChatAssistant from '@/components/ChatAssistant';
 
@@ -84,6 +85,9 @@ export default async function RootLayout({
                          <RefreshButton />
                          <NotificationBell />
                          <ArcSpinnerNavbar />
+                         <div className="hidden md:flex items-center pl-1 border-l border-border/60 ml-0.5">
+                            <SignOutButton />
+                         </div>
                       </div>
                     </header>
 

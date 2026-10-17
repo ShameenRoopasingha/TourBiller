@@ -208,39 +208,6 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                             Settings
                         </TooltipContent>
                     </Tooltip>
-
-                    {/* Sign Out */}
-                    <AlertDialog>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <AlertDialogTrigger asChild>
-                                    <button
-                                        className="p-2 rounded-lg transition-colors hover:bg-red-500/10 text-muted-foreground hover:text-red-600 shrink-0"
-                                        aria-label="Sign out"
-                                    >
-                                        <LogOut className="h-4 w-4" />
-                                    </button>
-                                </AlertDialogTrigger>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" align="center">
-                                Sign out
-                            </TooltipContent>
-                        </Tooltip>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Sign out?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Are you sure you want to sign out of your account?
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => logoutUser()}>
-                                    Sign out
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
                 </div>
 
                 {/* Expanded Mode Footer */}
@@ -264,7 +231,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <button
-                                    className="p-2 rounded-full transition-colors hover:bg-red-50 text-muted-foreground hover:text-red-600 shrink-0"
+                                    className="p-2 rounded-full transition-colors hover:bg-red-50 text-muted-foreground hover:text-red-600 shrink-0 md:hidden"
                                     aria-label="Sign out"
                                     title="Sign out"
                                 >
