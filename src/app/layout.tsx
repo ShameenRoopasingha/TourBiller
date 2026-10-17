@@ -1,24 +1,48 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Montserrat } from 'next/font/google'
+import { Inter, Montserrat, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import Image from 'next/image'
 import { cookies } from 'next/headers'
-import { Sidebar } from '@/components/Sidebar';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { SessionProvider } from '@/components/SessionProvider';
-import { auth } from '@/lib/auth';
-import { PageTransition } from '@/components/PageTransition';
-import { NotificationBell } from '@/components/NotificationBell';
-import { RefreshButton } from '@/components/RefreshButton';
-import { ToastProvider } from '@/components/ToastProvider';
-import { ArcSpinnerNavbar } from '@/components/ArcSpinnerNavbar';
-import { SignOutButton } from '@/components/SignOutButton';
+import { Sidebar } from '@/components/Sidebar'
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { ThemeProvider } from '@/components/ThemeProvider'
+import { SessionProvider } from '@/components/SessionProvider'
+import { auth } from '@/lib/auth'
+import { PageTransition } from '@/components/PageTransition'
+import { NotificationBell } from '@/components/NotificationBell'
+import { RefreshButton } from '@/components/RefreshButton'
+import { ToastProvider } from '@/components/ToastProvider'
+import { ArcSpinnerNavbar } from '@/components/ArcSpinnerNavbar'
+import { SignOutButton } from '@/components/SignOutButton'
+import { AmbientAtmosphere } from '@/components/layout/ambient-atmosphere'
+import { ThemeSwitcher } from '@/components/layout/theme-switcher'
+import ChatAssistant from '@/components/ChatAssistant'
 
-import ChatAssistant from '@/components/ChatAssistant';
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-plus-jakarta',
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '800'],
+})
 
-const inter = Inter({ subsets: ['latin'] })
-const montserrat = Montserrat({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+})
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  variable: '--font-montserrat',
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '800', '900'],
+})
 
 export const metadata: Metadata = {
   title: 'Vigil Tour Management Platform',
@@ -27,8 +51,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#09090b' },
+    { media: '(prefers-color-scheme: light)', color: '#fcfcfd' },
+    { media: '(prefers-color-scheme: dark)', color: '#07070a' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -46,26 +70,23 @@ export default async function RootLayout({
 
   return (
     <html lang="en-GB" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+      <body
+        className={`${inter.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${inter.className} font-sans antialiased`}
+        suppressHydrationWarning
+      >
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
+          <AmbientAtmosphere />
           {session ? (
             <SessionProvider>
               <SidebarProvider defaultOpen={defaultOpen}>
-                <div className="flex min-h-screen bg-background relative selection:bg-primary/20 w-full">
-                  {/* Aurora Background Elements */}
-                  <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-                    <div className="absolute -top-[25%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[120px]" />
-                    <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px]" />
-                    <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] rounded-full bg-purple-500/10 blur-[120px]" />
-                  </div>
-
+                <div className="flex min-h-screen bg-background relative selection:bg-primary/20 selection:text-primary w-full">
                   <div className="print:hidden z-40 shrink-0">
                     <Sidebar userRole={(session.user as { role?: string })?.role} userName={session.user?.name || 'User'} />
                   </div>
 
                   <SidebarInset className="flex flex-1 min-w-0 flex-col bg-transparent relative">
                     {/* Global Topbar */}
-                    <header className="flex h-auto md:h-16 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6 print:hidden backdrop-blur-md bg-background/80 z-30 sticky top-0 pt-notch-safe pb-2.5 md:pt-0 md:pb-0">
+                    <header className="flex h-auto md:h-16 shrink-0 items-center justify-between gap-2 border-b border-border/60 px-4 md:px-6 print:hidden backdrop-blur-md bg-background/80 z-30 sticky top-0 pt-notch-safe pb-2.5 md:pt-0 md:pb-0">
                       <div className="flex items-center gap-2">
                         {/* Mobile Only Logo */}
                         <div className="md:hidden flex items-center gap-2">
@@ -85,6 +106,7 @@ export default async function RootLayout({
                          <RefreshButton />
                          <NotificationBell />
                          <ArcSpinnerNavbar />
+                         <ThemeSwitcher />
                          <div className="hidden md:flex items-center pl-1 border-l border-border/60 ml-0.5">
                             <SignOutButton />
                          </div>
@@ -104,7 +126,9 @@ export default async function RootLayout({
               </SidebarProvider>
             </SessionProvider>
           ) : (
-            children
+            <div className="relative z-10 min-h-screen">
+              {children}
+            </div>
           )}
           <ToastProvider />
         </ThemeProvider>

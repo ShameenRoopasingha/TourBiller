@@ -5,105 +5,156 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme {
-  --font-sans: var(--font-inter);
+:root {
+  color-scheme: light;
+  --background: hsl(240 20% 99%);
+  --foreground: hsl(240 10% 4%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 10% 4%);
+  --popover: hsl(0 0% 100% / 0.88);
+  --popover-foreground: hsl(240 10% 4%);
+  --primary: hsl(252 88% 56%);
+  --primary-glow: hsl(252 88% 56% / 0.25);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(240 6% 94%);
+  --secondary-foreground: hsl(252 80% 48%);
+  --muted: hsl(240 5% 96%);
+  --muted-foreground: hsl(240 4% 44%);
+  --accent: hsl(250 60% 96%);
+  --accent-foreground: hsl(252 88% 48%);
+  --destructive: hsl(350 89% 60%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(240 6% 90%);
+  --border-specular: rgba(255, 255, 255, 0.85);
+  --input: hsl(240 6% 90%);
+  --ring: hsl(252 88% 56%);
+  --radius: 0.75rem;
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Unified Sidebar Tokens (Frosted Alabaster) */
+  --sidebar: hsl(240 15% 97.5% / 0.85);
+  --sidebar-foreground: hsl(240 6% 25%);
+  --sidebar-primary: hsl(252 88% 56%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(252 50% 95%);
+  --sidebar-accent-foreground: hsl(252 88% 50%);
+  --sidebar-border: hsl(240 6% 90%);
+  --sidebar-ring: hsl(252 88% 56%);
+  --sidebar-width: 16.5rem;
+  --sidebar-width-icon: 4.25rem;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: hsl(240 15% 3.5%);
+  --foreground: hsl(0 0% 98%);
+  --card: hsl(240 12% 6.5%);
+  --card-foreground: hsl(240 5% 96%);
+  --popover: hsl(240 12% 8% / 0.85);
+  --popover-foreground: hsl(0 0% 98%);
+  --primary: hsl(252 92% 67%);
+  --primary-glow: hsl(252 92% 67% / 0.35);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(240 8% 12%);
+  --secondary-foreground: hsl(240 5% 92%);
+  --muted: hsl(240 7% 10%);
+  --muted-foreground: hsl(240 5% 62%);
+  --accent: hsl(252 35% 16%);
+  --accent-foreground: hsl(252 90% 82%);
+  --destructive: hsl(350 85% 62%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(240 8% 14%);
+  --border-specular: rgba(255, 255, 255, 0.07);
+  --input: hsl(240 8% 14%);
+  --ring: hsl(252 92% 67%);
+
+  /* Unified Sidebar Tokens (Obsidian Glass) */
+  --sidebar: hsl(240 12% 5.5% / 0.75);
+  --sidebar-foreground: hsl(240 5% 84%);
+  --sidebar-primary: hsl(252 92% 67%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 8% 12% / 0.8);
+  --sidebar-accent-foreground: hsl(0 0% 98%);
+  --sidebar-border: hsl(240 8% 12%);
+  --sidebar-ring: hsl(252 92% 67%);
+  --sidebar-width: 16.5rem;
+  --sidebar-width-icon: 4.25rem;
+}
+
+@theme inline {
+  --font-display: var(--font-plus-jakarta), var(--font-montserrat), sans-serif;
+  --font-sans: var(--font-inter), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-
   --color-primary: var(--primary);
+  --color-primary-glow: var(--primary-glow);
   --color-primary-foreground: var(--primary-foreground);
-
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-aurora-slow: aurora-drift 22s ease-in-out infinite alternate;
+  --animate-aurora-reverse: aurora-drift-reverse 28s ease-in-out infinite alternate;
+
+  @keyframes aurora-drift {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(4%, 6%, 0) scale(1.06); }
+    100% { transform: translate3d(-3%, -4%, 0) scale(0.96); }
+  }
+
+  @keyframes aurora-drift-reverse {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(-5%, 4%, 0) scale(0.95); }
+    100% { transform: translate3d(4%, -5%, 0) scale(1.05); }
+  }
 }
 
-:root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(240 10% 3.9%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(240 10% 3.9%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(240 10% 3.9%);
-  --primary: hsl(250 84% 54%); /* Vibrant Primary Violet */
-  --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(240 4.8% 95.9%);
-  --secondary-foreground: hsl(250 84% 54%);
-  --muted: hsl(240 4.8% 95.9%);
-  --muted-foreground: hsl(240 3.8% 46.1%);
-  --accent: hsl(240 4.8% 95.9%);
-  --accent-foreground: hsl(240 5.9% 10%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 5.9% 90%);
-  --input: hsl(240 5.9% 90%);
-  --ring: hsl(250 84% 54%);
-  --radius: 0.5rem;
-  --sidebar: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(240 5.3% 26.1%);
-  --sidebar-primary: hsl(240 5.9% 10%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(240 4.8% 95.9%);
-  --sidebar-accent-foreground: hsl(240 5.9% 10%);
-  --sidebar-border: hsl(220 13% 91%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-  --sidebar-width: 16rem;
-  --sidebar-width-icon: 4rem;
+@utility card-luxury {
+  background-color: color-mix(in srgb, var(--card) 85%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 2px 8px -2px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 0 var(--border-specular);
+  transition:
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.dark {
-  --background: hsl(240 10% 3.9%);
-  --foreground: hsl(0 0% 98%);
-  --card: hsl(240 10% 3.9%);
-  --card-foreground: hsl(0 0% 98%);
-  --popover: hsl(240 10% 3.9%);
-  --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(250 84% 65%); /* Lighter Violet for Dark Mode */
-  --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(240 3.7% 15.9%);
-  --secondary-foreground: hsl(0 0% 98%);
-  --muted: hsl(240 3.7% 15.9%);
-  --muted-foreground: hsl(240 5% 64.9%);
-  --accent: hsl(240 3.7% 15.9%);
-  --accent-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 3.7% 15.9%);
-  --input: hsl(240 3.7% 15.9%);
-  --ring: hsl(250 84% 65%);
-  --sidebar: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsl(224.3 76.3% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-  --sidebar-width: 16rem;
-  --sidebar-width-icon: 4rem;
+@utility telemetry-plate {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: -0.02em;
 }
 
 @layer base {
@@ -114,74 +165,13 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
 /* =========================================================================
-   Print Styles (A4 Enforcement)
+   Mobile device top notch & status bar safe spacing
    ========================================================================= */
-
-@media print {
-  /* Force A4 Size */
-  @page {
-    size: A4;
-    margin: 0; /* setting 0 removes browser URL/date headers/footers */
-  }
-
-  /* Base wrapper for A4 sizing strictly */
-  .print-a4-wrapper {
-    width: 21cm !important;
-    min-height: 100% !important;
-    height: auto !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    padding: 1cm !important; /* Move margin into padding so it isn't used by browser headers */
-    overflow: hidden;
-  }
-
-  /* Optional: Landscape wrapper if a specific page (like big tables) needs to be landscape */
-  .print-a4-landscape {
-    width: 29.7cm !important;
-    height: 21cm !important;
-    page: landscape;
-  }
-  @page landscape {
-    size: A4 landscape;
-  }
-
-  /* 58mm Thermal Printer Support */
-  .print-thermal {
-    width: 58mm !important;
-    max-width: 58mm !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    overflow: hidden;
-    page: thermal;
-  }
-  @page thermal {
-    size: 58mm auto; /* 58mm width, continuous height */
-    margin: 0; 
-  }
-
-  /* Force background colors to show up in Chrome/Edge prints */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-}
-
-@theme inline {
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-}
-
-/* Mobile device top notch & status bar safe spacing (Mobile screens only) */
 @media (max-width: 767px) {
   .pt-notch-safe {
     padding-top: max(env(safe-area-inset-top, 0px), 1.25rem);
@@ -199,5 +189,49 @@
 
   .top-notch-safe {
     top: 0.75rem !important;
+  }
+}
+
+/* =========================================================================
+   Print Styles (A4 Enforcement & Thermal Receipt)
+   ========================================================================= */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  @page thermal {
+    size: 58mm auto;
+    margin: 0;
+  }
+
+  body {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+  }
+
+  .print-a4-wrapper {
+    width: 21cm !important;
+    min-height: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 1cm !important;
+    overflow: hidden;
+  }
+
+  .print-thermal {
+    width: 58mm !important;
+    max-width: 58mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    overflow: hidden;
+    page: thermal;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }

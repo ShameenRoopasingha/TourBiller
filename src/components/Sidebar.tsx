@@ -5,12 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { logoutUser } from '@/lib/user-actions';
-import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, Sun, Moon, LogOut, UserCog, BarChart3, CalendarRange, Radio } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, LogOut, UserCog, BarChart3, CalendarRange, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Montserrat } from 'next/font/google';
 
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['700', '900'] });
+import { ThemeSwitcher } from '@/components/layout/theme-switcher';
 import {
     Sidebar as ShadcnSidebar,
     SidebarContent,
@@ -73,7 +73,6 @@ interface SidebarProps {
 
 export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: SidebarProps) {
     const pathname = usePathname();
-    const { resolvedTheme, setTheme } = useTheme();
     const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
     const { state, isMobile } = useSidebar();
     const isCollapsed = state === 'collapsed' && !isMobile;
@@ -171,22 +170,16 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                     </Tooltip>
 
                     {/* Theme Toggle */}
-                    {mounted && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                                    aria-label="Toggle theme"
-                                >
-                                    {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" align="center">
-                                Toggle {resolvedTheme === 'dark' ? 'Light' : 'Dark'} Mode
-                            </TooltipContent>
-                        </Tooltip>
-                    )}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div>
+                                <ThemeSwitcher />
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" align="center">
+                            Toggle Theme
+                        </TooltipContent>
+                    </Tooltip>
 
                     {/* Settings */}
                     <Tooltip>
@@ -261,17 +254,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                             <span className="font-semibold">VIGIL</span> v0.1
                         </div>
                         <div className="flex items-center gap-1">
-                            {mounted ? (
-                                <button
-                                    onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-                                    className="p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
-                                    aria-label="Toggle theme"
-                                >
-                                    {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                                </button>
-                            ) : (
-                                <div className="p-2 h-9 w-9" />
-                            )}
+                            <ThemeSwitcher />
                             <Link href="/settings" aria-label="Settings">
                                 <div className={cn(
                                     "p-2 rounded-full transition-colors",

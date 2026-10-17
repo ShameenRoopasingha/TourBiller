@@ -699,9 +699,9 @@ export type QuotationStatusUpdateInput = z.infer<typeof QuotationStatusUpdateSch
 export const CompanyImportSchema = z.object({
   companyId: z.string().min(1, 'Company ID is required'),
   entityType: z.enum(['customers', 'vehicles'], {
-    errorMap: () => ({ message: 'Unsupported entity type. Must be customers or vehicles' }),
+    message: 'Unsupported entity type. Must be customers or vehicles',
   }),
-  data: z.array(z.record(z.any())).min(1, 'Data array must not be empty'),
+  data: z.array(z.record(z.string(), z.any())).min(1, 'Data array must not be empty'),
 });
 
 export type CompanyImportInput = z.infer<typeof CompanyImportSchema>;
