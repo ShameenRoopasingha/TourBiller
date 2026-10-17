@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
+import { getJwtSecret } from '@/lib/jwt';
 
 async function verifyAdminOrOwner(req: Request) {
     // 1. Session-based check (Next.js Dashboard)
@@ -22,7 +21,7 @@ async function verifyAdminOrOwner(req: Request) {
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
         try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJwtSecret()) as any;
             if (decoded?.companyId && (decoded.role === 'ADMIN' || decoded.role === 'OWNER')) {
                 return { companyId: decoded.companyId, userId: decoded.id, role: decoded.role };
             }

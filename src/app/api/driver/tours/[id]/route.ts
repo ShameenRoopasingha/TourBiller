@@ -3,8 +3,7 @@ import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import { auth } from '@/lib/auth';
 import { DriverTourActionSchema } from '@/lib/validations';
-
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
+import { getJwtSecret } from '@/lib/jwt';
 
 // Middleware-like function to verify driver (Bearer token for Mobile App or NextAuth for Web Portal)
 async function verifyDriver(req: Request) {
@@ -13,7 +12,7 @@ async function verifyDriver(req: Request) {
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
         try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJwtSecret()) as any;
             if (decoded?.id && decoded?.companyId) {
                 return { driver: decoded };
             }

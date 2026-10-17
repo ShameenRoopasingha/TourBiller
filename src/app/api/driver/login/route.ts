@@ -3,8 +3,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { DriverLoginSchema } from '@/lib/validations';
-
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
+import { getJwtSecret } from '@/lib/jwt';
 
 export async function POST(req: Request) {
     console.log("REACHED /api/driver/login ROUTE!");
@@ -33,7 +32,7 @@ export async function POST(req: Request) {
 
         const token = jwt.sign(
             { id: user.id, email: user.email, companyId: user.companyId, role: user.role },
-            JWT_SECRET,
+            getJwtSecret(),
             { expiresIn: '30d' }
         );
 

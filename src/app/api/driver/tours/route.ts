@@ -3,8 +3,7 @@ import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 
 import { auth } from '@/lib/auth';
-
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
+import { getJwtSecret } from '@/lib/jwt';
 
 export async function GET(req: Request) {
     try {
@@ -15,7 +14,7 @@ export async function GET(req: Request) {
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
             try {
-                const decoded = jwt.verify(token, JWT_SECRET) as any;
+                const decoded = jwt.verify(token, getJwtSecret()) as any;
                 if (decoded?.role === 'DRIVER' && decoded?.id) {
                     driverId = decoded.id;
                 }

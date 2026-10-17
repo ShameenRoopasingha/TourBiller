@@ -3,8 +3,7 @@ import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import { auth } from '@/lib/auth';
 import { DriverLocationPingSchema, DriverLocationBatchSchema } from '@/lib/validations';
-
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
+import { getJwtSecret } from '@/lib/jwt';
 
 async function authenticateDriverOrUser(req: Request) {
     // 1. Try Bearer token (Mobile App)
@@ -12,7 +11,7 @@ async function authenticateDriverOrUser(req: Request) {
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
         try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJwtSecret()) as any;
             if (decoded?.id && decoded?.companyId) {
                 return {
                     driverId: decoded.id as string,

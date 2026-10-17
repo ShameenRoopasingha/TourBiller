@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import { DriverExpenseApiSchema } from '@/lib/validations';
-
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-vigil';
+import { getJwtSecret } from '@/lib/jwt';
 
 export async function POST(req: Request) {
     try {
@@ -15,7 +14,7 @@ export async function POST(req: Request) {
         const token = authHeader.split(' ')[1];
         let decoded: any;
         try {
-            decoded = jwt.verify(token, JWT_SECRET);
+            decoded = jwt.verify(token, getJwtSecret());
         } catch (e) {
             return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
         }
