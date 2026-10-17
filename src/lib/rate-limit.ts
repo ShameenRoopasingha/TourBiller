@@ -10,17 +10,33 @@ type RateLimitEntry = {
     resetTime: number;
 };
 
+const MAX_STORE_SIZE = 10_000;
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-// Clean up expired entries every 5 minutes
-setInterval(() => {
-    const now = Date.now();
+function pruneExpired(now: number) {
     for (const [key, entry] of rateLimitStore.entries()) {
         if (now > entry.resetTime) {
             rateLimitStore.delete(key);
         }
     }
+}
+
+// Clean up expired entries every 5 minutes.
+// Crucial: Call unref() so this background timer does not hold open the Node.js event loop or leak workers.
+const cleanupTimer = setInterval(() => {
+    pruneExpired(Date.now());
 }, 5 * 60 * 1000);
+
+if (typeof cleanupTimer === 'object' && typeof (cleanupTimer as any).unref === 'function') {
+    (cleanupTimer as any).unref();
+}
+
+/**
+ * Resets and clears the in-memory rate limit store (used in testing and graceful teardowns).
+ */
+export function _clearRateLimitStore() {
+    rateLimitStore.clear();
+}
 
 /**
  * Check if a key has exceeded the rate limit.
@@ -40,6 +56,13 @@ export function rateLimit(
 
     // No existing entry or window expired — allow
     if (!entry || now > entry.resetTime) {
+        if (rateLimitStore.size >= MAX_STORE_SIZE) {
+            pruneExpired(now);
+            if (rateLimitStore.size >= MAX_STORE_SIZE) {
+                const oldestKey = rateLimitStore.keys().next().value;
+                if (oldestKey) rateLimitStore.delete(oldestKey);
+            }
+        }
         rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
         return { limited: false, remaining: maxAttempts - 1, retryAfterMs: 0 };
     }

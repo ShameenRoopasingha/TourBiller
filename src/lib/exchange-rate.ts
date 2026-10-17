@@ -4,7 +4,8 @@ interface CachedRates {
     rates: Record<string, number>;
 }
 
-let cachedData: CachedRates | null = null;
+const MAX_RATES_CACHE = 25;
+const currencyRatesCache = new Map<string, CachedRates>();
 const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
 
 /**
@@ -14,8 +15,9 @@ export async function getLiveRates(baseCurrency = 'USD'): Promise<Record<string,
     const base = baseCurrency.toUpperCase().trim();
     const now = Date.now();
 
-    if (cachedData && cachedData.base === base && (now - cachedData.timestamp) < CACHE_DURATION_MS) {
-        return cachedData.rates;
+    const cached = currencyRatesCache.get(base);
+    if (cached && (now - cached.timestamp) < CACHE_DURATION_MS) {
+        return { ...cached.rates };
     }
 
     try {
@@ -29,12 +31,18 @@ export async function getLiveRates(baseCurrency = 'USD'): Promise<Record<string,
 
         const data = await res.json();
         if (data && data.rates) {
-            cachedData = {
+            // Keep cache strictly bounded
+            if (currencyRatesCache.size >= MAX_RATES_CACHE) {
+                const oldest = currencyRatesCache.keys().next().value;
+                if (oldest) currencyRatesCache.delete(oldest);
+            }
+
+            currencyRatesCache.set(base, {
                 timestamp: now,
                 base,
-                rates: data.rates,
-            };
-            return data.rates;
+                rates: { ...data.rates },
+            });
+            return { ...data.rates };
         }
     } catch (error) {
         console.error('Failed to fetch live exchange rates:', error);

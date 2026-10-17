@@ -245,4 +245,8 @@ describe('Multi-Tenant Data Isolation', () => {
         // Dashboard should only count Company A's 1 vehicle
         expect(dashA.data?.totalVehicles).toBe(1);
     });
+
+    afterAll(async () => {
+        await prisma.$disconnect();
+    });
 });

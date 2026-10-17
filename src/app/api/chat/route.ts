@@ -12,6 +12,23 @@ const groq = createOpenAI({
   apiKey: process.env.GROQ_API_KEY || '',
 });
 
+let cachedAgentKnowledge: string | null = null;
+
+function getAgentKnowledge(): string {
+  if (cachedAgentKnowledge !== null) {
+    return cachedAgentKnowledge;
+  }
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const knowledgePath = path.join(process.cwd(), 'src', 'agent-knowledge.md');
+    cachedAgentKnowledge = fs.readFileSync(knowledgePath, 'utf8');
+  } catch {
+    cachedAgentKnowledge = '';
+  }
+  return cachedAgentKnowledge;
+}
+
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
@@ -48,16 +65,7 @@ export async function POST(req: Request) {
     }));
 
     const coreMessages = await convertToModelMessages(sanitizedMessages);
-
-    let agentKnowledge = "";
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const knowledgePath = path.join(process.cwd(), 'src', 'agent-knowledge.md');
-      agentKnowledge = fs.readFileSync(knowledgePath, 'utf8');
-    } catch (e) {
-      console.log('Knowledge base file not found');
-    }
+    const agentKnowledge = getAgentKnowledge();
 
     const result = streamText({
       model: groq('openai/gpt-oss-120b'),
