@@ -35,7 +35,7 @@ export function TelemetryReadout({
     >
       {/* Header: Micro Instrument Label + Optional Icon */}
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <span className="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-muted-foreground select-none truncate">
+        <span className="text-instrument-label select-none truncate">
           {label}
         </span>
         {Icon && (
@@ -47,10 +47,10 @@ export function TelemetryReadout({
       <div className="flex items-baseline gap-1.5 flex-wrap">
         <span
           className={cn(
-            'font-mono font-extrabold tabular-nums tracking-tight text-foreground leading-none drop-shadow-xs',
-            variant === 'compact' && 'text-lg',
-            variant === 'default' && 'text-xl sm:text-2xl',
-            variant === 'hero' && 'text-3xl sm:text-4xl'
+            'text-telemetry font-extrabold leading-none drop-shadow-xs',
+            variant === 'compact' && 'text-lg text-foreground',
+            variant === 'default' && 'text-xl sm:text-2xl text-foreground',
+            variant === 'hero' && 'text-3xl sm:text-4xl text-kpi-metallic'
           )}
         >
           {value}

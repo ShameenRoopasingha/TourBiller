@@ -2,6 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Calendar, User, Phone, MapPin, Users, Printer, Eye, ArrowRight } from 'lucide-react';
 import { VehiclePlateBadge, type VehiclePlateStatus } from './vehicle-plate-badge';
+import { CurrencyReadout } from './currency-readout';
 import { Button } from './button';
 import { Badge } from './badge';
 
@@ -37,7 +38,7 @@ export function TourBoardingPassCard({
   driverName,
   driverPhone,
   totalAmount,
-  currency = 'LKR',
+  currency = 'Rs.',
   status = 'CONFIRMED',
   onView,
   onPrint,
@@ -59,7 +60,7 @@ export function TourBoardingPassCard({
             VIGIL BOARDING PASS
           </span>
           <span className="text-xs text-muted-foreground">•</span>
-          <span className="font-mono text-xs font-bold tabular-nums text-foreground">
+          <span className="text-telemetry text-xs font-bold text-foreground">
             {bookingId}
           </span>
         </div>
@@ -73,19 +74,19 @@ export function TourBoardingPassCard({
         {/* Customer & Destination Hero */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <span className="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-muted-foreground block">
+            <span className="text-instrument-label block">
               PASSENGER / LEAD GUEST
             </span>
-            <h3 className="font-display font-extrabold text-lg sm:text-xl text-foreground tracking-tight">
+            <h3 className="text-display-hero text-lg sm:text-xl text-foreground mt-0.5">
               {customerName}
             </h3>
           </div>
 
           <div className="sm:text-right">
-            <span className="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-muted-foreground block">
+            <span className="text-instrument-label block">
               DESTINATION ROUTE
             </span>
-            <div className="flex items-center sm:justify-end gap-1.5 font-bold text-foreground">
+            <div className="flex items-center sm:justify-end gap-1.5 font-bold text-foreground mt-0.5">
               <MapPin className="w-4 h-4 text-primary shrink-0" />
               <span>{destination}</span>
             </div>
@@ -95,27 +96,27 @@ export function TourBoardingPassCard({
         {/* Travel Timeline & Logistics Roster */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-border/60">
           <div>
-            <span className="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-muted-foreground block">
+            <span className="text-instrument-label block">
               DATE OF TOUR
             </span>
             <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground mt-1">
               <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="font-mono tabular-nums">{startDate}</span>
+              <span className="text-telemetry">{startDate}</span>
             </div>
           </div>
 
           <div>
-            <span className="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-muted-foreground block">
+            <span className="text-instrument-label block">
               PASSENGERS
             </span>
             <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground mt-1">
               <Users className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="font-mono tabular-nums">{passengerCount} PAX</span>
+              <span className="text-telemetry">{passengerCount} PAX</span>
             </div>
           </div>
 
           <div>
-            <span className="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-muted-foreground block">
+            <span className="text-instrument-label block">
               ASSIGNED FLEET
             </span>
             <div className="mt-1">
@@ -133,7 +134,7 @@ export function TourBoardingPassCard({
           </div>
 
           <div>
-            <span className="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-muted-foreground block">
+            <span className="text-instrument-label block">
               CHAUFFEUR DRIVER
             </span>
             <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground mt-1">
@@ -152,15 +153,14 @@ export function TourBoardingPassCard({
       {/* Tear-Off Ticket Stub / Financial Summary & Actions */}
       <div className="bg-muted/40 dark:bg-zinc-950/40 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-muted-foreground block">
+          <span className="text-instrument-label block mb-1">
             TOTAL FARE CHARGE
           </span>
-          <div className="text-lg sm:text-xl font-mono font-black tabular-nums tracking-tight text-foreground">
-            {currency}{' '}
-            {typeof totalAmount === 'number'
-              ? totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })
-              : totalAmount || '0.00'}
-          </div>
+          <CurrencyReadout
+            amount={totalAmount ?? 0}
+            currency={currency}
+            size="lg"
+          />
         </div>
 
         <div className="flex items-center gap-2">

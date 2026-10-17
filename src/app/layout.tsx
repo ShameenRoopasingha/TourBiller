@@ -22,7 +22,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-plus-jakarta',
   display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['600', '700', '800'],
 })
 
 const inter = Inter({
@@ -35,13 +35,14 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-jetbrains-mono',
   display: 'swap',
+  weight: ['500', '600', '700'],
 })
 
 const montserrat = Montserrat({
   subsets: ['latin'],
   variable: '--font-montserrat',
   display: 'swap',
-  weight: ['400', '500', '600', '700', '800', '900'],
+  weight: ['700', '900'],
 })
 
 export const metadata: Metadata = {
@@ -69,7 +70,11 @@ export default async function RootLayout({
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
 
   return (
-    <html lang="en-GB" suppressHydrationWarning>
+    <html
+      lang="en-GB"
+      className={`${inter.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} ${montserrat.variable}`}
+      suppressHydrationWarning
+    >
       <body
         className={`${inter.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${inter.className} font-sans antialiased`}
         suppressHydrationWarning

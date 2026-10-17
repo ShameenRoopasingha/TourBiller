@@ -70,7 +70,7 @@ export function VehiclePlateBadge({
   return (
     <div
       className={cn(
-        'badge-license-plate inline-flex items-center select-none font-bold text-foreground transition-all duration-200',
+        'badge-license-plate text-telemetry inline-flex items-center select-none font-bold text-foreground transition-all duration-200',
         sizeStyles,
         className
       )}

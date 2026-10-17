@@ -1,13 +1,13 @@
-# VIGIL Design System & Theme Engine (v2.0 — Tactile Cockpit & Atmospheric Glass Edition)
+# VIGIL Design System & Theme Engine (v2.0 — Tactile Cockpit & Precision Typography Edition)
 
-> Architecture, token reference, and neo-skeuomorphic implementation blueprints for the **VIGIL Tour & Fleet Management Platform**.  
+> Architecture, token reference, 3-tier typography system, and neo-skeuomorphic implementation blueprints for the **VIGIL Tour & Fleet Management Platform**.  
 > Built with **Next.js 16 (App Router)**, **Tailwind CSS v4 (`@theme inline`)**, and **`next-themes`**.
 
 ---
 
 ## 1. Executive Directive & Design Philosophy
 
-The VIGIL v2.0 design system merges **Linear/Raycast-grade atmospheric specular glass** with **Teenage Engineering / Apple hardware realism**, creating a mission-critical **Tactile Cockpit & Atmospheric Glass** interface tailored for real-time fleet telematics, high-density vehicle hire ledgers, and live tour logistics.
+The VIGIL v2.0 design system merges **Linear/Raycast-grade atmospheric specular glass** with **Teenage Engineering, Bloomberg Terminal, and Apple macOS hardware realism**, creating a mission-critical **Tactile Cockpit & Atmospheric Glass** interface tailored for real-time fleet telematics, high-density vehicle hire ledgers, and live tour logistics.
 
 ### The 80/20 Neo-Skeuomorphic Golden Rule
 
@@ -24,7 +24,51 @@ The VIGIL v2.0 design system merges **Linear/Raycast-grade atmospheric specular 
 
 ---
 
-## 2. Rendering Pipeline Architecture
+## 2. 3-Tier Precision Cockpit Typography System
+
+### 2.1 Font Stack Architecture
+
+| Tier | Role | Primary Font | Fallback / Secondary | Loaded Weights |
+| :--- | :--- | :--- | :--- | :--- |
+| **Tier 1: Display & Brand** | Editorial hero headlines, brand marks, and large KPI numbers | `Plus_Jakarta_Sans` | `Montserrat` | `600`, `700`, `800`, `900` |
+| **Tier 2: UI & Dense Data** | Data tables, form controls, navigation links, and body prose | `Inter` | `system-ui` | Optical Sizing Auto |
+| **Tier 3: Telemetry & Finance** | Currency ledgers (`LKR / Rs.`), odometer readings (`km`), booking IDs, license plates, timestamps | `JetBrains_Mono` | `monospace` | `500`, `600`, `700` |
+
+### 2.2 Global OpenType Optimization (`src/app/globals.css`)
+
+Applied globally to `body`:
+```css
+body {
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1, "ss01" 1, "ss03" 1, "calt" 1;
+}
+```
+- `"cv02"` / `"cv03"` / `"cv04"`: Open digits `4`, `6`, `9` for instant numerical clarity.
+- `"cv11"`: Single-story technical lowercase `a`.
+- `"ss01"`: Disambiguated uppercase `I`, lowercase `l`, and digit `1`.
+- `"ss03"`: Curved technical `r`.
+- `"calt"`: Contextual typographical alternates.
+
+### 2.3 Tactile Light-Physics Typography Utilities
+
+1. **`@utility text-display-hero`**:
+   - `font-family: var(--font-display); font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; text-wrap: balance;`
+2. **`@utility text-kpi-metallic`**:
+   - Anodized metallic numbers for Hero Revenue & Fleet KPIs.
+   - Light: `linear-gradient(180deg, #09090B 0%, #52525B 100%)` with text clipping.
+   - Dark: `linear-gradient(180deg, #FFFFFF 0%, #A1A1AA 100%)` with soft luminescence drop-shadow.
+3. **`@utility text-instrument-label`**:
+   - Laser-etched uppercase micro-labels for cards, table headers, and form inputs.
+   - Light text shadow: `0 1px 0 rgba(255, 255, 255, 0.85)` (chiseled indent).
+   - Dark text shadow: `0 -1px 0 rgba(0, 0, 0, 0.85)` (back-lit laser etching).
+4. **`@utility text-telemetry`**:
+   - `font-family: var(--font-mono); font-variant-numeric: tabular-nums slashed-zero; font-feature-settings: "zero" 1, "tnum" 1; letter-spacing: -0.02em;`
+
+---
+
+## 3. Rendering Pipeline Architecture
 
 ```text
                          ┌──────────────────────────────────┐
@@ -50,6 +94,7 @@ The VIGIL v2.0 design system merges **Linear/Raycast-grade atmospheric specular 
                          │          Tailwind CSS v4         │
                          │   @theme Semantic Token Engine   │
                          ├──────────────────────────────────┤
+                         │ • 3-Tier Cockpit Typography      │
                          │ • 80% Specular Glass Surfaces    │
                          │ • 20% Tactile Hardware Realism   │
                          │ • Recessed LCD Telemetry Wells   │
@@ -60,9 +105,9 @@ The VIGIL v2.0 design system merges **Linear/Raycast-grade atmospheric specular 
 
 ---
 
-## 3. Exhaustive Semantic Token Specification
+## 4. Stepped Luminance Semantic Token Specification
 
-### 3.1 Stepped Luminance Canvas & Interactive Tokens
+### 4.1 Canvas & Interactive Tokens
 
 | Semantic Token | Light Mode (Alabaster Silk) | Dark Mode (Obsidian Void) | Architectural & Hardware Role |
 | :--- | :--- | :--- | :--- |
@@ -89,7 +134,7 @@ The VIGIL v2.0 design system merges **Linear/Raycast-grade atmospheric specular 
 | **`--ring`** | `hsl(252 88% 56%)` (`#5B2BF3`) | `hsl(252 92% 67%)` (`#7C5DFA`) | Double-offset accessible keyboard focus rings. |
 | **`--radius`** | `0.75rem` (`12px`) | `0.75rem` (`12px`) | Base border radius token for cards and controls. |
 
-### 3.2 Unified Sidebar & Navigation Rail Tokens
+### 4.2 Unified Sidebar & Navigation Rail Tokens
 
 | Sidebar Token | Light Theme (Frosted Alabaster) | Dark Theme (Obsidian Glass) | Purpose |
 | :--- | :--- | :--- | :--- |
@@ -105,7 +150,7 @@ The VIGIL v2.0 design system merges **Linear/Raycast-grade atmospheric specular 
 
 ---
 
-## 4. Custom Neo-Skeuomorphic & Glass Utilities
+## 5. Custom Neo-Skeuomorphic & Glass Utilities
 
 ```css
 /* 1. Translucent Elevated Specular Surface */
@@ -171,7 +216,14 @@ The VIGIL v2.0 design system merges **Linear/Raycast-grade atmospheric specular 
   letter-spacing: -0.02em;
 }
 
-/* 6. Perforated Tour Voucher Container */
+/* 6. Recessed Rocker Track */
+@utility switch-track-skeuo {
+  background-color: var(--switch-track-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--switch-track-shadow);
+}
+
+/* 7. Perforated Tour Voucher Container */
 @utility ticket-perforated {
   position: relative;
   background-color: color-mix(in srgb, var(--card) 90%, transparent);
@@ -188,43 +240,45 @@ The VIGIL v2.0 design system merges **Linear/Raycast-grade atmospheric specular 
 
 ---
 
-## 5. Signature Domain Components
+## 6. Signature Cockpit & Domain Components
 
-### 5.1 `<VehiclePlateBadge />`
-- Renders Sri Lankan license plates inside `badge-license-plate`.
+### 6.1 `<CurrencyReadout />`
+- **Location:** `src/components/ui/currency-readout.tsx`
+- Splits financial figures into three visual tiers:
+  1. `0.7em` muted uppercase currency symbol (`Rs.` / `LKR`).
+  2. Bold `text-foreground` or `text-kpi-metallic` integer digits formatted with `en-LK` locale thousands grouping.
+  3. Muted `0.75em` decimal cents (`.00`), enabling rapid balance sheet scanning.
+
+### 6.2 `<VehiclePlateBadge />`
+- **Location:** `src/components/ui/vehicle-plate-badge.tsx`
+- Renders Sri Lankan license plates inside `badge-license-plate` with `text-telemetry`.
 - Features an embossed province prefix (`WP`, `SP`, `CP`), monospaced plate characters, and a **3D Domed Hardware Status LED** with off-center specular glint and neon bloom:
   - `active`: Emerald Neon (`#10B981`)
   - `on-tour`: Amber Pulse (`#F59E0B`)
   - `maintenance`: Crimson Rose Alert (`#F43F5E`)
   - `scheduled`: Electric Indigo Standby (`#6366F1`)
 
-### 5.2 `<TelemetryReadout />`
-- Uses `surface-recessed` to construct machined LCD digital instrument wells.
-- Displays micro uppercase instrument labels, tabular numbers, measurement units (`km`, `LKR`, `hrs`), and trend indicators.
+### 6.3 `<TelemetryReadout />`
+- **Location:** `src/components/ui/telemetry-readout.tsx`
+- Uses `surface-recessed` container, `text-instrument-label` header, and `text-telemetry` values.
+- Features digital LCD well styling, units (`km`, `hrs`), and directional delta trend pills.
 
-### 5.3 `<TourBoardingPassCard />`
+### 6.4 `<TourBoardingPassCard />`
+- **Location:** `src/components/ui/tour-boarding-pass-card.tsx`
 - Tactile airline-style perforated boarding voucher for tours and chauffeur allocations.
-- Features dual punch-out notches on tear-lines, itinerary routing, lead passenger info, chauffeur contacts, assigned vehicle plate badge, and LKR fare breakdowns.
+- Features punch-out notches on tear-lines, itinerary routing, lead passenger info, chauffeur contacts, assigned `<VehiclePlateBadge />`, and `<CurrencyReadout />`.
 
-### 5.4 `<ThemeSwitcher />`
+### 6.5 `<ThemeSwitcher />`
+- **Location:** `src/components/layout/theme-switcher.tsx`
 - Tactile physical keycap toggle housed in `btn-tactile-secondary`.
-- Powered by `document.startViewTransition` with spring-physics animated `Sun` and `Moon` icons.
-
----
-
-## 6. Typography & Telemetry Precision Rules
-
-- **Display & Brand Headers**: `Montserrat` / `Plus Jakarta Sans` (`font-black` / `font-extrabold`, tight tracking `-0.03em`).
-- **Body & UI Controls**: `Inter` with optical sizing and font feature flags (`cv02`, `cv03`, `cv04`, `cv11`).
-- **Telemetry, Currency & Numbers**: `JetBrains Mono` with strict `font-mono tabular-nums tracking-tight` for all prices (`LKR`), odometer readings (`km`), booking IDs (`#VGL-2026-894`), and vehicle plates.
-- **Micro Instrument Labels**: `text-[0.65rem] font-bold tracking-[0.14em] uppercase text-muted-foreground`.
+- Powered by native browser `document.startViewTransition` with spring-physics animated `Sun` and `Moon` icons.
 
 ---
 
 ## 7. Platform Constraints (Mobile Notch & Print Fidelity)
 
 - **Mobile Notch & Safe Areas:** Preserves `.pt-notch-safe` and `.top-notch-safe` ensuring edge-to-edge layouts on iPhones and modern Android devices (`max(env(safe-area-inset-top, 0px), 1.25rem)` on mobile; `0` on desktop).
-- **Print Theme Engine:** All skeuomorphic shadows, masks, and dark backgrounds cleanly strip to pure `#FFFFFF` paper and `#000000` text during printing (`@page { size: A4; }`, `@page thermal { size: 58mm auto; }`).
+- **Print Theme Engine:** All skeuomorphic shadows, masks, metallic gradients, and dark backgrounds cleanly strip to pure `#FFFFFF` paper and `#000000` text during printing (`@page { size: A4; }`, `@page thermal { size: 58mm auto; }`).
 
 ---
-*VIGIL Design System v2.0 — Tactile Cockpit & Atmospheric Glass Edition.*
+*VIGIL Design System v2.0 — Tactile Cockpit & Precision Typography Edition.*
