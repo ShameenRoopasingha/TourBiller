@@ -4,6 +4,7 @@ import { streamText, tool, convertToModelMessages } from 'ai';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { rateLimit } from '@/lib/rate-limit';
 
 // Initialize Groq API using the OpenAI provider compatibility
 const groq = createOpenAI({
@@ -23,6 +24,12 @@ export async function POST(req: Request) {
 
     if (!companyId) {
       return new Response('Company ID not found', { status: 400 });
+    }
+
+    // Rate limit: 30 requests per minute per company to prevent LLM/server DoS
+    const { limited } = rateLimit(`chat:${companyId}`, 30, 60 * 1000);
+    if (limited) {
+      return new Response('Rate limit exceeded. Please wait a moment before sending more messages.', { status: 429 });
     }
 
     const body = await req.json();
