@@ -372,25 +372,38 @@ export async function sharePdfFile({
         }
     }
 
-    // 4. Fallback: Download file directly to device
+    // 4. Download file directly to device so user has the PDF ready to attach
     await downloadPdfFile(file, cleanFilename);
 
-    // 5. In standard desktop/mobile browsers, open WhatsApp Web/App in a new tab.
-    const isWebView =
-        typeof window !== 'undefined' &&
-        (Boolean((window as any).__TAURI__) ||
-         Boolean((window as any).__TAURI_INTERNALS__) ||
-         /wv|Android.*Version\/[\d.]+/i.test(navigator.userAgent));
+    // 5. Open WhatsApp with pre-filled message and recipient
+    const waText = `${shareMessage}\n\n(📄 PDF "${cleanFilename}" has been saved to your downloads - please attach it here).`;
+    const waUrl = getWhatsAppUrl(targetPhone, waText);
+    const waIntentUrl = targetPhone
+        ? `whatsapp://send?phone=${targetPhone}&text=${encodeURIComponent(waText)}`
+        : `whatsapp://send?text=${encodeURIComponent(waText)}`;
 
-    if (!isWebView) {
-        const waUrl = getWhatsAppUrl(
-            targetPhone,
-            `${shareMessage}\n\n(PDF file "${cleanFilename}" has been saved to your downloads - please attach it here).`
-        );
-        try {
-            window.open(waUrl, '_blank');
-        } catch {
-            // Popup blocked by browser settings
+    if (typeof window !== 'undefined') {
+        const isMobile = /Android|iPhone|iPad|iPod|wv/i.test(navigator.userAgent);
+        if (isMobile) {
+            // Small timeout ensures the file download initiates before the app switches to WhatsApp
+            setTimeout(() => {
+                try {
+                    const link = document.createElement('a');
+                    link.href = waIntentUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch {
+                    window.location.href = waUrl;
+                }
+            }, 200);
+        } else {
+            // On desktop, open WhatsApp Web in a new tab
+            try {
+                window.open(waUrl, '_blank');
+            } catch {
+                window.location.href = waUrl;
+            }
         }
     }
 
