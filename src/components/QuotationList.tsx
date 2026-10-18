@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye, User, CheckCircle2 } from 'lucide-react';
+import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil, Eye, User, CheckCircle2, Send, Check, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
 import { notify } from '@/lib/notifications';
 import { ConvertQuotationDialog } from '@/components/ConvertQuotationDialog';
@@ -79,9 +79,26 @@ const STATUS_COLORS: Record<string, string> = {
     EXPIRED: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
 };
 
-const NEXT_STATUS: Record<string, string> = {
-    DRAFT: 'SENT',
-    SENT: 'ACCEPTED',
+interface StatusActionConfig {
+    label: string;
+    nextStatus: string;
+    icon: React.ComponentType<{ className?: string }>;
+    colorClass: string;
+}
+
+const STATUS_ACTIONS: Record<string, StatusActionConfig> = {
+    DRAFT: {
+        label: 'Mark Sent',
+        nextStatus: 'SENT',
+        icon: Send,
+        colorClass: 'text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 dark:border-blue-800 dark:hover:bg-blue-950/40',
+    },
+    SENT: {
+        label: 'Accept',
+        nextStatus: 'ACCEPTED',
+        icon: Check,
+        colorClass: 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200 dark:border-emerald-800 dark:hover:bg-emerald-950/40 font-semibold',
+    },
 };
 
 export function QuotationList({ quotations, drivers = [] }: QuotationListProps) {
@@ -165,7 +182,7 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
     const fmt = formatCurrency;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-20">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                 <div>
@@ -195,16 +212,16 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                 />
             </div>
 
-            {/* Table */}
-            <Card>
-                <CardHeader>
+            {/* Table / Mobile Cards */}
+            <Card className="border-0 sm:border bg-transparent sm:bg-card shadow-none sm:shadow-xs py-0 sm:py-6">
+                <CardHeader className="px-0 sm:px-6 pb-2 sm:pb-6">
                     <CardTitle className="text-sm text-muted-foreground">
                         {filtered.length} quotation{filtered.length !== 1 ? 's' : ''} found
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0 sm:px-6">
                     {filtered.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground">
+                        <div className="text-center py-12 text-muted-foreground bg-card sm:bg-transparent rounded-xl border sm:border-0 p-6">
                             <FileCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
                             <p>No quotations found</p>
                             <Link href="/quotations/new" className="text-primary underline text-sm mt-2 inline-block">
@@ -220,26 +237,26 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                                     const tourDays = q.tourSchedule?.days || (
                                         (q.startDate && q.endDate)
                                             ? Math.max(1, Math.round((new Date(q.endDate).getTime() - new Date(q.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
-                                            : 1
+                                             : 1
                                     );
 
                                     return (
-                                        <Card key={q.id} className="p-4 space-y-3">
+                                        <Card key={q.id} className="p-3.5 sm:p-4 space-y-2.5 w-full min-w-0 overflow-hidden bg-card border border-border/80 shadow-xs">
                                             <div className="flex items-start justify-between gap-2">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-mono font-bold text-sm bg-muted px-2 py-0.5 rounded">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="font-mono font-bold text-xs bg-muted px-2 py-0.5 rounded">
                                                             Q-{String(q.quotationNumber).padStart(4, '0')}
                                                         </span>
                                                         <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[q.status] || ''}`}>
                                                             {q.status}
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                    <p className="text-[11px] text-muted-foreground mt-1">
                                                         {new Date(q.createdAt).toLocaleDateString('en-GB')}
                                                     </p>
                                                 </div>
-                                                <div className="text-right">
+                                                <div className="text-right shrink-0">
                                                     <span className="text-base font-bold text-primary block">
                                                         {fmt(q.totalAmount)}
                                                     </span>
@@ -247,56 +264,62 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                                             </div>
 
                                             <div className="space-y-1 py-2 border-y border-border/50 text-xs">
-                                                <div>
+                                                <div className="truncate">
                                                     <span className="font-semibold text-foreground text-sm">{q.customerName}</span>
                                                     {q.customerPhone && (
                                                         <span className="text-muted-foreground ml-1.5 font-normal">({q.customerPhone})</span>
                                                     )}
                                                 </div>
                                                 {q.driver && (
-                                                    <div className="text-muted-foreground flex items-center gap-1">
+                                                    <div className="text-muted-foreground flex items-center gap-1 truncate">
                                                         <User className="w-3 h-3 text-primary shrink-0" />
                                                         <span>Driver: <strong className="text-foreground">{q.driver.name}</strong></span>
                                                     </div>
                                                 )}
-                                                <div className="text-muted-foreground pt-0.5">
+                                                <div className="text-muted-foreground pt-0.5 break-words">
                                                     <span className="text-foreground font-medium">{tourTitle}</span>
                                                     <span className="ml-1 text-[11px]">({tourDays} day{tourDays !== 1 ? 's' : ''}{(q.totalDistance && q.totalDistance > 0) ? ` • ${q.totalDistance.toFixed(0)} km` : ''})</span>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between gap-1 pt-1">
-                                                <div className="flex items-center gap-1">
+                                            <div className="flex items-center justify-between gap-1.5 pt-0.5">
+                                                <div className="flex items-center gap-1 min-w-0">
                                                     <Link href={`/quotations/${q.id}`}>
-                                                        <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
+                                                        <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs shrink-0">
                                                             <Eye className="h-3.5 w-3.5 mr-1" />
                                                             View
                                                         </Button>
                                                     </Link>
                                                     <Link href={`/quotations/${q.id}/print`}>
-                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Print">
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-foreground" title="Print Quotation">
                                                             <Printer className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
                                                     <Link href={`/quotations/${q.id}/edit`}>
-                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Edit">
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-foreground" title="Edit Quotation">
                                                             <Pencil className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
                                                 </div>
 
-                                                <div className="flex items-center gap-1">
-                                                    {NEXT_STATUS[q.status] && (
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    {STATUS_ACTIONS[q.status] && (
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            className="h-8 px-2 text-xs"
-                                                            onClick={() => handleStatusUpdate(q.id, NEXT_STATUS[q.status])}
+                                                            className={`h-8 px-2.5 text-xs shadow-2xs ${STATUS_ACTIONS[q.status].colorClass}`}
+                                                            onClick={() => handleStatusUpdate(q.id, STATUS_ACTIONS[q.status].nextStatus)}
                                                             disabled={updating === q.id || converting === q.id}
-                                                            title={`Mark as ${NEXT_STATUS[q.status]}`}
+                                                            title={`Mark quotation as ${STATUS_ACTIONS[q.status].nextStatus}`}
                                                         >
-                                                            <ArrowRight className="h-3.5 w-3.5 mr-1" />
-                                                            {NEXT_STATUS[q.status]}
+                                                            {updating === q.id ? (
+                                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                            ) : (
+                                                                <>
+                                                                    {React.createElement(STATUS_ACTIONS[q.status].icon, { className: "h-3.5 w-3.5 mr-1" })}
+                                                                    <span>{STATUS_ACTIONS[q.status].label}</span>
+                                                                </>
+                                                            )}
                                                         </Button>
                                                     )}
 
@@ -308,11 +331,11 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                                                                 <Button
                                                                     variant="outline"
                                                                     size="sm"
-                                                                    title="Convert to Booking"
-                                                                    className="h-8 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                    title="Convert to Booking (Assign Driver)"
+                                                                    className="h-8 px-2.5 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 font-medium"
                                                                 >
                                                                     <ArrowRightLeft className="h-3.5 w-3.5 mr-1" />
-                                                                    Book
+                                                                    Convert
                                                                 </Button>
                                                             }
                                                         />
@@ -323,8 +346,8 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                title="View Booking"
-                                                                className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700"
+                                                                title="Converted to Booking (View in Bookings)"
+                                                                className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                                                             >
                                                                 <CheckCircle2 className="h-4 w-4" />
                                                             </Button>
@@ -337,6 +360,7 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                title="Delete Quotation"
                                                             >
                                                                 <Trash2 className="h-4 w-4" />
                                                                 <span className="sr-only">Delete</span>
@@ -447,15 +471,20 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                                                             </Button>
                                                         </Link>
 
-                                                        {NEXT_STATUS[q.status] && (
+                                                        {STATUS_ACTIONS[q.status] && (
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                onClick={() => handleStatusUpdate(q.id, NEXT_STATUS[q.status])}
+                                                                onClick={() => handleStatusUpdate(q.id, STATUS_ACTIONS[q.status].nextStatus)}
                                                                 disabled={updating === q.id || converting === q.id}
-                                                                title={`Mark as ${NEXT_STATUS[q.status]}`}
+                                                                title={`Mark as ${STATUS_ACTIONS[q.status].nextStatus}`}
+                                                                className={STATUS_ACTIONS[q.status].colorClass}
                                                             >
-                                                                <ArrowRight className="h-4 w-4" />
+                                                                {updating === q.id ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                ) : (
+                                                                    React.createElement(STATUS_ACTIONS[q.status].icon, { className: "h-4 w-4" })
+                                                                )}
                                                             </Button>
                                                         )}
 
