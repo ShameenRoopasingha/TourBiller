@@ -2,9 +2,32 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Printer, ArrowLeft, Loader2, Check } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
+import {
+    Printer,
+    ArrowLeft,
+    Loader2,
+    Check,
+    Share2,
+    Download,
+    Copy,
+    ExternalLink,
+    FileText,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { generatePdfFile, sharePdfFile } from '@/lib/pdf-share';
+import {
+    generatePdfFile,
+    sharePdfFile,
+    downloadPdfFile,
+    getWhatsAppUrl,
+    formatWhatsAppPhone,
+} from '@/lib/pdf-share';
 
 interface PrintButtonProps {
     label?: string;
@@ -41,9 +64,10 @@ export function PrintButton({
     const [cachedPdf, setCachedPdf] = useState<File | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [statusText, setStatusText] = useState<string | null>(null);
-    const [needsClickToSend, setNeedsClickToSend] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
 
-    // Pre-cache PDF in the background 1.5s after mount so it is instantly ready
+    // Pre-cache PDF in the background after mount so it is ready for instant sharing
     useEffect(() => {
         let isMounted = true;
         const timer = setTimeout(async () => {
@@ -56,7 +80,7 @@ export function PrintButton({
             } catch {
                 // Background caching failure is silent; click handler will regenerate
             }
-        }, 1500);
+        }, 1200);
 
         return () => {
             isMounted = false;
@@ -64,7 +88,8 @@ export function PrintButton({
         };
     }, [elementId, filename, showWhatsApp]);
 
-    const handleWhatsAppShare = async () => {
+    // Handle the main WhatsApp button click
+    const handleWhatsAppButtonClick = async () => {
         // CASE 1: PDF is already pre-generated in memory!
         if (cachedPdf) {
             try {
@@ -79,14 +104,16 @@ export function PrintButton({
                 if (res.sharedViaNative) {
                     setStatusText('Sent!');
                     setTimeout(() => setStatusText(null), 3000);
-                } else {
-                    setStatusText('Downloaded!');
-                    setTimeout(() => setStatusText(null), 4000);
+                    return;
                 }
-                setNeedsClickToSend(false);
+            } catch (err) {
+                console.warn('Native share error:', err);
             } finally {
                 setIsGenerating(false);
             }
+
+            // If native share was not triggered or user needs options, open modal
+            setShowShareModal(true);
             return;
         }
 
@@ -101,90 +128,225 @@ export function PrintButton({
                 return;
             }
             setCachedPdf(res.file);
+            setStatusText(null);
+            // Open the Share Modal now that PDF is fully ready in memory!
+            setShowShareModal(true);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
-            // Attempt share immediately:
-            const shareRes = await sharePdfFile({
-                file: res.file,
+    // Triggered inside modal: User clicks "Share via WhatsApp / Native Share" with a fresh gesture
+    const handleModalNativeShare = async () => {
+        if (!cachedPdf) return;
+        try {
+            setIsGenerating(true);
+            const res = await sharePdfFile({
+                file: cachedPdf,
                 filename,
                 title,
                 phone: recipientPhone,
             });
 
-            if (shareRes.success && shareRes.sharedViaNative) {
+            if (res.sharedViaNative) {
+                setShowShareModal(false);
                 setStatusText('Sent!');
                 setTimeout(() => setStatusText(null), 3000);
-                setNeedsClickToSend(false);
-            } else if (shareRes.error === 'GESTURE_EXPIRED') {
-                // User gesture expired while generating; prompt with fresh click
-                setNeedsClickToSend(true);
-                setStatusText('PDF සූදානම්! තට්ටු කරන්න');
-            } else {
-                setStatusText('Downloaded!');
-                setTimeout(() => setStatusText(null), 4000);
             }
         } finally {
             setIsGenerating(false);
         }
     };
 
+    // Download PDF directly from modal or button
+    const handleDownload = () => {
+        if (cachedPdf) {
+            downloadPdfFile(cachedPdf, filename);
+            setStatusText('Downloaded!');
+            setTimeout(() => setStatusText(null), 3000);
+        }
+    };
+
+    // Copy document link to clipboard
+    const handleCopyLink = async () => {
+        if (typeof window === 'undefined') return;
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2500);
+        } catch (err) {
+            console.error('Failed to copy link:', err);
+        }
+    };
+
+    const formattedPhone = formatWhatsAppPhone(recipientPhone);
+    const cleanFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+    const shareMessage = `📄 *${title}*\nGreetings from VIGIL Tour Management.\nPlease find your document attached.`;
+    const waUrl = getWhatsAppUrl(
+        formattedPhone,
+        `${shareMessage}\n\n🔗 View Online:\n${typeof window !== 'undefined' ? window.location.href : ''}`
+    );
+
     return (
-        <div className="no-print flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 w-full">
-            {showBack && (
+        <>
+            <div className="no-print flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 w-full">
+                {showBack && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => router.back()}
+                        className="shrink-0 font-medium bg-white hover:bg-gray-100 text-gray-800 border-gray-300 shadow-xs h-10 px-3 sm:px-4"
+                    >
+                        <ArrowLeft className="h-4 w-4 mr-1 sm:mr-1.5" />
+                        <span>Back</span>
+                    </Button>
+                )}
+
                 <Button
                     type="button"
-                    variant="outline"
-                    onClick={() => router.back()}
-                    className="shrink-0 font-medium bg-white hover:bg-gray-100 text-gray-800 border-gray-300 shadow-xs h-10 px-3 sm:px-4"
+                    onClick={() => window.print()}
+                    className="flex-1 font-semibold btn-tactile-primary shadow-xs h-10 text-xs sm:text-sm min-w-[140px]"
                 >
-                    <ArrowLeft className="h-4 w-4 mr-1 sm:mr-1.5" />
-                    <span>Back</span>
+                    <Printer className="mr-1.5 sm:mr-2 h-4 w-4" />
+                    <span>{label}</span>
                 </Button>
-            )}
 
-            <Button
-                type="button"
-                onClick={() => window.print()}
-                className="flex-1 font-semibold btn-tactile-primary shadow-xs h-10 text-xs sm:text-sm min-w-[140px]"
-            >
-                <Printer className="mr-1.5 sm:mr-2 h-4 w-4" />
-                <span>{label}</span>
-            </Button>
+                {showWhatsApp && (
+                    <Button
+                        type="button"
+                        onClick={handleWhatsAppButtonClick}
+                        disabled={isGenerating}
+                        className="shrink-0 font-semibold text-white shadow-xs h-10 px-3.5 sm:px-4 text-xs sm:text-sm active:translate-y-[1px] transition-all bg-[#25D366] hover:bg-[#20bd5a]"
+                        title="Share via WhatsApp"
+                    >
+                        {isGenerating ? (
+                            <>
+                                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                                <span>PDF සකසමින්...</span>
+                            </>
+                        ) : statusText ? (
+                            <>
+                                <Check className="h-4 w-4 mr-1.5" />
+                                <span>{statusText}</span>
+                            </>
+                        ) : (
+                            <>
+                                <WhatsAppIcon className="h-4 w-4 mr-1.5" />
+                                <span>WhatsApp PDF</span>
+                            </>
+                        )}
+                    </Button>
+                )}
+            </div>
 
-            {showWhatsApp && (
-                <Button
-                    type="button"
-                    onClick={handleWhatsAppShare}
-                    disabled={isGenerating}
-                    className={`shrink-0 font-semibold text-white shadow-xs h-10 px-3 sm:px-4 text-xs sm:text-sm active:translate-y-[1px] transition-all ${
-                        needsClickToSend
-                            ? 'bg-[#25D366] hover:bg-[#20bd5a] ring-2 ring-emerald-400 ring-offset-1 animate-pulse shadow-md'
-                            : 'bg-[#25D366] hover:bg-[#20bd5a]'
-                    }`}
-                    title="Share PDF via WhatsApp"
-                >
-                    {isGenerating ? (
-                        <>
-                            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                            <span>PDF සකසමින්...</span>
-                        </>
-                    ) : needsClickToSend ? (
-                        <>
-                            <WhatsAppIcon className="h-4 w-4 mr-1.5" />
-                            <span className="font-bold">WhatsApp වෙත යවන්න</span>
-                        </>
-                    ) : statusText ? (
-                        <>
-                            <Check className="h-4 w-4 mr-1.5" />
-                            <span>{statusText}</span>
-                        </>
-                    ) : (
-                        <>
-                            <WhatsAppIcon className="h-4 w-4 mr-1.5" />
-                            <span>WhatsApp PDF</span>
-                        </>
-                    )}
-                </Button>
-            )}
-        </div>
+            {/* Comprehensive Share & WhatsApp Modal */}
+            <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+                <DialogContent className="sm:max-w-md p-5 sm:p-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-2xl">
+                    <DialogHeader className="text-left space-y-1">
+                        <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                            <WhatsAppIcon className="h-5 w-5 text-[#25D366]" />
+                            <span>WhatsApp සහ Share පහසුකම්</span>
+                        </DialogTitle>
+                        <DialogDescription className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                            {title} ලේඛනය පහසුවෙන් WhatsApp හරහා පාරිභෝගිකයා වෙත යවන්න.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {/* PDF Document Status Card */}
+                    <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="h-8 w-8 rounded-lg bg-[#25D366]/20 text-[#25D366] flex items-center justify-center shrink-0">
+                                <FileText className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                    {cleanFilename}
+                                </p>
+                                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                                    ✅ PDF සූදානම් ({cachedPdf ? `${(cachedPdf.size / 1024).toFixed(0)} KB` : 'Ready'})
+                                </p>
+                            </div>
+                        </div>
+                        {recipientPhone && (
+                            <span className="text-[11px] font-mono bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded border border-gray-200 dark:border-zinc-700 shrink-0">
+                                {recipientPhone}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col gap-2.5 pt-1">
+                        {/* Option 1: Native Share Sheet (Sends File / WhatsApp) */}
+                        <Button
+                            type="button"
+                            onClick={handleModalNativeShare}
+                            disabled={!cachedPdf || isGenerating}
+                            className="w-full h-12 justify-start px-4 font-semibold text-white bg-[#25D366] hover:bg-[#20bd5a] active:scale-[0.99] transition-all shadow-sm rounded-xl text-xs sm:text-sm"
+                        >
+                            <Share2 className="h-4 w-4 mr-2.5 shrink-0" />
+                            <div className="flex flex-col text-left">
+                                <span className="font-bold">WhatsApp / Share Sheet වෙත යවන්න</span>
+                                <span className="text-[10px] text-white/90 font-normal">
+                                    PDF file එක WhatsApp හෝ වෙනත් app එකකින් තෝරා යවන්න
+                                </span>
+                            </div>
+                        </Button>
+
+                        {/* Option 2: Direct WhatsApp Chat */}
+                        <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full h-12 flex items-center justify-start px-4 font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100/70 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 active:scale-[0.99] transition-all rounded-xl border border-emerald-300/60 dark:border-emerald-800 text-xs sm:text-sm"
+                        >
+                            <WhatsAppIcon className="h-4 w-4 mr-2.5 text-[#25D366] shrink-0" />
+                            <div className="flex flex-col text-left">
+                                <span className="font-bold">
+                                    {recipientPhone ? `WhatsApp Chat (${recipientPhone})` : 'WhatsApp Chat එක අරින්න'}
+                                </span>
+                                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-normal">
+                                    පාරිභෝගිකයාගේ WhatsApp එකට කෙලින්ම විවෘත කරන්න
+                                </span>
+                            </div>
+                            <ExternalLink className="h-3.5 w-3.5 ml-auto text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        </a>
+
+                        {/* Option 3: Download PDF to Device */}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleDownload}
+                            disabled={!cachedPdf}
+                            className="w-full h-11 justify-start px-4 font-semibold text-gray-800 dark:text-gray-200 bg-gray-50 hover:bg-gray-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 border-gray-200 dark:border-zinc-700 rounded-xl text-xs sm:text-sm"
+                        >
+                            <Download className="h-4 w-4 mr-2.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                            <div className="flex flex-col text-left">
+                                <span>PDF එක Device එකට බාගත කරන්න (Download)</span>
+                            </div>
+                        </Button>
+
+                        {/* Option 4: Copy Share Link */}
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={handleCopyLink}
+                            className="w-full h-10 justify-start px-4 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 rounded-xl"
+                        >
+                            {isCopied ? (
+                                <>
+                                    <Check className="h-3.5 w-3.5 mr-2 text-emerald-600 shrink-0" />
+                                    <span className="font-medium text-emerald-600">Link එක Copy කරගත්තා! (Copied)</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Copy className="h-3.5 w-3.5 mr-2 shrink-0" />
+                                    <span>ලේඛනයේ Link එක Copy කරගන්න (Copy Link)</span>
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }

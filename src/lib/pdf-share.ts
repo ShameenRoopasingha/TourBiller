@@ -34,6 +34,34 @@ export function formatWhatsAppPhone(phone?: string | null): string | undefined {
 }
 
 /**
+ * Returns the universal WhatsApp link (wa.me) for web or mobile.
+ */
+export function getWhatsAppUrl(phone?: string | null, text?: string): string {
+    const targetPhone = formatWhatsAppPhone(phone);
+    const encodedText = encodeURIComponent(text || '');
+    if (targetPhone) {
+        return `https://wa.me/${targetPhone}${encodedText ? `?text=${encodedText}` : ''}`;
+    }
+    return `https://wa.me/?text=${encodedText}`;
+}
+
+/**
+ * Downloads a File or Blob directly to the device.
+ */
+export function downloadPdfFile(file: File | Blob, filename: string): void {
+    if (typeof window === 'undefined') return;
+    const cleanFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+    const fileUrl = URL.createObjectURL(file);
+    const downloadLink = document.createElement('a');
+    downloadLink.href = fileUrl;
+    downloadLink.download = cleanFilename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    setTimeout(() => URL.revokeObjectURL(fileUrl), 10000);
+}
+
+/**
  * Generates an A4 PDF File object from a DOM element using html2canvas-pro and jsPDF.
  */
 export async function generatePdfFile({
@@ -111,7 +139,7 @@ export async function generatePdfFile({
 
 /**
  * Shares a PDF File using the native Web Share API Level 2 if supported.
- * Falls back safely to download without crashing mobile WebViews with ERR_UNKNOWN_URL_SCHEME.
+ * Falls back to Web Share API Level 1 (text + link) or local download and WhatsApp.
  */
 export async function sharePdfFile({
     file,
@@ -125,9 +153,14 @@ export async function sharePdfFile({
     title?: string;
     text?: string;
     phone?: string | null;
-}): Promise<{ success: boolean; error?: string; sharedViaNative?: boolean }> {
+}): Promise<{
+    success: boolean;
+    error?: string;
+    sharedViaNative?: boolean;
+    method?: 'native-files' | 'native-text' | 'fallback';
+}> {
     const cleanFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
-    const shareMessage = text || `Here is your ${title} from VIGIL:`;
+    const shareMessage = text || `📄 *${title}*\nGreetings from VIGIL Tour Management.\nPlease find your document attached.`;
     const targetPhone = formatWhatsAppPhone(phone);
 
     // 1. Try Native Web Share API Level 2 (files sharing)
@@ -142,48 +175,61 @@ export async function sharePdfFile({
                 title: cleanFilename,
                 text: shareMessage,
             });
-            return { success: true, sharedViaNative: true };
+            return { success: true, sharedViaNative: true, method: 'native-files' };
         } catch (err: any) {
             if (err?.name === 'AbortError') {
                 // User cancelled share dialog
-                return { success: true, sharedViaNative: true };
+                return { success: true, sharedViaNative: true, method: 'native-files' };
             }
             if (err?.name === 'NotAllowedError') {
                 // User gesture expired due to async delay
                 return { success: false, error: 'GESTURE_EXPIRED' };
             }
-            console.warn('Native share error, falling back:', err);
+            console.warn('Native file share failed, trying text share:', err);
         }
     }
 
-    // 2. Fallback: Download file directly to device
-    const fileUrl = URL.createObjectURL(file);
-    const downloadLink = document.createElement('a');
-    downloadLink.href = fileUrl;
-    downloadLink.download = cleanFilename;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    setTimeout(() => URL.revokeObjectURL(fileUrl), 5000);
-
-    // 3. Detect if in a mobile WebView / Tauri app to prevent ERR_UNKNOWN_URL_SCHEME crash
-    const isWebView =
-        typeof window !== 'undefined' &&
-        (Boolean((window as any).__TAURI__) ||
-         Boolean((window as any).__TAURI_INTERNALS__) ||
-         /wv|Android.*Version\/[\d.]+/i.test(navigator.userAgent));
-
-    if (!isWebView) {
-        // Safe desktop browser: Open WhatsApp Web in new tab
-        const baseWhatsAppUrl = targetPhone
-            ? `https://api.whatsapp.com/send?phone=${encodeURIComponent(targetPhone)}&text=`
-            : `https://api.whatsapp.com/send?text=`;
-
-        const fallbackMsg = `${shareMessage}\n\n(PDF file "${cleanFilename}" has been saved to your downloads - please attach it here).`;
-        window.open(`${baseWhatsAppUrl}${encodeURIComponent(fallbackMsg)}`, '_blank');
+    // 2. Try Native Web Share API Level 1 (text + page URL)
+    // Supported in almost all Android WebViews and mobile browsers!
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        try {
+            const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+            await navigator.share({
+                title: cleanFilename,
+                text: `${shareMessage}\n\n🔗 View Online:\n${pageUrl}`,
+                url: pageUrl || undefined,
+            });
+            return { success: true, sharedViaNative: true, method: 'native-text' };
+        } catch (err: any) {
+            if (err?.name === 'AbortError') {
+                return { success: true, sharedViaNative: true, method: 'native-text' };
+            }
+            if (err?.name === 'NotAllowedError') {
+                return { success: false, error: 'GESTURE_EXPIRED' };
+            }
+            console.warn('Native text share failed, falling back to download:', err);
+        }
     }
 
-    return { success: true, sharedViaNative: false };
+    // 3. Fallback: Download file directly to device
+    downloadPdfFile(file, cleanFilename);
+
+    // 4. Open WhatsApp directly via Universal Link (wa.me)
+    const waUrl = getWhatsAppUrl(
+        targetPhone,
+        `${shareMessage}\n\n(PDF file "${cleanFilename}" has been saved to your downloads - please attach it here).`
+    );
+
+    try {
+        const opened = window.open(waUrl, '_blank');
+        if (!opened) {
+            window.location.href = waUrl;
+        }
+    } catch {
+        window.location.href = waUrl;
+    }
+
+    return { success: true, sharedViaNative: false, method: 'fallback' };
 }
 
 /**
