@@ -7,9 +7,6 @@ import { usePathname } from 'next/navigation';
 import { logoutUser } from '@/lib/user-actions';
 import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, LogOut, UserCog, BarChart3, CalendarRange, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Montserrat } from 'next/font/google';
-
-const montserrat = Montserrat({ subsets: ['latin'], weight: ['700', '900'] });
 import {
     Sidebar as ShadcnSidebar,
     SidebarContent,
@@ -99,7 +96,7 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                                 <Image src="/logo-icon.png" alt="VIGIL" width={32} height={32} className="h-8 w-auto object-contain" priority />
                             </div>
                             <div className="flex flex-col group-data-[collapsible=icon]:hidden transition-opacity min-w-0">
-                                <span className={`font-black text-2xl tracking-tight leading-none text-foreground pb-0.5 ${montserrat.className}`}>VIGIL</span>
+                                <span className="font-black text-2xl tracking-tight leading-none text-foreground pb-0.5 font-montserrat">VIGIL</span>
                                 <span className="text-[0.55rem] font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase leading-tight truncate">Vehicle Hire &<br/>Travel Management</span>
                             </div>
                         </Link>

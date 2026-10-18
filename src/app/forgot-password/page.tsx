@@ -14,17 +14,6 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Montserrat, Plus_Jakarta_Sans } from 'next/font/google';
-
-const montserrat = Montserrat({ 
-    subsets: ['latin'], 
-    weight: ['600', '700', '800', '900'] 
-});
-
-const plusJakarta = Plus_Jakarta_Sans({ 
-    subsets: ['latin'], 
-    weight: ['400', '500', '600', '700'] 
-});
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
@@ -71,7 +60,7 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className={`relative min-h-[100dvh] w-full flex items-center justify-center p-3 sm:p-5 lg:p-6 xl:p-8 overflow-x-hidden bg-[#060911] text-slate-100 ${plusJakarta.className}`}>
+        <div className="relative min-h-[100dvh] w-full flex items-center justify-center p-3 sm:p-5 lg:p-6 xl:p-8 overflow-x-hidden bg-[#060911] text-slate-100 font-display">
             {/* Ambient Multi-Layer Architectural Lighting */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
                 <div 
@@ -165,7 +154,7 @@ export default function ForgotPasswordPage() {
                             </div>
 
                             <div className="space-y-0.5">
-                                <span className={`text-2xl font-black tracking-tight text-white ${montserrat.className}`}>
+                                <span className="text-2xl font-black tracking-tight text-white font-montserrat">
                                     VIGIL
                                 </span>
                                 <h2 className="text-sm font-semibold text-slate-200">

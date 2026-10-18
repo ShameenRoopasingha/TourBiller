@@ -23,17 +23,6 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Montserrat, Plus_Jakarta_Sans } from 'next/font/google';
-
-const montserrat = Montserrat({ 
-    subsets: ['latin'], 
-    weight: ['600', '700', '800', '900'] 
-});
-
-const plusJakarta = Plus_Jakarta_Sans({ 
-    subsets: ['latin'], 
-    weight: ['400', '500', '600', '700'] 
-});
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -124,7 +113,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className={`relative min-h-[100dvh] lg:h-[100dvh] w-full flex items-center justify-center p-2 sm:p-4 lg:p-6 overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-[#060911] text-slate-100 ${plusJakarta.className}`}>
+        <div className="relative min-h-[100dvh] lg:h-[100dvh] w-full flex items-center justify-center p-2 sm:p-4 lg:p-6 overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-[#060911] text-slate-100 font-display">
             {/* Ambient Multi-Layer Architectural Lighting */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
                 <div 
@@ -325,7 +314,7 @@ export default function LoginPage() {
                             </div>
 
                             <div className="space-y-0.5">
-                                <span className={`text-2xl sm:text-3xl font-black tracking-tight text-white ${montserrat.className}`}>
+                                <span className="text-2xl sm:text-3xl font-black tracking-tight text-white font-montserrat">
                                     VIGIL
                                 </span>
                                 <p className="text-[11px] sm:text-xs font-semibold tracking-wider text-cyan-400 uppercase">

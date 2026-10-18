@@ -9,9 +9,6 @@ import { Loader2, KeyRound, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-
 import Link from 'next/link';
 import Image from 'next/image';
 import Aurora from '../../../components/reactbits/Aurora';
-import { Montserrat } from 'next/font/google';
-
-const montserrat = Montserrat({ subsets: ['latin'], weight: ['700', '900'] });
 
 export default function ResetPasswordPage() {
     const router = useRouter();
@@ -141,7 +138,7 @@ export default function ResetPasswordPage() {
                                 <Image src="/logo-icon.png" alt="VIGIL Logo Icon" width={72} height={72} className="h-16 w-auto relative z-10 object-contain" priority />
                             </div>
                             <div className="flex flex-col items-center mt-2">
-                                <CardTitle className={`text-3xl font-black tracking-tight text-slate-900 pb-1 ${montserrat.className}`}>VIGIL</CardTitle>
+                                <CardTitle className="text-3xl font-black tracking-tight text-slate-900 pb-1 font-montserrat">VIGIL</CardTitle>
                             </div>
                         </div>
                     </CardHeader>
