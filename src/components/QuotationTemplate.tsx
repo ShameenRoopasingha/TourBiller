@@ -306,6 +306,14 @@ export function QuotationTemplate({
                         break-after: avoid !important;
                         page-break-after: avoid !important;
                     }
+                    .print-break-before {
+                        break-before: page !important;
+                        page-break-before: always !important;
+                    }
+                    .print-break-after {
+                        break-after: page !important;
+                        page-break-after: always !important;
+                    }
                     table {
                         break-inside: auto !important;
                         page-break-inside: auto !important;
@@ -335,7 +343,7 @@ export function QuotationTemplate({
                 />
             </div>
 
-            <div id="printable-document" className="w-full max-w-[190mm] mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-between shadow-md sm:shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-0 print:m-0 print:w-full print:max-w-none bg-white rounded-lg sm:rounded-md print:rounded-none overflow-hidden print:overflow-visible print:block">
+            <div id="printable-document" className="w-full max-w-[190mm] mx-auto p-3.5 sm:p-5 md:p-6 flex flex-col justify-between shadow-md sm:shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-0 print:m-0 print:w-full print:max-w-none bg-white rounded-lg sm:rounded-md print:rounded-none overflow-hidden print:overflow-visible print:block">
 
                 {/* ── Header - 3 Column Layout on Desktop/Print, Stacked on Mobile ── */}
                 <div className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto] print:grid print:grid-cols-[auto_1fr_auto] items-start gap-3 sm:gap-4 border-b-2 border-black pb-2.5 mb-2.5 print:pb-2 print:mb-2 print-avoid-break">
@@ -501,7 +509,7 @@ export function QuotationTemplate({
                     <div className="overflow-x-auto -mx-1 sm:mx-0 print:overflow-visible">
                         <table className="w-full min-w-[540px] sm:min-w-0 text-xs border-collapse border border-gray-300">
                             <thead>
-                                <tr className="bg-gray-800 text-white">
+                                <tr className="bg-gray-800 text-white print-avoid-break">
                                     <th className="px-2 py-1.5 print:py-1 text-left w-[46px] border-r border-gray-600">Day</th>
                                     <th className="px-2 py-1.5 print:py-1 text-left border-r border-gray-600">Route / Description</th>
                                     <th className="px-2 py-1.5 print:py-1 text-right w-[44px] border-r border-gray-600">Km</th>
@@ -523,7 +531,7 @@ export function QuotationTemplate({
                                         : null;
                                     
                                     return (
-                                        <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-200`}>
+                                        <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-200 print-avoid-break`}>
                                             <td className="px-2 py-1 print:py-0.5 font-bold text-center border-r border-gray-200">
                                                 <div>Day {item.dayNumber}</div>
                                                 {dayDate && (
@@ -749,10 +757,10 @@ export function QuotationTemplate({
                 </div>
 
                 {/* ── Terms, Excluded Items, Advance Payment & Signatures ── */}
-                <div className="print-avoid-break space-y-1.5 print:space-y-1">
+                <div className="space-y-1.5 print:space-y-1">
                     {/* ── Excluded Items ── */}
                     {quotation.excludedItems && (
-                        <div className="text-xs">
+                        <div className="text-xs print-avoid-break">
                             <div className="p-2 sm:p-2.5 print:p-1.5 bg-red-50 border border-red-200 rounded">
                                 <span className="font-bold text-red-700">Not Included: </span>
                                 <span className="whitespace-pre-wrap text-red-600">{quotation.excludedItems}</span>
@@ -762,7 +770,7 @@ export function QuotationTemplate({
 
                     {/* ── Advance Payment & Bank Details ── */}
                     {quotation.advanceAmount > 0 && (
-                        <div className="text-xs">
+                        <div className="text-xs print-avoid-break">
                             <div className="p-2 sm:p-2.5 print:p-1.5 bg-green-50 border border-green-200 rounded">
                                 <span className="font-bold text-green-700">Advance Payment Required: </span>
                                 <span className="font-bold text-green-800">{fmt(quotation.advanceAmount)}</span>
@@ -788,7 +796,7 @@ export function QuotationTemplate({
 
                     {/* ── Notes & Validity ── */}
                     {(quotation.notes || quotation.validUntil) && (
-                        <div className="text-xs space-y-1">
+                        <div className="text-xs space-y-1 print-avoid-break">
                             {quotation.notes && (
                                 <div className="p-2 sm:p-2.5 print:p-1.5 bg-yellow-50 border border-yellow-200 rounded">
                                     <span className="font-bold text-gray-700">Notes & Terms: </span>
@@ -803,21 +811,22 @@ export function QuotationTemplate({
                         </div>
                     )}
 
-                    {/* ── Signatures ── */}
-                    <div className="pt-3 print:pt-2 grid grid-cols-2 gap-4 sm:gap-8 text-xs">
-                        <div className="text-center border-t border-dotted border-black pt-1 text-gray-500">
-                            Customer Signature
+                    {/* ── Signatures & Footer (Kept together to avoid orphaned signatures) ── */}
+                    <div className="print-avoid-break pt-2 print:pt-1">
+                        <div className="pt-2 print:pt-1.5 grid grid-cols-2 gap-4 sm:gap-8 text-xs">
+                            <div className="text-center border-t border-dotted border-black pt-1 text-gray-500">
+                                Customer Signature
+                            </div>
+                            <div className="text-center border-t border-dotted border-black pt-1 text-gray-500">
+                                Authorized Signature
+                            </div>
                         </div>
-                        <div className="text-center border-t border-dotted border-black pt-1 text-gray-500">
-                            Authorized Signature
-                        </div>
-                    </div>
 
-                    {/* ── Footer ── */}
-                    <div className="text-center text-[10px] text-gray-400 pt-1.5 pb-0.5">
-                        System Generated Quotation | Thank you for choosing {companyName}!
-                        <div className="mt-0.5 text-[9px] opacity-70">
-                            Powered by <span className="font-semibold text-black">Bitgard PVT LTD</span> (+94 70 563 3969)
+                        <div className="text-center text-[10px] text-gray-400 pt-1.5 pb-0.5">
+                            System Generated Quotation | Thank you for choosing {companyName}!
+                            <div className="mt-0.5 text-[9px] opacity-70">
+                                Powered by <span className="font-semibold text-black">Bitgard PVT LTD</span> (+94 70 563 3969)
+                            </div>
                         </div>
                     </div>
                 </div>

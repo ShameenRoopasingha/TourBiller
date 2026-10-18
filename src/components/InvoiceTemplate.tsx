@@ -251,19 +251,50 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
     // --- A4 PORTRAIT INVOICE LAYOUT (FOR ADMINS) ---
     return (
-        <div className="w-full flex flex-col items-center mx-auto font-sans text-sm text-black leading-relaxed bg-slate-100 dark:bg-zinc-950 print:bg-transparent min-h-screen py-3 sm:py-6 md:py-8 px-2 sm:px-4 print:p-0 print:m-0">
+        <div className="w-full flex flex-col items-center mx-auto font-sans text-sm text-black leading-relaxed bg-slate-100 dark:bg-zinc-950 print:bg-transparent min-h-screen py-3 sm:py-6 md:py-8 px-2 sm:px-4 print:p-0 print:m-0 print:block">
             <style jsx global>{`
                 @media print {
                     @page {
                         size: A4 portrait;
-                        margin: 0;
+                        margin: 6mm 8mm;
                     }
-                    body {
-                        margin: 0;
-                        padding: 0;
-                        background: white !important;
+                    html, body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: #ffffff !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
+                    }
+                    /* Content-friendly page break controls */
+                    .print-avoid-break {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                    }
+                    .print-heading {
+                        break-after: avoid !important;
+                        page-break-after: avoid !important;
+                    }
+                    .print-break-before {
+                        break-before: page !important;
+                        page-break-before: always !important;
+                    }
+                    .print-break-after {
+                        break-after: page !important;
+                        page-break-after: always !important;
+                    }
+                    table {
+                        break-inside: auto !important;
+                        page-break-inside: auto !important;
+                    }
+                    tr {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                    }
+                    thead {
+                        display: table-header-group !important;
+                    }
+                    tfoot {
+                        display: table-footer-group !important;
                     }
                 }
             `}</style>
@@ -281,10 +312,10 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
             </div>
 
             {/* Main Container - A4 Portrait (21cm x max intrinsic height) */}
-            <div id="printable-document" className="w-full max-w-[190mm] flex flex-col justify-between shadow-md sm:shadow-lg print:shadow-none border border-gray-200 print:border-none p-4 sm:p-6 md:p-8 print:p-10 bg-white rounded-lg sm:rounded-md print:rounded-none my-1 sm:my-3 print:my-0 overflow-hidden print:overflow-visible">
+            <div id="printable-document" className="w-full max-w-[190mm] mx-auto flex flex-col justify-between shadow-md sm:shadow-lg print:shadow-none border border-gray-200 print:border-none p-3.5 sm:p-5 md:p-6 print:p-0 bg-white rounded-lg sm:rounded-md print:rounded-none my-1 sm:my-3 print:my-0 print:w-full print:max-w-none overflow-hidden print:overflow-visible print:block">
 
                 {/* Header Section - 3 Column Layout on Desktop/Print, Stacked on Mobile */}
-                <div className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto] print:grid print:grid-cols-[auto_1fr_auto] items-start gap-3 sm:gap-4 border-b-2 border-black pb-3 mb-4">
+                <div className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto] print:grid print:grid-cols-[auto_1fr_auto] items-start gap-3 sm:gap-4 border-b-2 border-black pb-3 mb-4 print-avoid-break">
                     {/* Column 1 & 2 wrapper for mobile */}
                     <div className="flex items-start gap-3 sm:contents">
                         {/* Logo */}
@@ -335,7 +366,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 <div className="flex flex-col md:flex-row print:flex-row gap-4 sm:gap-6 flex-1">
 
                     {/* Left Column: Trip Details */}
-                    <div className="w-full md:w-[45%] print:w-[45%] space-y-3">
+                    <div className="w-full md:w-[45%] print:w-[45%] space-y-3 print-avoid-break">
                         <div className="bg-gray-50 p-3 border border-gray-200 rounded">
                             <div className="grid grid-cols-[85px_1fr] gap-y-1.5 gap-x-2 text-sm">
                                 <span className="font-medium text-gray-500">Customer:</span>
@@ -377,7 +408,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         {/* Day-by-Day Itinerary */}
                         {itineraryItems.length > 0 && (
                             <div className="mt-3">
-                                <h3 className="text-xs font-semibold uppercase text-gray-500 mb-1.5 border-b border-gray-300 pb-1 tracking-wide">Day-by-Day Itinerary</h3>
+                                <h3 className="text-xs font-semibold uppercase text-gray-500 mb-1.5 border-b border-gray-300 pb-1 tracking-wide print-heading">Day-by-Day Itinerary</h3>
                                 <div className="text-xs space-y-1">
                                     {itineraryItems.map((item) => (
                                         <div key={item.dayNumber} className="flex items-start gap-1">
@@ -411,7 +442,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                     </div>
 
                     {/* Right Column: Calculations */}
-                    <div className="w-full md:w-[55%] print:w-[55%]">
+                    <div className="w-full md:w-[55%] print:w-[55%] print-avoid-break">
                         <div className="grid grid-cols-12 gap-y-1.5 text-sm">
                             {/* Header Row */}
                             <div className="col-span-12 grid grid-cols-12 border-b-2 border-gray-800 pb-1.5 mb-2 font-semibold text-xs uppercase text-gray-500 tracking-wide">
@@ -534,15 +565,17 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 </div>
 
                 {/* Footer Section */}
-                <div className="mt-6 pt-6 sm:pt-12 grid grid-cols-2 gap-4 sm:gap-8 text-xs">
-                    <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">Customer Signature</div>
-                    <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">Authorized Signature</div>
-                </div>
+                <div className="print-avoid-break mt-6 pt-4 print:pt-2">
+                    <div className="grid grid-cols-2 gap-4 sm:gap-8 text-xs">
+                        <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">Customer Signature</div>
+                        <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">Authorized Signature</div>
+                    </div>
 
-                <div className="text-center text-[10px] text-gray-400 mt-4">
-                    System Generated Invoice | Thank you for your business!
-                    <div className="mt-1 text-[9px] opacity-70">
-                        Powered by <span className="font-semibold text-black">Bitgard PVT LTD</span> (+94 70 563 3969)
+                    <div className="text-center text-[10px] text-gray-400 mt-4 pb-1">
+                        System Generated Invoice | Thank you for your business!
+                        <div className="mt-1 text-[9px] opacity-70">
+                            Powered by <span className="font-semibold text-black">Bitgard PVT LTD</span> (+94 70 563 3969)
+                        </div>
                     </div>
                 </div>
             </div>

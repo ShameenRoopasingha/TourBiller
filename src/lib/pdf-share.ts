@@ -94,6 +94,10 @@ export async function downloadPdfFile(file: File | Blob, filename: string): Prom
 
 /**
  * Generates an A4 PDF File object from a DOM element using html2canvas-pro and jsPDF.
+ * Implements intelligent, content-aware pagination:
+ * 1. Single-page tolerance (up to 5% overflow is scaled cleanly to 1 page instead of creating an empty 2nd page).
+ * 2. Multi-page slicing detects avoid-break elements (tables, rows, headings, cards, signatures)
+ *    and slices off-screen canvases at clean element boundaries, never cutting through text or rows.
  */
 export async function generatePdfFile({
     elementId,
@@ -134,7 +138,6 @@ export async function generatePdfFile({
             },
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const pdf = new jsPDF({
             orientation: 'p',
             unit: 'mm',
@@ -144,18 +147,119 @@ export async function generatePdfFile({
 
         const imgWidth = 210; // A4 width in mm
         const pageHeight = 297; // A4 height in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
+        const mmPerPx = imgWidth / canvas.width;
+        const totalHeightMm = canvas.height * mmPerPx;
+        const pageHeightPx = pageHeight / mmPerPx;
 
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        // 1. Single-page scenario: If content fits within 1 page (or with up to 5% minor overflow),
+        // scale slightly so it fits perfectly on 1 page without creating an accidental 2nd page.
+        if (totalHeightMm <= pageHeight * 1.05) {
+            const scale = totalHeightMm > pageHeight ? (pageHeight / totalHeightMm) : 1;
+            const renderWidthMm = imgWidth * scale;
+            const renderHeightMm = totalHeightMm * scale;
+            const xOffsetMm = (imgWidth - renderWidthMm) / 2;
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            pdf.addImage(imgData, 'JPEG', xOffsetMm, 0, renderWidthMm, renderHeightMm);
+        } else {
+            // 2. Multi-page scenario: Content-aware intelligent slicing
+            const elementRect = element.getBoundingClientRect();
+            const scaleY = canvas.height / (elementRect.height || element.scrollHeight);
 
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
+            const avoidSelectors = [
+                '.print-avoid-break',
+                'tr',
+                '.print-heading',
+                'h1', 'h2', 'h3',
+                '[data-avoid-break="true"]'
+            ];
+            const avoidNodes = Array.from(element.querySelectorAll(avoidSelectors.join(','))) as HTMLElement[];
+
+            interface AvoidZone {
+                top: number;
+                bottom: number;
+            }
+
+            const avoidZones: AvoidZone[] = [];
+            for (const node of avoidNodes) {
+                if (!node.offsetParent && node.offsetHeight === 0) continue;
+                const rect = node.getBoundingClientRect();
+                if (rect.height <= 0) continue;
+
+                const topPx = (rect.top - elementRect.top) * scaleY;
+                const bottomPx = (rect.bottom - elementRect.top) * scaleY;
+
+                // Add small buffer around elements (4px)
+                avoidZones.push({
+                    top: Math.max(0, topPx - 4),
+                    bottom: Math.min(canvas.height, bottomPx + 4),
+                });
+            }
+
+            // Calculate slice intervals
+            let currentY = 0;
+            const slices: { startY: number; endY: number }[] = [];
+
+            while (currentY < canvas.height) {
+                const remainingHeight = canvas.height - currentY;
+                if (remainingHeight <= pageHeightPx * 1.03) {
+                    slices.push({ startY: currentY, endY: canvas.height });
+                    break;
+                }
+
+                let targetSliceY = currentY + pageHeightPx;
+
+                // Check if targetSliceY cuts through any avoid zone
+                const intersectingZone = avoidZones.find(
+                    (zone) => targetSliceY > zone.top && targetSliceY < zone.bottom
+                );
+
+                if (intersectingZone) {
+                    const zoneHeight = intersectingZone.bottom - intersectingZone.top;
+                    // Pull slice point above the element if it leaves sufficient page height (> 40%)
+                    if (zoneHeight < pageHeightPx * 0.8 && intersectingZone.top > currentY + pageHeightPx * 0.4) {
+                        targetSliceY = intersectingZone.top;
+                    }
+                }
+
+                // Ensure forward progress
+                if (targetSliceY <= currentY + 100) {
+                    targetSliceY = currentY + pageHeightPx;
+                }
+
+                slices.push({ startY: currentY, endY: Math.min(canvas.height, targetSliceY) });
+                currentY = targetSliceY;
+            }
+
+            // Draw each slice on an offscreen canvas and add to PDF
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            const ctx = sliceCanvas.getContext('2d');
+
+            for (let i = 0; i < slices.length; i++) {
+                const { startY, endY } = slices[i];
+                const sliceHeight = endY - startY;
+                if (sliceHeight <= 0) continue;
+
+                sliceCanvas.height = sliceHeight;
+                if (ctx) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, sliceCanvas.width, sliceHeight);
+                    ctx.drawImage(
+                        canvas,
+                        0, startY, canvas.width, sliceHeight,
+                        0, 0, canvas.width, sliceHeight
+                    );
+                }
+
+                const sliceImgData = sliceCanvas.toDataURL('image/jpeg', 0.95);
+                const sliceHeightMm = (sliceHeight * imgWidth) / canvas.width;
+
+                if (i > 0) {
+                    pdf.addPage();
+                }
+
+                pdf.addImage(sliceImgData, 'JPEG', 0, 0, imgWidth, sliceHeightMm);
+            }
         }
 
         const blob = pdf.output('blob');

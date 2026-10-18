@@ -33,7 +33,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     const { id } = await params;
 
     return (
-        <div className="min-h-screen bg-slate-100 dark:bg-zinc-950 print:bg-white flex flex-col items-center justify-start print:items-start print:py-0 overflow-x-hidden">
+        <div className="min-h-screen bg-slate-100 dark:bg-zinc-950 print:bg-white flex flex-col items-center justify-start print:block print:min-h-0 print:h-auto print:p-0 print:m-0 overflow-x-hidden">
             <Suspense fallback={
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
