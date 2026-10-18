@@ -39,7 +39,7 @@ export const prisma =
 globalForPrisma.prisma = prisma;
 
 // Gracefully close connection pool on process termination to prevent unreleased sockets
-if (typeof process !== 'undefined' && process.on) {
+if (typeof process !== 'undefined' && typeof process.on === 'function') {
   const disconnect = async () => {
     try {
       await prisma.$disconnect();

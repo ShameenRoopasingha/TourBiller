@@ -183,95 +183,91 @@ export function PrintButton({
     };
 
     return (
-        <div className="no-print flex flex-wrap items-center gap-2 sm:gap-2.5 w-full">
-            {showBack && (
+        <div className="no-print flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full">
+            {/* Top row on mobile, left on desktop: Back + Print */}
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+                {showBack && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => router.back()}
+                        className="shrink-0 font-medium bg-white hover:bg-gray-100 text-gray-800 border-gray-300 shadow-xs h-10 px-3 sm:px-4"
+                    >
+                        <ArrowLeft className="h-4 w-4 mr-1 sm:mr-1.5" />
+                        <span>Back</span>
+                    </Button>
+                )}
+
                 <Button
                     type="button"
-                    variant="outline"
-                    onClick={() => router.back()}
-                    className="shrink-0 font-medium bg-white hover:bg-gray-100 text-gray-800 border-gray-300 shadow-xs h-10 px-3 sm:px-4"
+                    onClick={() => window.print()}
+                    className="flex-1 font-semibold btn-tactile-primary shadow-xs h-10 text-xs sm:text-sm"
                 >
-                    <ArrowLeft className="h-4 w-4 mr-1 sm:mr-1.5" />
-                    <span>Back</span>
+                    <Printer className="mr-1.5 sm:mr-2 h-4 w-4" />
+                    <span className="truncate">{label}</span>
                 </Button>
-            )}
+            </div>
 
-            <Button
-                type="button"
-                onClick={() => window.print()}
-                className="flex-1 min-w-[130px] font-semibold btn-tactile-primary shadow-xs h-10 text-xs sm:text-sm"
-            >
-                <Printer className="mr-1.5 sm:mr-2 h-4 w-4" />
-                <span className="truncate">{label}</span>
-            </Button>
+            {/* Bottom row on mobile (3 equal balanced columns), right on desktop (flex row) */}
+            <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:w-auto shrink-0">
+                {showDownload && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleDownloadButtonClick}
+                        disabled={isGenerating}
+                        className="font-semibold text-gray-800 dark:text-gray-200 bg-white hover:bg-gray-100 dark:bg-zinc-800 border-gray-300 shadow-xs h-10 px-2 sm:px-3.5 text-xs sm:text-sm justify-center"
+                        title="Download PDF directly to your device"
+                    >
+                        {isGenerating && activeAction === 'download' ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <>
+                                <Download className="h-4 w-4 mr-1 sm:mr-1.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                                <span className="truncate">Download</span>
+                            </>
+                        )}
+                    </Button>
+                )}
 
-            {showDownload && (
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleDownloadButtonClick}
-                    disabled={isGenerating}
-                    className="font-semibold text-gray-800 dark:text-gray-200 bg-white hover:bg-gray-100 dark:bg-zinc-800 border-gray-300 shadow-xs h-10 px-3 sm:px-3.5 text-xs sm:text-sm shrink-0"
-                    title="Download PDF directly to your device"
-                >
-                    {isGenerating && activeAction === 'download' ? (
-                        <>
-                            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                            <span>Downloading...</span>
-                        </>
-                    ) : (
-                        <>
-                            <Download className="h-4 w-4 mr-1.5 text-blue-600 dark:text-blue-400" />
-                            <span className="hidden sm:inline">Download PDF</span>
-                            <span className="sm:hidden">Download</span>
-                        </>
-                    )}
-                </Button>
-            )}
+                {showWhatsApp && (
+                    <Button
+                        type="button"
+                        onClick={handleWhatsAppButtonClick}
+                        disabled={isGenerating}
+                        className="font-semibold text-white shadow-xs h-10 px-2 sm:px-3.5 text-xs sm:text-sm active:translate-y-[1px] transition-all bg-[#25D366] hover:bg-[#20bd5a] justify-center"
+                        title={recipientPhone ? `Share via WhatsApp (${recipientPhone})` : 'Share via WhatsApp'}
+                    >
+                        {isGenerating && activeAction === 'whatsapp' ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <>
+                                <WhatsAppIcon className="h-4 w-4 mr-1 sm:mr-1.5 shrink-0" />
+                                <span className="truncate">WhatsApp</span>
+                            </>
+                        )}
+                    </Button>
+                )}
 
-            {showWhatsApp && (
-                <Button
-                    type="button"
-                    onClick={handleWhatsAppButtonClick}
-                    disabled={isGenerating}
-                    className="font-semibold text-white shadow-xs h-10 px-3.5 text-xs sm:text-sm active:translate-y-[1px] transition-all bg-[#25D366] hover:bg-[#20bd5a] shrink-0"
-                    title={recipientPhone ? `Share via WhatsApp (${recipientPhone})` : 'Share via WhatsApp'}
-                >
-                    {isGenerating && activeAction === 'whatsapp' ? (
-                        <>
-                            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                            <span>Sharing...</span>
-                        </>
-                    ) : (
-                        <>
-                            <WhatsAppIcon className="h-4 w-4 mr-1.5" />
-                            <span>WhatsApp</span>
-                        </>
-                    )}
-                </Button>
-            )}
-
-            {showEmail && (
-                <Button
-                    type="button"
-                    onClick={handleEmailButtonClick}
-                    disabled={isGenerating}
-                    className="font-semibold text-white shadow-xs h-10 px-3.5 text-xs sm:text-sm active:translate-y-[1px] transition-all bg-blue-600 hover:bg-blue-700 shrink-0"
-                    title={recipientEmail ? `Email to ${recipientEmail}` : 'Send via Email'}
-                >
-                    {isGenerating && activeAction === 'email' ? (
-                        <>
-                            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                            <span>Opening...</span>
-                        </>
-                    ) : (
-                        <>
-                            <Mail className="h-4 w-4 mr-1.5" />
-                            <span>Email</span>
-                        </>
-                    )}
-                </Button>
-            )}
+                {showEmail && (
+                    <Button
+                        type="button"
+                        onClick={handleEmailButtonClick}
+                        disabled={isGenerating}
+                        className="font-semibold text-white shadow-xs h-10 px-2 sm:px-3.5 text-xs sm:text-sm active:translate-y-[1px] transition-all bg-blue-600 hover:bg-blue-700 justify-center"
+                        title={recipientEmail ? `Email to ${recipientEmail}` : 'Send via Email'}
+                    >
+                        {isGenerating && activeAction === 'email' ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <>
+                                <Mail className="h-4 w-4 mr-1 sm:mr-1.5 shrink-0" />
+                                <span className="truncate">Email</span>
+                            </>
+                        )}
+                    </Button>
+                )}
+            </div>
         </div>
     );
 }

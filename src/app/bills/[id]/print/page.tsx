@@ -37,7 +37,8 @@ async function PrintBill({ id }: { id: string }) {
             });
             if (customer) {
                 if (customer.email) customerEmail = customer.email;
-                if (!customerPhone && customer.phone) customerPhone = customer.phone;
+                if (!customerPhone && customer.mobile) customerPhone = customer.mobile;
+                if (!customerPhone && (customer as any).phone) customerPhone = (customer as any).phone;
             }
         } catch {
             // Non-critical customer lookup failure
@@ -45,7 +46,7 @@ async function PrintBill({ id }: { id: string }) {
     }
 
     return <InvoiceTemplate
-        bill={bill as Bill}
+        bill={bill as unknown as Bill}
         businessProfile={profileResult.success ? (profileResult.data as BusinessProfile) : undefined}
         userRole={userRole}
         customerEmail={customerEmail}
