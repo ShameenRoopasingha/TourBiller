@@ -73,7 +73,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 `}</style>
 
                 {/* Fixed physical 58mm width wrapper for Thermal Printers */}
-                <div className="w-[58mm] max-w-[58mm] print-thermal text-[11px] font-sans break-words bg-white border border-gray-200 print:border-none my-4 print:my-0 pb-10">
+                <div id="printable-driver-receipt" className="w-[58mm] max-w-[58mm] print-thermal text-[11px] font-sans break-words bg-white border border-gray-200 print:border-none my-4 print:my-0 pb-10">
                     {/* Header */}
                     <div className="text-center border-b-2 border-black border-dashed pb-3 mb-3 pt-2 flex flex-col items-center">
                         {businessProfile?.logoUrl && (
@@ -235,7 +235,14 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
                 {/* Connect/Print Actions Panel (Hidden on Print) */}
                 <div className="w-full max-w-[280px] sm:w-[58mm] mb-8 print:hidden flex flex-col gap-2.5 px-3 sm:px-0">
-                    <PrintButton label="Print Receipt" showBack={true} />
+                    <PrintButton
+                        label="Print Receipt"
+                        showBack={true}
+                        elementId="printable-driver-receipt"
+                        filename={`Receipt-${bill.billNumber}`}
+                        title={`Receipt #${bill.billNumber}`}
+                        recipientPhone={bill.customerPhone}
+                    />
                     <BluetoothPrintButton bill={bill} companyName={companyName} tourScheduleName={tourScheduleName} />
                 </div>
             </div>
@@ -263,11 +270,18 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
             {/* Top Action Bar (Hidden on Print) */}
             <div className="w-full max-w-[190mm] mb-3 sm:mb-4 print:hidden">
-                <PrintButton label="Print / Save Invoice PDF" showBack={true} />
+                <PrintButton
+                    label="Print / Save Invoice PDF"
+                    showBack={true}
+                    elementId="printable-document"
+                    filename={`Invoice-${bill.billNumber}`}
+                    title={`Invoice #${bill.billNumber}`}
+                    recipientPhone={bill.customerPhone}
+                />
             </div>
 
             {/* Main Container - A4 Portrait (21cm x max intrinsic height) */}
-            <div className="w-full max-w-[190mm] flex flex-col justify-between shadow-md sm:shadow-lg print:shadow-none border border-gray-200 print:border-none p-4 sm:p-6 md:p-8 print:p-10 bg-white rounded-lg sm:rounded-md print:rounded-none my-1 sm:my-3 print:my-0 overflow-hidden print:overflow-visible">
+            <div id="printable-document" className="w-full max-w-[190mm] flex flex-col justify-between shadow-md sm:shadow-lg print:shadow-none border border-gray-200 print:border-none p-4 sm:p-6 md:p-8 print:p-10 bg-white rounded-lg sm:rounded-md print:rounded-none my-1 sm:my-3 print:my-0 overflow-hidden print:overflow-visible">
 
                 {/* Header Section - 3 Column Layout on Desktop/Print, Stacked on Mobile */}
                 <div className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto] print:grid print:grid-cols-[auto_1fr_auto] items-start gap-3 sm:gap-4 border-b-2 border-black pb-3 mb-4">
@@ -535,7 +549,14 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
             {/* Print Button - Below invoice, matching width */}
             <div className="w-full max-w-[190mm] mt-4 sm:mt-6 mb-8 print:hidden">
-                <PrintButton label="Print / Save Invoice PDF" showBack={true} />
+                <PrintButton
+                    label="Print / Save Invoice PDF"
+                    showBack={true}
+                    elementId="printable-document"
+                    filename={`Invoice-${bill.billNumber}`}
+                    title={`Invoice #${bill.billNumber}`}
+                    recipientPhone={bill.customerPhone}
+                />
             </div>
         </div>
     );

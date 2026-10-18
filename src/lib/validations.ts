@@ -252,6 +252,7 @@ export const BillSchema = z.object({
   vehicleNo: z.string().min(1, "Vehicle number is required"),
   customerName: z.string().min(1, "Customer name is required"),
   customerAddress: z.string().nullish().transform(v => v ?? undefined),
+  customerPhone: z.string().nullish().transform(v => v ?? undefined),
   route: z.string().min(1, "Route is required"),
   startMeter: z.coerce.number().min(0, "Start meter must be positive"),
   endMeter: z.coerce.number().min(0, "End meter must be positive"),

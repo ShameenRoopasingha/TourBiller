@@ -205,10 +205,17 @@ export function QuotationTemplate({
 
             {/* Top Action Bar (Hidden on Print) */}
             <div className="w-full max-w-[190mm] mb-3 sm:mb-4 print:hidden">
-                <PrintButton label="Print / Save Quotation PDF" showBack={true} />
+                <PrintButton
+                    label="Print / Save Quotation PDF"
+                    showBack={true}
+                    elementId="printable-document"
+                    filename={`Quotation-${quotation.quotationNumber}`}
+                    title={`Quotation #${quotation.quotationNumber}`}
+                    recipientPhone={quotation.customerPhone}
+                />
             </div>
 
-            <div className="w-full max-w-[190mm] mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-between shadow-md sm:shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-0 print:m-0 print:w-full print:max-w-none bg-white rounded-lg sm:rounded-md print:rounded-none overflow-hidden print:overflow-visible print:block">
+            <div id="printable-document" className="w-full max-w-[190mm] mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-between shadow-md sm:shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-0 print:m-0 print:w-full print:max-w-none bg-white rounded-lg sm:rounded-md print:rounded-none overflow-hidden print:overflow-visible print:block">
 
                 {/* ── Header - 3 Column Layout on Desktop/Print, Stacked on Mobile ── */}
                 <div className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto] print:grid print:grid-cols-[auto_1fr_auto] items-start gap-3 sm:gap-4 border-b-2 border-black pb-3 mb-4 print-avoid-break">
@@ -686,7 +693,14 @@ export function QuotationTemplate({
 
             {/* Print Button - Below content, matching width */}
             <div className="w-full max-w-[190mm] mt-4 sm:mt-6 mb-8 print:hidden">
-                <PrintButton label="Print / Save Quotation PDF" showBack={true} />
+                <PrintButton
+                    label="Print / Save Quotation PDF"
+                    showBack={true}
+                    elementId="printable-document"
+                    filename={`Quotation-${quotation.quotationNumber}`}
+                    title={`Quotation #${quotation.quotationNumber}`}
+                    recipientPhone={quotation.customerPhone}
+                />
             </div>
         </div>
     );
