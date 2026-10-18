@@ -132,9 +132,24 @@ async function PrintQuotation({ id }: { id: string }) {
             if (routeRes.success && routeRes.coordinates) {
                 routeCoordinates = routeRes.coordinates;
                 routeWaypoints = routeRes.waypoints || [];
+                if (!fixedQuotation.totalDistance || fixedQuotation.totalDistance <= 0) {
+                    if (routeRes.distanceKm && routeRes.distanceKm > 0) {
+                        fixedQuotation.totalDistance = routeRes.distanceKm;
+                    }
+                }
             }
         } catch (err) {
             console.error('Failed to precompute print route map:', err);
+        }
+    }
+
+    // Secondary fallback: parse distance from notes if still 0
+    if (!fixedQuotation.totalDistance || fixedQuotation.totalDistance <= 0) {
+        if (quotation.notes) {
+            const distMatch = quotation.notes.match(/Est\.\s*Distance:\s*([0-9.]+)\s*km/i);
+            if (distMatch && parseFloat(distMatch[1]) > 0) {
+                fixedQuotation.totalDistance = parseFloat(distMatch[1]);
+            }
         }
     }
 

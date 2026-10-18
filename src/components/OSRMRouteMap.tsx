@@ -10,6 +10,7 @@ interface OSRMRouteMapProps {
   waypoints?: RoutePoint[];
   height?: string;
   className?: string;
+  showOverlayLegend?: boolean;
 }
 
 export function OSRMRouteMap({
@@ -17,6 +18,7 @@ export function OSRMRouteMap({
   waypoints = [],
   height = '320px',
   className = '',
+  showOverlayLegend = false,
 }: OSRMRouteMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -46,6 +48,8 @@ export function OSRMRouteMap({
         center: coordinates[0] || defaultCenter,
         zoom: initialZoom,
         scrollWheelZoom: false,
+        zoomControl: false,
+        attributionControl: false,
       });
 
       mapInstanceRef.current = map;
@@ -131,36 +135,67 @@ export function OSRMRouteMap({
 
       // Add HTML DivIcon Markers for all stops
       if (waypoints.length > 0) {
+        const isRoundTrip = isCircuit || (waypoints.length >= 2 && (
+          Math.hypot(waypoints[0].lat - waypoints[waypoints.length - 1].lat, waypoints[0].lon - waypoints[waypoints.length - 1].lon) < 0.05 ||
+          (waypoints[0].name && waypoints[waypoints.length - 1].name && waypoints[0].name.toLowerCase().split(',')[0].trim() === waypoints[waypoints.length - 1].name.toLowerCase().split(',')[0].trim())
+        ));
+
         waypoints.forEach((wp, idx) => {
           const isStart = idx === 0;
           const isEnd = idx === waypoints.length - 1;
+
+          // If this is a round trip/circuit and this is the final waypoint (same location as start),
+          // skip rendering a duplicate marker so it doesn't obscure Marker A
+          if (isRoundTrip && isEnd && waypoints.length > 1) {
+            return;
+          }
+
           const isStop = !isStart && !isEnd;
+          const isDualRole = isStart && isRoundTrip;
 
           let label = 'A';
           let markerColor = '#059669'; // Green
+          let roleLabel = isStart ? 'Origin' : 'Destination';
 
-          if (isEnd) {
+          if (isDualRole) {
+            label = 'A • B';
+            roleLabel = 'Start & Finish (Round Trip)';
+            markerColor = '#0f766e'; // Teal
+          } else if (isEnd) {
             label = 'B';
             markerColor = '#e11d48'; // Rose
+            roleLabel = 'Destination';
           } else if (isStop) {
             label = `${idx}`;
             // If it's the turnaround stop in a circuit tour, highlight with amber
             if (isCircuit && idx === waypoints.length - 2) {
               markerColor = '#ea580c'; // Amber Orange
+              roleLabel = 'Turnaround Stop';
             } else {
               markerColor = '#2563eb'; // Blue
+              roleLabel = `Stop ${idx}`;
             }
           }
 
-          const roleLabel = isStart ? 'Origin' : isEnd ? 'Destination' : isCircuit && idx === waypoints.length - 2 ? 'Turnaround Stop' : `Stop ${idx}`;
+          const pinWidth = isDualRole ? 36 : 28;
+          const pinHeight = isDualRole ? 38 : 36;
+          const anchorX = pinWidth / 2;
+          const circleR = isDualRole ? 11 : 9;
+          const circleCy = isDualRole ? 15 : 14;
+          const fontSize = isDualRole ? 9 : 11;
+          const textY = isDualRole ? 18.5 : 18;
 
-          // Precise SVG Teardrop Pin - tip is anchored exactly at (14, 36)
+          // Precise SVG Teardrop Pin
           const iconHtml = `
-            <div style="position: relative; width: 28px; height: 36px;">
-              <svg width="28" height="36" viewBox="0 0 28 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
-                <path d="M14 0C6.268 0 0 6.268 0 14C0 24.5 14 36 14 36C14 36 28 24.5 28 14C28 6.268 21.732 0 14 0Z" fill="${markerColor}" stroke="#ffffff" stroke-width="2"/>
-                <circle cx="14" cy="14" r="9" fill="#ffffff"/>
-                <text x="14" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="${markerColor}" text-anchor="middle">${label}</text>
+            <div style="position: relative; width: ${pinWidth}px; height: ${pinHeight}px;">
+              <svg width="${pinWidth}" height="${pinHeight}" viewBox="0 0 ${pinWidth} ${pinHeight}" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
+                ${isDualRole ? `
+                  <path d="M18 0C8.059 0 0 8.059 0 18C0 28 18 38 18 38C18 38 36 28 36 18C36 8.059 27.941 0 18 0Z" fill="${markerColor}" stroke="#ffffff" stroke-width="2"/>
+                ` : `
+                  <path d="M14 0C6.268 0 0 6.268 0 14C0 24.5 14 36 14 36C14 36 28 24.5 28 14C28 6.268 21.732 0 14 0Z" fill="${markerColor}" stroke="#ffffff" stroke-width="2"/>
+                `}
+                <circle cx="${anchorX}" cy="${circleCy}" r="${circleR}" fill="#ffffff"/>
+                <text x="${anchorX}" y="${textY}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="${fontSize}" font-weight="900" fill="${markerColor}" text-anchor="middle">${label}</text>
               </svg>
             </div>
           `;
@@ -168,9 +203,9 @@ export function OSRMRouteMap({
           const customIcon = L.divIcon({
             className: 'custom-map-pin !bg-transparent !border-0',
             html: iconHtml,
-            iconSize: [28, 36],
-            iconAnchor: [14, 36], // Tip of needle is at exact bottom-center
-            popupAnchor: [0, -36],
+            iconSize: [pinWidth, pinHeight],
+            iconAnchor: [anchorX, pinHeight], // Tip of needle is at exact bottom-center
+            popupAnchor: [0, -pinHeight],
           });
 
           const popupHtml = `
@@ -212,15 +247,15 @@ export function OSRMRouteMap({
     <div className={`relative rounded-lg overflow-hidden border border-border shadow-xs ${className}`}>
       <div ref={mapContainerRef} style={{ height, width: '100%' }} className="z-0" />
       
-      {/* Top Right Live Route Indicator */}
+      {/* Top Right Live Route Indicator (Hidden on print) */}
       <div className="absolute top-2 right-2 z-[400] bg-background/90 backdrop-blur-xs px-2 py-1 rounded-md text-[10px] font-mono border text-muted-foreground shadow-xs flex items-center gap-1 print:hidden">
         <Navigation className="w-3 h-3 text-primary" />
         OSM Live Route
       </div>
 
-      {/* Dual Color Route Legend (Printed & On-Screen) for Circuit Tours */}
-      {isCircuitRoute && (
-        <div className="absolute bottom-2 left-2 z-[400] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs px-2.5 py-1 rounded-md text-[10px] border border-gray-300 dark:border-gray-700 shadow-sm flex items-center gap-3 font-semibold print:bg-white print:border-gray-400">
+      {/* Optional Dual Color Route Legend (Hidden on print and suppressed when header legend is present) */}
+      {showOverlayLegend && isCircuitRoute && (
+        <div className="absolute bottom-2 left-2 z-[400] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs px-2.5 py-1 rounded-md text-[10px] border border-gray-300 dark:border-gray-700 shadow-sm flex items-center gap-3 font-semibold print:hidden">
           <div className="flex items-center gap-1.5 text-blue-700">
             <span className="w-3 h-1 bg-blue-600 rounded-full inline-block" />
             <span>Outbound Route</span>

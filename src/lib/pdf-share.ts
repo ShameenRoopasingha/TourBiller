@@ -127,6 +127,8 @@ export async function generatePdfFile({
                 return (
                     el.classList.contains('no-print') ||
                     el.classList.contains('print:hidden') ||
+                    el.classList.contains('leaflet-control-zoom') ||
+                    el.classList.contains('leaflet-control-attribution') ||
                     el.hasAttribute('data-no-print')
                 );
             },
