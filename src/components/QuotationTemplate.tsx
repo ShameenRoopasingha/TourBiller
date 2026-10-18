@@ -158,7 +158,7 @@ export function QuotationTemplate({
     const markupAmount = subtotalWithDriver * (quotation.markup / 100);
 
     return (
-        <div className="flex flex-col items-center mx-auto font-sans text-sm text-black leading-relaxed print:block print:w-full print:m-0 print:p-0">
+        <div className="w-full flex flex-col items-center mx-auto font-sans text-sm text-black leading-relaxed bg-slate-100 dark:bg-zinc-950 print:bg-transparent min-h-screen py-3 sm:py-6 md:py-8 px-2 sm:px-4 print:p-0 print:m-0 print:block">
             <style jsx global>{`
                 @media print {
                     @page {
@@ -203,84 +203,98 @@ export function QuotationTemplate({
                 }
             `}</style>
 
-            <div className="w-[190mm] mx-auto p-6 md:p-8 flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-0 print:m-0 print:w-full print:max-w-none bg-white overflow-hidden print:overflow-visible print:block">
+            {/* Top Action Bar (Hidden on Print) */}
+            <div className="w-full max-w-[190mm] mb-3 sm:mb-4 print:hidden">
+                <PrintButton label="Print / Save Quotation PDF" showBack={true} />
+            </div>
 
-                {/* ── Header - 3 Column Layout ── */}
-                <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-3 mb-4 print-avoid-break">
-                    {/* Column 1: Logo */}
-                    <div className="flex items-start pt-1">
-                        {businessProfile?.logoUrl ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                                src={businessProfile.logoUrl}
-                                alt="Company Logo"
-                                className="h-14 w-14 rounded-full object-cover"
-                            />
-                        ) : (
-                            <div className="h-14 w-14" />
-                        )}
-                    </div>
+            <div className="w-full max-w-[190mm] mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-between shadow-md sm:shadow-lg print:shadow-none border border-gray-200 print:border-none print:p-0 print:m-0 print:w-full print:max-w-none bg-white rounded-lg sm:rounded-md print:rounded-none overflow-hidden print:overflow-visible print:block">
 
-                    {/* Column 2: Company Name & Contact */}
-                    <div>
-                        <h1 className="text-2xl font-bold uppercase tracking-wider">{companyName}</h1>
-                        <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">
-                            {address && <>{address}<br /></>}
-                            {phone && <>Tel: {phone}</>}
-                            {email && <> | Email: {email}</>}
-                        </p>
+                {/* ── Header - 3 Column Layout on Desktop/Print, Stacked on Mobile ── */}
+                <div className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto] print:grid print:grid-cols-[auto_1fr_auto] items-start gap-3 sm:gap-4 border-b-2 border-black pb-3 mb-4 print-avoid-break">
+                    {/* Top Row on mobile: Logo + Company Name */}
+                    <div className="flex items-start gap-3 sm:contents">
+                        {/* Column 1: Logo */}
+                        <div className="flex items-start pt-0.5 sm:pt-1 shrink-0">
+                            {businessProfile?.logoUrl ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img
+                                    src={businessProfile.logoUrl}
+                                    alt="Company Logo"
+                                    className="h-12 w-12 sm:h-14 sm:w-14 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 text-sm print:hidden">
+                                    V
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Column 2: Company Name & Contact */}
+                        <div className="flex-1">
+                            <h1 className="text-xl sm:text-2xl font-bold uppercase tracking-wider">{companyName}</h1>
+                            <p className="text-xs text-gray-600 mt-0.5 sm:mt-1 whitespace-pre-wrap">
+                                {address && <>{address}<br /></>}
+                                {phone && <>Tel: {phone}</>}
+                                {email && <> | Email: {email}</>}
+                            </p>
+                        </div>
                     </div>
 
                     {/* Column 3: Quotation Details */}
-                    <div className="text-right">
-                        <div className="text-3xl font-bold text-blue-700">
-                            QUOTATION
+                    <div className="w-full sm:w-auto text-left sm:text-right print:text-right flex sm:flex-col justify-between items-end sm:items-end border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100">
+                        <div>
+                            <div className="text-2xl sm:text-3xl font-bold text-blue-700">
+                                QUOTATION
+                            </div>
+                            <div className="text-base sm:text-lg font-bold mt-0.5">
+                                NO: {quotation.quotationNumber}
+                            </div>
                         </div>
-                        <div className="text-lg font-bold mt-0.5">
-                            NO: {quotation.quotationNumber}
-                        </div>
-                        <div className="text-sm text-gray-500 mt-0.5">
-                            Date: {new Date(quotation.createdAt).toLocaleDateString('en-GB')}
-                        </div>
-                        <div className="mt-1">
-                            <span className={`font-bold border px-2.5 py-1 text-xs uppercase rounded-sm ${quotation.status === 'CONVERTED' ? 'border-emerald-600 text-emerald-700 bg-emerald-50' :
-                                quotation.status === 'ACCEPTED' ? 'border-green-600 text-green-700' :
-                                quotation.status === 'SENT' ? 'border-blue-600 text-blue-700' :
-                                    quotation.status === 'EXPIRED' ? 'border-red-600 text-red-700' :
-                                        'border-black text-black'
-                                }`}>
-                                {quotation.status}
-                            </span>
+                        <div className="text-right">
+                            <div className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                                Date: {new Date(quotation.createdAt).toLocaleDateString('en-GB')}
+                            </div>
+                            <div className="mt-1">
+                                <span className={`font-bold border px-2.5 py-0.5 sm:py-1 text-xs uppercase rounded-sm inline-block ${quotation.status === 'CONVERTED' ? 'border-emerald-600 text-emerald-700 bg-emerald-50' :
+                                    quotation.status === 'ACCEPTED' ? 'border-green-600 text-green-700' :
+                                    quotation.status === 'SENT' ? 'border-blue-600 text-blue-700' :
+                                        quotation.status === 'EXPIRED' ? 'border-red-600 text-red-700' :
+                                            'border-black text-black'
+                                    }`}>
+                                    {quotation.status}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* ── Customer & Tour Details ── */}
-                <div className="flex gap-4 mb-4 print-avoid-break">
-                    <div className="w-1/2 bg-gray-50 p-3 border border-gray-200 rounded">
+                <div className="flex flex-col sm:flex-row print:flex-row gap-3 sm:gap-4 mb-4 print-avoid-break">
+                    <div className="w-full sm:w-1/2 print:w-1/2 bg-gray-50 p-3 border border-gray-200 rounded">
                         <div className="grid grid-cols-[75px_1fr] gap-y-1.5 gap-x-2 text-sm">
                             <span className="font-medium text-gray-500">Customer:</span>
-                            <span className="font-semibold">{quotation.customerName}</span>
+                            <span className="font-semibold break-words">{quotation.customerName}</span>
                             {quotation.customerPhone && (
                                 <>
                                     <span className="font-medium text-gray-500">Phone:</span>
-                                    <span>{quotation.customerPhone}</span>
+                                    <span className="break-words">{quotation.customerPhone}</span>
                                 </>
                             )}
                             {quotation.customerEmail && (
                                 <>
                                     <span className="font-medium text-gray-500">Email:</span>
-                                    <span>{quotation.customerEmail}</span>
+                                    <span className="break-words">{quotation.customerEmail}</span>
                                 </>
                             )}
                             <span className="font-medium text-gray-500">Persons:</span>
                             <span>{quotation.numberOfPersons}</span>
                         </div>
                     </div>
-                    <div className="w-1/2 bg-gray-50 p-3 border border-gray-200 rounded">
+                    <div className="w-full sm:w-1/2 print:w-1/2 bg-gray-50 p-3 border border-gray-200 rounded">
                         <div className="grid grid-cols-[75px_1fr] gap-y-1.5 gap-x-2 text-sm">
                             <span className="font-medium text-gray-500">Tour:</span>
-                            <span className="font-semibold">{tourSchedule.name}</span>
+                            <span className="font-semibold break-words">{tourSchedule.name}</span>
                             <span className="font-medium text-gray-500">Duration:</span>
                             <span>{tourSchedule.days} days</span>
                             {quotation.totalDistance > 0 && (
@@ -290,11 +304,11 @@ export function QuotationTemplate({
                                 </>
                             )}
                             <span className="font-medium text-gray-500">Vehicle:</span>
-                            <span>{quotation.vehicleNo || '—'} ({tourSchedule.vehicleCategory})</span>
+                            <span className="break-words">{quotation.vehicleNo || '—'} ({tourSchedule.vehicleCategory})</span>
                             {quotation.driver && (
                                 <>
                                     <span className="font-medium text-gray-500">Driver:</span>
-                                    <span className="font-semibold text-gray-800">
+                                    <span className="font-semibold text-gray-800 break-words">
                                         {quotation.driver.name}
                                     </span>
                                 </>
@@ -302,7 +316,7 @@ export function QuotationTemplate({
                             {quotation.startDate && (
                                 <>
                                     <span className="font-medium text-gray-500">Period:</span>
-                                    <span>
+                                    <span className="break-words">
                                         {new Date(quotation.startDate).toLocaleDateString('en-GB')}
                                         {quotation.endDate ? ` - ${new Date(quotation.endDate).toLocaleDateString('en-GB')}` : ''}
                                     </span>
@@ -357,53 +371,55 @@ export function QuotationTemplate({
                 {/* ── Day-by-Day Itinerary ── */}
                 <div className="mb-3">
                     <h3 className="text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-wide print-heading">Day-by-Day Itinerary</h3>
-                    <table className="w-full text-xs border-collapse border border-gray-300">
-                        <thead>
-                            <tr className="bg-gray-800 text-white">
-                                <th className="px-2 py-1.5 text-left w-[36px] border-r border-gray-600">Day</th>
-                                <th className="px-2 py-1.5 text-left border-r border-gray-600">Route / Description</th>
-                                <th className="px-2 py-1.5 text-right w-[40px] border-r border-gray-600">Km</th>
-                                <th className="px-2 py-1.5 text-right border-r border-gray-600">Transport</th>
-                                <th className="px-2 py-1.5 text-right border-r border-gray-600">Accomm.</th>
-                                <th className="px-2 py-1.5 text-right border-r border-gray-600">Meals</th>
-                                <th className="px-2 py-1.5 text-right border-r border-gray-600">Activities</th>
-                                <th className="px-2 py-1.5 text-right border-r border-gray-600">Other</th>
-                                <th className="px-2 py-1.5 text-right font-bold">Day Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {tourSchedule.items.map((item, idx) => {
-                                const dailyTransport = (quotation.transportCost / (tourSchedule.days || 1)) + (quotation.driverCostPerDay || 0);
-                                const dayTotal = dailyTransport + item.accommodation + item.meals + item.activities + item.otherCosts;
-                                const renderAmt = (val: number) => val === 0 ? '-' : fmt(val);
-                                
-                                return (
-                                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-200`}>
-                                        <td className="px-2 py-1.5 font-bold text-center border-r border-gray-200">{item.dayNumber}</td>
-                                        <td className="px-2 py-1.5 border-r border-gray-200">
-                                            <span className="font-semibold">{item.title}</span>
-                                            {item.description && (
-                                                <span className="text-[11px] text-gray-500 block leading-snug mt-0.5">{item.description}</span>
-                                            )}
-                                        </td>
-                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{item.distanceKm}</td>
-                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(dailyTransport)}</td>
-                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.accommodation)}</td>
-                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.meals)}</td>
-                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.activities)}</td>
-                                        <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.otherCosts)}</td>
-                                        <td className="px-2 py-1.5 text-right font-semibold">{renderAmt(dayTotal)}</td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                    <div className="overflow-x-auto -mx-1 sm:mx-0 print:overflow-visible">
+                        <table className="w-full min-w-[540px] sm:min-w-0 text-xs border-collapse border border-gray-300">
+                            <thead>
+                                <tr className="bg-gray-800 text-white">
+                                    <th className="px-2 py-1.5 text-left w-[36px] border-r border-gray-600">Day</th>
+                                    <th className="px-2 py-1.5 text-left border-r border-gray-600">Route / Description</th>
+                                    <th className="px-2 py-1.5 text-right w-[40px] border-r border-gray-600">Km</th>
+                                    <th className="px-2 py-1.5 text-right border-r border-gray-600">Transport</th>
+                                    <th className="px-2 py-1.5 text-right border-r border-gray-600">Accomm.</th>
+                                    <th className="px-2 py-1.5 text-right border-r border-gray-600">Meals</th>
+                                    <th className="px-2 py-1.5 text-right border-r border-gray-600">Activities</th>
+                                    <th className="px-2 py-1.5 text-right border-r border-gray-600">Other</th>
+                                    <th className="px-2 py-1.5 text-right font-bold">Day Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {tourSchedule.items.map((item, idx) => {
+                                    const dailyTransport = (quotation.transportCost / (tourSchedule.days || 1)) + (quotation.driverCostPerDay || 0);
+                                    const dayTotal = dailyTransport + item.accommodation + item.meals + item.activities + item.otherCosts;
+                                    const renderAmt = (val: number) => val === 0 ? '-' : fmt(val);
+                                    
+                                    return (
+                                        <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-200`}>
+                                            <td className="px-2 py-1.5 font-bold text-center border-r border-gray-200">{item.dayNumber}</td>
+                                            <td className="px-2 py-1.5 border-r border-gray-200">
+                                                <span className="font-semibold">{item.title}</span>
+                                                {item.description && (
+                                                    <span className="text-[11px] text-gray-500 block leading-snug mt-0.5">{item.description}</span>
+                                                )}
+                                            </td>
+                                            <td className="px-2 py-1.5 text-right border-r border-gray-200">{item.distanceKm}</td>
+                                            <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(dailyTransport)}</td>
+                                            <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.accommodation)}</td>
+                                            <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.meals)}</td>
+                                            <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.activities)}</td>
+                                            <td className="px-2 py-1.5 text-right border-r border-gray-200">{renderAmt(item.otherCosts)}</td>
+                                            <td className="px-2 py-1.5 text-right font-semibold">{renderAmt(dayTotal)}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                {/* ── Visual Route Map & Cost Summary (Side-by-side layout) ── */}
+                {/* ── Visual Route Map & Cost Summary (Side-by-side on desktop/print, stacked on mobile) ── */}
                 <div className="mb-3 print:mb-2 print-avoid-break">
                     {routeCoordinates.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-3 items-stretch">
+                        <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-3 items-stretch">
                             {/* Column 1: Visual Tour Route Map */}
                             <div className="flex flex-col">
                                 <div className="flex items-center justify-between mb-1">
@@ -649,7 +665,7 @@ export function QuotationTemplate({
                     )}
 
                     {/* ── Signatures ── */}
-                    <div className="pt-4 print:pt-3 grid grid-cols-2 gap-8 text-xs">
+                    <div className="pt-4 print:pt-3 grid grid-cols-2 gap-4 sm:gap-8 text-xs">
                         <div className="text-center border-t border-dotted border-black pt-1 text-gray-500">
                             Customer Signature
                         </div>
@@ -669,8 +685,8 @@ export function QuotationTemplate({
             </div>
 
             {/* Print Button - Below content, matching width */}
-            <div className="w-[190mm] mt-6 mb-8 print:hidden">
-                <PrintButton />
+            <div className="w-full max-w-[190mm] mt-4 sm:mt-6 mb-8 print:hidden">
+                <PrintButton label="Print / Save Quotation PDF" showBack={true} />
             </div>
         </div>
     );

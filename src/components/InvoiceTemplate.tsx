@@ -234,8 +234,8 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 </div>
 
                 {/* Connect/Print Actions Panel (Hidden on Print) */}
-                <div className="w-[58mm] mb-8 print:hidden flex flex-col gap-2">
-                    <PrintButton />
+                <div className="w-full max-w-[280px] sm:w-[58mm] mb-8 print:hidden flex flex-col gap-2.5 px-3 sm:px-0">
+                    <PrintButton label="Print Receipt" showBack={true} />
                     <BluetoothPrintButton bill={bill} companyName={companyName} tourScheduleName={tourScheduleName} />
                 </div>
             </div>
@@ -244,7 +244,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
     // --- A4 PORTRAIT INVOICE LAYOUT (FOR ADMINS) ---
     return (
-        <div className="flex flex-col items-center mx-auto font-sans text-sm text-black leading-relaxed bg-white print:bg-transparent min-h-screen">
+        <div className="w-full flex flex-col items-center mx-auto font-sans text-sm text-black leading-relaxed bg-slate-100 dark:bg-zinc-950 print:bg-transparent min-h-screen py-3 sm:py-6 md:py-8 px-2 sm:px-4 print:p-0 print:m-0">
             <style jsx global>{`
                 @media print {
                     @page {
@@ -261,53 +261,67 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 }
             `}</style>
 
+            {/* Top Action Bar (Hidden on Print) */}
+            <div className="w-full max-w-[190mm] mb-3 sm:mb-4 print:hidden">
+                <PrintButton label="Print / Save Invoice PDF" showBack={true} />
+            </div>
+
             {/* Main Container - A4 Portrait (21cm x max intrinsic height) */}
-            <div className="w-[190mm] flex flex-col justify-between shadow-lg print:shadow-none border border-gray-200 print:border-none p-8 print:p-10 bg-white my-8 print:my-0">
+            <div className="w-full max-w-[190mm] flex flex-col justify-between shadow-md sm:shadow-lg print:shadow-none border border-gray-200 print:border-none p-4 sm:p-6 md:p-8 print:p-10 bg-white rounded-lg sm:rounded-md print:rounded-none my-1 sm:my-3 print:my-0 overflow-hidden print:overflow-visible">
 
-                {/* Header Section - 3 Column Layout */}
-                <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 border-b-2 border-black pb-3 mb-4">
-                    {/* Column 1: Logo */}
-                    <div className="flex items-start pt-1">
-                        {businessProfile?.logoUrl ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                                src={businessProfile.logoUrl}
-                                alt="Company Logo"
-                                className="h-14 w-14 rounded-full object-cover"
-                            />
-                        ) : (
-                            <div className="h-14 w-14" />
-                        )}
-                    </div>
+                {/* Header Section - 3 Column Layout on Desktop/Print, Stacked on Mobile */}
+                <div className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto] print:grid print:grid-cols-[auto_1fr_auto] items-start gap-3 sm:gap-4 border-b-2 border-black pb-3 mb-4">
+                    {/* Column 1 & 2 wrapper for mobile */}
+                    <div className="flex items-start gap-3 sm:contents">
+                        {/* Logo */}
+                        <div className="flex items-start pt-0.5 sm:pt-1 shrink-0">
+                            {businessProfile?.logoUrl ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img
+                                    src={businessProfile.logoUrl}
+                                    alt="Company Logo"
+                                    className="h-12 w-12 sm:h-14 sm:w-14 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 text-sm print:hidden">
+                                    V
+                                </div>
+                            )}
+                        </div>
 
-                    {/* Column 2: Company Name & Contact */}
-                    <div>
-                        <h1 className="text-2xl font-bold uppercase tracking-wider">{companyName}</h1>
-                        <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">
-                            {address}
-                            <br />
-                            Tel: {phone} {email && `| ${email}`}
-                        </p>
+                        {/* Company Name & Contact */}
+                        <div className="flex-1">
+                            <h1 className="text-xl sm:text-2xl font-bold uppercase tracking-wider">{companyName}</h1>
+                            <p className="text-xs text-gray-600 mt-0.5 sm:mt-1 whitespace-pre-wrap">
+                                {address}
+                                <br />
+                                Tel: {phone} {email && `| ${email}`}
+                            </p>
+                        </div>
                     </div>
 
                     {/* Column 3: Invoice Details */}
-                    <div className="text-right">
-                        <div className="text-3xl font-bold text-red-600">INVOICE</div>
-                        <div className="text-lg font-bold mt-0.5">NO: {bill.billNumber}</div>
-                        <div className="text-sm text-gray-600">Date: {new Date(bill.createdAt).toLocaleDateString('en-GB')}</div>
-                        <div className="mt-1">
-                            <span className="font-bold border border-black px-2.5 py-1 text-xs uppercase rounded-sm">
-                                {bill.paymentMethod || 'CASH'}
-                            </span>
+                    <div className="w-full sm:w-auto text-left sm:text-right print:text-right flex sm:flex-col justify-between items-end sm:items-end border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100">
+                        <div>
+                            <div className="text-2xl sm:text-3xl font-bold text-red-600">INVOICE</div>
+                            <div className="text-base sm:text-lg font-bold mt-0.5">NO: {bill.billNumber}</div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-xs sm:text-sm text-gray-600">Date: {new Date(bill.createdAt).toLocaleDateString('en-GB')}</div>
+                            <div className="mt-1">
+                                <span className="font-bold border border-black px-2.5 py-0.5 sm:py-1 text-xs uppercase rounded-sm inline-block">
+                                    {bill.paymentMethod || 'CASH'}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Content Grid - Side by Side */}
-                <div className="flex gap-4 flex-1">
+                {/* Content Grid - Responsive Stacking on Mobile Screen, Side by Side on Desktop & Print */}
+                <div className="flex flex-col md:flex-row print:flex-row gap-4 sm:gap-6 flex-1">
 
                     {/* Left Column: Trip Details */}
-                    <div className="w-[45%] space-y-3">
+                    <div className="w-full md:w-[45%] print:w-[45%] space-y-3">
                         <div className="bg-gray-50 p-3 border border-gray-200 rounded">
                             <div className="grid grid-cols-[85px_1fr] gap-y-1.5 gap-x-2 text-sm">
                                 <span className="font-medium text-gray-500">Customer:</span>
@@ -383,24 +397,24 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                     </div>
 
                     {/* Right Column: Calculations */}
-                    <div className="w-[55%]">
+                    <div className="w-full md:w-[55%] print:w-[55%]">
                         <div className="grid grid-cols-12 gap-y-1.5 text-sm">
                             {/* Header Row */}
                             <div className="col-span-12 grid grid-cols-12 border-b-2 border-gray-800 pb-1.5 mb-2 font-semibold text-xs uppercase text-gray-500 tracking-wide">
-                                <div className="col-span-8">Description</div>
-                                <div className="col-span-4 text-right">Amount</div>
+                                <div className="col-span-7 sm:col-span-8">Description</div>
+                                <div className="col-span-5 sm:col-span-4 text-right">Amount</div>
                             </div>
 
                             {/* Expected Mileage (covered by package charge) */}
                             {(bill.allowedKm > 0 || bill.packageCharge > 0) ? (
                                 <>
-                                    <div className="col-span-8 flex justify-between pr-2">
+                                    <div className="col-span-7 sm:col-span-8 flex flex-col sm:flex-row sm:justify-between pr-2">
                                         <span>Expected Mileage</span>
-                                        <span className="text-gray-600 font-medium">
-                                            ({bill.allowedKm}km/day × {scheduledDays} days = {expectedKm}km{scheduledDays > 1 ? ` | ${fmt(bill.packageCharge / scheduledDays)}/day` : ''})
+                                        <span className="text-gray-600 font-medium text-xs sm:text-sm">
+                                            ({bill.allowedKm}km/d × {scheduledDays}d = {expectedKm}km)
                                         </span>
                                     </div>
-                                    <div className="col-span-4 text-right font-medium">
+                                    <div className="col-span-5 sm:col-span-4 text-right font-medium">
                                         {fmt(bill.packageCharge)}
                                     </div>
                                 </>
@@ -409,88 +423,86 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                             {/* Mileage Cost */}
                             {(bill.extraKm || 0) > 0 && (
                                 <>
-                                    <div className="col-span-8 flex justify-between pr-2">
+                                    <div className="col-span-7 sm:col-span-8 flex flex-col sm:flex-row sm:justify-between pr-2">
                                         <span>{(bill.allowedKm > 0 || bill.packageCharge > 0) ? 'Extra Mileage Cost' : 'Distance Charge'}</span>
-                                        <span className="text-gray-600 font-medium">
+                                        <span className="text-gray-600 font-medium text-xs sm:text-sm">
                                             ({bill.extraKm}km × {fmt(bill.hireRate)}/km)
                                         </span>
                                     </div>
-                                    <div className="col-span-4 text-right font-medium">
+                                    <div className="col-span-5 sm:col-span-4 text-right font-medium">
                                         {fmt((bill.extraKm || 0) * bill.hireRate)}
                                     </div>
                                 </>
                             )}
                             {bill.extraHours > 0 && (
                                 <>
-                                    <div className="col-span-8 flex justify-between pr-2">
+                                    <div className="col-span-7 sm:col-span-8 flex flex-col sm:flex-row sm:justify-between pr-2">
                                         <span>Extra Hours</span>
-                                        <span className="text-gray-600 font-medium">
+                                        <span className="text-gray-600 font-medium text-xs sm:text-sm">
                                             ({bill.extraHours} hrs @ {fmt(bill.extraHourRate)})
                                         </span>
                                     </div>
-                                    <div className="col-span-4 text-right font-medium">
+                                    <div className="col-span-5 sm:col-span-4 text-right font-medium">
                                         {fmt(bill.extraHours * bill.extraHourRate)}
                                     </div>
                                 </>
                             )}
 
-
-
                             {/* Extra Charges */}
                             {bill.waitingCharge > 0 && (
                                 <>
-                                    <div className="col-span-8">Waiting Charges</div>
-                                    <div className="col-span-4 text-right font-medium">{fmt(bill.waitingCharge)}</div>
+                                    <div className="col-span-7 sm:col-span-8">Waiting Charges</div>
+                                    <div className="col-span-5 sm:col-span-4 text-right font-medium">{fmt(bill.waitingCharge)}</div>
                                 </>
                             )}
 
                             {bill.gatePass > 0 && (
                                 <>
-                                    <div className="col-span-8">Gate Pass</div>
-                                    <div className="col-span-4 text-right font-medium">{fmt(bill.gatePass)}</div>
+                                    <div className="col-span-7 sm:col-span-8">Gate Pass</div>
+                                    <div className="col-span-5 sm:col-span-4 text-right font-medium">{fmt(bill.gatePass)}</div>
                                 </>
                             )}
 
                             {(bill.accommodationCharge || 0) > 0 && (
                                 <>
-                                    <div className="col-span-8">Accommodation</div>
-                                    <div className="col-span-4 text-right font-medium">{fmt(bill.accommodationCharge || 0)}</div>
+                                    <div className="col-span-7 sm:col-span-8">Accommodation</div>
+                                    <div className="col-span-5 sm:col-span-4 text-right font-medium">{fmt(bill.accommodationCharge || 0)}</div>
                                 </>
                             )}
                             
                             {(bill.mealsCharge || 0) > 0 && (
                                 <>
-                                    <div className="col-span-8">Meals</div>
-                                    <div className="col-span-4 text-right font-medium">{fmt(bill.mealsCharge || 0)}</div>
+                                    <div className="col-span-7 sm:col-span-8">Meals</div>
+                                    <div className="col-span-5 sm:col-span-4 text-right font-medium">{fmt(bill.mealsCharge || 0)}</div>
                                 </>
                             )}
 
                             {(bill.activitiesCharge || 0) > 0 && (
                                 <>
-                                    <div className="col-span-8">Activities</div>
-                                    <div className="col-span-4 text-right font-medium">{fmt(bill.activitiesCharge || 0)}</div>
+                                    <div className="col-span-7 sm:col-span-8">Activities</div>
+                                    <div className="col-span-5 sm:col-span-4 text-right font-medium">{fmt(bill.activitiesCharge || 0)}</div>
                                 </>
                             )}
 
                             {(bill.otherCostsCharge || 0) > 0 && (
                                 <>
-                                    <div className="col-span-8">Other Costs</div>
-                                    <div className="col-span-4 text-right font-medium">{fmt(bill.otherCostsCharge || 0)}</div>
+                                    <div className="col-span-7 sm:col-span-8">Other Costs</div>
+                                    <div className="col-span-5 sm:col-span-4 text-right font-medium">{fmt(bill.otherCostsCharge || 0)}</div>
                                 </>
                             )}
 
                             {/* Totals */}
                             <div className="col-span-12 border-t-2 border-black mt-2 pt-1"></div>
 
-                            <div className="col-span-8 text-right pr-2">Total Amount</div>
-                            <div className="col-span-4 text-right font-medium">
+                            <div className="col-span-7 sm:col-span-8 text-right pr-2">Total Amount</div>
+                            <div className="col-span-5 sm:col-span-4 text-right font-medium">
                                 {fmt(bill.totalAmount)}
                             </div>
 
                             {bill.advanceAmount > 0 && (
                                 <>
-                                    <div className="col-span-8 text-right pr-2 text-gray-600">Less: Advance Payment</div>
-                                    <div className="col-span-4 text-right font-medium text-gray-600">
+                                    <div className="col-span-7 sm:col-span-8 text-right pr-2 text-gray-600">Less: Advance Payment</div>
+                                    <div className="col-span-5 sm:col-span-4 text-right font-medium text-gray-600">
                                         -{fmt(bill.advanceAmount)}
                                     </div>
                                 </>
@@ -498,8 +510,8 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
 
                             <div className="col-span-12 border-t border-dotted border-black my-1"></div>
 
-                            <div className="col-span-6 font-bold text-xl text-right pr-2">BALANCE DUE</div>
-                            <div className="col-span-6 text-right font-bold text-xl bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">
+                            <div className="col-span-6 font-bold text-lg sm:text-xl text-right pr-2">BALANCE DUE</div>
+                            <div className="col-span-6 text-right font-bold text-lg sm:text-xl bg-gray-100 px-2 py-0.5 border border-gray-300 rounded-sm">
                                 {fmt(Math.max(0, bill.totalAmount - (bill.advanceAmount || 0)))}
                             </div>
                             <div className="col-span-12 border-b-2 double border-black mt-1"></div>
@@ -508,7 +520,7 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                 </div>
 
                 {/* Footer Section */}
-                <div className="mt-6 pt-12 grid grid-cols-2 gap-8 text-xs">
+                <div className="mt-6 pt-6 sm:pt-12 grid grid-cols-2 gap-4 sm:gap-8 text-xs">
                     <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">Customer Signature</div>
                     <div className="text-center border-t border-dotted border-black pt-1.5 text-gray-500">Authorized Signature</div>
                 </div>
@@ -522,8 +534,8 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
             </div>
 
             {/* Print Button - Below invoice, matching width */}
-            <div className="w-[190mm] mt-6 mb-8 print:hidden">
-                <PrintButton />
+            <div className="w-full max-w-[190mm] mt-4 sm:mt-6 mb-8 print:hidden">
+                <PrintButton label="Print / Save Invoice PDF" showBack={true} />
             </div>
         </div>
     );
