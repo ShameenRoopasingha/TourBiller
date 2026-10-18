@@ -2,6 +2,7 @@
  * Client-side PDF generation and native WhatsApp / OS file sharing utility.
  * Uses jsPDF and html2canvas-pro with dynamic imports to avoid SSR issues.
  * Implements pre-caching and User-Activation preservation to eliminate NotAllowedError.
+ * Includes AndroidBridge support for direct device storage downloads and native intent sharing.
  */
 
 export interface SharePdfOptions {
@@ -46,11 +47,41 @@ export function getWhatsAppUrl(phone?: string | null, text?: string): string {
 }
 
 /**
- * Downloads a File or Blob directly to the device.
+ * Converts a File or Blob into a base64 string.
  */
-export function downloadPdfFile(file: File | Blob, filename: string): void {
+export async function fileToBase64(file: File | Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const result = reader.result as string;
+            const base64 = result.includes(',') ? result.split(',')[1] : result;
+            resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
+ * Downloads a File or Blob directly to the device.
+ * Supports native AndroidBridge in Tauri APK, with fallback to standard web download.
+ */
+export async function downloadPdfFile(file: File | Blob, filename: string): Promise<void> {
     if (typeof window === 'undefined') return;
     const cleanFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+
+    // 1. If running in Android APK with native AndroidBridge:
+    if (typeof (window as any).AndroidBridge?.downloadPdf === 'function') {
+        try {
+            const base64 = await fileToBase64(file);
+            (window as any).AndroidBridge.downloadPdf(base64, cleanFilename);
+            return;
+        } catch (err) {
+            console.error('AndroidBridge download error:', err);
+        }
+    }
+
+    // 2. Standard Web Download:
     const fileUrl = URL.createObjectURL(file);
     const downloadLink = document.createElement('a');
     downloadLink.href = fileUrl;
@@ -138,8 +169,8 @@ export async function generatePdfFile({
 }
 
 /**
- * Shares a PDF File using the native Web Share API Level 2 if supported.
- * Falls back to Web Share API Level 1 (text + link) or local download and WhatsApp.
+ * Shares a PDF File using AndroidBridge, Web Share API Level 2 (files), Level 1 (text),
+ * or local device download.
  */
 export async function sharePdfFile({
     file,
@@ -157,13 +188,24 @@ export async function sharePdfFile({
     success: boolean;
     error?: string;
     sharedViaNative?: boolean;
-    method?: 'native-files' | 'native-text' | 'fallback';
+    method?: 'android-bridge' | 'native-files' | 'native-text' | 'fallback';
 }> {
     const cleanFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
     const shareMessage = text || `📄 *${title}*\nGreetings from VIGIL Tour Management.\nPlease find your document attached.`;
     const targetPhone = formatWhatsAppPhone(phone);
 
-    // 1. Try Native Web Share API Level 2 (files sharing)
+    // 1. If running inside Android APK with native AndroidBridge:
+    if (typeof (window as any).AndroidBridge?.sharePdf === 'function') {
+        try {
+            const base64 = await fileToBase64(file);
+            (window as any).AndroidBridge.sharePdf(base64, cleanFilename, shareMessage);
+            return { success: true, sharedViaNative: true, method: 'android-bridge' };
+        } catch (err) {
+            console.error('AndroidBridge share error:', err);
+        }
+    }
+
+    // 2. Try Native Web Share API Level 2 (files sharing)
     if (
         typeof navigator !== 'undefined' &&
         typeof navigator.canShare === 'function' &&
@@ -178,19 +220,16 @@ export async function sharePdfFile({
             return { success: true, sharedViaNative: true, method: 'native-files' };
         } catch (err: any) {
             if (err?.name === 'AbortError') {
-                // User cancelled share dialog
                 return { success: true, sharedViaNative: true, method: 'native-files' };
             }
             if (err?.name === 'NotAllowedError') {
-                // User gesture expired due to async delay
                 return { success: false, error: 'GESTURE_EXPIRED' };
             }
             console.warn('Native file share failed, trying text share:', err);
         }
     }
 
-    // 2. Try Native Web Share API Level 1 (text + page URL)
-    // Supported in almost all Android WebViews and mobile browsers!
+    // 3. Try Native Web Share API Level 1 (text + page URL)
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
         try {
             const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -211,11 +250,10 @@ export async function sharePdfFile({
         }
     }
 
-    // 3. Fallback: Download file directly to device
-    downloadPdfFile(file, cleanFilename);
+    // 4. Fallback: Download file directly to device
+    await downloadPdfFile(file, cleanFilename);
 
-    // 4. In standard desktop/mobile browsers, open WhatsApp Web/App in a new tab.
-    // In mobile WebView, NEVER mutate window.location.href to prevent ERR_UNKNOWN_URL_SCHEME crashes.
+    // 5. In standard desktop/mobile browsers, open WhatsApp Web/App in a new tab.
     const isWebView =
         typeof window !== 'undefined' &&
         (Boolean((window as any).__TAURI__) ||
