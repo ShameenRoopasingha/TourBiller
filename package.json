@@ -45,7 +45,7 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.36.0",
     "gsap": "^3.15.0",
-    "html2canvas": "^1.4.1",
+    "html2canvas-pro": "^2.5.2",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.2",

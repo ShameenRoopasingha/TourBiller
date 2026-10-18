@@ -45,7 +45,7 @@ export async function generateAndSharePdf({
     try {
         // Dynamically import to keep client bundle lean
         const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-            import('html2canvas'),
+            import('html2canvas-pro'),
             import('jspdf'),
         ]);
 
