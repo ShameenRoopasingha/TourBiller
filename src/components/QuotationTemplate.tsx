@@ -581,11 +581,12 @@ export function QuotationTemplate({
                                         </span>
                                     )}
                                 </div>
-                                <div className="flex-1 rounded border border-gray-300 overflow-hidden shadow-xs print:border-gray-400 min-h-[190px] h-[190px] print:h-[185px]">
+                                <div className="w-full flex-1 rounded overflow-hidden min-h-[190px] h-[190px] print:h-[185px]">
                                     <OSRMRouteMap
                                         coordinates={routeCoordinates}
                                         waypoints={routeWaypoints}
-                                        height="100%"
+                                        height="190px"
+                                        className="w-full h-full"
                                         showOverlayLegend={false}
                                     />
                                 </div>

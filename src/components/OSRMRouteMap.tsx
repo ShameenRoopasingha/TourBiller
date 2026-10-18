@@ -230,6 +230,19 @@ export function OSRMRouteMap({
             .bindPopup(popupHtml);
         });
       }
+
+      // Invalidate size to guarantee tile rendering on mobile WebViews & flex containers
+      setTimeout(() => {
+        if (isMounted && mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 150);
+
+      setTimeout(() => {
+        if (isMounted && mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 500);
     }
 
     initMap();
@@ -243,9 +256,18 @@ export function OSRMRouteMap({
     };
   }, [coordinates, waypoints]);
 
+  const effectiveHeight = height && height !== '100%' ? height : '190px';
+
   return (
-    <div className={`relative rounded-lg overflow-hidden border border-border shadow-xs ${className}`}>
-      <div ref={mapContainerRef} style={{ height, width: '100%' }} className="z-0" />
+    <div
+      className={`relative w-full rounded-lg overflow-hidden border border-border shadow-xs ${className}`}
+      style={{ height: effectiveHeight, minHeight: effectiveHeight }}
+    >
+      <div
+        ref={mapContainerRef}
+        style={{ height: effectiveHeight, minHeight: effectiveHeight, width: '100%' }}
+        className="z-0 w-full"
+      />
       
       {/* Top Right Live Route Indicator (Hidden on print) */}
       <div className="absolute top-2 right-2 z-[400] bg-background/90 backdrop-blur-xs px-2 py-1 rounded-md text-[10px] font-mono border text-muted-foreground shadow-xs flex items-center gap-1 print:hidden">
