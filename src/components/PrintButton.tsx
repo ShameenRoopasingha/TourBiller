@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Printer, ArrowLeft, Loader2 } from 'lucide-react';
+import { Printer, ArrowLeft, Loader2, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { generateAndSharePdf } from '@/lib/pdf-share';
+import { generatePdfFile, sharePdfFile } from '@/lib/pdf-share';
 
 interface PrintButtonProps {
     label?: string;
@@ -38,20 +38,92 @@ export function PrintButton({
     showWhatsApp = true,
 }: PrintButtonProps) {
     const router = useRouter();
-    const [isSharing, setIsSharing] = useState(false);
+    const [cachedPdf, setCachedPdf] = useState<File | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [statusText, setStatusText] = useState<string | null>(null);
+    const [needsClickToSend, setNeedsClickToSend] = useState(false);
+
+    // Pre-cache PDF in the background 1.5s after mount so it is instantly ready
+    useEffect(() => {
+        let isMounted = true;
+        const timer = setTimeout(async () => {
+            if (!isMounted || !showWhatsApp) return;
+            try {
+                const res = await generatePdfFile({ elementId, filename });
+                if (isMounted && res?.file) {
+                    setCachedPdf(res.file);
+                }
+            } catch {
+                // Background caching failure is silent; click handler will regenerate
+            }
+        }, 1500);
+
+        return () => {
+            isMounted = false;
+            clearTimeout(timer);
+        };
+    }, [elementId, filename, showWhatsApp]);
 
     const handleWhatsAppShare = async () => {
+        // CASE 1: PDF is already pre-generated in memory!
+        if (cachedPdf) {
+            try {
+                setIsGenerating(true);
+                const res = await sharePdfFile({
+                    file: cachedPdf,
+                    filename,
+                    title,
+                    phone: recipientPhone,
+                });
+
+                if (res.sharedViaNative) {
+                    setStatusText('Sent!');
+                    setTimeout(() => setStatusText(null), 3000);
+                } else {
+                    setStatusText('Downloaded!');
+                    setTimeout(() => setStatusText(null), 4000);
+                }
+                setNeedsClickToSend(false);
+            } finally {
+                setIsGenerating(false);
+            }
+            return;
+        }
+
+        // CASE 2: User clicked before background pre-cache completed
         try {
-            setIsSharing(true);
-            await generateAndSharePdf({
-                elementId,
+            setIsGenerating(true);
+            setStatusText('PDF සකසමින්...');
+            const res = await generatePdfFile({ elementId, filename });
+            if (!res?.file) {
+                alert('PDF generation failed. Please try again.');
+                setStatusText(null);
+                return;
+            }
+            setCachedPdf(res.file);
+
+            // Attempt share immediately:
+            const shareRes = await sharePdfFile({
+                file: res.file,
                 filename,
                 title,
-                text: `Here is your ${title} from VIGIL:`,
-                phone: recipientPhone || undefined,
+                phone: recipientPhone,
             });
+
+            if (shareRes.success && shareRes.sharedViaNative) {
+                setStatusText('Sent!');
+                setTimeout(() => setStatusText(null), 3000);
+                setNeedsClickToSend(false);
+            } else if (shareRes.error === 'GESTURE_EXPIRED') {
+                // User gesture expired while generating; prompt with fresh click
+                setNeedsClickToSend(true);
+                setStatusText('PDF සූදානම්! තට්ටු කරන්න');
+            } else {
+                setStatusText('Downloaded!');
+                setTimeout(() => setStatusText(null), 4000);
+            }
         } finally {
-            setIsSharing(false);
+            setIsGenerating(false);
         }
     };
 
@@ -82,14 +154,28 @@ export function PrintButton({
                 <Button
                     type="button"
                     onClick={handleWhatsAppShare}
-                    disabled={isSharing}
-                    className="shrink-0 font-semibold bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-xs h-10 px-3 sm:px-4 text-xs sm:text-sm active:translate-y-[1px] transition-transform"
+                    disabled={isGenerating}
+                    className={`shrink-0 font-semibold text-white shadow-xs h-10 px-3 sm:px-4 text-xs sm:text-sm active:translate-y-[1px] transition-all ${
+                        needsClickToSend
+                            ? 'bg-[#25D366] hover:bg-[#20bd5a] ring-2 ring-emerald-400 ring-offset-1 animate-pulse shadow-md'
+                            : 'bg-[#25D366] hover:bg-[#20bd5a]'
+                    }`}
                     title="Share PDF via WhatsApp"
                 >
-                    {isSharing ? (
+                    {isGenerating ? (
                         <>
                             <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                             <span>PDF සකසමින්...</span>
+                        </>
+                    ) : needsClickToSend ? (
+                        <>
+                            <WhatsAppIcon className="h-4 w-4 mr-1.5" />
+                            <span className="font-bold">WhatsApp වෙත යවන්න</span>
+                        </>
+                    ) : statusText ? (
+                        <>
+                            <Check className="h-4 w-4 mr-1.5" />
+                            <span>{statusText}</span>
                         </>
                     ) : (
                         <>
