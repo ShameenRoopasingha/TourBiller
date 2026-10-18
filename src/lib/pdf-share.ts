@@ -47,6 +47,22 @@ export function getWhatsAppUrl(phone?: string | null, text?: string): string {
 }
 
 /**
+ * Returns a mailto: link with pre-filled recipient, subject, and body text.
+ */
+export function getMailtoUrl(options: {
+    to?: string | null;
+    subject?: string;
+    body?: string;
+}): string {
+    const to = options.to?.trim() || '';
+    const params = new URLSearchParams();
+    if (options.subject) params.set('subject', options.subject);
+    if (options.body) params.set('body', options.body);
+    const qs = params.toString().replace(/\+/g, '%20');
+    return `mailto:${to}${qs ? `?${qs}` : ''}`;
+}
+
+/**
  * Converts a File or Blob into a base64 string.
  */
 export async function fileToBase64(file: File | Blob): Promise<string> {

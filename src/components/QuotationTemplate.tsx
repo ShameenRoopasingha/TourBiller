@@ -340,6 +340,9 @@ export function QuotationTemplate({
                     filename={`Quotation-${quotation.quotationNumber}`}
                     title={`Quotation #${quotation.quotationNumber}`}
                     recipientPhone={quotation.customerPhone}
+                    recipientEmail={quotation.customerEmail}
+                    documentType="quotation"
+                    documentId={quotation.id}
                 />
             </div>
 
@@ -841,6 +844,9 @@ export function QuotationTemplate({
                     filename={`Quotation-${quotation.quotationNumber}`}
                     title={`Quotation #${quotation.quotationNumber}`}
                     recipientPhone={quotation.customerPhone}
+                    recipientEmail={quotation.customerEmail}
+                    documentType="quotation"
+                    documentId={quotation.id}
                 />
             </div>
         </div>

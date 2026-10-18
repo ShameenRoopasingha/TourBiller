@@ -13,9 +13,17 @@ interface InvoiceTemplateProps {
     bill: Bill;
     businessProfile?: BusinessProfile;
     userRole?: 'ADMIN' | 'DRIVER';
+    customerEmail?: string | null;
+    customerPhone?: string | null;
 }
 
-export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: InvoiceTemplateProps) {
+export function InvoiceTemplate({
+    bill,
+    businessProfile,
+    userRole = 'ADMIN',
+    customerEmail,
+    customerPhone,
+}: InvoiceTemplateProps) {
     useEffect(() => {
         // Auto-print when component mounts
         const timer = setTimeout(() => {
@@ -241,7 +249,10 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                         elementId="printable-driver-receipt"
                         filename={`Receipt-${bill.billNumber}`}
                         title={`Receipt #${bill.billNumber}`}
-                        recipientPhone={bill.customerPhone}
+                        recipientPhone={customerPhone || bill.customerPhone}
+                        recipientEmail={customerEmail}
+                        documentType="bill"
+                        documentId={bill.id}
                     />
                     <BluetoothPrintButton bill={bill} companyName={companyName} tourScheduleName={tourScheduleName} />
                 </div>
@@ -307,7 +318,10 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                     elementId="printable-document"
                     filename={`Invoice-${bill.billNumber}`}
                     title={`Invoice #${bill.billNumber}`}
-                    recipientPhone={bill.customerPhone}
+                    recipientPhone={customerPhone || bill.customerPhone}
+                    recipientEmail={customerEmail}
+                    documentType="bill"
+                    documentId={bill.id}
                 />
             </div>
 
@@ -588,7 +602,10 @@ export function InvoiceTemplate({ bill, businessProfile, userRole = 'ADMIN' }: I
                     elementId="printable-document"
                     filename={`Invoice-${bill.billNumber}`}
                     title={`Invoice #${bill.billNumber}`}
-                    recipientPhone={bill.customerPhone}
+                    recipientPhone={customerPhone || bill.customerPhone}
+                    recipientEmail={customerEmail}
+                    documentType="bill"
+                    documentId={bill.id}
                 />
             </div>
         </div>

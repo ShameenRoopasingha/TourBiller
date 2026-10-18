@@ -8,6 +8,7 @@ import { InvoiceTemplate } from '@/components/InvoiceTemplate';
 
 
 import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 async function PrintBill({ id }: { id: string }) {
     const session = await auth();
@@ -22,10 +23,33 @@ async function PrintBill({ id }: { id: string }) {
         return notFound();
     }
 
+    const bill = billResult.data;
+    let customerEmail: string | null = null;
+    let customerPhone: string | null = (bill as any).customerPhone || null;
+
+    if (bill.customerName && bill.companyId) {
+        try {
+            const customer = await prisma.customer.findFirst({
+                where: {
+                    name: bill.customerName,
+                    companyId: bill.companyId,
+                },
+            });
+            if (customer) {
+                if (customer.email) customerEmail = customer.email;
+                if (!customerPhone && customer.phone) customerPhone = customer.phone;
+            }
+        } catch {
+            // Non-critical customer lookup failure
+        }
+    }
+
     return <InvoiceTemplate
-        bill={billResult.data as Bill}
+        bill={bill as Bill}
         businessProfile={profileResult.success ? (profileResult.data as BusinessProfile) : undefined}
         userRole={userRole}
+        customerEmail={customerEmail}
+        customerPhone={customerPhone}
     />;
 }
 
