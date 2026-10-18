@@ -212,16 +212,16 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                 />
             </div>
 
-            {/* Table / Mobile Cards */}
-            <Card className="border-0 sm:border bg-transparent sm:bg-card shadow-none sm:shadow-xs py-0 sm:py-6">
-                <CardHeader className="px-0 sm:px-6 pb-2 sm:pb-6">
-                    <CardTitle className="text-sm text-muted-foreground">
+            {/* Table / Mobile Cards Container Frame */}
+            <Card className="w-full overflow-hidden border bg-card shadow-xs py-4 sm:py-6">
+                <CardHeader className="px-3.5 sm:px-6 pb-3 sm:pb-6">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
                         {filtered.length} quotation{filtered.length !== 1 ? 's' : ''} found
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="px-0 sm:px-6">
+                <CardContent className="px-3 sm:px-6">
                     {filtered.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground bg-card sm:bg-transparent rounded-xl border sm:border-0 p-6">
+                        <div className="text-center py-12 text-muted-foreground">
                             <FileCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
                             <p>No quotations found</p>
                             <Link href="/quotations/new" className="text-primary underline text-sm mt-2 inline-block">
@@ -231,7 +231,7 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                     ) : (
                         <>
                             {/* Mobile View (Card-based) */}
-                            <div className="grid gap-3 md:hidden">
+                            <div className="grid gap-3 w-full min-w-0 md:hidden">
                                 {filtered.map((q) => {
                                     const tourTitle = q.tourSchedule?.name || (q.pickupLocation && q.dropLocation ? `${q.pickupLocation} → ${q.dropLocation}` : 'Direct Route');
                                     const tourDays = q.tourSchedule?.days || (
@@ -241,11 +241,11 @@ export function QuotationList({ quotations, drivers = [] }: QuotationListProps) 
                                     );
 
                                     return (
-                                        <Card key={q.id} className="p-3.5 sm:p-4 space-y-2.5 w-full min-w-0 overflow-hidden bg-card border border-border/80 shadow-xs">
-                                            <div className="flex items-start justify-between gap-2">
+                                        <Card key={q.id} className="p-3 sm:p-4 space-y-2.5 w-full min-w-0 overflow-hidden bg-background/80 dark:bg-zinc-900/60 border border-border/80 shadow-2xs">
+                                            <div className="flex items-start justify-between gap-2 min-w-0">
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <span className="font-mono font-bold text-xs bg-muted px-2 py-0.5 rounded">
+                                                        <span className="font-mono font-bold text-xs bg-muted px-2 py-0.5 rounded shrink-0">
                                                             Q-{String(q.quotationNumber).padStart(4, '0')}
                                                         </span>
                                                         <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[q.status] || ''}`}>
