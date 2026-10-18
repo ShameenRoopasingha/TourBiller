@@ -214,19 +214,24 @@ export async function sharePdfFile({
     // 3. Fallback: Download file directly to device
     downloadPdfFile(file, cleanFilename);
 
-    // 4. Open WhatsApp directly via Universal Link (wa.me)
-    const waUrl = getWhatsAppUrl(
-        targetPhone,
-        `${shareMessage}\n\n(PDF file "${cleanFilename}" has been saved to your downloads - please attach it here).`
-    );
+    // 4. In standard desktop/mobile browsers, open WhatsApp Web/App in a new tab.
+    // In mobile WebView, NEVER mutate window.location.href to prevent ERR_UNKNOWN_URL_SCHEME crashes.
+    const isWebView =
+        typeof window !== 'undefined' &&
+        (Boolean((window as any).__TAURI__) ||
+         Boolean((window as any).__TAURI_INTERNALS__) ||
+         /wv|Android.*Version\/[\d.]+/i.test(navigator.userAgent));
 
-    try {
-        const opened = window.open(waUrl, '_blank');
-        if (!opened) {
-            window.location.href = waUrl;
+    if (!isWebView) {
+        const waUrl = getWhatsAppUrl(
+            targetPhone,
+            `${shareMessage}\n\n(PDF file "${cleanFilename}" has been saved to your downloads - please attach it here).`
+        );
+        try {
+            window.open(waUrl, '_blank');
+        } catch {
+            // Popup blocked by browser settings
         }
-    } catch {
-        window.location.href = waUrl;
     }
 
     return { success: true, sharedViaNative: false, method: 'fallback' };

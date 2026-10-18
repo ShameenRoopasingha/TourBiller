@@ -165,6 +165,34 @@ export function PrintButton({
         `${shareMessage}\n\n🔗 View Online:\n${typeof window !== 'undefined' ? window.location.href : ''}`
     );
 
+    const isWebView =
+        typeof window !== 'undefined' &&
+        (Boolean((window as any).__TAURI__) ||
+         Boolean((window as any).__TAURI_INTERNALS__) ||
+         /wv|Android.*Version\/[\d.]+/i.test(navigator.userAgent));
+
+    const handleDirectWhatsAppClick = (e: React.MouseEvent) => {
+        if (isWebView) {
+            e.preventDefault();
+            try {
+                const win = window.open(waUrl, '_blank');
+                if (!win) {
+                    if (cachedPdf) downloadPdfFile(cachedPdf, filename);
+                    handleCopyLink();
+                    setShowShareModal(false);
+                    setStatusText('PDF saved & link copied!');
+                    setTimeout(() => setStatusText(null), 4000);
+                } else {
+                    setShowShareModal(false);
+                }
+            } catch {
+                if (cachedPdf) downloadPdfFile(cachedPdf, filename);
+                handleCopyLink();
+                setShowShareModal(false);
+            }
+        }
+    };
+
     return (
         <>
             <div className="no-print flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full">
@@ -277,7 +305,7 @@ export function PrintButton({
                             href={waUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            onClick={() => setShowShareModal(false)}
+                            onClick={handleDirectWhatsAppClick}
                             className="w-full min-h-[52px] h-auto py-2.5 px-3.5 flex items-center justify-start font-semibold text-emerald-900 dark:text-emerald-300 bg-emerald-100/70 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 active:scale-[0.99] transition-all rounded-xl border border-emerald-300/60 dark:border-emerald-800 text-xs sm:text-sm"
                         >
                             <WhatsAppIcon className="h-5 w-5 mr-3 text-[#25D366] shrink-0" />
