@@ -28,6 +28,7 @@ import { ActiveTourVehicle } from '@/components/FleetLiveMap';
 import { 
     playBreakdownAlarm, 
     playHandoverChime, 
+    stopDispatchAudio,
     isDispatchAudioEnabled, 
     setDispatchAudioEnabled, 
     unlockDispatchAudio 
@@ -293,6 +294,15 @@ export default function LiveTrackingPage() {
                                                 Handover Chime
                                             </span>
                                             <span className="text-[10px] text-amber-400 underline">▶ Test Chime</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                stopDispatchAudio();
+                                            }}
+                                            className="w-full text-center py-1 text-[11px] text-slate-400 hover:text-slate-200 transition"
+                                        >
+                                            ■ Silence Audio Now
                                         </button>
                                     </div>
                                 </div>
