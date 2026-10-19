@@ -130,9 +130,24 @@ export async function generateQuotation(
         const markupAmount = subtotal * ((validated.markup || 0) / 100);
         const totalAmount = subtotal + markupAmount - (validated.discount || 0);
 
+        let vehicleId: string | null = null;
+        if (validated.vehicleNo) {
+            const fleetVehicle = await prisma.vehicle.findUnique({
+                where: {
+                    companyId_vehicleNo: {
+                        companyId: authCheck.companyId,
+                        vehicleNo: validated.vehicleNo,
+                    }
+                },
+                select: { id: true },
+            });
+            if (fleetVehicle) vehicleId = fleetVehicle.id;
+        }
+
         const quotation = await prisma.quotation.create({
             data: {
                 companyId: authCheck.companyId,
+                vehicleId,
                 tourScheduleId: validated.tourScheduleId || null,
                 customerName: validated.customerName,
                 customerEmail: validated.customerEmail || null,
@@ -391,10 +406,25 @@ export async function updateQuotation(
         const markupAmount = subtotal * ((validated.markup || 0) / 100);
         const totalAmount = subtotal + markupAmount - (validated.discount || 0);
 
+        let vehicleId: string | null = null;
+        if (validated.vehicleNo) {
+            const fleetVehicle = await prisma.vehicle.findUnique({
+                where: {
+                    companyId_vehicleNo: {
+                        companyId: authCheck.companyId,
+                        vehicleNo: validated.vehicleNo,
+                    }
+                },
+                select: { id: true },
+            });
+            if (fleetVehicle) vehicleId = fleetVehicle.id;
+        }
+
         const _res = await prisma.quotation.updateMany({
             where: { id, companyId: authCheck.companyId },
             data: {
                 ...validated,
+                vehicleId,
                 tourScheduleId,
                 driverId: validated.driverId || null,
                 totalDistance: finalDistance,

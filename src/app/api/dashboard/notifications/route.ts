@@ -52,6 +52,8 @@ export async function GET() {
                             id: true,
                             vehicleNo: true,
                             customerName: true,
+                            isEmergencyActive: true,
+                            emergencyAcknowledgedAt: true,
                             tripActivities: {
                                 where: { type: { in: ['HANDOVER', 'VEHICLE_SWAPPED'] } },
                                 select: { type: true, timestamp: true },
@@ -126,6 +128,18 @@ export async function GET() {
         }));
 
         const urgentDispatchAlerts = pendingRequests.filter((activity) => {
+            const isBreakdown = activity.type === 'BREAKDOWN_REPORTED';
+
+            // If breakdown has been acknowledged in Booking control room state, suppress siren/alarm
+            if (isBreakdown) {
+                if (activity.booking?.emergencyAcknowledgedAt && new Date(activity.timestamp) <= new Date(activity.booking.emergencyAcknowledgedAt)) {
+                    return false;
+                }
+                if (activity.booking && !activity.booking.isEmergencyActive && activity.booking.emergencyAcknowledgedAt) {
+                    return false;
+                }
+            }
+
             const latestResolution = activity.booking?.tripActivities?.[0];
             if (!latestResolution) return true;
             return new Date(activity.timestamp) > new Date(latestResolution.timestamp);

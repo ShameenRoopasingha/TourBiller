@@ -306,6 +306,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                                 { label: 'SUV', value: 'SUV' },
                                                 { label: 'Bus', value: 'BUS' },
                                                 { label: 'Lorry', value: 'LORRY' },
+                                                { label: 'Three Wheeler', value: 'THREE_WHEELER' },
                                             ]}
                                             value={field.value}
                                             onChange={field.onChange}

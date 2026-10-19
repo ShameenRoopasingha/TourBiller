@@ -84,13 +84,38 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
     const bookingId = formData.get('bookingId') as string;
     const itinerary = formData.get('itinerary') as string | null;
 
+    // Check if vehicle exists in company fleet to link foreign key
+    const fleetVehicle = await prisma.vehicle.findUnique({
+      where: {
+        companyId_vehicleNo: {
+          companyId: authCheck.companyId,
+          vehicleNo: validatedData.vehicleNo,
+        },
+      },
+      select: { id: true },
+    });
+
+    // Check if booking has route polyline to snapshot onto Bill
+    let routePolyline: any = null;
+    if (bookingId) {
+      const linkedBooking = await prisma.booking.findFirst({
+        where: { id: bookingId, companyId: authCheck.companyId },
+        select: { routePolyline: true },
+      });
+      if (linkedBooking?.routePolyline) {
+        routePolyline = linkedBooking.routePolyline;
+      }
+    }
+
     // Create the bill first (this is the critical operation)
     const createdBill = await prisma.bill.create({
       data: {
         companyId: authCheck.companyId,
+        vehicleId: fleetVehicle?.id || null,
         ...validatedData,
         totalAmount,
         itinerary: itinerary || null,
+        routePolyline: routePolyline || undefined,
       },
     });
 
@@ -105,11 +130,11 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
       // Vehicle might not exist in the registry - that's OK
     }
 
-    // Auto-Close Booking (non-critical)
+    // Auto-Close Booking (tenant-scoped)
     if (bookingId) {
       try {
-        await prisma.booking.update({
-          where: { id: bookingId },
+        await prisma.booking.updateMany({
+          where: { id: bookingId, companyId: authCheck.companyId },
           data: { status: 'BILLED' },
         });
       } catch (bookingError) {

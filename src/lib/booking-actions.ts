@@ -83,8 +83,22 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
             }
         }
 
+        const fleetVehicle = await prisma.vehicle.findUnique({
+            where: {
+                companyId_vehicleNo: {
+                    companyId: authCheck.companyId!,
+                    vehicleNo: validatedData.vehicleNo,
+                }
+            },
+            select: { id: true },
+        });
+
         const booking = await prisma.booking.create({
-            data: { companyId: authCheck.companyId!, ...validatedData },
+            data: {
+                ...validatedData,
+                companyId: authCheck.companyId!,
+                vehicleId: fleetVehicle?.id || null,
+            },
         });
 
         revalidateFor('booking');
@@ -451,10 +465,47 @@ export async function swapBookingVehicle(
 
         // Execute transaction
         await prisma.$transaction(async (tx) => {
-            // 1. Update booking vehicle number
+            // Find new vehicle in fleet if internal swap
+            let newVehicleId: string | null = null;
+            if (validOptions.swapType === 'FLEET') {
+                const newFleet = await tx.vehicle.findUnique({
+                    where: { companyId_vehicleNo: { companyId, vehicleNo: newVehicleNo } }
+                });
+                if (newFleet) newVehicleId = newFleet.id;
+            }
+
+            // 1. Update booking vehicle number, external supplier fields, and emergency resolution
             await tx.booking.update({
                 where: { id: bookingId },
-                data: { vehicleNo: newVehicleNo }
+                data: {
+                    vehicleNo: newVehicleNo,
+                    vehicleId: newVehicleId,
+                    isExternalVehicle: validOptions.swapType === 'EXTERNAL',
+                    externalVehicleNo: validOptions.swapType === 'EXTERNAL' ? newVehicleNo : null,
+                    supplierName: validOptions.swapType === 'EXTERNAL' ? (validOptions.supplierName || null) : null,
+                    supplierContact: validOptions.swapType === 'EXTERNAL' ? (validOptions.supplierPhone || null) : null,
+                    supplierNegotiatedCost: validOptions.swapType === 'EXTERNAL' ? (validOptions.hireCost || 0) : 0,
+                    isEmergencyActive: false,
+                    emergencyAcknowledgedAt: new Date(),
+                    emergencyAcknowledgedById: authCheck.userId || null,
+                }
+            });
+
+            // 1b. Create VehicleSwapLog audit record
+            await tx.vehicleSwapLog.create({
+                data: {
+                    companyId,
+                    bookingId,
+                    previousVehicleNo: oldVehicleNo,
+                    newVehicleNo,
+                    isExternal: validOptions.swapType === 'EXTERNAL',
+                    supplierName: validOptions.swapType === 'EXTERNAL' ? (validOptions.supplierName || null) : null,
+                    supplierContact: validOptions.swapType === 'EXTERNAL' ? (validOptions.supplierPhone || null) : null,
+                    supplierCost: validOptions.hireCost || 0,
+                    swapReason: validOptions.reason || null,
+                    swappedAtOdometer: !isNaN(oldMeterNum) ? oldMeterNum : null,
+                    swappedById: authCheck.userId || null,
+                }
             });
 
             // 2. If external hire and cost provided, create VehicleExpense
@@ -542,5 +593,65 @@ export async function swapBookingVehicle(
         return { success: false, error: 'Failed to complete emergency vehicle swap' };
     }
 }
+
+/**
+ * Acknowledge an active emergency breakdown alarm
+ */
+export async function acknowledgeEmergencyAlarm(bookingId: string): Promise<ActionResult<void>> {
+    try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        await prisma.booking.updateMany({
+            where: {
+                id: bookingId,
+                companyId: authCheck.companyId,
+            },
+            data: {
+                emergencyAcknowledgedAt: new Date(),
+                emergencyAcknowledgedById: authCheck.userId,
+            }
+        });
+
+        revalidateFor('booking');
+        return { success: true };
+    } catch (error) {
+        console.error('Error acknowledging emergency alarm:', error);
+        return { success: false, error: 'Failed to acknowledge emergency alarm' };
+    }
+}
+
+/**
+ * Get vehicle swap logs for a booking
+ */
+export async function getVehicleSwapLogs(bookingId: string) {
+    try {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const logs = await prisma.vehicleSwapLog.findMany({
+            where: {
+                bookingId,
+                companyId: authCheck.companyId,
+            },
+            include: {
+                swappedBy: {
+                    select: { name: true, email: true }
+                }
+            },
+            orderBy: { timestamp: 'desc' }
+        });
+
+        return { success: true, data: logs };
+    } catch (error) {
+        console.error('Error fetching vehicle swap logs:', error);
+        return { success: false, error: 'Failed to fetch swap logs' };
+    }
+}
+
 
 

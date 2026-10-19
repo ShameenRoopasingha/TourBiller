@@ -2,6 +2,7 @@
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { VehicleCategory } from '@prisma/client';
 import { VehicleSchema, type ActionResult, type Vehicle, type VehicleAvailabilityConflict } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
 import { revalidatePath } from 'next/cache';
@@ -49,7 +50,11 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
         const validatedData = VehicleSchema.parse(rawData);
 
         const vehicle = await prisma.vehicle.create({
-            data: { companyId: authCheck.companyId, ...validatedData },
+            data: {
+                ...validatedData,
+                companyId: authCheck.companyId,
+                category: validatedData.category as VehicleCategory,
+            },
         });
 
         revalidateFor('vehicle');
@@ -144,7 +149,10 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
 
         const result = await prisma.vehicle.updateMany({
             where: { id, companyId: authCheck.companyId },
-            data: { ...validatedData },
+            data: {
+                ...validatedData,
+                category: validatedData.category as VehicleCategory,
+            },
         });
 
         if (result.count === 0) {

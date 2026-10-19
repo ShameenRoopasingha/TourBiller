@@ -29,13 +29,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 import { useRouter } from 'next/navigation';
 
-const VEHICLE_CATEGORIES = ['CAR', 'VAN', 'SUV', 'BUS', 'MINI_BUS', 'COASTER'];
+const VEHICLE_CATEGORIES = ['CAR', 'VAN', 'SUV', 'BUS', 'LORRY', 'THREE_WHEELER', 'MINI_BUS', 'COASTER'];
 
 const CATEGORY_SEATS: Record<string, number> = {
     'CAR': 4,
     'VAN': 14,
     'SUV': 7,
     'BUS': 45,
+    'LORRY': 3,
+    'THREE_WHEELER': 3,
     'MINI_BUS': 25,
     'COASTER': 29
 };

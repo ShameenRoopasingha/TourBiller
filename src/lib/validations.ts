@@ -38,11 +38,31 @@ export const CustomerFormSchema = z.object({
 
 export type CustomerFormInput = z.infer<typeof CustomerFormSchema>;
 
+export const VehicleCategoryEnum = z.enum([
+  'CAR',
+  'VAN',
+  'SUV',
+  'BUS',
+  'LORRY',
+  'THREE_WHEELER',
+]);
+export type VehicleCategory = z.infer<typeof VehicleCategoryEnum>;
+
+export const normalizeVehicleCategory = (val: unknown): VehicleCategory => {
+  if (typeof val === 'string') {
+    const upper = val.trim().toUpperCase().replace(/[\s-]+/g, '_');
+    if (upper === 'CAR' || upper === 'VAN' || upper === 'SUV' || upper === 'BUS' || upper === 'LORRY' || upper === 'THREE_WHEELER') {
+      return upper as VehicleCategory;
+    }
+  }
+  return 'CAR';
+};
+
 // Vehicle form schema - RHF compatible
 export const VehicleFormSchema = z.object({
   vehicleNo: z.string().min(1, "Vehicle number is required"),
   model: z.string().default(''),
-  category: z.string().default("CAR"),
+  category: z.preprocess(normalizeVehicleCategory, VehicleCategoryEnum).default("CAR"),
   status: z.string().default("ACTIVE"),
   ratePerDay: z.coerce.number().min(0).default(0),
   kmPerDay: z.coerce.number().min(0).default(0),
@@ -140,7 +160,7 @@ export const TourScheduleFormSchema = z.object({
   description: z.string().default(''),
   days: z.coerce.number().min(1, "Must have at least 1 day"),
   basePricePerPerson: z.coerce.number().min(0).default(0),
-  vehicleCategory: z.string().default("CAR"),
+  vehicleCategory: z.preprocess(normalizeVehicleCategory, VehicleCategoryEnum).default("CAR"),
   vehicleNo: z.string().default(''),
   ratePerDay: z.coerce.number().min(0).default(0),
   kmPerDay: z.coerce.number().min(0).default(0),
@@ -287,6 +307,8 @@ export type BillFormData = z.infer<typeof BillSchema>;
 export const BillDbSchema = BillSchema.extend({
   id: z.string(),
   billNumber: z.number(),
+  vehicleId: z.string().nullable().optional(),
+  routePolyline: z.any().optional(),
   totalAmount: z.number(),
   totalAmountLKR: z.number().default(0),
   createdAt: z.date(),
@@ -306,7 +328,7 @@ export type ActionResult<T> = {
 export const VehicleSchema = z.object({
   vehicleNo: z.string().min(1, "Vehicle number is required"),
   model: z.string().nullish().transform(v => v ?? undefined),
-  category: z.string().default("CAR"),
+  category: z.preprocess(normalizeVehicleCategory, VehicleCategoryEnum).default("CAR"),
   status: z.string().default("ACTIVE"),
   ratePerDay: z.coerce.number().min(0).default(0),
   kmPerDay: z.coerce.number().min(0).default(0),
@@ -392,6 +414,7 @@ export type Customer = z.infer<typeof CustomerDbSchema>;
 
 // Booking validation schema
 export const BookingSchema = z.object({
+  vehicleId: z.string().nullish().transform(v => v ?? undefined),
   vehicleNo: z.string().min(1, "Vehicle number is required"),
   customerName: z.string().min(1, "Customer name is required"),
   startDate: z.coerce.date(),
@@ -401,6 +424,17 @@ export const BookingSchema = z.object({
   advanceAmount: z.coerce.number().min(0).default(0),
   notes: z.string().nullish().transform(v => v ?? undefined),
   driverId: z.string().nullish().transform(v => v ?? undefined),
+  isEmergencyActive: z.boolean().default(false),
+  emergencyReason: z.string().nullable().optional(),
+  emergencyTriggeredAt: z.coerce.date().nullable().optional(),
+  emergencyAcknowledgedAt: z.coerce.date().nullable().optional(),
+  emergencyAcknowledgedById: z.string().nullable().optional(),
+  isExternalVehicle: z.boolean().default(false),
+  externalVehicleNo: z.string().nullable().optional(),
+  supplierName: z.string().nullable().optional(),
+  supplierContact: z.string().nullable().optional(),
+  supplierNegotiatedCost: z.coerce.number().min(0).default(0),
+  routePolyline: z.any().optional(),
 }).refine(data => !data.endDate || data.endDate >= data.startDate, {
   message: "End date must be after or equal to start date",
   path: ["endDate"]
@@ -454,7 +488,7 @@ export const TourScheduleSchema = z.object({
   description: z.string().nullish().transform(v => v ?? undefined),
   days: z.coerce.number().min(1, "Must have at least 1 day"),
   basePricePerPerson: z.coerce.number().min(0).optional().default(0),
-  vehicleCategory: z.string().default("CAR"),
+  vehicleCategory: z.preprocess(normalizeVehicleCategory, VehicleCategoryEnum).default("CAR"),
   vehicleNo: z.string().nullish().or(z.literal('')).transform(v => (v === '' || v === null) ? undefined : v),
   ratePerDay: z.coerce.number().min(0).default(0),
   kmPerDay: z.coerce.number().min(0).default(0),
@@ -486,6 +520,7 @@ export type TourScheduleDayItem = z.infer<typeof TourScheduleDayItemDbSchema>;
 
 // Quotation validation schema
 export const QuotationSchema = z.object({
+  vehicleId: z.string().nullish().transform(v => v ?? undefined),
   tourScheduleId: z.string().nullish().transform(v => v || undefined),
   customerName: z.string().min(1, "Customer name is required"),
   customerEmail: z.string().email("Invalid email").nullish().or(z.literal('')).transform(v => v || undefined),
@@ -517,6 +552,7 @@ export type QuotationFormData = z.infer<typeof QuotationSchema>;
 export const QuotationDbSchema = QuotationSchema.extend({
   id: z.string(),
   quotationNumber: z.number(),
+  vehicleId: z.string().nullable().optional(),
   totalDistance: z.number().default(0),
   transportCost: z.number().default(0),
   accommodationTotal: z.number().default(0),

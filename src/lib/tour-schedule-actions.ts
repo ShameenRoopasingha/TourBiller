@@ -2,6 +2,7 @@
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { VehicleCategory } from '@prisma/client';
 import { TourScheduleSchema, type ActionResult } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
@@ -94,7 +95,7 @@ export async function createTourSchedule(
                         where: { id: existing.id },
                         data: {
                             days: validated.days,
-                            vehicleCategory: validated.vehicleCategory,
+                            vehicleCategory: validated.vehicleCategory as VehicleCategory,
                             vehicleNo: validated.vehicleNo,
                             ratePerDay: validated.ratePerDay,
                             kmPerDay: validated.kmPerDay,
@@ -140,7 +141,7 @@ export async function createTourSchedule(
                     description: validated.description,
                     days: validated.days,
                     basePricePerPerson: validated.basePricePerPerson,
-                    vehicleCategory: validated.vehicleCategory,
+                    vehicleCategory: validated.vehicleCategory as VehicleCategory,
                     vehicleNo: validated.vehicleNo,
                     ratePerDay: validated.ratePerDay,
                     kmPerDay: validated.kmPerDay,
@@ -320,7 +321,7 @@ export async function updateTourSchedule(
                     description: validated.description,
                     days: validated.days,
                     basePricePerPerson: validated.basePricePerPerson,
-                    vehicleCategory: validated.vehicleCategory,
+                    vehicleCategory: validated.vehicleCategory as VehicleCategory,
                     vehicleNo: validated.vehicleNo,
                     ratePerDay: validated.ratePerDay,
                     kmPerDay: validated.kmPerDay,

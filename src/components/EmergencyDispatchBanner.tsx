@@ -118,6 +118,11 @@ export function EmergencyDispatchBanner() {
             sessionStorage.setItem('vigil_silenced_alerts', JSON.stringify(Array.from(next)));
         } catch {}
         stopRepeatingAlarm();
+
+        // Persist acknowledgement across all terminals if booking entityId exists
+        if (primaryAlert.entityId && primaryAlert.type === 'BREAKDOWN') {
+            fetch(`/api/bookings/${primaryAlert.entityId}/acknowledge`, { method: 'POST' }).catch(() => {});
+        }
     };
 
     const handleRespond = () => {

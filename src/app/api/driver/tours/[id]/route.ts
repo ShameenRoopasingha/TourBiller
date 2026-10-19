@@ -254,10 +254,31 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         }
 
         if (action === 'END_TRIP') {
+            // 1. Fetch raw telemetry coordinates for this booking
+            const locations = await prisma.driverLocation.findMany({
+                where: { bookingId },
+                orderBy: { timestamp: 'asc' },
+                select: {
+                    lat: true,
+                    lon: true,
+                    timestamp: true
+                }
+            });
+
+            // 2. Aggregate coordinates into compressed JSON array [[lat, lon, timestamp], ...]
+            const routePolyline = locations.map(loc => [
+                loc.lat,
+                loc.lon,
+                loc.timestamp.toISOString()
+            ]);
+
             await prisma.$transaction([
                 prisma.booking.update({
                     where: { id: bookingId },
-                    data: { status: 'COMPLETED' }
+                    data: {
+                        status: 'COMPLETED',
+                        ...(routePolyline.length > 0 ? { routePolyline: routePolyline as any } : {})
+                    }
                 }),
                 prisma.user.update({
                     where: { id: driverId },
@@ -273,6 +294,20 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
                     }
                 })
             ]);
+
+            // 3. Telemetry bloat prevention: delete raw DriverLocation rows older than 7 days
+            try {
+                const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                await prisma.driverLocation.deleteMany({
+                    where: {
+                        companyId,
+                        timestamp: { lt: sevenDaysAgo }
+                    }
+                });
+            } catch (pruneErr) {
+                console.warn('Telemetry pruning non-critical error:', pruneErr);
+            }
+
             return NextResponse.json({ success: true });
         }
 
@@ -354,6 +389,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
                     driverId,
                     type: 'BREAKDOWN_REPORTED',
                     note: `Vehicle Breakdown Reported by Driver: ${details}`,
+                }
+            });
+
+            // Set persistent emergency breakdown state on Booking (Section 1.3)
+            await prisma.booking.update({
+                where: { id: bookingId },
+                data: {
+                    isEmergencyActive: true,
+                    emergencyReason: breakdownReason,
+                    emergencyTriggeredAt: new Date(),
+                    emergencyAcknowledgedAt: null,
+                    emergencyAcknowledgedById: null,
                 }
             });
 
