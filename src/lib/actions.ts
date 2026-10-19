@@ -6,6 +6,7 @@ import { type Bill, type BusinessProfile } from '@prisma/client';
 import { calculateTotalAmount } from '@/lib/calculations';
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
+import { formatActionError } from '@/lib/error-handler';
 
 /**
  * Create a new bill
@@ -150,19 +151,7 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
       data: createdBill.id,
     };
   } catch (error) {
-    console.error('Error creating bill:', error);
-
-    if (error instanceof Error) {
-      return {
-        success: false,
-        error: error.message,
-      };
-    }
-
-    return {
-      success: false,
-      error: 'An unexpected error occurred while creating the bill',
-    };
+    return formatActionError(error, 'An unexpected error occurred while creating the bill');
   }
 }
 
@@ -276,19 +265,7 @@ export async function updateBill(id: string, formData: FormData): Promise<Action
       data: id,
     };
   } catch (error) {
-    console.error('Error updating bill:', error);
-
-    if (error instanceof Error) {
-      return {
-        success: false,
-        error: error.message,
-      };
-    }
-
-    return {
-      success: false,
-      error: 'An unexpected error occurred while updating the bill',
-    };
+    return formatActionError(error, 'An unexpected error occurred while updating the bill');
   }
 }
 
@@ -326,12 +303,7 @@ export async function getBills(searchQuery?: string): Promise<ActionResult<Bill[
       data: bills,
     };
   } catch (error) {
-    console.error('Error fetching bills:', error);
-
-    return {
-      success: false,
-      error: 'Failed to fetch bills',
-    };
+    return formatActionError(error, 'Failed to fetch bills');
   }
 }
 
@@ -361,12 +333,7 @@ export async function getBillById(id: string): Promise<ActionResult<Bill>> {
       data: bill,
     };
   } catch (error) {
-    console.error('Error fetching bill:', error);
-
-    return {
-      success: false,
-      error: 'Failed to fetch bill',
-    };
+    return formatActionError(error, 'Failed to fetch bill');
   }
 }
 
@@ -392,8 +359,7 @@ export async function getBusinessProfile(): Promise<ActionResult<BusinessProfile
 
     return { success: true, data: JSON.parse(JSON.stringify(profile)) };
   } catch (error) {
-    console.error('Error fetching business profile:', error);
-    return { success: false, error: 'Failed to fetch business profile' };
+    return formatActionError(error, 'Failed to fetch business profile');
   }
 }
 
@@ -436,11 +402,7 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
 
     return { success: true, data: JSON.parse(JSON.stringify(profile)) };
   } catch (error) {
-    console.error('Error updating business profile:', error);
-    if (error instanceof Error) {
-      return { success: false, error: error.message };
-    }
-    return { success: false, error: 'Failed to update business profile' };
+    return formatActionError(error, 'Failed to update business profile');
   }
 }
 
@@ -473,8 +435,7 @@ export async function configureInitialCurrency(
     revalidateFor('businessProfile');
     return { success: true, data: JSON.parse(JSON.stringify(profile)) };
   } catch (error) {
-    console.error('Error configuring initial currency:', error);
-    return { success: false, error: 'Failed to configure initial currency' };
+    return formatActionError(error, 'Failed to configure initial currency');
   }
 }
 
@@ -499,11 +460,7 @@ export async function deleteBill(id: string): Promise<ActionResult<void>> {
 
     return { success: true };
   } catch (error) {
-    console.error('Error deleting bill:', error);
-    return {
-      success: false,
-      error: 'Failed to delete bill',
-    };
+    return formatActionError(error, 'Failed to delete bill');
   }
 }
 

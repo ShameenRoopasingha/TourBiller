@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cancelBooking, getBookingById } from '@/lib/booking-actions';
+import { formatApiErrorResponse } from '@/lib/error-handler';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -7,8 +8,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         const result = await getBookingById(id);
         return NextResponse.json(result, { status: result.success ? 200 : 404 });
     } catch (error) {
-        console.error('API error fetching booking:', error);
-        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+        return formatApiErrorResponse(error, 'Error fetching booking');
     }
 }
 
@@ -18,7 +18,6 @@ export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ i
         const result = await cancelBooking(id);
         return NextResponse.json(result, { status: result.success ? 200 : 400 });
     } catch (error) {
-        console.error('API error cancelling booking:', error);
-        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+        return formatApiErrorResponse(error, 'Error cancelling booking');
     }
 }

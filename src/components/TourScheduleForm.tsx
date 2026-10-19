@@ -130,7 +130,7 @@ export function TourScheduleForm({
             description: initialData?.description || '',
             days: initialData?.days || 1,
             basePricePerPerson: initialData?.basePricePerPerson || ('' as unknown as number),
-            vehicleCategory: initialData?.vehicleCategory || 'CAR',
+            vehicleCategory: (initialData?.vehicleCategory as TourScheduleFormData['vehicleCategory']) || 'CAR',
             vehicleNo: initialData?.vehicleNo || '',
             ratePerDay: initialData?.ratePerDay || 0,
             kmPerDay: initialData?.kmPerDay || 0,
@@ -327,7 +327,7 @@ export function TourScheduleForm({
     };
 
     return (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={handleEnterKey}>
+        <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6" onKeyDown={handleEnterKey}>
             {error && (
                 <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>

@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { DriverTourActionSchema } from '@/lib/validations';
 import { getJwtSecret } from '@/lib/jwt';
 import { extractHandoverNavigation } from '@/lib/handover-navigation';
+import { formatApiErrorResponse } from '@/lib/error-handler';
 
 // Middleware-like function to verify driver (Bearer token for Mobile App or NextAuth for Web Portal)
 async function verifyDriver(req: Request) {
@@ -203,8 +204,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         });
 
     } catch (error) {
-        console.error('Fetch tour error:', error);
-        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+        return formatApiErrorResponse(error, 'Error fetching tour details');
     }
 }
 
@@ -218,7 +218,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const bookingId = resolvedParams.id;
         const { companyId, id: driverId } = auth.driver;
         
-        const body = await req.json();
+        let body: any;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({ success: false, error: 'Invalid JSON request payload' }, { status: 400 });
+        }
+
         const parsed = DriverTourActionSchema.safeParse(body);
         if (!parsed.success) {
             return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message || 'Invalid action' }, { status: 400 });
@@ -428,7 +434,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
 
     } catch (error) {
-        console.error('Update tour error:', error);
-        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+        return formatApiErrorResponse(error, 'Error updating tour status');
     }
 }

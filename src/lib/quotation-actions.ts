@@ -6,6 +6,7 @@ import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { checkDriverAvailability } from '@/lib/user-actions';
+import { formatActionError } from '@/lib/error-handler';
 
 // Types for server responses
 
@@ -185,11 +186,7 @@ export async function generateQuotation(
         revalidateFor('quotation');
         return { success: true, data: quotation.id };
     } catch (error) {
-        console.error('Error generating quotation:', error);
-        if (error instanceof Error) {
-            return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Failed to generate quotation' };
+        return formatActionError(error, 'Failed to generate quotation');
     }
 }
 
@@ -235,8 +232,7 @@ export async function getQuotations(
 
         return { success: true, data: quotations as unknown as QuotationWithSchedule[] };
     } catch (error) {
-        console.error('Error fetching quotations:', error);
-        return { success: false, error: 'Failed to fetch quotations' };
+        return formatActionError(error, 'Failed to fetch quotations');
     }
 }
 
@@ -274,8 +270,7 @@ export async function getQuotationById(
 
         return { success: true, data: quotation as unknown as QuotationWithSchedule };
     } catch (error) {
-        console.error('Error fetching quotation:', error);
-        return { success: false, error: 'Failed to fetch quotation' };
+        return formatActionError(error, 'Failed to fetch quotation');
     }
 }
 
@@ -441,11 +436,7 @@ export async function updateQuotation(
         revalidateFor('quotation');
         return { success: true, data: id };
     } catch (error) {
-        console.error('Error updating quotation:', error);
-        if (error instanceof Error) {
-            return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Failed to update quotation' };
+        return formatActionError(error, 'Failed to update quotation');
     }
 }
 
@@ -517,8 +508,7 @@ export async function updateQuotationStatus(
         revalidateFor('quotation');
         return { success: true };
     } catch (error) {
-        console.error('Error updating quotation status:', error);
-        return { success: false, error: 'Failed to update quotation status' };
+        return formatActionError(error, 'Failed to update quotation status');
     }
 }
 
@@ -540,8 +530,7 @@ export async function deleteQuotation(id: string): Promise<ActionResult<void>> {
         revalidateFor('quotation');
         return { success: true };
     } catch (error) {
-        console.error('Error deleting quotation:', error);
-        return { success: false, error: 'Failed to delete quotation' };
+        return formatActionError(error, 'Failed to delete quotation');
     }
 }
 
@@ -734,11 +723,7 @@ export async function convertQuotationToBooking(
 
         return { success: true, data: newBookingId };
     } catch (error) {
-        console.error('Error converting quotation to booking:', error);
-        if (error instanceof Error) {
-            return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Failed to convert quotation to booking' };
+        return formatActionError(error, 'Failed to convert quotation to booking');
     }
 }
 

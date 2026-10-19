@@ -5,6 +5,7 @@ import { requireAuth, requireAdmin } from '@/lib/auth-guard';
 import bcrypt from 'bcrypt';
 import { type ActionResult, type DriverAvailabilityConflict, UserCreateSchema } from '@/lib/validations';
 import { revalidatePath } from 'next/cache';
+import { formatActionError } from '@/lib/error-handler';
 
 /**
  * Check driver availability for a given date range.
@@ -108,8 +109,7 @@ export async function checkDriverAvailability(
             }
         };
     } catch (error) {
-        console.error('Error checking driver availability:', error);
-        return { success: false, error: 'Failed to check driver availability' };
+        return formatActionError(error, 'Failed to check driver availability');
     }
 }
 
@@ -146,8 +146,7 @@ export async function getUsers(): Promise<ActionResult<UserData[]>> {
 
         return { success: true, data: users };
     } catch (error) {
-        console.error('Error fetching users:', error);
-        return { success: false, error: 'Failed to fetch users' };
+        return formatActionError(error, 'Failed to fetch users');
     }
 }
 
@@ -198,8 +197,7 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
         revalidatePath('/users');
         return { success: true, data: user.id };
     } catch (error) {
-        console.error('Error creating user:', error);
-        return { success: false, error: 'Failed to create user' };
+        return formatActionError(error, 'Failed to create user');
     }
 }
 
@@ -243,11 +241,7 @@ export async function deleteUser(id: string): Promise<ActionResult<void>> {
         revalidatePath('/users');
         return { success: true };
     } catch (error) {
-        console.error('Error deleting user:', error);
-        if (error instanceof Error && error.message.includes('Foreign key constraint')) {
-            return { success: false, error: 'Cannot delete user: they have related records (bookings, quotations, or expenses). Remove those first.' };
-        }
-        return { success: false, error: 'Failed to delete user' };
+        return formatActionError(error, 'Failed to delete user');
     }
 }
 
@@ -271,8 +265,7 @@ export async function getDrivers(): Promise<ActionResult<DriverOption[]>> {
         });
         return { success: true, data: drivers };
     } catch (error) {
-        console.error('Error fetching drivers:', error);
-        return { success: false, error: 'Failed to fetch drivers' };
+        return formatActionError(error, 'Failed to fetch drivers');
     }
 }
 

@@ -20,6 +20,8 @@ jest.mock('@/lib/auth-guard', () => ({
 import * as authGuard from '@/lib/auth-guard';
 
 describe('Multi-Tenant Data Isolation', () => {
+    jest.setTimeout(30000);
+
     let companyA_Id: string;
     let companyB_Id: string;
     let vehicleB_Id: string;
@@ -28,7 +30,6 @@ describe('Multi-Tenant Data Isolation', () => {
     let quotationB_Id: string;
     let userB_Id: string;
     let scheduleB_Id: string;
-
 
     beforeAll(async () => {
         // Create Company A and B

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { revalidateFor } from '@/lib/revalidation';
 import { type ActionResult, VehicleExpenseSchema, type VehicleExpense, type VehicleExpenseFormData, type Vehicle } from '@/lib/validations';
+import { formatActionError } from '@/lib/error-handler';
 
 /**
  * Add a new vehicle expense
@@ -11,7 +12,7 @@ import { type ActionResult, VehicleExpenseSchema, type VehicleExpense, type Vehi
 export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<ActionResult<string>> {
     const validated = VehicleExpenseSchema.safeParse(data);
     if (!validated.success) {
-        return { success: false, error: validated.error.issues[0].message };
+        return formatActionError(validated.error, 'Invalid expense data');
     }
     const validatedData = validated.data;
 
@@ -34,7 +35,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
                     companyId: authCheck.companyId,
                     driverId: authCheck.userId,
                     vehicleNo: validatedData.vehicleNo,
-                    status: 'CONFIRMED',
+                    status: { in: ['CONFIRMED', 'ONGOING'] },
                     startDate: { lte: new Date() },
                     OR: [
                         { endDate: null },
@@ -104,8 +105,7 @@ export async function addVehicleExpense(data: VehicleExpenseFormData): Promise<A
         revalidateFor('vehicle-expenses');
         return { success: true, data: created.id };
     } catch (error) {
-        console.error('Error adding vehicle expense:', error);
-        return { success: false, error: 'Failed to add vehicle expense' };
+        return formatActionError(error, 'Failed to add vehicle expense');
     }
 }
 
@@ -131,8 +131,7 @@ export async function getVehicleExpenses(vehicleNo?: string, bookingId?: string)
         const plainExpenses = JSON.parse(JSON.stringify(expenses));
         return { success: true, data: plainExpenses as VehicleExpense[] };
     } catch (error) {
-        console.error('Error fetching vehicle expenses:', error);
-        return { success: false, error: 'Failed to fetch vehicle expenses' };
+        return formatActionError(error, 'Failed to fetch vehicle expenses');
     }
 }
 
@@ -154,8 +153,7 @@ export async function deleteVehicleExpense(id: string): Promise<ActionResult<boo
         revalidateFor('vehicle-expenses');
         return { success: true, data: true };
     } catch (error) {
-        console.error('Error deleting vehicle expense:', error);
-        return { success: false, error: 'Failed to delete vehicle expense' };
+        return formatActionError(error, 'Failed to delete vehicle expense');
     }
 }
 

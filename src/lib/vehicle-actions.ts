@@ -7,6 +7,7 @@ import { VehicleSchema, type ActionResult, type Vehicle, type VehicleAvailabilit
 import { revalidateFor } from '@/lib/revalidation';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
+import { formatActionError } from '@/lib/error-handler';
 
 /**
  * Create a new vehicle
@@ -64,11 +65,7 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
             data: vehicle.id,
         };
     } catch (error) {
-        console.error('Error creating vehicle:', error);
-        if (error instanceof Error) {
-            return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Failed to create vehicle' };
+        return formatActionError(error, 'Failed to create vehicle');
     }
 }
 
@@ -101,8 +98,7 @@ export async function getVehicles(searchQuery?: string): Promise<ActionResult<Ve
 
         return { success: true, data: plainVehicles as Vehicle[] };
     } catch (error) {
-        console.error('Error fetching vehicles:', error);
-        return { success: false, error: 'Failed to fetch vehicles' };
+        return formatActionError(error, 'Failed to fetch vehicles');
     }
 }
 
@@ -163,11 +159,7 @@ export async function updateVehicle(id: string, formData: FormData): Promise<Act
 
         return { success: true, data: id };
     } catch (error) {
-        console.error('Error updating vehicle:', error);
-        if (error instanceof Error) {
-            return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Failed to update vehicle' };
+        return formatActionError(error, 'Failed to update vehicle');
     }
 }
 
@@ -226,8 +218,7 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
 
         return { success: true };
     } catch (error) {
-        console.error('Error deleting vehicle:', error);
-        return { success: false, error: 'Failed to delete vehicle. Please try again.' };
+        return formatActionError(error, 'Failed to delete vehicle. Please try again.');
     }
 }
 
@@ -283,7 +274,7 @@ export async function checkVehicleAvailability(
             where: {
                 companyId: authCheck.companyId,
                 vehicleNo,
-                status: 'CONFIRMED',
+                status: { in: ['CONFIRMED', 'ONGOING'] },
                 id: (currentType === 'Booking' && currentId) ? { not: currentId } : undefined,
                 OR: [
                     {
@@ -365,8 +356,7 @@ export async function checkVehicleAvailability(
             }
         };
     } catch (error) {
-        console.error('Error checking vehicle availability:', error);
-        return { success: false, error: 'Failed to check availability' };
+        return formatActionError(error, 'Failed to check availability');
     }
 }
 
@@ -409,8 +399,7 @@ export async function getActiveVehicles(): Promise<ActionResult<{
 
         return { success: true, data: vehicles };
     } catch (error) {
-        console.error('Error fetching active vehicles:', error);
-        return { success: false, error: 'Failed to fetch vehicles' };
+        return formatActionError(error, 'Failed to fetch vehicles');
     }
 }
 

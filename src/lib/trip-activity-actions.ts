@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-guard';
 import { type ActionResult, type TripActivity, type TripActivityType, TripActivityLogSchema } from '@/lib/validations';
+import { formatActionError } from '@/lib/error-handler';
 
 /**
  * Log a trip activity (driver only, must have active booking)
@@ -16,7 +17,7 @@ export async function logTripActivity(
     try {
         const parsed = TripActivityLogSchema.safeParse({ bookingId, type, note, expenseId });
         if (!parsed.success) {
-            return { success: false, error: parsed.error.issues[0]?.message || 'Invalid trip activity payload' };
+            return formatActionError(parsed.error, 'Invalid trip activity payload');
         }
 
         const authCheck = await requireAuth();
@@ -28,13 +29,13 @@ export async function logTripActivity(
             return { success: false, error: 'Unauthorized' };
         }
 
-        // Verify the booking belongs to this driver
+        // Verify the booking belongs to this driver (can be upcoming CONFIRMED or active ONGOING)
         const booking = await prisma.booking.findFirst({
             where: {
                 id: bookingId,
                 companyId: authCheck.companyId,
                 driverId: authCheck.userId,
-                status: 'CONFIRMED',
+                status: { in: ['CONFIRMED', 'ONGOING'] },
             },
         });
 
@@ -42,9 +43,7 @@ export async function logTripActivity(
             return { success: false, error: 'Booking not found or not assigned to you.' };
         }
 
-
-
-    const activity = await prisma.tripActivity.create({
+        const activity = await prisma.tripActivity.create({
             data: {
                 companyId: authCheck.companyId,
                 bookingId,
@@ -57,8 +56,7 @@ export async function logTripActivity(
 
         return { success: true, data: activity.id };
     } catch (error) {
-        console.error('Error logging trip activity:', error);
-        return { success: false, error: 'Failed to log activity' };
+        return formatActionError(error, 'Failed to log activity');
     }
 }
 
@@ -82,8 +80,7 @@ export async function getTripActivities(bookingId: string): Promise<ActionResult
         const plain = JSON.parse(JSON.stringify(activities));
         return { success: true, data: plain as TripActivity[] };
     } catch (error) {
-        console.error('Error fetching trip activities:', error);
-        return { success: false, error: 'Failed to fetch activities' };
+        return formatActionError(error, 'Failed to fetch activities');
     }
 }
 
@@ -140,7 +137,6 @@ export async function getDriverTourHistory(
         const plain = JSON.parse(JSON.stringify(bookings));
         return { success: true, data: plain as TourHistoryBooking[] };
     } catch (error) {
-        console.error('Error fetching tour history:', error);
-        return { success: false, error: 'Failed to fetch tour history' };
+        return formatActionError(error, 'Failed to fetch tour history');
     }
 }

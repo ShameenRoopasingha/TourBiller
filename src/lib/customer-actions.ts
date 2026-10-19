@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { CustomerSchema, type ActionResult, type Customer } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
+import { formatActionError } from '@/lib/error-handler';
 
 /**
  * Create a new customer
@@ -36,11 +37,7 @@ export async function createCustomer(formData: FormData): Promise<ActionResult<s
             data: customer.id,
         };
     } catch (error) {
-        console.error('Error creating customer:', error);
-        if (error instanceof Error) {
-            return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Failed to create customer' };
+        return formatActionError(error, 'Failed to create customer');
     }
 }
 
@@ -68,8 +65,7 @@ export async function getCustomers(searchQuery?: string): Promise<ActionResult<C
 
         return { success: true, data: customers as Customer[] };
     } catch (error) {
-        console.error('Error fetching customers:', error);
-        return { success: false, error: 'Failed to fetch customers' };
+        return formatActionError(error, 'Failed to fetch customers');
     }
 }
 
@@ -103,11 +99,7 @@ export async function updateCustomer(id: string, formData: FormData): Promise<Ac
 
         return { success: true, data: id };
     } catch (error) {
-        console.error('Error updating customer:', error);
-        if (error instanceof Error) {
-            return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Failed to update customer' };
+        return formatActionError(error, 'Failed to update customer');
     }
 }
 
@@ -154,7 +146,6 @@ export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
 
         return { success: true };
     } catch (error) {
-        console.error('Error deleting customer:', error);
-        return { success: false, error: 'Failed to delete customer' };
+        return formatActionError(error, 'Failed to delete customer');
     }
 }

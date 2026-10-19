@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createVehicle, getVehicles } from '@/lib/vehicle-actions';
+import { formatApiErrorResponse } from '@/lib/error-handler';
 
 export async function GET(req: NextRequest) {
     try {
@@ -7,18 +8,21 @@ export async function GET(req: NextRequest) {
         const result = await getVehicles(searchQuery);
         return NextResponse.json(result, { status: result.success ? 200 : 400 });
     } catch (error) {
-        console.error('API error fetching vehicles:', error);
-        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+        return formatApiErrorResponse(error, 'Error fetching vehicles');
     }
 }
 
 export async function POST(req: NextRequest) {
     try {
-        const formData = await req.formData();
+        let formData: FormData;
+        try {
+            formData = await req.formData();
+        } catch {
+            return NextResponse.json({ success: false, error: 'Invalid form data payload' }, { status: 400 });
+        }
         const result = await createVehicle(formData);
         return NextResponse.json(result, { status: result.success ? 200 : 400 });
     } catch (error) {
-        console.error('API error creating vehicle:', error);
-        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+        return formatApiErrorResponse(error, 'Error creating vehicle');
     }
 }

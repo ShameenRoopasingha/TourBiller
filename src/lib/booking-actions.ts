@@ -17,6 +17,7 @@ import { revalidatePath } from 'next/cache';
 import { requireAuth, requireAdmin } from '@/lib/auth-guard';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { checkDriverAvailability } from '@/lib/user-actions';
+import { formatActionError } from '@/lib/error-handler';
 
 
 /**
@@ -108,11 +109,7 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
             data: booking.id,
         };
     } catch (error) {
-        console.error('Error creating booking:', error);
-        if (error instanceof Error) {
-            return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Failed to create booking' };
+        return formatActionError(error, 'Failed to create booking');
     }
 }
 
@@ -164,8 +161,7 @@ export async function getBookings(searchQuery?: string): Promise<ActionResult<Bo
 
         return { success: true, data: bookings as unknown as BookingWithDriver[] };
     } catch (error) {
-        console.error('Error fetching bookings:', error);
-        return { success: false, error: 'Failed to fetch bookings' };
+        return formatActionError(error, 'Failed to fetch bookings');
     }
 }
 
@@ -214,8 +210,7 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
 
         return { success: true };
     } catch (error) {
-        console.error('Error cancelling booking:', error);
-        return { success: false, error: 'Failed to cancel booking' };
+        return formatActionError(error, 'Failed to cancel booking');
     }
 }
 
@@ -256,8 +251,7 @@ export async function getBookingById(id: string): Promise<ActionResult<BookingWi
 
         return { success: true, data: booking as unknown as BookingWithDriver };
     } catch (error) {
-        console.error('Error fetching booking:', error);
-        return { success: false, error: 'Failed to fetch booking' };
+        return formatActionError(error, 'Failed to fetch booking');
     }
 }
 
@@ -381,8 +375,7 @@ export async function assignDriverToBooking(
         revalidateFor('booking');
         return { success: true };
     } catch (error) {
-        console.error('Error assigning driver to booking:', error);
-        return { success: false, error: 'Failed to assign driver' };
+        return formatActionError(error, 'Failed to assign driver');
     }
 }
 
@@ -589,8 +582,7 @@ export async function swapBookingVehicle(
 
         return { success: true };
     } catch (error) {
-        console.error('Error swapping booking vehicle:', error);
-        return { success: false, error: 'Failed to complete emergency vehicle swap' };
+        return formatActionError(error, 'Failed to complete emergency vehicle swap');
     }
 }
 
@@ -618,8 +610,7 @@ export async function acknowledgeEmergencyAlarm(bookingId: string): Promise<Acti
         revalidateFor('booking');
         return { success: true };
     } catch (error) {
-        console.error('Error acknowledging emergency alarm:', error);
-        return { success: false, error: 'Failed to acknowledge emergency alarm' };
+        return formatActionError(error, 'Failed to acknowledge emergency alarm');
     }
 }
 
@@ -648,8 +639,7 @@ export async function getVehicleSwapLogs(bookingId: string) {
 
         return { success: true, data: logs };
     } catch (error) {
-        console.error('Error fetching vehicle swap logs:', error);
-        return { success: false, error: 'Failed to fetch swap logs' };
+        return formatActionError(error, 'Failed to fetch swap logs');
     }
 }
 

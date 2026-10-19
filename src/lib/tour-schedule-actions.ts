@@ -6,6 +6,7 @@ import { VehicleCategory } from '@prisma/client';
 import { TourScheduleSchema, type ActionResult } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
+import { formatActionError } from '@/lib/error-handler';
 
 // Types for server responses
 export type TourScheduleWithItems = {
@@ -195,10 +196,7 @@ export async function createTourSchedule(
                 error: `A tour schedule with the name "${(data as any)?.name}" already exists. Please choose a different name.`
             };
         }
-        if (error instanceof Error) {
-            return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Failed to create tour schedule' };
+        return formatActionError(error, 'Failed to create tour schedule');
     }
 }
 
@@ -238,8 +236,7 @@ export async function getTourSchedules(
 
         return { success: true, data: schedules as TourScheduleWithItems[] };
     } catch (error) {
-        console.error('Error fetching tour schedules:', error);
-        return { success: false, error: 'Failed to fetch tour schedules' };
+        return formatActionError(error, 'Failed to fetch tour schedules');
     }
 }
 
@@ -268,8 +265,7 @@ export async function getTourScheduleById(
 
         return { success: true, data: schedule as TourScheduleWithItems };
     } catch (error) {
-        console.error('Error fetching tour schedule:', error);
-        return { success: false, error: 'Failed to fetch tour schedule' };
+        return formatActionError(error, 'Failed to fetch tour schedule');
     }
 }
 
@@ -360,11 +356,7 @@ export async function updateTourSchedule(
         revalidateFor('tourSchedule');
         return { success: true, data: { id: id, name: validated.name } };
     } catch (error) {
-        console.error('Error updating tour schedule:', error);
-        if (error instanceof Error) {
-            return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Failed to update tour schedule' };
+        return formatActionError(error, 'Failed to update tour schedule');
     }
 }
 
@@ -387,7 +379,6 @@ export async function deleteTourSchedule(id: string): Promise<ActionResult<void>
         revalidateFor('tourSchedule');
         return { success: true };
     } catch (error) {
-        console.error('Error deleting tour schedule:', error);
-        return { success: false, error: 'Failed to delete tour schedule' };
+        return formatActionError(error, 'Failed to delete tour schedule');
     }
 }
