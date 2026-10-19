@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { 
     Navigation, 
@@ -20,9 +20,18 @@ import {
     Compass,
     AlertTriangle,
     ShieldAlert,
-    Wrench
+    Wrench,
+    Volume2,
+    VolumeX
 } from 'lucide-react';
 import { ActiveTourVehicle } from '@/components/FleetLiveMap';
+import { 
+    playBreakdownAlarm, 
+    playHandoverChime, 
+    isDispatchAudioEnabled, 
+    setDispatchAudioEnabled, 
+    unlockDispatchAudio 
+} from '@/lib/dispatch-audio';
 
 // Dynamically import FleetLiveMap to avoid SSR leaflet window errors
 const FleetLiveMap = dynamic(
@@ -48,6 +57,16 @@ export default function LiveTrackingPage() {
     const [mobileTab, setMobileTab] = useState<'map' | 'list'>('map');
     const [error, setError] = useState<string | null>(null);
     const [fitAllTrigger, setFitAllTrigger] = useState<number>(0);
+    const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+    const [showSoundPopover, setShowSoundPopover] = useState<boolean>(false);
+
+    const prevBreakdownsRef = useRef<Set<string>>(new Set());
+    const prevHandoversRef = useRef<Set<string>>(new Set());
+    const isInitialLoadRef = useRef<boolean>(true);
+
+    useEffect(() => {
+        setSoundEnabled(isDispatchAudioEnabled());
+    }, []);
 
     const fetchLiveLocations = useCallback(async (manual = false) => {
         if (manual) setIsRefreshing(true);
@@ -55,9 +74,34 @@ export default function LiveTrackingPage() {
             const res = await fetch('/api/fleet/live-locations');
             const data = await res.json();
             if (data.success && data.data) {
-                setVehicles(data.data.activeTours || []);
+                const tours: ActiveTourVehicle[] = data.data.activeTours || [];
+                setVehicles(tours);
                 setLastUpdated(new Date());
                 setError(null);
+
+                // Detect newly reported breakdowns or handovers to play distinct alert sounds
+                const currentBreakdowns = new Set<string>(
+                    tours.filter(t => t.hasPendingBreakdown).map(t => t.id)
+                );
+                const currentHandovers = new Set<string>(
+                    tours.filter(t => t.hasPendingHandover).map(t => t.id)
+                );
+
+                if (!isInitialLoadRef.current) {
+                    const hasNewBreakdown = Array.from(currentBreakdowns).some(id => !prevBreakdownsRef.current.has(id));
+                    const hasNewHandover = Array.from(currentHandovers).some(id => !prevHandoversRef.current.has(id));
+
+                    if (hasNewBreakdown) {
+                        playBreakdownAlarm();
+                    } else if (hasNewHandover) {
+                        playHandoverChime();
+                    }
+                } else {
+                    isInitialLoadRef.current = false;
+                }
+
+                prevBreakdownsRef.current = currentBreakdowns;
+                prevHandoversRef.current = currentHandovers;
             } else {
                 setError(data.error || 'Failed to fetch live locations');
             }
@@ -173,8 +217,88 @@ export default function LiveTrackingPage() {
                         </button>
                     </div>
 
-                    {/* Actions: Refresh & Time */}
+                    {/* Actions: Sound Alerts, Refresh & Time */}
                     <div className="flex items-center gap-2 shrink-0">
+                        {/* Audio Alert Toggle & Test Tones */}
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    unlockDispatchAudio();
+                                    setShowSoundPopover(v => !v);
+                                }}
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition active:scale-95 ${
+                                    soundEnabled
+                                        ? 'bg-slate-800 border-slate-700 text-emerald-400 hover:bg-slate-700'
+                                        : 'bg-red-950/40 border-red-800/60 text-red-400 hover:bg-red-900/60'
+                                }`}
+                                title="Emergency Audio Alert Settings & Test Tones"
+                            >
+                                {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+                                <span className="hidden sm:inline">{soundEnabled ? 'Siren ON' : 'Muted'}</span>
+                            </button>
+
+                            {/* Sound Control Dropdown Popover */}
+                            {showSoundPopover && (
+                                <div className="absolute right-0 top-full mt-2 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-3 z-50 text-slate-200 space-y-2.5">
+                                    <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                                        <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                                            <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+                                            Dispatch Audio Alerts
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const next = !soundEnabled;
+                                                setSoundEnabled(next);
+                                                setDispatchAudioEnabled(next);
+                                            }}
+                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition ${
+                                                soundEnabled
+                                                    ? 'bg-emerald-950 text-emerald-300 border-emerald-700 hover:bg-emerald-900'
+                                                    : 'bg-red-950 text-red-300 border-red-700 hover:bg-red-900'
+                                            }`}
+                                        >
+                                            {soundEnabled ? 'ACTIVE' : 'MUTED'}
+                                        </button>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 leading-tight">
+                                        Distinct sirens play when new vehicle breakdowns or mid-tour handovers are reported.
+                                    </p>
+                                    <div className="space-y-1.5 pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                unlockDispatchAudio();
+                                                playBreakdownAlarm(true);
+                                            }}
+                                            className="w-full flex items-center justify-between px-2.5 py-1.5 bg-red-950/60 hover:bg-red-900/80 border border-red-800/80 rounded-lg text-red-200 text-xs font-semibold transition"
+                                        >
+                                            <span className="flex items-center gap-1.5">
+                                                <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                                                Breakdown Alarm
+                                            </span>
+                                            <span className="text-[10px] text-red-400 underline">▶ Test Siren</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                unlockDispatchAudio();
+                                                playHandoverChime(true);
+                                            }}
+                                            className="w-full flex items-center justify-between px-2.5 py-1.5 bg-amber-950/60 hover:bg-amber-900/80 border border-amber-800/80 rounded-lg text-amber-200 text-xs font-semibold transition"
+                                        >
+                                            <span className="flex items-center gap-1.5">
+                                                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                                                Handover Chime
+                                            </span>
+                                            <span className="text-[10px] text-amber-400 underline">▶ Test Chime</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <span className="text-[11px] text-slate-400 hidden lg:inline">
                             {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : 'Connecting...'}
                         </span>

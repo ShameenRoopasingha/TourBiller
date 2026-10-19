@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bell, AlertTriangle, FileText, Calendar, Banknote, ShieldAlert } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { playBreakdownAlarm, playHandoverChime } from '@/lib/dispatch-audio';
 
 type DashboardAlert = { id: string; entityId?: string; title: string; message: string; type: string };
 
@@ -12,6 +13,10 @@ export function NotificationBell() {
     const [alerts, setAlerts] = useState<DashboardAlert[]>([]);
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false);
+
+    const prevBreakdownsRef = useRef<Set<string>>(new Set());
+    const prevHandoversRef = useRef<Set<string>>(new Set());
+    const isFirstBellLoadRef = useRef<boolean>(true);
 
     useEffect(() => {
         const fetchAlerts = async () => {
@@ -27,6 +32,29 @@ export function NotificationBell() {
                         !(a.type === 'EXPENSE' && dismissed.includes(a.id))
                     );
                     
+                    // Trigger sound alerts if a new breakdown or handover arrives
+                    const currentBreakdowns = new Set<string>(
+                        filteredAlerts.filter((a: DashboardAlert) => a.type === 'BREAKDOWN').map((a: DashboardAlert) => a.id)
+                    );
+                    const currentHandovers = new Set<string>(
+                        filteredAlerts.filter((a: DashboardAlert) => a.type === 'HANDOVER').map((a: DashboardAlert) => a.id)
+                    );
+
+                    if (!isFirstBellLoadRef.current) {
+                        const hasNewBreakdown = Array.from(currentBreakdowns).some(id => !prevBreakdownsRef.current.has(id));
+                        const hasNewHandover = Array.from(currentHandovers).some(id => !prevHandoversRef.current.has(id));
+
+                        if (hasNewBreakdown) {
+                            playBreakdownAlarm();
+                        } else if (hasNewHandover) {
+                            playHandoverChime();
+                        }
+                    } else {
+                        isFirstBellLoadRef.current = false;
+                    }
+
+                    prevBreakdownsRef.current = currentBreakdowns;
+                    prevHandoversRef.current = currentHandovers;
                     setAlerts(filteredAlerts);
                 } else {
                     setAlerts([]);
