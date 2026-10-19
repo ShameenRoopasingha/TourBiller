@@ -103,17 +103,19 @@ export default async function BookingDetailsPage(props: {
     const handoverDoneActivity = booking.tripActivities?.find(a => a.type === 'HANDOVER');
     const isHandoverPending = handoverReqActivity && (!handoverDoneActivity || new Date(handoverReqActivity.timestamp) > new Date(handoverDoneActivity.timestamp));
 
-    let pendingHandoverRequest: { reason: string; meterReading: string; note: string; timestamp: Date | string } | null = null;
+    let pendingHandoverRequest: { reason: string; meterReading: string; location: string; note: string; timestamp: Date | string } | null = null;
     if (isHandoverPending && isTourActive && handoverReqActivity) {
         const noteText = handoverReqActivity.note || '';
         const reasonMatch = noteText.match(/Reason:\s*([^|]+)/i);
         const meterMatch = noteText.match(/Meter:\s*([0-9.]+)/i);
-        const locationMatch = noteText.match(/(?:Location\/Note|Note):\s*(.+)/i);
+        const locMatch = noteText.match(/Location:\s*([^|]+)/i);
+        const notesMatch = noteText.match(/Notes:\s*(.+)/i) || (!locMatch ? noteText.match(/(?:Location\/Note|Note):\s*(.+)/i) : null);
 
         pendingHandoverRequest = {
             reason: reasonMatch ? reasonMatch[1].trim() : 'Driver Request',
             meterReading: meterMatch ? meterMatch[1].trim() : '',
-            note: locationMatch ? locationMatch[1].trim() : '',
+            location: locMatch ? locMatch[1].trim() : '',
+            note: notesMatch ? notesMatch[1].trim() : '',
             timestamp: handoverReqActivity.timestamp,
         };
     }

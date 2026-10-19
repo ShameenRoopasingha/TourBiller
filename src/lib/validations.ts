@@ -722,6 +722,7 @@ export type DriverTourActionInput = z.infer<typeof DriverTourActionSchema>;
 export const DriverHandoverOptionsSchema = z.object({
   reason: z.string().optional(),
   handoverMeterReading: z.string().optional(),
+  location: z.string().optional(),
   notes: z.string().optional(),
 });
 

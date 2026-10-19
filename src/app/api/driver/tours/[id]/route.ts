@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { auth } from '@/lib/auth';
 import { DriverTourActionSchema } from '@/lib/validations';
 import { getJwtSecret } from '@/lib/jwt';
+import { extractHandoverNavigation } from '@/lib/handover-navigation';
 
 // Middleware-like function to verify driver (Bearer token for Mobile App or NextAuth for Web Portal)
 async function verifyDriver(req: Request) {
@@ -181,6 +182,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             ? `https://waze.com/ul?q=${encodeURIComponent(primaryDestination)}&navigate=yes`
             : null;
 
+        const { needsTakeover, handoverDetails } = extractHandoverNavigation(booking);
+
         return NextResponse.json({
             success: true,
             data: {
@@ -189,6 +192,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 customerEmail,
                 vehicle,
                 itineraryDays,
+                needsTakeover,
+                handoverDetails,
                 navigation: {
                     target: primaryDestination,
                     googleMapsUrl: googleMapsNavUrl,

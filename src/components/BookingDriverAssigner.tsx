@@ -26,6 +26,7 @@ interface BookingDriverAssignerProps {
     pendingHandoverRequest?: {
         reason?: string;
         meterReading?: string;
+        location?: string;
         note?: string;
         timestamp?: Date | string;
     } | null;
@@ -45,6 +46,7 @@ export function BookingDriverAssigner({
     const [selectedDriverId, setSelectedDriverId] = useState(currentDriver?.id || '');
     const [handoverReason, setHandoverReason] = useState(pendingHandoverRequest?.reason || 'Medical / Sickness');
     const [handoverMeterReading, setHandoverMeterReading] = useState(pendingHandoverRequest?.meterReading || '');
+    const [handoverLocation, setHandoverLocation] = useState(pendingHandoverRequest?.location || '');
     const [handoverNotes, setHandoverNotes] = useState(pendingHandoverRequest?.note || '');
     const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +67,7 @@ export function BookingDriverAssigner({
             const handoverOptions = isOngoing && selectedDriverId !== currentDriver?.id ? {
                 reason: handoverReason,
                 handoverMeterReading: handoverMeterReading.trim(),
+                location: handoverLocation.trim() || undefined,
                 notes: handoverNotes.trim() || undefined,
             } : undefined;
 
@@ -90,6 +93,7 @@ export function BookingDriverAssigner({
         setSelectedDriverId(currentDriver?.id || '');
         setHandoverReason('Medical / Sickness');
         setHandoverMeterReading('');
+        setHandoverLocation('');
         setHandoverNotes('');
         setError(null);
         setIsEditing(false);
@@ -183,16 +187,32 @@ export function BookingDriverAssigner({
                                     </div>
                                     <div>
                                         <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">
-                                            Handover Location / Note
+                                            Handover Location (Meet Point)
                                         </label>
                                         <input
                                             type="text"
-                                            value={handoverNotes}
-                                            onChange={(e) => setHandoverNotes(e.target.value)}
-                                            placeholder="e.g. Handover at Kandy Clock Tower"
+                                            value={handoverLocation}
+                                            onChange={(e) => setHandoverLocation(e.target.value)}
+                                            placeholder="e.g. Kandy Clock Tower"
                                             className="w-full text-xs rounded-md border border-input bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                                         />
+                                        <span className="text-[10px] text-muted-foreground mt-0.5 block">
+                                            Used by replacement driver for Google Maps navigation
+                                        </span>
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">
+                                        Handover Notes / Instructions
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={handoverNotes}
+                                        onChange={(e) => setHandoverNotes(e.target.value)}
+                                        placeholder="e.g. Passengers waiting inside hotel lobby"
+                                        className="w-full text-xs rounded-md border border-input bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                                    />
                                 </div>
                             </div>
                         )}

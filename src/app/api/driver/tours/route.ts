@@ -5,6 +5,8 @@ import jwt from 'jsonwebtoken';
 import { auth } from '@/lib/auth';
 import { getJwtSecret } from '@/lib/jwt';
 
+import { extractHandoverNavigation } from '@/lib/handover-navigation';
+
 export async function GET(req: Request) {
     try {
         let driverId: string | null = null;
@@ -49,6 +51,21 @@ export async function GET(req: Request) {
                         in: ['CONFIRMED', 'PENDING', 'ONGOING'] // Ongoing or upcoming
                     }
                 },
+                include: {
+                    tripActivities: {
+                        orderBy: { timestamp: 'desc' },
+                        take: 10,
+                    },
+                    driverLocations: {
+                        orderBy: { timestamp: 'desc' },
+                        take: 1,
+                        select: {
+                            lat: true,
+                            lon: true,
+                            timestamp: true,
+                        }
+                    }
+                },
                 orderBy: {
                     startDate: 'asc'
                 }
@@ -68,9 +85,18 @@ export async function GET(req: Request) {
             })
         ]);
 
+        const enrichedTours = tours.map((tour) => {
+            const { needsTakeover, handoverDetails } = extractHandoverNavigation(tour);
+            return {
+                ...tour,
+                needsTakeover,
+                handoverDetails,
+            };
+        });
+
         return NextResponse.json({
             success: true,
-            data: tours,
+            data: enrichedTours,
             driver: driverUser ? {
                 id: driverUser.id,
                 name: driverUser.name,

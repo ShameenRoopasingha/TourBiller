@@ -331,9 +331,10 @@ export async function assignDriverToBooking(
             if (booking.status === 'ONGOING' && previousDriverId && previousDriverId !== driverId) {
                 const meterText = handoverOptions?.handoverMeterReading ? `Meter: ${handoverOptions.handoverMeterReading} km` : null;
                 const reasonText = handoverOptions?.reason ? `Reason: ${handoverOptions.reason}` : null;
+                const locText = handoverOptions?.location ? `Location: ${handoverOptions.location}` : null;
                 const notesText = handoverOptions?.notes ? `Notes: ${handoverOptions.notes}` : null;
                 
-                const details = [meterText, reasonText, notesText].filter(Boolean).join(' | ');
+                const details = [meterText, reasonText, locText, notesText].filter(Boolean).join(' | ');
                 const handoverNote = `Mid-Tour Handover: Reassigned from ${previousDriverName} to ${newDriverName}.${details ? ` (${details})` : ''}`;
 
                 await tx.tripActivity.create({
