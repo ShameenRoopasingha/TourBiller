@@ -33,12 +33,77 @@ export function isDispatchAudioEnabled(): boolean {
     return stored === null ? true : stored === 'true';
 }
 
+let repeatingAlarmTimer: ReturnType<typeof setInterval> | null = null;
+let currentLoopType: 'BREAKDOWN' | 'HANDOVER' | null = null;
+
+export function isAlarmLoopActive(): boolean {
+    return repeatingAlarmTimer !== null;
+}
+
+export function getCurrentAlarmType(): 'BREAKDOWN' | 'HANDOVER' | null {
+    return currentLoopType;
+}
+
 export function setDispatchAudioEnabled(enabled: boolean): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem('vigil_dispatch_audio_enabled', enabled ? 'true' : 'false');
     if (!enabled) {
+        stopRepeatingAlarm();
         stopDispatchAudio();
     }
+}
+
+/**
+ * Start a continuous repeating alarm loop until stopRepeatingAlarm() is called
+ * (Plays immediately, then repeats every intervalSeconds until admin responds)
+ */
+export function startRepeatingAlarm(type: 'BREAKDOWN' | 'HANDOVER', intervalSeconds = 5.5): void {
+    if (!isDispatchAudioEnabled()) return;
+    
+    // If already looping the same or higher priority alarm, keep it running
+    if (repeatingAlarmTimer && currentLoopType === 'BREAKDOWN' && type === 'HANDOVER') {
+        return; // Don't downgrade breakdown to handover
+    }
+
+    if (repeatingAlarmTimer && currentLoopType === type) {
+        return; // Already actively looping this type
+    }
+
+    stopRepeatingAlarm();
+
+    currentLoopType = type;
+
+    // Play immediately
+    if (type === 'BREAKDOWN') {
+        playBreakdownAlarm();
+    } else {
+        playHandoverChime();
+    }
+
+    // Schedule repeating loop
+    repeatingAlarmTimer = setInterval(() => {
+        if (!isDispatchAudioEnabled()) {
+            stopRepeatingAlarm();
+            return;
+        }
+        if (currentLoopType === 'BREAKDOWN') {
+            playBreakdownAlarm();
+        } else if (currentLoopType === 'HANDOVER') {
+            playHandoverChime();
+        }
+    }, intervalSeconds * 1000);
+}
+
+/**
+ * Stop the continuous repeating alarm loop
+ */
+export function stopRepeatingAlarm(): void {
+    if (repeatingAlarmTimer) {
+        clearInterval(repeatingAlarmTimer);
+        repeatingAlarmTimer = null;
+    }
+    currentLoopType = null;
+    stopDispatchAudio();
 }
 
 /**

@@ -5,7 +5,7 @@ import { Bell, AlertTriangle, FileText, Calendar, Banknote, ShieldAlert } from '
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { playBreakdownAlarm, playHandoverChime } from '@/lib/dispatch-audio';
+import { fireEmergencySystemNotification } from '@/lib/system-notifications';
 
 type DashboardAlert = { id: string; entityId?: string; title: string; message: string; type: string };
 
@@ -32,7 +32,7 @@ export function NotificationBell() {
                         !(a.type === 'EXPENSE' && dismissed.includes(a.id))
                     );
                     
-                    // Trigger sound alerts if a new breakdown or handover arrives
+                    // Trigger sound & OS notifications if a new breakdown or handover arrives
                     const currentBreakdowns = new Set<string>(
                         filteredAlerts.filter((a: DashboardAlert) => a.type === 'BREAKDOWN').map((a: DashboardAlert) => a.id)
                     );
@@ -41,13 +41,25 @@ export function NotificationBell() {
                     );
 
                     if (!isFirstBellLoadRef.current) {
-                        const hasNewBreakdown = Array.from(currentBreakdowns).some(id => !prevBreakdownsRef.current.has(id));
-                        const hasNewHandover = Array.from(currentHandovers).some(id => !prevHandoversRef.current.has(id));
+                        const newBreakdown = filteredAlerts.find((a: DashboardAlert) => a.type === 'BREAKDOWN' && !prevBreakdownsRef.current.has(a.id));
+                        const newHandover = filteredAlerts.find((a: DashboardAlert) => a.type === 'HANDOVER' && !prevHandoversRef.current.has(a.id));
 
-                        if (hasNewBreakdown) {
-                            playBreakdownAlarm();
-                        } else if (hasNewHandover) {
-                            playHandoverChime();
+                        if (newBreakdown) {
+                            fireEmergencySystemNotification({
+                                type: 'BREAKDOWN',
+                                vehicleNo: newBreakdown.title || 'Fleet Vehicle',
+                                driverName: 'Dispatch Alert',
+                                details: newBreakdown.message,
+                                bookingId: newBreakdown.entityId,
+                            });
+                        } else if (newHandover) {
+                            fireEmergencySystemNotification({
+                                type: 'HANDOVER',
+                                vehicleNo: newHandover.title || 'Fleet Vehicle',
+                                driverName: 'Dispatch Alert',
+                                details: newHandover.message,
+                                bookingId: newHandover.entityId,
+                            });
                         }
                     } else {
                         isFirstBellLoadRef.current = false;

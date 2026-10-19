@@ -17,6 +17,7 @@ import { SignOutButton } from '@/components/SignOutButton'
 import { AmbientAtmosphere } from '@/components/layout/ambient-atmosphere'
 import { ThemeSwitcher } from '@/components/layout/theme-switcher'
 import ChatAssistant from '@/components/ChatAssistant'
+import { EmergencyDispatchBanner } from '@/components/EmergencyDispatchBanner'
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -90,6 +91,7 @@ export default async function RootLayout({
                   </div>
 
                   <SidebarInset className="flex flex-1 min-w-0 flex-col bg-transparent relative">
+                    <EmergencyDispatchBanner />
                     {/* Global Topbar */}
                     <header className="flex h-auto md:h-16 shrink-0 items-center justify-between gap-2 border-b border-border/60 px-4 md:px-6 print:hidden backdrop-blur-md bg-background/80 z-30 sticky top-0 pt-notch-safe pb-2.5 md:pt-0 md:pb-0">
                       <div className="flex items-center gap-2">

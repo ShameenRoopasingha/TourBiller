@@ -22,7 +22,8 @@ import {
     ShieldAlert,
     Wrench,
     Volume2,
-    VolumeX
+    VolumeX,
+    Bell
 } from 'lucide-react';
 import { ActiveTourVehicle } from '@/components/FleetLiveMap';
 import { 
@@ -33,6 +34,12 @@ import {
     setDispatchAudioEnabled, 
     unlockDispatchAudio 
 } from '@/lib/dispatch-audio';
+import { 
+    fireEmergencySystemNotification, 
+    requestSystemNotificationPermission, 
+    getSystemNotificationPermission, 
+    registerDispatchServiceWorker 
+} from '@/lib/system-notifications';
 
 // Dynamically import FleetLiveMap to avoid SSR leaflet window errors
 const FleetLiveMap = dynamic(
@@ -61,12 +68,16 @@ export default function LiveTrackingPage() {
     const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
     const [showSoundPopover, setShowSoundPopover] = useState<boolean>(false);
 
+    const [notifPermission, setNotifPermission] = useState<string>('default');
+
     const prevBreakdownsRef = useRef<Set<string>>(new Set());
     const prevHandoversRef = useRef<Set<string>>(new Set());
     const isInitialLoadRef = useRef<boolean>(true);
 
     useEffect(() => {
         setSoundEnabled(isDispatchAudioEnabled());
+        registerDispatchServiceWorker();
+        setNotifPermission(getSystemNotificationPermission());
     }, []);
 
     const fetchLiveLocations = useCallback(async (manual = false) => {
@@ -80,7 +91,7 @@ export default function LiveTrackingPage() {
                 setLastUpdated(new Date());
                 setError(null);
 
-                // Detect newly reported breakdowns or handovers to play distinct alert sounds
+                // Detect newly reported breakdowns or handovers to play distinct alert sounds & trigger OS notifications
                 const currentBreakdowns = new Set<string>(
                     tours.filter(t => t.hasPendingBreakdown).map(t => t.id)
                 );
@@ -89,13 +100,25 @@ export default function LiveTrackingPage() {
                 );
 
                 if (!isInitialLoadRef.current) {
-                    const hasNewBreakdown = Array.from(currentBreakdowns).some(id => !prevBreakdownsRef.current.has(id));
-                    const hasNewHandover = Array.from(currentHandovers).some(id => !prevHandoversRef.current.has(id));
+                    const newBreakdownTour = tours.find(t => t.hasPendingBreakdown && !prevBreakdownsRef.current.has(t.id));
+                    const newHandoverTour = tours.find(t => t.hasPendingHandover && !prevHandoversRef.current.has(t.id));
 
-                    if (hasNewBreakdown) {
-                        playBreakdownAlarm();
-                    } else if (hasNewHandover) {
-                        playHandoverChime();
+                    if (newBreakdownTour) {
+                        fireEmergencySystemNotification({
+                            type: 'BREAKDOWN',
+                            vehicleNo: newBreakdownTour.vehicleNo,
+                            driverName: newBreakdownTour.driverName,
+                            details: newBreakdownTour.breakdownDetails?.reason,
+                            bookingId: newBreakdownTour.bookingId,
+                        });
+                    } else if (newHandoverTour) {
+                        fireEmergencySystemNotification({
+                            type: 'HANDOVER',
+                            vehicleNo: newHandoverTour.vehicleNo,
+                            driverName: newHandoverTour.driverName,
+                            details: newHandoverTour.handoverDetails?.reason,
+                            bookingId: newHandoverTour.bookingId,
+                        });
                     }
                 } else {
                     isInitialLoadRef.current = false;
@@ -266,6 +289,19 @@ export default function LiveTrackingPage() {
                                     <p className="text-[11px] text-slate-400 leading-tight">
                                         Distinct sirens play when new vehicle breakdowns or mid-tour handovers are reported.
                                     </p>
+                                    {notifPermission !== 'granted' && (
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const res = await requestSystemNotificationPermission();
+                                                setNotifPermission(res);
+                                            }}
+                                            className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition shadow active:scale-95"
+                                        >
+                                            <Bell className="w-3.5 h-3.5" />
+                                            <span>Enable Background Popups</span>
+                                        </button>
+                                    )}
                                     <div className="space-y-1.5 pt-1">
                                         <button
                                             type="button"
@@ -698,6 +734,7 @@ export default function LiveTrackingPage() {
                                     </div>
                                     <a
                                         href={`/bookings/${selectedVehicle.bookingId}#swap-section`}
+                                        onClick={() => stopDispatchAudio()}
                                         className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-lg shadow-md transition"
                                     >
                                         <Wrench className="w-3.5 h-3.5" />
@@ -723,6 +760,7 @@ export default function LiveTrackingPage() {
                                     </div>
                                     <a
                                         href={`/bookings/${selectedVehicle.bookingId}#handover-section`}
+                                        onClick={() => stopDispatchAudio()}
                                         className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg shadow-md transition"
                                     >
                                         <User className="w-3.5 h-3.5" />
