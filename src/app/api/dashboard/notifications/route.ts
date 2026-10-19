@@ -17,7 +17,7 @@ export async function GET() {
         dayAfterTomorrow.setDate(todayStart.getDate() + 2);
         const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
-        const [vehicles, pendingTours] = await Promise.all([
+        const [vehicles, pendingTours, pendingRequests] = await Promise.all([
             prisma.vehicle.findMany({
                 where: { companyId, status: 'ACTIVE' },
                 select: {
@@ -37,6 +37,35 @@ export async function GET() {
             prisma.booking.findMany({
                 where: { companyId, status: 'COMPLETED' },
                 select: { id: true, vehicleNo: true, customerName: true },
+            }),
+            prisma.tripActivity.findMany({
+                where: {
+                    companyId,
+                    type: { in: ['HANDOVER_REQUESTED', 'BREAKDOWN_REPORTED'] },
+                    booking: {
+                        status: { in: ['CONFIRMED', 'ONGOING', 'OVERDUE'] },
+                    },
+                },
+                include: {
+                    booking: {
+                        select: {
+                            id: true,
+                            vehicleNo: true,
+                            customerName: true,
+                            tripActivities: {
+                                where: { type: { in: ['HANDOVER', 'VEHICLE_SWAPPED'] } },
+                                select: { type: true, timestamp: true },
+                                orderBy: { timestamp: 'desc' },
+                                take: 1,
+                            },
+                        },
+                    },
+                    driver: {
+                        select: { name: true },
+                    },
+                },
+                orderBy: { timestamp: 'desc' },
+                take: 10,
             }),
         ]);
 
@@ -96,7 +125,37 @@ export async function GET() {
             type: 'EXPENSE',
         }));
 
-        return NextResponse.json({ success: true, data: { maintenanceAlerts: [...maintenanceAlerts, ...billingAlerts, ...upcomingAlerts, ...expenseAlerts] } });
+        const urgentDispatchAlerts = pendingRequests.filter((activity) => {
+            const latestResolution = activity.booking?.tripActivities?.[0];
+            if (!latestResolution) return true;
+            return new Date(activity.timestamp) > new Date(latestResolution.timestamp);
+        }).map((activity) => {
+            const isBreakdown = activity.type === 'BREAKDOWN_REPORTED';
+            const vehicle = activity.booking?.vehicleNo || 'Tour';
+            const driverName = activity.driver?.name || 'Driver';
+            return {
+                id: `dispatch-${activity.id}`,
+                entityId: activity.booking?.id,
+                title: isBreakdown ? `🚨 Breakdown: ${vehicle}` : `⚠️ Handover: ${vehicle}`,
+                message: isBreakdown
+                    ? `Driver ${driverName} reported a vehicle defect. Action required.`
+                    : `Driver ${driverName} requested mid-tour driver handover (${activity.note || ''}).`,
+                type: isBreakdown ? 'BREAKDOWN' : 'HANDOVER',
+            };
+        });
+
+        return NextResponse.json({ 
+            success: true, 
+            data: { 
+                maintenanceAlerts: [
+                    ...urgentDispatchAlerts,
+                    ...maintenanceAlerts, 
+                    ...billingAlerts, 
+                    ...upcomingAlerts, 
+                    ...expenseAlerts
+                ] 
+            } 
+        });
     } catch (error) {
         console.error('API error fetching notifications:', error);
         return NextResponse.json({ success: false, error: 'Failed to fetch notifications' }, { status: 500 });

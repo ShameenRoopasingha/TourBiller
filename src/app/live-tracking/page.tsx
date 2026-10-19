@@ -17,7 +17,10 @@ import {
     ListFilter,
     X,
     ExternalLink,
-    Compass
+    Compass,
+    AlertTriangle,
+    ShieldAlert,
+    Wrench
 } from 'lucide-react';
 import { ActiveTourVehicle } from '@/components/FleetLiveMap';
 
@@ -32,7 +35,7 @@ const FleetLiveMap = dynamic(
     ) }
 );
 
-type StatusFilter = 'all' | 'moving' | 'parked' | 'offline';
+type StatusFilter = 'all' | 'moving' | 'parked' | 'offline' | 'alerts';
 
 export default function LiveTrackingPage() {
     const [vehicles, setVehicles] = useState<ActiveTourVehicle[]>([]);
@@ -82,6 +85,7 @@ export default function LiveTrackingPage() {
     const movingCount = vehicles.filter(v => v.isFresh && v.speed > 5).length;
     const stationaryCount = vehicles.filter(v => v.isFresh && v.speed <= 5).length;
     const offlineCount = vehicles.filter(v => !v.isFresh || v.lat === null).length;
+    const alertCount = vehicles.filter(v => v.hasPendingHandover || v.hasPendingBreakdown).length;
 
     // Filter vehicles by search query & status filter
     const filteredVehicles = vehicles.filter(v => {
@@ -94,6 +98,7 @@ export default function LiveTrackingPage() {
 
         if (!matchesSearch) return false;
 
+        if (statusFilter === 'alerts') return !!(v.hasPendingHandover || v.hasPendingBreakdown);
         if (statusFilter === 'moving') return v.isFresh && v.speed > 5;
         if (statusFilter === 'parked') return v.isFresh && v.speed <= 5;
         if (statusFilter === 'offline') return !v.isFresh || v.lat === null;
@@ -238,6 +243,24 @@ export default function LiveTrackingPage() {
                         </span>
                     </button>
 
+                    {alertCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('alerts')}
+                            className={`px-2.5 py-1 rounded-full border transition flex items-center gap-1.5 shrink-0 ${
+                                statusFilter === 'alerts'
+                                    ? 'bg-amber-500 text-slate-950 font-bold border-amber-400'
+                                    : 'bg-amber-950/70 border-amber-500/60 text-amber-300 hover:bg-amber-950/90 animate-pulse'
+                            }`}
+                        >
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            <span>Dispatch Alerts</span>
+                            <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 rounded-full text-[10px] font-black">
+                                {alertCount}
+                            </span>
+                        </button>
+                    )}
+
                     {offlineCount > 0 && (
                         <button
                             type="button"
@@ -333,17 +356,31 @@ export default function LiveTrackingPage() {
                                         className={`p-3 sm:p-3.5 cursor-pointer transition flex flex-col gap-2 ${
                                             isSelected 
                                                 ? 'bg-slate-800/90 border-l-4 border-amber-400' 
-                                                : 'hover:bg-slate-800/50 active:bg-slate-800/70'
+                                                : tour.hasPendingBreakdown
+                                                    ? 'bg-red-950/20 border-l-4 border-red-500 hover:bg-red-950/30'
+                                                    : tour.hasPendingHandover
+                                                        ? 'bg-amber-950/20 border-l-4 border-amber-500 hover:bg-amber-950/30'
+                                                        : 'hover:bg-slate-800/50 active:bg-slate-800/70'
                                         }`}
                                     >
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="flex items-center gap-2.5 min-w-0">
                                                 <div className={`p-2 rounded-lg shrink-0 ${
-                                                    tour.isFresh 
-                                                        ? (isMoving ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400')
-                                                        : 'bg-slate-800 text-slate-400'
+                                                    tour.hasPendingBreakdown
+                                                        ? 'bg-red-500/20 text-red-400 animate-pulse'
+                                                        : tour.hasPendingHandover
+                                                            ? 'bg-amber-500/20 text-amber-400 animate-pulse'
+                                                            : tour.isFresh 
+                                                                ? (isMoving ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400')
+                                                                : 'bg-slate-800 text-slate-400'
                                                 }`}>
-                                                    <Car className="w-4 h-4" />
+                                                    {tour.hasPendingBreakdown ? (
+                                                        <ShieldAlert className="w-4 h-4 text-red-400" />
+                                                    ) : tour.hasPendingHandover ? (
+                                                        <AlertTriangle className="w-4 h-4 text-amber-400" />
+                                                    ) : (
+                                                        <Car className="w-4 h-4" />
+                                                    )}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-sm text-white flex items-center gap-1.5 truncate">
@@ -361,19 +398,47 @@ export default function LiveTrackingPage() {
 
                                             <div className="text-right shrink-0">
                                                 <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                    tour.isFresh 
-                                                        ? (isMoving ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-blue-950 text-blue-300 border border-blue-800')
-                                                        : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                                    tour.hasPendingBreakdown
+                                                        ? 'bg-red-950 text-red-300 border border-red-800 animate-pulse'
+                                                        : tour.hasPendingHandover
+                                                            ? 'bg-amber-950 text-amber-300 border border-amber-800 animate-pulse'
+                                                            : tour.isFresh 
+                                                                ? (isMoving ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-blue-950 text-blue-300 border border-blue-800')
+                                                                : 'bg-slate-800 text-slate-400 border border-slate-700'
                                                 }`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${
-                                                        tour.isFresh 
-                                                            ? (isMoving ? 'bg-emerald-400 animate-pulse' : 'bg-blue-400')
-                                                            : 'bg-slate-500'
+                                                        tour.hasPendingBreakdown
+                                                            ? 'bg-red-400'
+                                                            : tour.hasPendingHandover
+                                                                ? 'bg-amber-400'
+                                                                : tour.isFresh 
+                                                                    ? (isMoving ? 'bg-emerald-400 animate-pulse' : 'bg-blue-400')
+                                                                    : 'bg-slate-500'
                                                     }`}></span>
-                                                    {tour.isFresh ? `${Math.round(tour.speed)} km/h` : 'No Signal'}
+                                                    {tour.hasPendingBreakdown ? 'Breakdown' : tour.hasPendingHandover ? 'Handover' : tour.isFresh ? `${Math.round(tour.speed)} km/h` : 'No Signal'}
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {tour.hasPendingBreakdown && (
+                                            <div className="flex items-center justify-between text-[11px] font-bold text-red-300 bg-red-950/80 border border-red-500/40 px-2 py-1 rounded animate-pulse">
+                                                <div className="flex items-center gap-1.5 truncate">
+                                                    <ShieldAlert className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                                                    <span className="truncate">Breakdown: {tour.breakdownDetails?.reason || 'Defect reported'}</span>
+                                                </div>
+                                                <span className="text-[10px] underline ml-2 shrink-0">Swap</span>
+                                            </div>
+                                        )}
+
+                                        {tour.hasPendingHandover && (
+                                            <div className="flex items-center justify-between text-[11px] font-bold text-amber-300 bg-amber-950/80 border border-amber-500/40 px-2 py-1 rounded animate-pulse">
+                                                <div className="flex items-center gap-1.5 truncate">
+                                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                                    <span className="truncate">Handover: {tour.handoverDetails?.reason || 'Driver request'}</span>
+                                                </div>
+                                                <span className="text-[10px] underline ml-2 shrink-0">Review</span>
+                                            </div>
+                                        )}
 
                                         <div className="text-xs text-slate-400 space-y-0.5 pl-1">
                                             <div className="truncate">
@@ -477,6 +542,60 @@ export default function LiveTrackingPage() {
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
+
+                            {/* Urgent Dispatch Action Banners */}
+                            {selectedVehicle.hasPendingBreakdown && (
+                                <div className="mb-3 p-3 bg-red-950/80 border-2 border-red-500/80 rounded-xl space-y-2 animate-pulse shadow-lg">
+                                    <div className="flex items-center gap-2 font-bold text-xs text-red-300">
+                                        <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                                        <span>🚨 VEHICLE BREAKDOWN REPORTED</span>
+                                    </div>
+                                    <div className="text-[11px] space-y-0.5 text-red-100">
+                                        <div><span className="text-red-400 font-semibold">Reported Issue:</span> {selectedVehicle.breakdownDetails?.reason || 'Vehicle defect'}</div>
+                                        {selectedVehicle.breakdownDetails?.meterReading && (
+                                            <div><span className="text-red-400 font-semibold">Odometer:</span> {selectedVehicle.breakdownDetails.meterReading} km</div>
+                                        )}
+                                        {selectedVehicle.breakdownDetails?.location && (
+                                            <div><span className="text-red-400 font-semibold">Location:</span> {selectedVehicle.breakdownDetails.location}</div>
+                                        )}
+                                        {selectedVehicle.breakdownDetails?.note && (
+                                            <div><span className="text-red-400 font-semibold">Notes:</span> {selectedVehicle.breakdownDetails.note}</div>
+                                        )}
+                                    </div>
+                                    <a
+                                        href={`/bookings/${selectedVehicle.bookingId}#swap-section`}
+                                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-lg shadow-md transition"
+                                    >
+                                        <Wrench className="w-3.5 h-3.5" />
+                                        <span>⚡ Dispatch Emergency Vehicle Swap</span>
+                                    </a>
+                                </div>
+                            )}
+
+                            {selectedVehicle.hasPendingHandover && (
+                                <div className="mb-3 p-3 bg-amber-950/80 border-2 border-amber-500/80 rounded-xl space-y-2 animate-pulse shadow-lg">
+                                    <div className="flex items-center gap-2 font-bold text-xs text-amber-300">
+                                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                                        <span>⚠️ MID-TOUR HANDOVER REQUESTED</span>
+                                    </div>
+                                    <div className="text-[11px] space-y-0.5 text-amber-100">
+                                        <div><span className="text-amber-400 font-semibold">Reason:</span> {selectedVehicle.handoverDetails?.reason || 'Driver request'}</div>
+                                        {selectedVehicle.handoverDetails?.meterReading && (
+                                            <div><span className="text-amber-400 font-semibold">Odometer:</span> {selectedVehicle.handoverDetails.meterReading} km</div>
+                                        )}
+                                        {selectedVehicle.handoverDetails?.note && (
+                                            <div><span className="text-amber-400 font-semibold">Location/Note:</span> {selectedVehicle.handoverDetails.note}</div>
+                                        )}
+                                    </div>
+                                    <a
+                                        href={`/bookings/${selectedVehicle.bookingId}#handover-section`}
+                                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg shadow-md transition"
+                                    >
+                                        <User className="w-3.5 h-3.5" />
+                                        <span>⚡ Reassign Replacement Driver</span>
+                                    </a>
+                                </div>
+                            )}
 
                             {/* Details List */}
                             <div className="space-y-2.5 text-xs">

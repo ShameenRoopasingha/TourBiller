@@ -131,6 +131,19 @@ export async function getBookings(searchQuery?: string): Promise<ActionResult<Bo
                         email: true,
                     },
                 },
+                tripActivities: {
+                    where: {
+                        type: { in: ['HANDOVER_REQUESTED', 'HANDOVER', 'BREAKDOWN_REPORTED', 'VEHICLE_SWAPPED'] }
+                    },
+                    select: {
+                        id: true,
+                        type: true,
+                        note: true,
+                        timestamp: true,
+                    },
+                    orderBy: { timestamp: 'desc' },
+                    take: 4,
+                },
             },
             orderBy: { createdAt: 'desc' },
         });

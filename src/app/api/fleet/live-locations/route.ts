@@ -42,11 +42,21 @@ export async function GET(req: Request) {
 
         const companyId = authUser.companyId;
 
-        // 1. Fetch active ongoing tours
+        // 1. Fetch active ongoing tours or tours with urgent dispatch alerts
         const activeBookings = await prisma.booking.findMany({
             where: {
                 companyId: companyId,
-                status: 'ONGOING'
+                OR: [
+                    { status: { in: ['ONGOING', 'OVERDUE'] } },
+                    {
+                        status: 'CONFIRMED',
+                        tripActivities: {
+                            some: {
+                                type: { in: ['HANDOVER_REQUESTED', 'BREAKDOWN_REPORTED'] }
+                            }
+                        }
+                    }
+                ]
             },
             include: {
                 driver: {
@@ -59,6 +69,19 @@ export async function GET(req: Request) {
                         lastLocationAt: true,
                         isLiveTracking: true,
                     }
+                },
+                tripActivities: {
+                    where: {
+                        type: { in: ['HANDOVER_REQUESTED', 'HANDOVER', 'BREAKDOWN_REPORTED', 'VEHICLE_SWAPPED'] }
+                    },
+                    select: {
+                        id: true,
+                        type: true,
+                        note: true,
+                        timestamp: true,
+                    },
+                    orderBy: { timestamp: 'desc' },
+                    take: 4,
                 }
             },
             orderBy: {
@@ -93,6 +116,44 @@ export async function GET(req: Request) {
             // Check if active in the last 5 minutes
             const isFresh = lastAt ? (nowMs - new Date(lastAt).getTime() < 5 * 60 * 1000) : false;
 
+            const handoverReq = b.tripActivities?.find(a => a.type === 'HANDOVER_REQUESTED');
+            const handoverDone = b.tripActivities?.find(a => a.type === 'HANDOVER');
+            const hasPendingHandover = !!handoverReq && (!handoverDone || new Date(handoverReq.timestamp) > new Date(handoverDone.timestamp));
+
+            let handoverDetails = null;
+            if (hasPendingHandover && handoverReq) {
+                const noteText = handoverReq.note || '';
+                const reasonMatch = noteText.match(/Reason:\s*([^|]+)/i);
+                const meterMatch = noteText.match(/Meter:\s*([0-9.]+)/i);
+                const locationMatch = noteText.match(/(?:Location\/Note|Note):\s*(.+)/i);
+                handoverDetails = {
+                    reason: reasonMatch ? reasonMatch[1].trim() : 'Mid-Tour Handover Requested',
+                    meterReading: meterMatch ? meterMatch[1].trim() : '',
+                    note: locationMatch ? locationMatch[1].trim() : '',
+                    timestamp: handoverReq.timestamp,
+                };
+            }
+
+            const breakdownReq = b.tripActivities?.find(a => a.type === 'BREAKDOWN_REPORTED');
+            const swapped = b.tripActivities?.find(a => a.type === 'VEHICLE_SWAPPED');
+            const hasPendingBreakdown = !!breakdownReq && (!swapped || new Date(breakdownReq.timestamp) > new Date(swapped.timestamp));
+
+            let breakdownDetails = null;
+            if (hasPendingBreakdown && breakdownReq) {
+                const noteText = breakdownReq.note || '';
+                const issueMatch = noteText.match(/Issue:\s*([^|]+)/i);
+                const meterMatch = noteText.match(/Meter:\s*([0-9.]+)/i);
+                const locMatch = noteText.match(/Location:\s*([^|]+)/i);
+                const notesMatch = noteText.match(/Notes:\s*(.+)/i);
+                breakdownDetails = {
+                    reason: issueMatch ? issueMatch[1].trim() : 'Vehicle Breakdown Reported',
+                    meterReading: meterMatch ? meterMatch[1].trim() : '',
+                    location: locMatch ? locMatch[1].trim() : '',
+                    note: notesMatch ? notesMatch[1].trim() : '',
+                    timestamp: breakdownReq.timestamp,
+                };
+            }
+
             return {
                 id: b.id,
                 bookingId: b.id,
@@ -102,7 +163,6 @@ export async function GET(req: Request) {
                 vehicleCategory: vehicleInfo?.category || 'HIRE',
                 isExternalVehicle: !vehicleInfo,
                 driverId: b.driverId,
-
                 driverName: b.driver?.name || 'Unassigned',
                 driverEmail: b.driver?.email || '',
                 pickupLocation: b.pickupLocation,
@@ -117,6 +177,10 @@ export async function GET(req: Request) {
                 lastLocationAt: lastAt,
                 isFresh,
                 isLiveTracking: b.driver?.isLiveTracking ?? false,
+                hasPendingHandover,
+                handoverDetails,
+                hasPendingBreakdown,
+                breakdownDetails,
             };
         });
 

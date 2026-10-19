@@ -96,11 +96,15 @@ export default async function BookingDetailsPage(props: {
     }
 
     const isOngoing = displayStatus === 'ONGOING' || displayStatus === 'OVERDUE';
+    const isTourActive = ['CONFIRMED', 'ONGOING', 'OVERDUE'].includes(booking.status) || isOngoing;
 
     // Check if there is an unresolved handover request from the driver
     const handoverReqActivity = booking.tripActivities?.find(a => a.type === 'HANDOVER_REQUESTED');
+    const handoverDoneActivity = booking.tripActivities?.find(a => a.type === 'HANDOVER');
+    const isHandoverPending = handoverReqActivity && (!handoverDoneActivity || new Date(handoverReqActivity.timestamp) > new Date(handoverDoneActivity.timestamp));
+
     let pendingHandoverRequest: { reason: string; meterReading: string; note: string; timestamp: Date | string } | null = null;
-    if (handoverReqActivity && isOngoing) {
+    if (isHandoverPending && isTourActive && handoverReqActivity) {
         const noteText = handoverReqActivity.note || '';
         const reasonMatch = noteText.match(/Reason:\s*([^|]+)/i);
         const meterMatch = noteText.match(/Meter:\s*([0-9.]+)/i);
@@ -117,8 +121,10 @@ export default async function BookingDetailsPage(props: {
     // Check if there is an unresolved vehicle breakdown report from the driver
     const breakdownReqActivity = booking.tripActivities?.find(a => a.type === 'BREAKDOWN_REPORTED');
     const swappedActivity = booking.tripActivities?.find(a => a.type === 'VEHICLE_SWAPPED');
+    const isBreakdownPending = breakdownReqActivity && (!swappedActivity || new Date(breakdownReqActivity.timestamp) > new Date(swappedActivity.timestamp));
+
     let pendingBreakdownReport: { reason: string; meterReading: string; location: string; note: string; timestamp: Date | string } | null = null;
-    if (breakdownReqActivity && isOngoing && (!swappedActivity || new Date(breakdownReqActivity.timestamp) > new Date(swappedActivity.timestamp))) {
+    if (isBreakdownPending && isTourActive && breakdownReqActivity) {
         const noteText = breakdownReqActivity.note || '';
         const issueMatch = noteText.match(/Issue:\s*([^|]+)/i);
         const meterMatch = noteText.match(/Meter:\s*([0-9.]+)/i);
@@ -292,24 +298,28 @@ export default async function BookingDetailsPage(props: {
                     </div>
 
                     {/* Assigned Vehicle & Emergency Swap */}
-                    <BookingVehicleSwapper
-                        bookingId={booking.id}
-                        currentVehicleNo={booking.vehicleNo}
-                        bookingStatus={displayStatus}
-                        fleetVehicles={fleetVehicles}
-                        isAdmin={auth.role === 'ADMIN' || auth.role === 'OWNER'}
-                        pendingBreakdownReport={pendingBreakdownReport}
-                    />
+                    <div id="swap-section" className="scroll-mt-6">
+                        <BookingVehicleSwapper
+                            bookingId={booking.id}
+                            currentVehicleNo={booking.vehicleNo}
+                            bookingStatus={displayStatus}
+                            fleetVehicles={fleetVehicles}
+                            isAdmin={auth.role === 'ADMIN' || auth.role === 'OWNER'}
+                            pendingBreakdownReport={pendingBreakdownReport}
+                        />
+                    </div>
 
                     {/* Assigned Driver */}
-                    <BookingDriverAssigner
-                        bookingId={booking.id}
-                        bookingStatus={displayStatus}
-                        currentDriver={booking.driver || null}
-                        drivers={drivers}
-                        isAdmin={auth.role === 'ADMIN' || auth.role === 'OWNER'}
-                        pendingHandoverRequest={pendingHandoverRequest}
-                    />
+                    <div id="handover-section" className="scroll-mt-6">
+                        <BookingDriverAssigner
+                            bookingId={booking.id}
+                            bookingStatus={displayStatus}
+                            currentDriver={booking.driver || null}
+                            drivers={drivers}
+                            isAdmin={auth.role === 'ADMIN' || auth.role === 'OWNER'}
+                            pendingHandoverRequest={pendingHandoverRequest}
+                        />
+                    </div>
 
                     {/* Trip Activities & Handover Audit */}
                     {booking.tripActivities && booking.tripActivities.length > 0 && (

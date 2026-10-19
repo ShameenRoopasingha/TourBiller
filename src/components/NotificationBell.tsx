@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, AlertTriangle, FileText, Calendar, Banknote } from 'lucide-react';
+import { Bell, AlertTriangle, FileText, Calendar, Banknote, ShieldAlert } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -118,7 +118,8 @@ export function NotificationBell() {
                         <div className="flex flex-col">
                             {alerts.map((alert, i) => {
                                 let href = '/dashboard';
-                                if (alert.type === 'BILLING') href = '/bills';
+                                if (alert.type === 'HANDOVER' || alert.type === 'BREAKDOWN') href = alert.entityId ? `/bookings/${alert.entityId}` : '/bookings';
+                                else if (alert.type === 'BILLING') href = '/bills';
                                 else if (alert.type === 'TOUR') href = '/bookings';
                                 else if (alert.type === 'MAINTENANCE') href = `/vehicles?expenseVehicleNo=${encodeURIComponent(alert.title)}`;
                                 else if (alert.type === 'EXPENSE') href = '/reports';
@@ -128,23 +129,32 @@ export function NotificationBell() {
                                         key={i} 
                                         href={href}
                                         onClick={() => setOpen(false)}
-                                        className="flex gap-3 p-4 border-b last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
+                                        className={`flex gap-3 p-4 border-b last:border-0 hover:bg-muted/50 transition-colors cursor-pointer ${
+                                            alert.type === 'HANDOVER' ? 'bg-amber-500/5 hover:bg-amber-500/10' :
+                                            alert.type === 'BREAKDOWN' ? 'bg-red-500/5 hover:bg-red-500/10' : ''
+                                        }`}
                                     >
                                         <div className="mt-0.5 flex-shrink-0">
                                             <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                                                alert.type === 'BILLING' ? 'bg-orange-100 dark:bg-orange-900/30' : 
-                                                alert.type === 'TOUR' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                                                alert.type === 'EXPENSE' ? 'bg-green-100 dark:bg-green-900/30' :
-                                                'bg-red-100 dark:bg-red-900/30'
+                                                alert.type === 'HANDOVER' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' :
+                                                alert.type === 'BREAKDOWN' ? 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 animate-pulse' :
+                                                alert.type === 'BILLING' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' : 
+                                                alert.type === 'TOUR' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
+                                                alert.type === 'EXPENSE' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                                                'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                                             }`}>
-                                                {alert.type === 'BILLING' ? (
-                                                    <FileText className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                                {alert.type === 'BREAKDOWN' ? (
+                                                    <ShieldAlert className="h-4 w-4" />
+                                                ) : alert.type === 'HANDOVER' ? (
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                ) : alert.type === 'BILLING' ? (
+                                                    <FileText className="h-4 w-4" />
                                                 ) : alert.type === 'TOUR' ? (
-                                                    <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                                    <Calendar className="h-4 w-4" />
                                                 ) : alert.type === 'EXPENSE' ? (
-                                                    <Banknote className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                                    <Banknote className="h-4 w-4" />
                                                 ) : (
-                                                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                                    <AlertTriangle className="h-4 w-4" />
                                                 )}
                                             </div>
                                         </div>

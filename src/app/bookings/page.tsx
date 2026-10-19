@@ -15,7 +15,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Clock, Eye, User } from 'lucide-react';
+import { Plus, Clock, Eye, User, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { SearchInput } from '@/components/SearchInput';
 
 function EndTourDialog({ vehicleNo, customerName, bookingId }: { vehicleNo: string, customerName: string, bookingId: string }) {
@@ -76,11 +76,19 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                             }
                         }
 
+                        const latestHandoverReq = booking.tripActivities?.find(a => a.type === 'HANDOVER_REQUESTED');
+                        const latestHandoverDone = booking.tripActivities?.find(a => a.type === 'HANDOVER');
+                        const hasPendingHandover = !!latestHandoverReq && (!latestHandoverDone || new Date(latestHandoverReq.timestamp) > new Date(latestHandoverDone.timestamp));
+
+                        const latestBreakdown = booking.tripActivities?.find(a => a.type === 'BREAKDOWN_REPORTED');
+                        const latestSwap = booking.tripActivities?.find(a => a.type === 'VEHICLE_SWAPPED');
+                        const hasPendingBreakdown = !!latestBreakdown && (!latestSwap || new Date(latestBreakdown.timestamp) > new Date(latestSwap.timestamp));
+
                         return (
-                            <Card key={booking.id} className="overflow-hidden">
+                            <Card key={booking.id} className={`overflow-hidden ${hasPendingHandover ? 'border-amber-500/50 bg-amber-500/5' : hasPendingBreakdown ? 'border-red-500/50 bg-red-500/5' : ''}`}>
                                 <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-wrap items-center gap-2">
                                             <span className="font-bold text-lg">{booking.vehicleNo}</span>
                                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${displayStatus === 'CONFIRMED' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
                                                 displayStatus === 'ONGOING' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
@@ -90,6 +98,20 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                                                 }`}>
                                                 {displayStatus}
                                             </span>
+
+                                            {hasPendingHandover && (
+                                                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40 flex items-center gap-1 animate-pulse">
+                                                    <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                                                    Handover Requested
+                                                </span>
+                                            )}
+
+                                            {hasPendingBreakdown && (
+                                                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/40 flex items-center gap-1 animate-pulse">
+                                                    <ShieldAlert className="w-3 h-3 text-red-600 dark:text-red-400 shrink-0" />
+                                                    Breakdown Reported
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="text-sm text-muted-foreground">
                                             Customer: <span className="font-medium text-foreground">{booking.customerName}</span>
@@ -128,6 +150,22 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                                     </div>
 
                                     <div className="flex flex-wrap sm:flex-nowrap gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 justify-end items-center">
+                                        {hasPendingHandover && (
+                                            <Button variant="default" size="sm" asChild className="bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-sm animate-pulse">
+                                                <Link href={`/bookings/${booking.id}#handover-section`}>
+                                                    <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
+                                                    Review Handover
+                                                </Link>
+                                            </Button>
+                                        )}
+                                        {hasPendingBreakdown && (
+                                            <Button variant="default" size="sm" asChild className="bg-red-600 hover:bg-red-700 text-white font-semibold shadow-sm animate-pulse">
+                                                <Link href={`/bookings/${booking.id}#swap-section`}>
+                                                    <ShieldAlert className="w-3.5 h-3.5 mr-1.5" />
+                                                    Vehicle Swap
+                                                </Link>
+                                            </Button>
+                                        )}
                                         {(displayStatus === 'ONGOING' || displayStatus === 'OVERDUE') && (
                                             <EndTourDialog vehicleNo={booking.vehicleNo} customerName={booking.customerName} bookingId={booking.id} />
                                         )}

@@ -23,6 +23,21 @@ export interface ActiveTourVehicle {
     lastLocationAt: string | null;
     isFresh: boolean;
     isLiveTracking: boolean;
+    hasPendingHandover?: boolean;
+    handoverDetails?: {
+        reason?: string;
+        meterReading?: string;
+        note?: string;
+        timestamp?: Date | string;
+    } | null;
+    hasPendingBreakdown?: boolean;
+    breakdownDetails?: {
+        reason?: string;
+        meterReading?: string;
+        location?: string;
+        note?: string;
+        timestamp?: Date | string;
+    } | null;
 }
 
 interface FleetLiveMapProps {
@@ -166,25 +181,64 @@ export function FleetLiveMap({
             hasPoints = true;
             const isSelected = selectedVehicleId === v.id;
             const isMoving = v.speed > 5;
-            const statusColor = v.isFresh ? (isMoving ? '#10b981' : '#3b82f6') : '#9ca3af';
+
+            // Determine pin appearance & priority status
+            let statusColor = v.isFresh ? (isMoving ? '#10b981' : '#3b82f6') : '#9ca3af';
+            let pinEmoji = '🚗';
+            let alertPulseHtml = '';
+            let badgeExtra = '';
+
+            if (v.hasPendingBreakdown) {
+                statusColor = '#ef4444';
+                pinEmoji = '🚨';
+                badgeExtra = `<span style="background:#dc2626; color:white; font-size:9px; padding:1px 4px; border-radius:3px; margin-left:4px; font-weight:bold;">🚨 BREAKDOWN</span>`;
+                alertPulseHtml = `
+                    <span style="
+                        position: absolute;
+                        top: -4px;
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 50%;
+                        background: rgba(239, 68, 68, 0.45);
+                        animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+                    "></span>
+                `;
+            } else if (v.hasPendingHandover) {
+                statusColor = '#f59e0b';
+                pinEmoji = '⚠️';
+                badgeExtra = `<span style="background:#d97706; color:white; font-size:9px; padding:1px 4px; border-radius:3px; margin-left:4px; font-weight:bold;">⚠️ HANDOVER</span>`;
+                alertPulseHtml = `
+                    <span style="
+                        position: absolute;
+                        top: -4px;
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 50%;
+                        background: rgba(245, 158, 11, 0.45);
+                        animation: ping 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+                    "></span>
+                `;
+            } else if (v.isFresh && isMoving) {
+                alertPulseHtml = `
+                    <span style="
+                        position: absolute;
+                        top: 4px;
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 50%;
+                        background: rgba(16, 185, 129, 0.35);
+                        animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+                    "></span>
+                `;
+            }
 
             // HTML Marker with Pulsing radar & Vehicle Badge
             const customIcon = L.divIcon({
                 className: 'fleet-custom-marker',
                 html: `
                     <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-                        <!-- Radar Pulse Animation for active moving vehicle -->
-                        ${v.isFresh && isMoving ? `
-                            <span style="
-                                position: absolute;
-                                top: 4px;
-                                width: 44px;
-                                height: 44px;
-                                border-radius: 50%;
-                                background: rgba(16, 185, 129, 0.35);
-                                animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-                            "></span>
-                        ` : ''}
+                        <!-- Radar Pulse Animation -->
+                        ${alertPulseHtml}
 
                         <!-- Vehicle Pin Icon -->
                         <div style="
@@ -201,10 +255,10 @@ export function FleetLiveMap({
                             font-size: 15px;
                             font-weight: bold;
                             z-index: 10;
-                            transform: ${v.heading ? `rotate(${v.heading}deg)` : 'none'};
+                            transform: ${v.heading && !v.hasPendingBreakdown && !v.hasPendingHandover ? `rotate(${v.heading}deg)` : 'none'};
                             transition: transform 0.3s ease;
                         ">
-                            🚗
+                            ${pinEmoji}
                         </div>
 
                         <!-- Badge Label -->
@@ -218,9 +272,9 @@ export function FleetLiveMap({
                             font-weight: 600;
                             white-space: nowrap;
                             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                            border: ${isSelected ? '1px solid #f59e0b' : '1px solid #334155'};
+                            border: ${isSelected ? '1px solid #f59e0b' : v.hasPendingBreakdown ? '1px solid #ef4444' : v.hasPendingHandover ? '1px solid #f59e0b' : '1px solid #334155'};
                         ">
-                            ${v.vehicleNo} • ${Math.round(v.speed)} km/h
+                            ${v.vehicleNo} • ${Math.round(v.speed)} km/h ${badgeExtra}
                         </div>
                     </div>
                 `,
@@ -238,7 +292,7 @@ export function FleetLiveMap({
 
             // Popup
             const popupContent = `
-                <div style="font-family: inherit; font-size: 13px; line-height: 1.4; min-width: 200px;">
+                <div style="font-family: inherit; font-size: 13px; line-height: 1.4; min-width: 210px;">
                     <div style="font-weight: bold; font-size: 14px; color: #0f172a; margin-bottom: 4px;">
                         ${v.vehicleNo} <span style="font-weight: normal; color: #64748b;">(${v.vehicleModel || 'Vehicle'})</span>
                     </div>
@@ -266,6 +320,23 @@ export function FleetLiveMap({
                             ${v.isFresh ? '● GPS Connected' : '○ Signal Idle'}
                         </span>
                     </div>
+                    ${v.hasPendingBreakdown ? `
+                        <div style="margin-top: 8px; padding: 6px 8px; background: #fee2e2; border: 1px solid #ef4444; border-radius: 6px; color: #991b1b;">
+                            <div style="font-weight: bold; font-size: 11px;">🚨 Breakdown Reported</div>
+                            <div style="font-size: 11px; margin-top: 2px;">${v.breakdownDetails?.reason || 'Vehicle defect'}${v.breakdownDetails?.meterReading ? ` • ${v.breakdownDetails.meterReading} km` : ''}</div>
+                            <a href="/bookings/${v.bookingId}#swap-section" style="display: block; margin-top: 5px; text-align: center; background: #dc2626; color: white; padding: 5px 8px; border-radius: 4px; font-weight: bold; text-decoration: none; font-size: 11px;">
+                                ⚡ Emergency Vehicle Swap
+                            </a>
+                        </div>
+                    ` : v.hasPendingHandover ? `
+                        <div style="margin-top: 8px; padding: 6px 8px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; color: #92400e;">
+                            <div style="font-weight: bold; font-size: 11px;">⚠️ Handover Requested</div>
+                            <div style="font-size: 11px; margin-top: 2px;">${v.handoverDetails?.reason || 'Driver handover'}${v.handoverDetails?.meterReading ? ` • ${v.handoverDetails.meterReading} km` : ''}</div>
+                            <a href="/bookings/${v.bookingId}#handover-section" style="display: block; margin-top: 5px; text-align: center; background: #d97706; color: white; padding: 5px 8px; border-radius: 4px; font-weight: bold; text-decoration: none; font-size: 11px;">
+                                ⚡ Reassign Driver
+                            </a>
+                        </div>
+                    ` : ''}
                 </div>
             `;
             marker.bindPopup(popupContent);
