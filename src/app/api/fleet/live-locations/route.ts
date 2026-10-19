@@ -138,6 +138,21 @@ export async function GET(req: Request) {
             const swapped = b.tripActivities?.find(a => a.type === 'VEHICLE_SWAPPED');
             const hasPendingBreakdown = !!breakdownReq && (!swapped || new Date(breakdownReq.timestamp) > new Date(swapped.timestamp));
 
+            const wasSwapped = !!swapped;
+            let isHiredVehicle = !vehicleInfo; // Not in company fleet
+            let hiredSupplier: string | null = null;
+
+            if (swapped?.note) {
+                const noteLower = swapped.note.toLowerCase();
+                if (noteLower.includes('external third-party hire') || noteLower.includes('external') || noteLower.includes('outsourced')) {
+                    isHiredVehicle = true;
+                }
+                const supplierMatch = swapped.note.match(/Supplier:\s*([^|(]+)/i);
+                if (supplierMatch) {
+                    hiredSupplier = supplierMatch[1].trim();
+                }
+            }
+
             let breakdownDetails = null;
             if (hasPendingBreakdown && breakdownReq) {
                 const noteText = breakdownReq.note || '';
@@ -159,9 +174,12 @@ export async function GET(req: Request) {
                 bookingId: b.id,
                 customerName: b.customerName,
                 vehicleNo: b.vehicleNo,
-                vehicleModel: vehicleInfo?.model || `${b.vehicleNo} (External Hire)`,
-                vehicleCategory: vehicleInfo?.category || 'HIRE',
+                vehicleModel: vehicleInfo?.model || (isHiredVehicle ? `${b.vehicleNo} (Hired)` : `${b.vehicleNo} (Vehicle)`),
+                vehicleCategory: vehicleInfo?.category || (isHiredVehicle ? 'HIRED' : 'STANDARD'),
                 isExternalVehicle: !vehicleInfo,
+                isHiredVehicle,
+                hiredSupplier,
+                wasSwapped,
                 driverId: b.driverId,
                 driverName: b.driver?.name || 'Unassigned',
                 driverEmail: b.driver?.email || '',

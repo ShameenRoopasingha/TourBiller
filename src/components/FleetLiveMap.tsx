@@ -10,6 +10,10 @@ export interface ActiveTourVehicle {
     vehicleNo: string;
     vehicleModel?: string;
     vehicleCategory?: string;
+    isExternalVehicle?: boolean;
+    isHiredVehicle?: boolean;
+    hiredSupplier?: string | null;
+    wasSwapped?: boolean;
     driverId?: string | null;
     driverName: string;
     driverEmail?: string;
@@ -233,6 +237,10 @@ export function FleetLiveMap({
             }
 
             // HTML Marker with Pulsing radar & Vehicle Badge
+            const hiredBadgeHtml = v.isHiredVehicle
+                ? `<span style="background:#b45309; color:white; font-size:9px; padding:1px 4px; border-radius:3px; margin-left:3px; font-weight:bold;">🤝 HIRED</span>`
+                : '';
+
             const customIcon = L.divIcon({
                 className: 'fleet-custom-marker',
                 html: `
@@ -246,7 +254,7 @@ export function FleetLiveMap({
                             height: 36px;
                             border-radius: 50%;
                             background: ${isSelected ? '#f59e0b' : statusColor};
-                            border: 3px solid white;
+                            border: ${isSelected ? '3px solid #f59e0b' : v.isHiredVehicle && !v.hasPendingBreakdown ? '3px solid #f59e0b' : '3px solid white'};
                             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
                             display: flex;
                             align-items: center;
@@ -272,9 +280,9 @@ export function FleetLiveMap({
                             font-weight: 600;
                             white-space: nowrap;
                             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                            border: ${isSelected ? '1px solid #f59e0b' : v.hasPendingBreakdown ? '1px solid #ef4444' : v.hasPendingHandover ? '1px solid #f59e0b' : '1px solid #334155'};
+                            border: ${isSelected ? '1px solid #f59e0b' : v.hasPendingBreakdown ? '1px solid #ef4444' : v.hasPendingHandover ? '1px solid #f59e0b' : v.isHiredVehicle ? '1px solid #d97706' : '1px solid #334155'};
                         ">
-                            ${v.vehicleNo} • ${Math.round(v.speed)} km/h ${badgeExtra}
+                            ${v.vehicleNo} • ${Math.round(v.speed)} km/h ${badgeExtra} ${hiredBadgeHtml}
                         </div>
                     </div>
                 `,
@@ -292,10 +300,23 @@ export function FleetLiveMap({
 
             // Popup
             const popupContent = `
-                <div style="font-family: inherit; font-size: 13px; line-height: 1.4; min-width: 210px;">
-                    <div style="font-weight: bold; font-size: 14px; color: #0f172a; margin-bottom: 4px;">
-                        ${v.vehicleNo} <span style="font-weight: normal; color: #64748b;">(${v.vehicleModel || 'Vehicle'})</span>
+                <div style="font-family: inherit; font-size: 13px; line-height: 1.4; min-width: 220px;">
+                    <div style="font-weight: bold; font-size: 14px; color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                        <span>${v.vehicleNo}</span>
+                        ${v.isHiredVehicle ? `
+                            <span style="background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; font-size: 10px; font-weight: bold; padding: 1px 6px; border-radius: 9999px;">
+                                🤝 Hired
+                            </span>
+                        ` : ''}
+                        <span style="font-weight: normal; color: #64748b; font-size: 12px;">(${v.vehicleModel || (v.isHiredVehicle ? 'External Hire' : 'Vehicle')})</span>
                     </div>
+                    ${v.isHiredVehicle ? `
+                        <div style="margin-bottom: 6px; padding: 4px 8px; background: #fffbeb; border: 1px dashed #f59e0b; border-radius: 6px; color: #92400e; font-size: 11px;">
+                            <div style="font-weight: bold;">🤝 External / Outsourced Vehicle</div>
+                            ${v.hiredSupplier ? `<div>Supplier: <strong>${v.hiredSupplier}</strong></div>` : ''}
+                            ${v.wasSwapped ? `<div style="font-size: 10px; color: #b45309; margin-top: 1px;">Assigned via Emergency Breakdown Swap</div>` : ''}
+                        </div>
+                    ` : ''}
                     <div style="color: #334155; margin-bottom: 2px;">
                         <strong>Driver:</strong> ${v.driverName}
                     </div>

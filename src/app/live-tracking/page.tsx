@@ -52,7 +52,7 @@ const FleetLiveMap = dynamic(
     ) }
 );
 
-type StatusFilter = 'all' | 'moving' | 'parked' | 'offline' | 'alerts';
+type StatusFilter = 'all' | 'moving' | 'parked' | 'hired' | 'offline' | 'alerts';
 
 export default function LiveTrackingPage() {
     const [vehicles, setVehicles] = useState<ActiveTourVehicle[]>([]);
@@ -154,6 +154,7 @@ export default function LiveTrackingPage() {
     const stationaryCount = vehicles.filter(v => v.isFresh && v.speed <= 5).length;
     const offlineCount = vehicles.filter(v => !v.isFresh || v.lat === null).length;
     const alertCount = vehicles.filter(v => v.hasPendingHandover || v.hasPendingBreakdown).length;
+    const hiredCount = vehicles.filter(v => v.isHiredVehicle).length;
 
     // Filter vehicles by search query & status filter
     const filteredVehicles = vehicles.filter(v => {
@@ -162,11 +163,13 @@ export default function LiveTrackingPage() {
             v.vehicleNo.toLowerCase().includes(query) ||
             v.driverName.toLowerCase().includes(query) ||
             v.customerName.toLowerCase().includes(query) ||
-            (v.destination && v.destination.toLowerCase().includes(query));
+            (v.destination && v.destination.toLowerCase().includes(query)) ||
+            (v.hiredSupplier && v.hiredSupplier.toLowerCase().includes(query));
 
         if (!matchesSearch) return false;
 
         if (statusFilter === 'alerts') return !!(v.hasPendingHandover || v.hasPendingBreakdown);
+        if (statusFilter === 'hired') return !!v.isHiredVehicle;
         if (statusFilter === 'moving') return v.isFresh && v.speed > 5;
         if (statusFilter === 'parked') return v.isFresh && v.speed <= 5;
         if (statusFilter === 'offline') return !v.isFresh || v.lat === null;
@@ -413,6 +416,24 @@ export default function LiveTrackingPage() {
                         </span>
                     </button>
 
+                    {hiredCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('hired')}
+                            className={`px-2.5 py-1 rounded-full border transition flex items-center gap-1.5 shrink-0 ${
+                                statusFilter === 'hired'
+                                    ? 'bg-amber-950 border-amber-400 text-amber-200 font-bold'
+                                    : 'bg-amber-950/40 border-amber-700/50 text-amber-300 hover:bg-amber-950/70'
+                            }`}
+                        >
+                            <span>🤝</span>
+                            <span>Hired</span>
+                            <span className="px-1.5 py-0.2 bg-amber-900 rounded-full text-[10px] font-bold text-amber-200">
+                                {hiredCount}
+                            </span>
+                        </button>
+                    )}
+
                     {alertCount > 0 && (
                         <button
                             type="button"
@@ -553,10 +574,16 @@ export default function LiveTrackingPage() {
                                                     )}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <div className="font-bold text-sm text-white flex items-center gap-1.5 truncate">
+                                                    <div className="font-bold text-sm text-white flex items-center gap-1.5 truncate flex-wrap">
                                                         <span>{tour.vehicleNo}</span>
+                                                        {tour.isHiredVehicle && (
+                                                            <span className="text-[10px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/60 px-1.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-sm">
+                                                                <span>🤝</span>
+                                                                <span>Hired</span>
+                                                            </span>
+                                                        )}
                                                         <span className="text-[10px] font-normal text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded truncate">
-                                                            {tour.vehicleModel || 'Vehicle'}
+                                                            {tour.vehicleModel || (tour.isHiredVehicle ? 'External Hired' : 'Vehicle')}
                                                         </span>
                                                     </div>
                                                     <div className="text-xs text-slate-300 flex items-center gap-1 truncate">
@@ -589,6 +616,20 @@ export default function LiveTrackingPage() {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {tour.isHiredVehicle && (
+                                            <div className="text-[11px] font-medium text-amber-300/90 bg-amber-950/40 border border-amber-500/30 px-2 py-1 rounded flex items-center gap-1.5">
+                                                <span>🤝</span>
+                                                <span className="truncate">
+                                                    {tour.hiredSupplier ? `Hired: ${tour.hiredSupplier}` : 'Outsourced / Hired Vehicle'}
+                                                </span>
+                                                {tour.wasSwapped && (
+                                                    <span className="text-[9px] text-amber-400 ml-auto shrink-0 bg-amber-950 px-1.5 py-0.2 rounded border border-amber-500/40 font-semibold">
+                                                        Breakdown Swap
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {tour.hasPendingBreakdown && (
                                             <div className="flex items-center justify-between text-[11px] font-bold text-red-300 bg-red-950/80 border border-red-500/40 px-2 py-1 rounded animate-pulse">
@@ -693,10 +734,16 @@ export default function LiveTrackingPage() {
                             {/* Header */}
                             <div className="flex items-start justify-between border-b border-slate-800 pb-2.5 mb-3">
                                 <div>
-                                    <div className="text-base font-bold text-white flex items-center gap-2">
+                                    <div className="text-base font-bold text-white flex items-center gap-2 flex-wrap">
                                         <span>{selectedVehicle.vehicleNo}</span>
+                                        {selectedVehicle.isHiredVehicle && (
+                                            <span className="text-[11px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/60 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                                                <span>🤝</span>
+                                                <span>Hired Vehicle</span>
+                                            </span>
+                                        )}
                                         <span className="text-xs font-normal text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
-                                            {selectedVehicle.vehicleModel || 'Vehicle'}
+                                            {selectedVehicle.vehicleModel || (selectedVehicle.isHiredVehicle ? 'External Hired' : 'Vehicle')}
                                         </span>
                                     </div>
                                     <div className="text-xs text-emerald-400 font-medium flex items-center gap-1.5 mt-0.5">
@@ -771,6 +818,31 @@ export default function LiveTrackingPage() {
 
                             {/* Details List */}
                             <div className="space-y-2.5 text-xs">
+                                {selectedVehicle.isHiredVehicle && (
+                                    <div className="p-3 bg-amber-950/40 border border-amber-500/40 rounded-xl space-y-1 text-amber-200 text-xs">
+                                        <div className="flex items-center justify-between font-bold text-amber-300">
+                                            <span className="flex items-center gap-1.5">
+                                                <span>🤝</span>
+                                                <span>Outsourced / Hired Replacement</span>
+                                            </span>
+                                            <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded text-[9px] font-bold uppercase">
+                                                Hired
+                                            </span>
+                                        </div>
+                                        {selectedVehicle.hiredSupplier && (
+                                            <div className="text-[11px] pt-0.5">
+                                                <span className="text-amber-400/80">Supplier / Vendor:</span>{' '}
+                                                <strong className="text-white">{selectedVehicle.hiredSupplier}</strong>
+                                            </div>
+                                        )}
+                                        {selectedVehicle.wasSwapped && (
+                                            <div className="text-[10px] text-amber-400/90 pt-1 border-t border-amber-900/60">
+                                                ℹ️ Assigned mid-tour following a breakdown replacement swap.
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div>
                                     <span className="text-slate-400 text-[11px]">DRIVER</span>
                                     <div className="font-semibold text-white text-sm flex items-center gap-1.5 mt-0.5">
