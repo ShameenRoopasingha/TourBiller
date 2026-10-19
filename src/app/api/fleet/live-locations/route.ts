@@ -125,11 +125,13 @@ export async function GET(req: Request) {
                 const noteText = handoverReq.note || '';
                 const reasonMatch = noteText.match(/Reason:\s*([^|]+)/i);
                 const meterMatch = noteText.match(/Meter:\s*([0-9.]+)/i);
-                const locationMatch = noteText.match(/(?:Location\/Note|Note):\s*(.+)/i);
+                const locMatch = noteText.match(/(?:Location\/Note|Location):\s*([^|]+)/i);
+                const notesMatch = noteText.match(/Notes?:\s*(.+)/i);
                 handoverDetails = {
                     reason: reasonMatch ? reasonMatch[1].trim() : 'Mid-Tour Handover Requested',
                     meterReading: meterMatch ? meterMatch[1].trim() : '',
-                    note: locationMatch ? locationMatch[1].trim() : '',
+                    location: locMatch ? locMatch[1].trim() : '',
+                    note: notesMatch ? notesMatch[1].trim() : (!locMatch && noteText ? noteText : ''),
                     timestamp: handoverReq.timestamp,
                 };
             }

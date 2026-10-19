@@ -31,6 +31,7 @@ export interface ActiveTourVehicle {
     handoverDetails?: {
         reason?: string;
         meterReading?: string;
+        location?: string;
         note?: string;
         timestamp?: Date | string;
     } | null;
@@ -353,6 +354,8 @@ export function FleetLiveMap({
                         <div style="margin-top: 8px; padding: 6px 8px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; color: #92400e;">
                             <div style="font-weight: bold; font-size: 11px;">⚠️ Handover Requested</div>
                             <div style="font-size: 11px; margin-top: 2px;">${v.handoverDetails?.reason || 'Driver handover'}${v.handoverDetails?.meterReading ? ` • ${v.handoverDetails.meterReading} km` : ''}</div>
+                            ${v.handoverDetails?.location ? `<div style="font-size: 10px; color: #b45309; margin-top: 2px;">📍 ${v.handoverDetails.location}</div>` : ''}
+                            ${v.handoverDetails?.note ? `<div style="font-size: 10px; color: #78350f; margin-top: 1px;">📝 ${v.handoverDetails.note}</div>` : ''}
                             <a href="/bookings/${v.bookingId}#handover-section" style="display: block; margin-top: 5px; text-align: center; background: #d97706; color: white; padding: 5px 8px; border-radius: 4px; font-weight: bold; text-decoration: none; font-size: 11px;">
                                 ⚡ Reassign Driver
                             </a>

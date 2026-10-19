@@ -801,8 +801,11 @@ export default function LiveTrackingPage() {
                                         {selectedVehicle.handoverDetails?.meterReading && (
                                             <div><span className="text-amber-400 font-semibold">Odometer:</span> {selectedVehicle.handoverDetails.meterReading} km</div>
                                         )}
+                                        {selectedVehicle.handoverDetails?.location && (
+                                            <div><span className="text-amber-400 font-semibold">Location:</span> {selectedVehicle.handoverDetails.location}</div>
+                                        )}
                                         {selectedVehicle.handoverDetails?.note && (
-                                            <div><span className="text-amber-400 font-semibold">Location/Note:</span> {selectedVehicle.handoverDetails.note}</div>
+                                            <div><span className="text-amber-400 font-semibold">Notes:</span> {selectedVehicle.handoverDetails.note}</div>
                                         )}
                                     </div>
                                     <a

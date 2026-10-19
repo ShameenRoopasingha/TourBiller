@@ -306,7 +306,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             const details = [
                 `Reason: ${handoverReason}`,
                 `Meter: ${meterReading} km`,
-                note ? `Location/Note: ${note}` : null
+                note ? (note.includes('Location:') ? note : `Location/Note: ${note}`) : null
             ].filter(Boolean).join(' | ');
 
             const activity = await prisma.tripActivity.create({
