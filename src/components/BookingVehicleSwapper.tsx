@@ -228,35 +228,43 @@ export function BookingVehicleSwapper({
 
             {/* Emergency Vehicle Swap Dialog */}
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400 text-xl">
-                            <ShieldAlert className="h-6 w-6" />
-                            Emergency Mid-Tour Vehicle Swap
+                <DialogContent className="max-w-2xl max-h-[92vh] flex flex-col p-0 overflow-hidden sm:rounded-2xl z-50">
+                    <DialogHeader className="p-4 sm:p-6 pb-3 border-b pr-10">
+                        <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400 text-lg sm:text-xl font-bold">
+                            <ShieldAlert className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                            <span>Emergency Mid-Tour Vehicle Swap</span>
                         </DialogTitle>
-                        <DialogDescription>
-                            Replace broken vehicle <strong>{currentVehicleNo}</strong> mid-tour. You can assign an available fleet vehicle or hire an external outsourced vehicle.
+                        <DialogDescription className="text-xs sm:text-sm mt-1">
+                            Replace broken vehicle <strong className="text-foreground">{currentVehicleNo}</strong> mid-tour. You can assign an available fleet vehicle or hire an external outsourced vehicle.
                         </DialogDescription>
                     </DialogHeader>
 
                     {error && (
-                        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                        <div className="mx-4 sm:mx-6 mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
                             <AlertTriangle className="h-4 w-4 shrink-0" />
                             <span>{error}</span>
                         </div>
                     )}
 
-                    <div className="space-y-5 py-2">
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
                         {/* Replacement Vehicle Type Switcher */}
                         <div>
-                            <Label className="text-sm font-semibold mb-2 block">Replacement Vehicle Source</Label>
+                            <Label className="text-xs sm:text-sm font-semibold mb-2 block">Replacement Vehicle Source</Label>
                             <Tabs value={swapType} onValueChange={(val) => setSwapType(val as 'FLEET' | 'EXTERNAL')} className="w-full">
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="FLEET" className="font-semibold">
-                                        🏢 Company Fleet Vehicle
+                                <TabsList className="grid w-full grid-cols-2 h-auto p-1 gap-1.5 bg-muted/70 rounded-xl">
+                                    <TabsTrigger 
+                                        value="FLEET" 
+                                        className="h-auto py-2.5 px-2 flex items-center justify-center gap-1.5 rounded-lg font-semibold text-xs sm:text-sm whitespace-normal text-center data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                                    >
+                                        <span className="text-base sm:text-lg">🏢</span>
+                                        <span className="truncate">Company Fleet</span>
                                     </TabsTrigger>
-                                    <TabsTrigger value="EXTERNAL" className="font-semibold">
-                                        🤝 Outsourced Hire (External)
+                                    <TabsTrigger 
+                                        value="EXTERNAL" 
+                                        className="h-auto py-2.5 px-2 flex items-center justify-center gap-1.5 rounded-lg font-semibold text-xs sm:text-sm whitespace-normal text-center data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                                    >
+                                        <span className="text-base sm:text-lg">🤝</span>
+                                        <span className="truncate">External Hire</span>
                                     </TabsTrigger>
                                 </TabsList>
 
@@ -333,8 +341,8 @@ export function BookingVehicleSwapper({
 
                                     <div className="space-y-1.5">
                                         <Label className="text-xs font-semibold">Expense Charged To</Label>
-                                        <div className="flex items-center gap-4 pt-1">
-                                            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pt-1">
+                                            <label className="flex items-center gap-2 text-sm cursor-pointer hover:opacity-80">
                                                 <input
                                                     type="radio"
                                                     name="expenseType"
@@ -345,7 +353,7 @@ export function BookingVehicleSwapper({
                                                 />
                                                 <span>Company Operational Expense</span>
                                             </label>
-                                            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                            <label className="flex items-center gap-2 text-sm cursor-pointer hover:opacity-80">
                                                 <input
                                                     type="radio"
                                                     name="expenseType"
@@ -446,14 +454,14 @@ export function BookingVehicleSwapper({
                         </div>
                     </div>
 
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="outline" onClick={handleCloseModal} disabled={isPending}>
+                    <DialogFooter className="p-3 sm:p-4 border-t bg-muted/20 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+                        <Button variant="outline" onClick={handleCloseModal} disabled={isPending} className="w-full sm:w-auto">
                             Cancel
                         </Button>
                         <Button 
                             onClick={handleConfirmSwap} 
                             disabled={isPending}
-                            className="bg-red-600 hover:bg-red-700 text-white font-bold"
+                            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold"
                         >
                             {isPending ? (
                                 <>
