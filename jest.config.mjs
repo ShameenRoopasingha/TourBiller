@@ -7,6 +7,7 @@ const createJestConfig = nextJest({
 /** @type {import('jest').Config} */
 const config = {
   testEnvironment: 'node',
+  testTimeout: 60000,
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },

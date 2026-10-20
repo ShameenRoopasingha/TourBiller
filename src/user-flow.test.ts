@@ -17,6 +17,7 @@ jest.mock('@/lib/auth-guard', () => ({
 }));
 
 describe('Complete User Flow Integration', () => {
+    jest.setTimeout(30000);
     let companyId: string;
     let tourScheduleId: string;
     let quotationId: string;

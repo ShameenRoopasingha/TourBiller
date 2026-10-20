@@ -20,18 +20,18 @@ function Calendar({
             showOutsideDays={showOutsideDays}
             className={cn("p-3 bg-card rounded-md select-none", className)}
             classNames={{
-                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                months: "relative flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
                 month: "space-y-3",
-                month_caption: "flex justify-center pt-1 relative items-center h-8",
-                caption_label: "text-sm font-semibold tracking-tight text-foreground",
-                nav: "flex items-center",
+                month_caption: "flex justify-center items-center h-8 relative px-8",
+                caption_label: "text-sm font-semibold tracking-tight text-foreground select-none",
+                nav: "flex items-center justify-between absolute top-0 inset-x-0 w-full px-1 pointer-events-none z-10",
                 button_previous: cn(
                     buttonVariants({ variant: "outline", size: "icon" }),
-                    "h-7 w-7 bg-background p-0 opacity-70 hover:opacity-100 absolute left-1 z-10 hover:bg-accent"
+                    "h-7 w-7 bg-background p-0 opacity-70 hover:opacity-100 pointer-events-auto hover:bg-accent shadow-xs"
                 ),
                 button_next: cn(
                     buttonVariants({ variant: "outline", size: "icon" }),
-                    "h-7 w-7 bg-background p-0 opacity-70 hover:opacity-100 absolute right-1 z-10 hover:bg-accent"
+                    "h-7 w-7 bg-background p-0 opacity-70 hover:opacity-100 pointer-events-auto hover:bg-accent shadow-xs"
                 ),
                 month_grid: "w-full border-collapse space-y-1 mt-2",
                 weekdays: "flex w-full justify-between pb-1 border-b border-border/40 mb-1",
