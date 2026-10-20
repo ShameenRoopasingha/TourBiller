@@ -24,7 +24,8 @@ export default auth((req) => {
         pathname.startsWith('/api/keepalive') ||
         pathname.startsWith('/api/webhooks/subscription') ||
         pathname.startsWith('/api/cron') || // Vercel Cron uses Bearer token auth
-        pathname.startsWith('/api/driver') // Mobile API routes use Bearer token auth, not cookies
+        pathname.startsWith('/api/driver') || // Mobile API routes use Bearer token auth, not cookies
+        pathname.startsWith('/driver/upload-avatar') // Mobile web avatar uploader authenticated via JWT query token
     ) {
         return NextResponse.next();
     }
