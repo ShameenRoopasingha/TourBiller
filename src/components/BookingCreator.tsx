@@ -363,7 +363,11 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                                     min="0"
                                                     placeholder="0.00"
                                                     {...field}
-                                                    onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                                                    value={field.value === 0 ? '' : (field.value ?? '')}
+                                                    onChange={e => {
+                                                        const val = e.target.value;
+                                                        field.onChange(val === '' ? '' : (parseFloat(val) || 0));
+                                                    }}
                                                 />
                                             </FormControl>
                                             <FormMessage />

@@ -2,11 +2,20 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+function Input({ className, type, onFocus, ...props }: React.ComponentProps<"input">) {
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (type === "number") {
+      // Auto-select text on focus so user can overwrite or delete default numbers immediately
+      e.target.select();
+    }
+    onFocus?.(e);
+  };
+
   return (
     <input
       type={type}
       data-slot="input"
+      onFocus={handleFocus}
       className={cn(
         "surface-recessed file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground h-9 w-full min-w-0 rounded-xl px-3 py-1 text-base transition-all duration-150 outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",

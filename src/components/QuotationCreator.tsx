@@ -216,15 +216,15 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             numberOfPersons: 1,
             pickupLocation: '',
             dropLocation: '',
-            hireRatePerDay: 0,
-            kmPerDay: 0,
-            totalDistance: 0,
-            excessKmRate: 0,
-            extraHourRate: 0,
-            markup: 0,
-            discount: 0,
-            driverCostPerDay: 0,
-            advanceAmount: 0,
+            hireRatePerDay: '' as unknown as number,
+            kmPerDay: '' as unknown as number,
+            totalDistance: '' as unknown as number,
+            excessKmRate: '' as unknown as number,
+            extraHourRate: '' as unknown as number,
+            markup: '' as unknown as number,
+            discount: '' as unknown as number,
+            driverCostPerDay: '' as unknown as number,
+            advanceAmount: '' as unknown as number,
             excludedItems: 'Highway / expressway charges\nParking fees',
             notes: '',
             validUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] as unknown as Date,
@@ -1033,7 +1033,16 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 type="number"
                                 min="1"
                                 placeholder="1"
-                                {...form.register('numberOfPersons')}
+                                value={watchedFields.numberOfPersons === 0 ? '' : (watchedFields.numberOfPersons ?? '')}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    form.setValue('numberOfPersons', val === '' ? ('' as unknown as number) : Math.max(1, parseInt(val, 10) || 1), { shouldDirty: true });
+                                }}
+                                onBlur={() => {
+                                    if (!watchedFields.numberOfPersons || Number(watchedFields.numberOfPersons) < 1) {
+                                        form.setValue('numberOfPersons', 1, { shouldDirty: true });
+                                    }
+                                }}
                             />
                         </div>
 
@@ -1044,7 +1053,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                     Tour Duration (Days) *
                                 </Label>
                                 <span className="text-[11px] text-muted-foreground font-mono">
-                                    {mapDays} {mapDays === 1 ? 'Day' : 'Days'}
+                                    {mapDays > 0 ? `${mapDays} ${mapDays === 1 ? 'Day' : 'Days'}` : 'Enter days'}
                                 </span>
                             </div>
                             <Input
@@ -1052,23 +1061,43 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 type="number"
                                 min="1"
                                 max="60"
-                                value={mapDays}
+                                value={mapDays === 0 ? '' : mapDays}
                                 onChange={(e) => {
-                                    const newDays = Math.max(1, parseInt(e.target.value) || 1);
-                                    if (newDays !== mapDays) {
-                                        setMapDays(newDays);
+                                    const val = e.target.value;
+                                    if (val === '') {
+                                        setMapDays(0);
+                                        return;
                                     }
-                                    if (watchedStartDate) {
-                                        const start = new Date(watchedStartDate);
-                                        if (!isNaN(start.getTime())) {
-                                            const end = new Date(start);
-                                            end.setDate(start.getDate() + (newDays - 1));
-                                            form.setValue('endDate', end as unknown as Date, { shouldValidate: true, shouldDirty: true });
+                                    const parsed = parseInt(val, 10);
+                                    if (!isNaN(parsed)) {
+                                        const newDays = Math.max(1, Math.min(60, parsed));
+                                        if (newDays !== mapDays) {
+                                            setMapDays(newDays);
+                                        }
+                                        if (watchedStartDate) {
+                                            const start = new Date(watchedStartDate);
+                                            if (!isNaN(start.getTime())) {
+                                                const end = new Date(start);
+                                                end.setDate(start.getDate() + (newDays - 1));
+                                                form.setValue('endDate', end as unknown as Date, { shouldValidate: true, shouldDirty: true });
+                                            }
+                                        }
+                                    }
+                                }}
+                                onBlur={() => {
+                                    if (!mapDays || mapDays < 1) {
+                                        setMapDays(1);
+                                        if (watchedStartDate) {
+                                            const start = new Date(watchedStartDate);
+                                            if (!isNaN(start.getTime())) {
+                                                const end = new Date(start);
+                                                form.setValue('endDate', end as unknown as Date, { shouldValidate: true, shouldDirty: true });
+                                            }
                                         }
                                     }
                                 }}
                                 className="font-bold border-primary/50 focus:border-primary text-base"
-                                placeholder="e.g. 1"
+                                placeholder="1"
                             />
                         </div>
                     </div>
