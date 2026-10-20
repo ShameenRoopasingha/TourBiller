@@ -286,6 +286,12 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             const hasEndDate = !!watchedEndDate;
 
             if (hasStartDate && hasEndDate && (hasVehicle || hasDriver)) {
+                const startDateObj = new Date(watchedStartDate);
+                const endDateObj = new Date(watchedEndDate);
+                if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
+                    return;
+                }
+
                 setIsCheckingAvailability(true);
                 // Reset conflicts before checking
                 if (hasVehicle) setAvailabilityConflict(null);
@@ -293,8 +299,8 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
 
                 try {
                     const currentParams = {
-                        startDate: new Date(watchedStartDate).toISOString(),
-                        endDate: new Date(watchedEndDate).toISOString(),
+                        startDate: startDateObj.toISOString(),
+                        endDate: endDateObj.toISOString(),
                         currentType: 'Quotation',
                         ...(initialData?.id ? { currentId: initialData.id } : {}),
                     };
@@ -1049,19 +1055,15 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 value={mapDays}
                                 onChange={(e) => {
                                     const newDays = Math.max(1, parseInt(e.target.value) || 1);
-                                    setMapDays(newDays);
-                                    if (selectedSchedule) {
-                                        setSelectedSchedule({
-                                            ...selectedSchedule,
-                                            days: newDays,
-                                        });
+                                    if (newDays !== mapDays) {
+                                        setMapDays(newDays);
                                     }
                                     if (watchedStartDate) {
                                         const start = new Date(watchedStartDate);
                                         if (!isNaN(start.getTime())) {
                                             const end = new Date(start);
                                             end.setDate(start.getDate() + (newDays - 1));
-                                            form.setValue('endDate', end.toISOString().split('T')[0] as unknown as Date);
+                                            form.setValue('endDate', end as unknown as Date, { shouldValidate: true, shouldDirty: true });
                                         }
                                     }
                                 }}

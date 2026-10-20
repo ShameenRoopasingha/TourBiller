@@ -70,24 +70,28 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
             const hasDates = !!watchedStartDate;
 
             if (hasDates && (hasVehicle || hasDriver)) {
+                const startDateObj = watchedStartDate ? new Date(watchedStartDate) : null;
+                const endDateObj = watchedEndDate ? new Date(watchedEndDate) : startDateObj;
+                if (!startDateObj || isNaN(startDateObj.getTime()) || !endDateObj || isNaN(endDateObj.getTime())) {
+                    return;
+                }
+
                 setIsCheckingAvailability(true);
                 // Reset conflicts before checking
                 if (hasVehicle) setAvailabilityConflict(null);
                 if (hasDriver) setDriverAvailabilityConflict(null);
 
                 try {
-                    const end = watchedEndDate || watchedStartDate;
-                    
                     const vehicleParams = new URLSearchParams({
                         vehicleNo: watchedVehicleNo || '',
-                        startDate: new Date(watchedStartDate).toISOString(),
-                        endDate: new Date(end).toISOString(),
+                        startDate: startDateObj.toISOString(),
+                        endDate: endDateObj.toISOString(),
                         currentType: 'Booking',
                     });
                     const driverParams = new URLSearchParams({
                         driverId: watchedDriverId || '',
-                        startDate: new Date(watchedStartDate).toISOString(),
-                        endDate: new Date(end).toISOString(),
+                        startDate: startDateObj.toISOString(),
+                        endDate: endDateObj.toISOString(),
                         currentType: 'Booking',
                     });
                     const [vehicleResponse, driverResponse] = await Promise.all([
