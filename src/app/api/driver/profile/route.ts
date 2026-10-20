@@ -8,6 +8,8 @@ import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 const DriverProfileUpdateSchema = z.object({
+    name: z.string().trim().min(1, 'Name cannot be empty').optional(),
+    avatarUrl: z.string().optional().nullable(),
     email: z.string().email('Invalid email address format').optional().or(z.literal('')),
     currentPassword: z.string().optional(),
     newPassword: z.string().min(6, 'New password must be at least 6 characters long').optional(),
@@ -72,6 +74,7 @@ export async function GET(req: Request) {
                 id: user.id,
                 name: user.name,
                 email: user.email,
+                avatarUrl: user.avatarUrl || null,
                 role: user.role,
                 companyId: user.company?.id || user.companyId,
                 companyName: user.company?.companyName || 'Tour Transport Company',
@@ -111,7 +114,7 @@ export async function PUT(req: Request) {
             }, { status: 400 });
         }
 
-        const { email, currentPassword, newPassword } = parsed.data;
+        const { name, avatarUrl, email, currentPassword, newPassword } = parsed.data;
 
         const driver = await prisma.user.findUnique({
             where: { id: driverId },
@@ -122,9 +125,19 @@ export async function PUT(req: Request) {
             return NextResponse.json({ success: false, error: 'Driver not found' }, { status: 404 });
         }
 
-        const updateData: { email?: string; password?: string } = {};
+        const updateData: { name?: string; avatarUrl?: string | null; email?: string; password?: string } = {};
 
-        // 1. Email update validation
+        // 1. Name update
+        if (name && name.trim() && name.trim() !== driver.name) {
+            updateData.name = name.trim();
+        }
+
+        // 2. Avatar / Profile Picture update
+        if (avatarUrl !== undefined && avatarUrl !== driver.avatarUrl) {
+            updateData.avatarUrl = avatarUrl;
+        }
+
+        // 3. Email update validation
         const normalizedEmail = email?.trim().toLowerCase();
         if (normalizedEmail && normalizedEmail !== driver.email.toLowerCase()) {
             const existingEmailUser = await prisma.user.findUnique({
@@ -141,7 +154,7 @@ export async function PUT(req: Request) {
             updateData.email = normalizedEmail;
         }
 
-        // 2. Password change validation
+        // 4. Password change validation
         if (newPassword) {
             if (!currentPassword) {
                 return NextResponse.json(
@@ -172,6 +185,7 @@ export async function PUT(req: Request) {
                         id: driver.id,
                         name: driver.name,
                         email: driver.email,
+                        avatarUrl: driver.avatarUrl || null,
                         companyId: driver.company?.id || driver.companyId,
                         companyName: driver.company?.companyName || 'Tour Transport Company',
                         companyLogoUrl: driver.company?.logoUrl || null,
@@ -203,6 +217,7 @@ export async function PUT(req: Request) {
                     id: updatedDriver.id,
                     name: updatedDriver.name,
                     email: updatedDriver.email,
+                    avatarUrl: updatedDriver.avatarUrl || null,
                     companyId: updatedDriver.company?.id || updatedDriver.companyId,
                     companyName: updatedDriver.company?.companyName || 'Tour Transport Company',
                     companyLogoUrl: updatedDriver.company?.logoUrl || null,

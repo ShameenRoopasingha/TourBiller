@@ -101,6 +101,7 @@ export async function GET(req: Request) {
                 id: driverUser.id,
                 name: driverUser.name,
                 email: driverUser.email,
+                avatarUrl: driverUser.avatarUrl || null,
                 companyId: driverUser.company?.id,
                 companyName: driverUser.company?.companyName || 'Transport Company',
                 companyLogoUrl: driverUser.company?.logoUrl || null,

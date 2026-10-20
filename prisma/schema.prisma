@@ -172,6 +172,8 @@ model User {
   email     String   @unique
   password  String
   role      String   @default("ADMIN") // ADMIN, DRIVER, OWNER
+  avatarUrl String?
+  phone     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

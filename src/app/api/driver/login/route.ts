@@ -59,6 +59,7 @@ export async function POST(req: Request) {
                     companyId: user.company?.id,
                     companyName: user.company?.companyName || 'Transport Company',
                     companyLogoUrl: user.company?.logoUrl || null,
+                    avatarUrl: user.avatarUrl || null,
                 }
             }
         });
