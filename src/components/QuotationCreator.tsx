@@ -255,23 +255,27 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
     } = watchedFields;
 
     // Auto-calculate end date when start date, schedule, or mapDays changes
+    const tourDurationDays = selectedSchedule?.days || mapDays || 1;
     React.useEffect(() => {
-        if (watchedStartDate) {
-            try {
-                const start = new Date(watchedStartDate);
-                if (!isNaN(start.getTime())) {
-                    const currentDays = selectedSchedule?.days || mapDays || 1;
-                    const end = new Date(start);
-                    end.setDate(start.getDate() + (currentDays - 1));
-                    form.setValue('endDate', end.toISOString().split('T')[0] as unknown as Date);
-                }
-            } catch (e) {
-                console.error("Error calculating end date", e);
-            }
-        } else {
-            form.setValue('endDate', '' as unknown as Date);
+        if (!watchedStartDate) {
+            return;
         }
-    }, [watchedStartDate, selectedSchedule, mapDays, form]);
+        try {
+            const start = new Date(watchedStartDate);
+            if (!isNaN(start.getTime())) {
+                const targetEnd = new Date(start);
+                targetEnd.setDate(start.getDate() + (tourDurationDays - 1));
+                
+                // Compare with current endDate to prevent infinite re-renders
+                const currentEnd = watchedEndDate ? new Date(watchedEndDate) : null;
+                if (!currentEnd || isNaN(currentEnd.getTime()) || currentEnd.getTime() !== targetEnd.getTime()) {
+                    form.setValue('endDate', targetEnd as unknown as Date, { shouldDirty: true });
+                }
+            }
+        } catch (e) {
+            console.error("Error calculating end date", e);
+        }
+    }, [watchedStartDate, tourDurationDays, form]);
 
     // Check vehicle and driver availability
     React.useEffect(() => {
@@ -1074,11 +1078,11 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                             <DateTimePicker
                                 date={watchedStartDate ? (watchedStartDate instanceof Date ? watchedStartDate : new Date(watchedStartDate)) : undefined}
                                 setDate={(newDate) => {
-                                    form.setValue('startDate', newDate as unknown as Date);
-                                    if (newDate && mapDays) {
+                                    form.setValue('startDate', newDate as unknown as Date, { shouldValidate: true, shouldDirty: true });
+                                    if (newDate) {
                                         const end = new Date(newDate);
-                                        end.setDate(newDate.getDate() + (mapDays - 1));
-                                        form.setValue('endDate', end as unknown as Date);
+                                        end.setDate(newDate.getDate() + (tourDurationDays - 1));
+                                        form.setValue('endDate', end as unknown as Date, { shouldValidate: true, shouldDirty: true });
                                     }
                                 }}
                             />
@@ -1093,21 +1097,17 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 <span className="text-[10px] text-muted-foreground font-mono">Auto-syncs with days</span>
                             </div>
                             <DateTimePicker
-                                date={watchedFields.endDate ? (watchedFields.endDate instanceof Date ? watchedFields.endDate : new Date(watchedFields.endDate)) : undefined}
+                                date={watchedEndDate ? (watchedEndDate instanceof Date ? watchedEndDate : new Date(watchedEndDate)) : undefined}
                                 setDate={(newEndVal) => {
-                                    form.setValue('endDate', newEndVal as unknown as Date);
+                                    form.setValue('endDate', newEndVal as unknown as Date, { shouldValidate: true, shouldDirty: true });
                                     if (watchedStartDate && newEndVal) {
                                         const start = new Date(watchedStartDate);
                                         const end = new Date(newEndVal);
                                         if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
                                             const diffTime = end.getTime() - start.getTime();
                                             const calcDays = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1);
-                                            setMapDays(calcDays);
-                                            if (selectedSchedule) {
-                                                setSelectedSchedule({
-                                                    ...selectedSchedule,
-                                                    days: calcDays,
-                                                });
+                                            if (calcDays !== mapDays) {
+                                                setMapDays(calcDays);
                                             }
                                         }
                                     }
