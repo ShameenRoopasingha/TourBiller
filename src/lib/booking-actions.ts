@@ -18,6 +18,7 @@ import { requireAuth, requireAdmin } from '@/lib/auth-guard';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { checkDriverAvailability } from '@/lib/user-actions';
 import { formatActionError } from '@/lib/error-handler';
+import { formatAppDate } from '@/lib/date-utils';
 
 
 /**
@@ -59,7 +60,7 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
                 const conflict = availability.data.conflicts[0];
                 return { 
                     success: false, 
-                    error: `Vehicle is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
+                    error: `Vehicle is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${formatAppDate(conflict.end)}` 
                 };
             }
         }
@@ -79,7 +80,7 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
                 const conflict = driverAvailability.data.conflicts[0];
                 return { 
                     success: false, 
-                    error: `Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
+                    error: `Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${formatAppDate(conflict.end)}` 
                 };
             }
         }
@@ -295,7 +296,7 @@ export async function assignDriverToBooking(
                 const conflict = driverAvailability.data.conflicts[0];
                 return {
                     success: false,
-                    error: `Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}`
+                    error: `Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${formatAppDate(conflict.end)}`
                 };
             }
         }
@@ -448,7 +449,7 @@ export async function swapBookingVehicle(
                 const conflict = availability.data.conflicts[0];
                 return {
                     success: false,
-                    error: `Fleet vehicle ${newVehicleNo} is already occupied by ${conflict.customer} (${conflict.type}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}`
+                    error: `Fleet vehicle ${newVehicleNo} is already occupied by ${conflict.customer} (${conflict.type}) until ${formatAppDate(conflict.end)}`
                 };
             }
         }

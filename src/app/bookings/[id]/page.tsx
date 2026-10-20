@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Car, Calendar, MapPin, CreditCard, AlignLeft, User, Phone, Mail, Activity, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { getBookingById } from '@/lib/booking-actions';
+import { formatAppDateTime } from '@/lib/date-utils';
 import { getDrivers } from '@/lib/user-actions';
 import { getActiveVehicles } from '@/lib/vehicle-actions';
 import { CancelBookingButton } from '@/components/CancelBookingButton';
@@ -264,12 +265,12 @@ export default async function BookingDetailsPage(props: {
                             <div className="bg-muted/30 rounded-lg p-4 space-y-3">
                                 <div>
                                     <p className="text-xs text-muted-foreground uppercase font-semibold">Start Date & Time</p>
-                                    <p className="font-medium text-lg">{new Date(booking.startDate).toLocaleString('en-GB')}</p>
+                                    <p className="font-medium text-lg">{formatAppDateTime(booking.startDate)}</p>
                                 </div>
                                 {booking.endDate && (
                                     <div>
                                         <p className="text-xs text-muted-foreground uppercase font-semibold">Expected End Date & Time</p>
-                                        <p className="font-medium text-lg">{new Date(booking.endDate).toLocaleString('en-GB')}</p>
+                                        <p className="font-medium text-lg">{formatAppDateTime(booking.endDate)}</p>
                                     </div>
                                 )}
                             </div>
@@ -362,7 +363,7 @@ export default async function BookingDetailsPage(props: {
                                                 <p className="text-foreground text-sm font-medium">{act.note}</p>
                                             </div>
                                             <span className="text-muted-foreground shrink-0">
-                                                {new Date(act.timestamp).toLocaleString('en-GB')}
+                                                {formatAppDateTime(act.timestamp)}
                                             </span>
                                         </div>
                                     );

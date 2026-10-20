@@ -7,6 +7,7 @@ import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { checkDriverAvailability } from '@/lib/user-actions';
 import { formatActionError } from '@/lib/error-handler';
+import { formatAppDate } from '@/lib/date-utils';
 
 // Types for server responses
 
@@ -73,7 +74,7 @@ export async function generateQuotation(
             );
             if (availability.success && availability.data && !availability.data.available) {
                 const conflict = availability.data.conflicts[0];
-                throw new Error(`Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) from ${new Date(conflict.start).toLocaleDateString('en-GB')} to ${new Date(conflict.end).toLocaleDateString('en-GB')}`);
+                throw new Error(`Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) from ${formatAppDate(conflict.start)} to ${formatAppDate(conflict.end)}`);
             }
         }
 
@@ -88,7 +89,7 @@ export async function generateQuotation(
             );
             if (driverAvailability.success && driverAvailability.data && !driverAvailability.data.available) {
                 const conflict = driverAvailability.data.conflicts[0];
-                throw new Error(`Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) from ${new Date(conflict.start).toLocaleDateString('en-GB')} to ${new Date(conflict.end).toLocaleDateString('en-GB')}`);
+                throw new Error(`Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) from ${formatAppDate(conflict.start)} to ${formatAppDate(conflict.end)}`);
             }
         }
 
@@ -330,7 +331,7 @@ export async function updateQuotation(
                 const conflict = availability.data.conflicts[0];
                 return { 
                     success: false, 
-                    error: `Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
+                    error: `Vehicle ${validated.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${formatAppDate(conflict.end)}` 
                 };
             }
         }
@@ -348,7 +349,7 @@ export async function updateQuotation(
                 const conflict = driverAvailability.data.conflicts[0];
                 return { 
                     success: false, 
-                    error: `Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) from ${new Date(conflict.start).toLocaleDateString('en-GB')} to ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
+                    error: `Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) from ${formatAppDate(conflict.start)} to ${formatAppDate(conflict.end)}` 
                 };
             }
         }
@@ -476,7 +477,7 @@ export async function updateQuotationStatus(
                     const conflict = availability.data.conflicts[0];
                     return { 
                         success: false, 
-                        error: `Cannot accept quotation. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
+                        error: `Cannot accept quotation. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${formatAppDate(conflict.end)}` 
                     };
                 }
             }
@@ -493,7 +494,7 @@ export async function updateQuotationStatus(
                     const conflict = driverAvailability.data.conflicts[0];
                     return { 
                         success: false, 
-                        error: `Cannot accept quotation. Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}` 
+                        error: `Cannot accept quotation. Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${formatAppDate(conflict.end)}` 
                     };
                 }
             }
@@ -615,7 +616,7 @@ export async function convertQuotationToBooking(
             }
             if (availability.data && !availability.data.available) {
                 const conflict = availability.data.conflicts[0];
-                throw new Error(`Cannot convert to booking. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}`);
+                throw new Error(`Cannot convert to booking. Vehicle ${quotation.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}: ${conflict.reference}) until ${formatAppDate(conflict.end)}`);
             }
 
             if (effectiveDriverId) {
@@ -631,7 +632,7 @@ export async function convertQuotationToBooking(
                 }
                 if (driverAvailability.data && !driverAvailability.data.available) {
                     const conflict = driverAvailability.data.conflicts[0];
-                    throw new Error(`Cannot convert to booking. Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${new Date(conflict.end).toLocaleDateString('en-GB')}`);
+                    throw new Error(`Cannot convert to booking. Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${formatAppDate(conflict.end)}`);
                 }
             }
         }

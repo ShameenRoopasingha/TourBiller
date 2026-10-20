@@ -1,3 +1,4 @@
+import { formatAppDate, formatAppDateTime } from '@/lib/date-utils';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { getQuotationById } from '@/lib/quotation-actions';
@@ -184,7 +185,7 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                         </Badge>
                     </div>
                     <p className="text-muted-foreground mt-1">
-                        Created on {new Date(q.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+                        Created on {formatAppDate(q.createdAt, { day: '2-digit', month: 'long', year: 'numeric' })}
                     </p>
                 </div>
 
@@ -261,14 +262,14 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                                         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Start Date</label>
                                         <div className="flex items-center gap-2 mt-1">
                                             <Calendar className="h-4 w-4 text-muted-foreground" />
-                                            <span>{q.startDate ? new Date(q.startDate).toLocaleDateString('en-GB') : 'N/A'}</span>
+                                            <span>{formatAppDate(q.startDate)}</span>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Valid Until</label>
                                         <div className="flex items-center gap-2 mt-1">
                                             <Clock className="h-4 w-4 text-muted-foreground" />
-                                            <span>{q.validUntil ? new Date(q.validUntil).toLocaleDateString('en-GB') : 'N/A'}</span>
+                                            <span>{formatAppDate(q.validUntil)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -556,7 +557,7 @@ export default async function ViewQuotationPage({ params }: { params: Promise<{ 
                             </div>
                             <div className="flex justify-between">
                                 <span>Last Updated</span>
-                                <span>{new Date(q.updatedAt).toLocaleString('en-GB')}</span>
+                                <span>{formatAppDateTime(q.updatedAt)}</span>
                             </div>
                         </CardContent>
                     </Card>

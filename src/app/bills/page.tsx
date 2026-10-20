@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { getBills } from '@/lib/actions';
 import { formatCurrency } from '@/lib/calculations';
+import { formatAppDate } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -57,7 +58,7 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                         <div className="flex justify-between items-start">
                             <div>
                                 <div className="font-bold text-lg text-primary">#{bill.billNumber}</div>
-                                <div className="text-sm text-muted-foreground">{new Date(bill.createdAt).toLocaleDateString('en-GB')}</div>
+                                <div className="text-sm text-muted-foreground">{formatAppDate(bill.createdAt)}</div>
                             </div>
                             <div className="text-right">
                                 <div className="font-bold text-lg text-primary">{formatCurrency(bill.totalAmount)}</div>
@@ -85,11 +86,11 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                             </div>
                             <div className="space-y-1">
                                 <span className="text-muted-foreground block text-xs uppercase tracking-wider">Start Date</span>
-                                <span className="font-medium">{bill.startDate ? new Date(bill.startDate).toLocaleDateString('en-GB') : '-'}</span>
+                                <span className="font-medium">{formatAppDate(bill.startDate)}</span>
                             </div>
                             <div className="space-y-1">
                                 <span className="text-muted-foreground block text-xs uppercase tracking-wider">End Date</span>
-                                <span className="font-medium">{bill.endDate ? new Date(bill.endDate).toLocaleDateString('en-GB') : '-'}</span>
+                                <span className="font-medium">{formatAppDate(bill.endDate)}</span>
                             </div>
                         </div>
 
@@ -140,10 +141,10 @@ async function BillsList({ searchQuery, isAdmin }: { searchQuery?: string; isAdm
                                 <TableCell className="max-w-[200px] truncate" title={bill.route}>{bill.route}</TableCell>
                                 <TableCell>{bill.vehicleNo}</TableCell>
                                 <TableCell className="whitespace-nowrap">
-                                    {bill.startDate ? new Date(bill.startDate).toLocaleDateString('en-GB') : '-'}
+                                    {formatAppDate(bill.startDate)}
                                 </TableCell>
                                 <TableCell className="whitespace-nowrap">
-                                    {bill.endDate ? new Date(bill.endDate).toLocaleDateString('en-GB') : '-'}
+                                    {formatAppDate(bill.endDate)}
                                 </TableCell>
                                 <TableCell>
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${bill.paymentMethod === 'CASH'
@@ -227,7 +228,7 @@ async function PendingBillsList({ companyId }: { companyId: string }) {
                                 <TableCell className="text-orange-900 dark:text-orange-300">{tour.customerName}</TableCell>
                                 <TableCell className="text-orange-900 dark:text-orange-300">{tour.destination}</TableCell>
                                 <TableCell className="text-orange-900 dark:text-orange-300">
-                                    {new Date(tour.updatedAt).toLocaleDateString('en-GB')}
+                                    {formatAppDate(tour.updatedAt)}
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button size="sm" asChild className="bg-orange-600 hover:bg-orange-700 text-white">

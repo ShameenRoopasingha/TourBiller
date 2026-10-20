@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { getBookings } from '@/lib/booking-actions';
+import { formatAppDateTime } from '@/lib/date-utils';
 import { CancelBookingButton } from '@/components/CancelBookingButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -133,12 +134,12 @@ async function BookingList({ searchQuery }: { searchQuery?: string }) {
                                         <div className="flex gap-4 text-xs text-muted-foreground mt-1">
                                             <div className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
-                                                {new Date(booking.startDate).toLocaleString('en-GB')}
+                                                {formatAppDateTime(booking.startDate)}
                                             </div>
                                             {booking.endDate && (
                                                 <div className="flex items-center gap-1">
                                                     <span>to</span>
-                                                    {new Date(booking.endDate).toLocaleString('en-GB')}
+                                                    {formatAppDateTime(booking.endDate)}
                                                 </div>
                                             )}
                                         </div>
