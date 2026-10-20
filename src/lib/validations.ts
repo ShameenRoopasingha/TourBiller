@@ -745,7 +745,10 @@ export type CompanyImportInput = z.infer<typeof CompanyImportSchema>;
 
 // Driver Tour Actions
 export const DriverTourActionSchema = z.object({
-  action: z.enum(['START_TRIP', 'END_TRIP', 'TAKEOVER', 'REQUEST_HANDOVER', 'REPORT_BREAKDOWN', 'ADD_ACTIVITY']),
+  action: z.enum(['START_TRIP', 'END_TRIP', 'TAKEOVER', 'REQUEST_HANDOVER', 'REPORT_BREAKDOWN', 'ADD_ACTIVITY', 'CHANGE_ROUTE']),
+  changeType: z.enum(['DETOUR', 'DESTINATION']).nullish().transform(v => v || undefined),
+  extraKm: z.union([z.string(), z.number()]).nullish().transform(v => (v !== undefined && v !== null && v !== '' ? Number(v) : undefined)),
+  agreedByCustomer: z.boolean().optional(),
   note: z.string().nullish().transform(v => v || undefined),
   meterReading: z.union([z.string(), z.number()]).nullish().transform(v => (v !== undefined && v !== null ? String(v) : undefined)),
   reason: z.string().nullish().transform(v => v || undefined),

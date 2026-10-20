@@ -229,7 +229,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         if (!parsed.success) {
             return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message || 'Invalid action' }, { status: 400 });
         }
-        const { action, note, meterReading, reason, location } = parsed.data;
+        const { action, note, meterReading, reason, location, changeType, extraKm, agreedByCustomer } = parsed.data;
 
         const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
         if (!booking || booking.driverId !== driverId) {
@@ -414,6 +414,59 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
                 success: true, 
                 message: 'Vehicle breakdown report logged and transmitted to dispatch.',
                 data: activity 
+            });
+        }
+
+        if (action === 'CHANGE_ROUTE') {
+            if (!location || !location.trim()) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'New location / detour destination is required'
+                }, { status: 400 });
+            }
+
+            const formattedLocation = location.trim();
+            const routeReason = reason || 'Guest Requested Alteration';
+            const extraKmText = extraKm && extraKm > 0 ? `~${extraKm} km extra` : 'Standard route';
+            const agreedText = agreedByCustomer ? 'Guests agreed to extra charges' : 'Standard tour terms';
+
+            const activityNote = changeType === 'DESTINATION'
+                ? `Mid-Tour Destination Changed to: ${formattedLocation} (${extraKmText} | ${agreedText} | Reason: ${routeReason}${note ? ` | Note: ${note}` : ''})`
+                : `Mid-Tour Detour / Extra Stop Added: ${formattedLocation} (${extraKmText} | ${agreedText} | Reason: ${routeReason}${note ? ` | Note: ${note}` : ''})`;
+
+            const updateData: { destination?: string; dropLocation?: string; notes?: string } = {};
+
+            if (changeType === 'DESTINATION') {
+                updateData.destination = formattedLocation;
+                updateData.dropLocation = formattedLocation;
+            }
+
+            const appendNote = `[Route Alteration ${new Date().toLocaleDateString('en-GB')}]: ${changeType === 'DESTINATION' ? 'New Destination' : 'Added Detour'} -> ${formattedLocation} (${extraKmText})`;
+            updateData.notes = booking.notes ? `${booking.notes}\n${appendNote}` : appendNote;
+
+            const [updatedBooking, activity] = await prisma.$transaction([
+                prisma.booking.update({
+                    where: { id: bookingId },
+                    data: updateData,
+                }),
+                prisma.tripActivity.create({
+                    data: {
+                        companyId,
+                        bookingId,
+                        driverId,
+                        type: 'ROUTE_CHANGE',
+                        note: activityNote,
+                    }
+                })
+            ]);
+
+            return NextResponse.json({
+                success: true,
+                message: changeType === 'DESTINATION' ? 'Tour destination updated successfully.' : 'Extra stop / detour added to tour itinerary.',
+                data: {
+                    booking: updatedBooking,
+                    activity
+                }
             });
         }
 
