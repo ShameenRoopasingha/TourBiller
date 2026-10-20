@@ -8,6 +8,8 @@ import { Loader2, FileCheck, Calculator, Plus, Sparkles, Navigation, CalendarRan
 import { QuotationFormSchema, type QuotationFormInput, type QuotationWithSchedule, type VehicleAvailabilityConflict, type DriverAvailabilityConflict } from '@/lib/validations';
 import { notify } from '@/lib/notifications';
 import { MapDistanceCalculator } from '@/components/MapDistanceCalculator';
+import { DateTimePicker } from '@/components/ui/datetime-picker';
+import { DatePicker } from '@/components/ui/date-picker';
 
 // For backward compatibility
 export type QuotationFormData = QuotationFormInput;
@@ -1069,10 +1071,16 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="startDate">Tour Start Date *</Label>
-                            <Input
-                                id="startDate"
-                                type="date"
-                                {...form.register('startDate')}
+                            <DateTimePicker
+                                date={watchedStartDate ? (watchedStartDate instanceof Date ? watchedStartDate : new Date(watchedStartDate)) : undefined}
+                                setDate={(newDate) => {
+                                    form.setValue('startDate', newDate as unknown as Date);
+                                    if (newDate && mapDays) {
+                                        const end = new Date(newDate);
+                                        end.setDate(newDate.getDate() + (mapDays - 1));
+                                        form.setValue('endDate', end as unknown as Date);
+                                    }
+                                }}
                             />
                             {form.formState.errors.startDate && (
                                 <p className="text-sm text-destructive font-medium">{form.formState.errors.startDate.message}</p>
@@ -1084,12 +1092,9 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                 <Label htmlFor="endDate" className="text-muted-foreground">Tour End Date</Label>
                                 <span className="text-[10px] text-muted-foreground font-mono">Auto-syncs with days</span>
                             </div>
-                            <Input
-                                id="endDate"
-                                type="date"
-                                value={watchedFields.endDate ? (watchedFields.endDate instanceof Date ? watchedFields.endDate.toISOString().split('T')[0] : watchedFields.endDate) : ''}
-                                onChange={(e) => {
-                                    const newEndVal = e.target.value;
+                            <DateTimePicker
+                                date={watchedFields.endDate ? (watchedFields.endDate instanceof Date ? watchedFields.endDate : new Date(watchedFields.endDate)) : undefined}
+                                setDate={(newEndVal) => {
                                     form.setValue('endDate', newEndVal as unknown as Date);
                                     if (watchedStartDate && newEndVal) {
                                         const start = new Date(watchedStartDate);
@@ -1107,7 +1112,6 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                         }
                                     }
                                 }}
-                                className="bg-background"
                             />
                         </div>
                     </div>
@@ -1290,10 +1294,9 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="validUntil">Quotation Valid Until</Label>
-                            <Input
-                                id="validUntil"
-                                type="date"
-                                {...form.register('validUntil')}
+                            <DatePicker
+                                date={watchedFields.validUntil ? (watchedFields.validUntil instanceof Date ? watchedFields.validUntil : new Date(watchedFields.validUntil)) : undefined}
+                                setDate={(d) => form.setValue('validUntil', d as unknown as Date)}
                             />
                         </div>
                     </div>

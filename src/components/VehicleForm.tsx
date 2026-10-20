@@ -13,6 +13,7 @@ export type VehicleFormData = VehicleFormInput;
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import {
     Form,
@@ -407,7 +408,11 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                     <FormItem>
                                         <FormLabel>Insurance Expiry Date</FormLabel>
                                         <FormControl>
-                                            <Input type="date" {...field} value={field.value || ""} />
+                                            <DatePicker
+                                                date={field.value ? new Date(field.value) : undefined}
+                                                setDate={(d) => field.onChange(d ? d.toISOString().split('T')[0] : '')}
+                                                placeholder="Select insurance expiry date"
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -421,7 +426,11 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                                     <FormItem>
                                         <FormLabel>Revenue License Expiry Date</FormLabel>
                                         <FormControl>
-                                            <Input type="date" {...field} value={field.value || ""} />
+                                            <DatePicker
+                                                date={field.value ? new Date(field.value) : undefined}
+                                                setDate={(d) => field.onChange(d ? d.toISOString().split('T')[0] : '')}
+                                                placeholder="Select revenue license expiry date"
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

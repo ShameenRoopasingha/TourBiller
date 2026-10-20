@@ -45,6 +45,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { DatePicker } from '@/components/ui/date-picker';
 
 
 interface VehicleExpenseManagerProps {
@@ -292,11 +293,10 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
                                 Change date (default: today)
                             </button>
                             {showDatePicker && (
-                                <Input
-                                    type="date"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    className="h-12"
+                                <DatePicker
+                                    date={date ? new Date(date) : undefined}
+                                    setDate={(d: Date | undefined) => setDate(d ? d.toISOString().split('T')[0] : '')}
+                                    placeholder="Select expense date"
                                 />
                             )}
 
@@ -403,12 +403,10 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="date">Date</Label>
-                                <Input
-                                    id="date"
-                                    type="date"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    required
+                                <DatePicker
+                                    date={date ? new Date(date) : undefined}
+                                    setDate={(d: Date | undefined) => setDate(d ? d.toISOString().split('T')[0] : '')}
+                                    placeholder="Select expense date"
                                 />
                             </div>
                         </div>

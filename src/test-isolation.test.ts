@@ -91,7 +91,7 @@ describe('Multi-Tenant Data Isolation', () => {
     afterAll(async () => {
         // Cleanup
         await prisma.vehicle.deleteMany({ where: { companyId: { in: [companyA_Id, companyB_Id] } } });
-        await prisma.businessProfile.deleteMany({ where: { id: { in: [companyA_Id, companyB_Id] } } });
+        if (companyA_Id && companyB_Id) { await prisma.businessProfile.deleteMany({ where: { id: { in: [companyA_Id, companyB_Id] } } }); }
         await prisma.$disconnect();
     });
 

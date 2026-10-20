@@ -28,7 +28,7 @@ describe('Complete User Flow Integration', () => {
     });
 
     afterAll(async () => {
-        await prisma.businessProfile.deleteMany({ where: { id: companyId } });
+        if (companyId) { await prisma.businessProfile.deleteMany({ where: { id: companyId } }); }
         await prisma.$disconnect();
     });
 
