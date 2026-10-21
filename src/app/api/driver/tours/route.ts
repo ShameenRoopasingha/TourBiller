@@ -105,6 +105,7 @@ export async function GET(req: Request) {
                 companyId: driverUser.company?.id,
                 companyName: driverUser.company?.companyName || 'Transport Company',
                 companyLogoUrl: driverUser.company?.logoUrl || null,
+                companyPhone: driverUser.company?.phone || null,
             } : null
         });
     } catch (error) {

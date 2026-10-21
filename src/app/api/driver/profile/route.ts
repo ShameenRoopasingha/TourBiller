@@ -79,6 +79,7 @@ export async function GET(req: Request) {
                 companyId: user.company?.id || user.companyId,
                 companyName: user.company?.companyName || 'Tour Transport Company',
                 companyLogoUrl: user.company?.logoUrl || null,
+                companyPhone: user.company?.phone || null,
             },
         });
     } catch (error) {
@@ -189,6 +190,7 @@ export async function PUT(req: Request) {
                         companyId: driver.company?.id || driver.companyId,
                         companyName: driver.company?.companyName || 'Tour Transport Company',
                         companyLogoUrl: driver.company?.logoUrl || null,
+                        companyPhone: driver.company?.phone || null,
                     }
                 }
             });
@@ -221,6 +223,7 @@ export async function PUT(req: Request) {
                     companyId: updatedDriver.company?.id || updatedDriver.companyId,
                     companyName: updatedDriver.company?.companyName || 'Tour Transport Company',
                     companyLogoUrl: updatedDriver.company?.logoUrl || null,
+                    companyPhone: updatedDriver.company?.phone || null,
                 }
             }
         });
