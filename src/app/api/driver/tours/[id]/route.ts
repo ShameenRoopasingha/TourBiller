@@ -229,7 +229,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         if (!parsed.success) {
             return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message || 'Invalid action' }, { status: 400 });
         }
-        const { action, note, meterReading, reason, location, changeType, extraKm, agreedByCustomer } = parsed.data;
+        const { action, note, meterReading, reason, location, changeType, extraKm, agreedByCustomer, pickupLocation, dropLocation, destination: destParam, stops } = parsed.data;
 
         const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
         if (!booking || booking.driverId !== driverId) {
@@ -418,30 +418,52 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         }
 
         if (action === 'CHANGE_ROUTE') {
-            if (!location || !location.trim()) {
+            const formattedLocation = (location || '').trim();
+            const formattedPickup = (pickupLocation || '').trim();
+            const formattedDrop = (dropLocation || destParam || '').trim();
+
+            if (!formattedLocation && !formattedPickup && !formattedDrop && (!Array.isArray(stops) || stops.length === 0)) {
                 return NextResponse.json({
                     success: false,
-                    error: 'New location / detour destination is required'
+                    error: 'At least one route location or intermediate stop is required'
                 }, { status: 400 });
             }
 
-            const formattedLocation = location.trim();
             const routeReason = reason || 'Guest Requested Alteration';
             const extraKmText = extraKm && extraKm > 0 ? `~${extraKm} km extra` : 'Standard route';
             const agreedText = agreedByCustomer ? 'Guests agreed to extra charges' : 'Standard tour terms';
 
-            const activityNote = changeType === 'DESTINATION'
-                ? `Mid-Tour Destination Changed to: ${formattedLocation} (${extraKmText} | ${agreedText} | Reason: ${routeReason}${note ? ` | Note: ${note}` : ''})`
-                : `Mid-Tour Detour / Extra Stop Added: ${formattedLocation} (${extraKmText} | ${agreedText} | Reason: ${routeReason}${note ? ` | Note: ${note}` : ''})`;
+            const updateData: { pickupLocation?: string; destination?: string; dropLocation?: string; notes?: string } = {};
 
-            const updateData: { destination?: string; dropLocation?: string; notes?: string } = {};
-
-            if (changeType === 'DESTINATION') {
-                updateData.destination = formattedLocation;
-                updateData.dropLocation = formattedLocation;
+            if (formattedPickup) {
+                updateData.pickupLocation = formattedPickup;
+            }
+            if (formattedDrop || changeType === 'DESTINATION') {
+                const targetEnd = formattedDrop || formattedLocation;
+                if (targetEnd) {
+                    updateData.destination = targetEnd;
+                    updateData.dropLocation = targetEnd;
+                }
             }
 
-            const appendNote = `[Route Alteration ${new Date().toLocaleDateString('en-GB')}]: ${changeType === 'DESTINATION' ? 'New Destination' : 'Added Detour'} -> ${formattedLocation} (${extraKmText})`;
+            const stopsStr = Array.isArray(stops) && stops.length > 0
+                ? stops.map((s: any) => typeof s === 'string' ? s : (s.name || s.displayName || '')).filter(Boolean).join(' ➔ ')
+                : (changeType === 'DETOUR' ? formattedLocation : '');
+
+            let activityNote = '';
+            if (changeType === 'ITINERARY' || (stopsStr && (formattedPickup || formattedDrop))) {
+                const parts: string[] = [];
+                if (updateData.pickupLocation || booking.pickupLocation) parts.push(`Pickup: ${updateData.pickupLocation || booking.pickupLocation}`);
+                if (stopsStr) parts.push(`Stops: ${stopsStr}`);
+                if (updateData.dropLocation || booking.dropLocation) parts.push(`Drop: ${updateData.dropLocation || booking.dropLocation}`);
+                activityNote = `Tour Itinerary Alteration: ${parts.join(' ➔ ')} (${extraKmText} | ${agreedText} | Reason: ${routeReason}${note ? ` | Note: ${note}` : ''})`;
+            } else if (changeType === 'DESTINATION') {
+                activityNote = `Mid-Tour Destination Changed to: ${updateData.dropLocation || formattedLocation} (${extraKmText} | ${agreedText} | Reason: ${routeReason}${note ? ` | Note: ${note}` : ''})`;
+            } else {
+                activityNote = `Mid-Tour Detour / Stops Added: ${stopsStr || formattedLocation} (${extraKmText} | ${agreedText} | Reason: ${routeReason}${note ? ` | Note: ${note}` : ''})`;
+            }
+
+            const appendNote = `[Route Alteration ${new Date().toLocaleDateString('en-GB')}]: ${stopsStr ? `Stops: ${stopsStr}` : `Destination: ${updateData.dropLocation || formattedLocation}`} (${extraKmText})`;
             updateData.notes = booking.notes ? `${booking.notes}\n${appendNote}` : appendNote;
 
             const [updatedBooking, activity] = await prisma.$transaction([
