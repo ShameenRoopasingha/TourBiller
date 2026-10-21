@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Loader2, Save, KeyRound } from 'lucide-react';
+import { Loader2, Save, KeyRound, LogOut } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { notify } from '@/lib/notifications';
+import { SignOutButton } from '@/components/SignOutButton';
+
 interface ProfileFormProps {
     user: {
         id: string;
@@ -216,6 +218,27 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                         {updatingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
                         Update Password
                     </Button>
+                </CardFooter>
+            </Card>
+
+            {/* Account Session & Sign Out Card */}
+            <Card className="border-red-200/80 dark:border-red-950/60 bg-red-50/20 dark:bg-red-950/10">
+                <CardHeader>
+                    <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2">
+                        <LogOut className="h-5 w-5" /> Account Session & Sign Out
+                    </CardTitle>
+                    <CardDescription>
+                        Sign out of your active session on this device. You will need your login credentials to sign back in.
+                    </CardDescription>
+                </CardHeader>
+                <CardFooter className="border-t border-red-200/60 dark:border-red-900/30 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-muted/20">
+                    <div className="text-xs text-muted-foreground">
+                        Currently signed in as <span className="font-semibold text-foreground">{user.email}</span> ({user.role})
+                    </div>
+                    <SignOutButton 
+                        showLabel 
+                        className="w-full sm:w-auto h-9 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white border-transparent font-medium shadow-xs" 
+                    />
                 </CardFooter>
             </Card>
         </div>

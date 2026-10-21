@@ -35,13 +35,15 @@ export function SignOutButton({ className, showLabel = false }: SignOutButtonPro
                         <button
                             type="button"
                             className={cn(
-                                "size-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-red-600 hover:bg-red-500/10 border border-border/60 hover:border-red-300 dark:hover:border-red-900/60 transition-all cursor-pointer shadow-xs active:scale-95",
+                                showLabel
+                                    ? "h-9 px-3.5 rounded-lg flex items-center justify-center gap-2 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 border border-border/60 hover:border-red-300 dark:hover:border-red-900/60 transition-all cursor-pointer shadow-xs active:scale-95"
+                                    : "size-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-red-600 hover:bg-red-500/10 border border-border/60 hover:border-red-300 dark:hover:border-red-900/60 transition-all cursor-pointer shadow-xs active:scale-95",
                                 className
                             )}
                             aria-label="Sign out"
                         >
-                            <LogOut className="h-4 w-4" />
-                            {showLabel && <span className="ml-2 text-sm font-medium">Sign out</span>}
+                            <LogOut className="h-4 w-4 shrink-0" />
+                            {showLabel && <span className="text-sm font-medium">Sign out</span>}
                         </button>
                     </AlertDialogTrigger>
                 </TooltipTrigger>

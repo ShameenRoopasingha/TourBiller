@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { prisma } from '@/lib/prisma';
 import { BackupButton } from '@/components/BackupButton';
 import { CsvImport } from '@/components/CsvImport';
+import { SignOutButton } from '@/components/SignOutButton';
 
 async function SettingsContent() {
     const session = await auth();
@@ -32,9 +33,17 @@ async function SettingsContent() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-                <p className="text-muted-foreground">Manage your account and business preferences.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/50">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+                    <p className="text-muted-foreground">Manage your account and business preferences.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <SignOutButton 
+                        showLabel 
+                        className="w-full sm:w-auto h-9 px-4 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 font-medium transition-all shadow-xs" 
+                    />
+                </div>
             </div>
 
             <Tabs defaultValue="account" className="w-full">
@@ -72,6 +81,10 @@ async function SettingsContent() {
                             </div>
 
                             <div className="mt-6 pt-6 border-t border-border">
+                                <h3 className="text-lg font-medium mb-2">Import Data</h3>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    Restore or bulk-upload business records from a previously generated ZIP backup file.
+                                </p>
                                 {profile?.id && <CsvImport companyId={profile.id} />}
                             </div>
                         </div>
