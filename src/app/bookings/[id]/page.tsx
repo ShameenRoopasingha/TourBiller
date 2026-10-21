@@ -8,6 +8,7 @@ import { getActiveVehicles } from '@/lib/vehicle-actions';
 import { CancelBookingButton } from '@/components/CancelBookingButton';
 import { BookingDriverAssigner } from '@/components/BookingDriverAssigner';
 import { BookingVehicleSwapper } from '@/components/BookingVehicleSwapper';
+import { BookingDateEditor } from '@/components/BookingDateEditor';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -240,7 +241,22 @@ export default async function BookingDetailsPage(props: {
                             </CardDescription>
                         </div>
                         
-                        <div className="flex flex-col sm:items-end gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            {['CONFIRMED', 'ONGOING', 'OVERDUE'].includes(booking.status) && (
+                                <BookingDateEditor
+                                    bookingId={booking.id}
+                                    vehicleNo={booking.vehicleNo}
+                                    customerName={booking.customerName}
+                                    currentStartDate={booking.startDate}
+                                    currentEndDate={booking.endDate}
+                                    driverId={booking.driverId}
+                                    driverName={booking.driver?.name}
+                                    isOngoing={isOngoing}
+                                    currentNotes={booking.notes}
+                                    triggerVariant="button"
+                                />
+                            )}
+
                             {isOngoing && (
                                 <EndTourDialog 
                                     vehicleNo={booking.vehicleNo} 
@@ -259,20 +275,38 @@ export default async function BookingDetailsPage(props: {
                     {/* Timeframe */}
                     <div className="grid sm:grid-cols-2 gap-6">
                         <div className="space-y-4">
-                            <h3 className="font-semibold flex items-center gap-2 text-muted-foreground">
-                                <Calendar className="h-4 w-4" /> Tour Schedule
-                            </h3>
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-semibold flex items-center gap-2 text-muted-foreground">
+                                    <Calendar className="h-4 w-4" /> Tour Schedule
+                                </h3>
+                                {['CONFIRMED', 'ONGOING', 'OVERDUE'].includes(booking.status) && (
+                                    <BookingDateEditor
+                                        bookingId={booking.id}
+                                        vehicleNo={booking.vehicleNo}
+                                        customerName={booking.customerName}
+                                        currentStartDate={booking.startDate}
+                                        currentEndDate={booking.endDate}
+                                        driverId={booking.driverId}
+                                        driverName={booking.driver?.name}
+                                        isOngoing={isOngoing}
+                                        currentNotes={booking.notes}
+                                        triggerVariant="compact"
+                                    />
+                                )}
+                            </div>
                             <div className="bg-muted/30 rounded-lg p-4 space-y-3">
                                 <div>
                                     <p className="text-xs text-muted-foreground uppercase font-semibold">Start Date & Time</p>
                                     <p className="font-medium text-lg">{formatAppDateTime(booking.startDate)}</p>
                                 </div>
-                                {booking.endDate && (
-                                    <div>
-                                        <p className="text-xs text-muted-foreground uppercase font-semibold">Expected End Date & Time</p>
-                                        <p className="font-medium text-lg">{formatAppDateTime(booking.endDate)}</p>
-                                    </div>
-                                )}
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase font-semibold">Expected End Date & Time</p>
+                                    <p className="font-medium text-lg">
+                                        {booking.endDate ? formatAppDateTime(booking.endDate) : (
+                                            <span className="text-muted-foreground italic text-sm">Not specified (Single Day / Open)</span>
+                                        )}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 

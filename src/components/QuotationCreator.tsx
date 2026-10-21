@@ -1113,6 +1113,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                                     if (newDate) {
                                         const end = new Date(newDate);
                                         end.setDate(newDate.getDate() + (tourDurationDays - 1));
+                                        end.setHours(18, 0, 0, 0); // End of tour at standard evening time
                                         form.setValue('endDate', end as unknown as Date, { shouldValidate: true, shouldDirty: true });
                                     }
                                 }}

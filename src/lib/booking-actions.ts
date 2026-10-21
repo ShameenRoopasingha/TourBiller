@@ -18,7 +18,7 @@ import { requireAuth, requireAdmin } from '@/lib/auth-guard';
 import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { checkDriverAvailability } from '@/lib/user-actions';
 import { formatActionError } from '@/lib/error-handler';
-import { formatAppDate } from '@/lib/date-utils';
+import { formatAppDate, formatAppDateTime } from '@/lib/date-utils';
 
 
 /**
@@ -643,6 +643,126 @@ export async function getVehicleSwapLogs(bookingId: string) {
         return formatActionError(error, 'Failed to fetch swap logs');
     }
 }
+
+/**
+ * Update Tour Dates (Start Date, End Date, Duration, and Reschedule Notes)
+ * Validates vehicle and driver availability across the new timeframe
+ */
+export async function updateBookingDates(
+    bookingId: string,
+    data: {
+        startDate: Date | string;
+        endDate?: Date | string | null;
+        notes?: string;
+    }
+): Promise<ActionResult<{ id: string; startDate: Date; endDate: Date | null }>> {
+    try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+
+        const booking = await prisma.booking.findFirst({
+            where: { id: bookingId, companyId: authCheck.companyId },
+        });
+
+        if (!booking) {
+            return { success: false, error: 'Booking not found' };
+        }
+
+        const newStartDate = new Date(data.startDate);
+        if (isNaN(newStartDate.getTime())) {
+            return { success: false, error: 'Invalid start date' };
+        }
+
+        let newEndDate: Date | null = null;
+        if (data.endDate) {
+            newEndDate = new Date(data.endDate);
+            if (isNaN(newEndDate.getTime())) {
+                return { success: false, error: 'Invalid end date' };
+            }
+            if (newEndDate < newStartDate) {
+                return { success: false, error: 'End date must be after or equal to start date' };
+            }
+        }
+
+        // Check vehicle availability with new dates (excluding current bookingId)
+        if (booking.vehicleNo) {
+            const checkEnd = newEndDate || newStartDate;
+            const availability = await checkVehicleAvailability(
+                booking.vehicleNo,
+                newStartDate,
+                checkEnd,
+                bookingId,
+                'Booking'
+            );
+            if (availability.success && availability.data && !availability.data.available) {
+                const conflict = availability.data.conflicts[0];
+                return {
+                    success: false,
+                    error: `Vehicle ${booking.vehicleNo} is already occupied by ${conflict.customer} (${conflict.type}) until ${formatAppDate(conflict.end)}`
+                };
+            }
+        }
+
+        // Check driver availability if assigned (excluding current bookingId)
+        if (booking.driverId) {
+            const checkEnd = newEndDate || newStartDate;
+            const driverAvail = await checkDriverAvailability(
+                booking.driverId,
+                newStartDate,
+                checkEnd,
+                bookingId,
+                'Booking'
+            );
+            if (driverAvail.success && driverAvail.data && !driverAvail.data.available) {
+                const conflict = driverAvail.data.conflicts[0];
+                return {
+                    success: false,
+                    error: `Driver is already assigned to a tour for ${conflict.customer} (${conflict.type}) until ${formatAppDate(conflict.end)}`
+                };
+            }
+        }
+
+        const updated = await prisma.booking.update({
+            where: { id: bookingId },
+            data: {
+                startDate: newStartDate,
+                endDate: newEndDate,
+                ...(data.notes !== undefined ? { notes: data.notes } : {}),
+            },
+        });
+
+        // Add a trip activity note for tour date adjustment
+        await prisma.tripActivity.create({
+            data: {
+                companyId: authCheck.companyId!,
+                bookingId: booking.id,
+                driverId: booking.driverId || null,
+                type: 'NOTE',
+                note: `Tour dates updated by admin. New End Date: ${newEndDate ? formatAppDateTime(newEndDate) : 'Open/Single Day'} (Start: ${formatAppDateTime(newStartDate)}).`,
+            },
+        });
+
+        revalidateFor('booking');
+        revalidatePath(`/bookings/${bookingId}`);
+        revalidatePath('/bookings');
+        revalidatePath('/calendar');
+        revalidatePath('/live-tracking');
+
+        return {
+            success: true,
+            data: {
+                id: updated.id,
+                startDate: updated.startDate,
+                endDate: updated.endDate,
+            },
+        };
+    } catch (error) {
+        return formatActionError(error, 'Failed to update tour dates');
+    }
+}
+
 
 
 

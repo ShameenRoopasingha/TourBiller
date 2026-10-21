@@ -31,7 +31,7 @@ import { MapDistanceCalculator } from '@/components/MapDistanceCalculator';
 interface BookingCreatorProps {
     vehicles: Vehicle[];
     customers: Customer[];
-    schedules: { id: string; name: string }[];
+    schedules: { id: string; name: string; days?: number }[];
     drivers?: { id: string; name: string }[];
 }
 
@@ -273,11 +273,25 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                     name="startDate"
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
-                                            <FormLabel>Start Date & Time</FormLabel>
+                                            <FormLabel>Start Date & Time *</FormLabel>
                                             <FormControl>
                                                 <DateTimePicker
                                                     date={field.value || undefined}
-                                                    setDate={(date) => field.onChange(date)}
+                                                    setDate={(date) => {
+                                                        field.onChange(date);
+                                                        if (date) {
+                                                            const currentEnd = form.getValues('endDate');
+                                                            // If end date is missing or same/before start date, auto-set to standard evening tour finish
+                                                            if (!currentEnd || new Date(currentEnd).getTime() <= new Date(date).getTime()) {
+                                                                const nextEnd = new Date(date);
+                                                                if (date.getHours() >= 14) {
+                                                                    nextEnd.setDate(date.getDate() + 1);
+                                                                }
+                                                                nextEnd.setHours(18, 0, 0, 0);
+                                                                form.setValue('endDate', nextEnd, { shouldValidate: true, shouldDirty: true });
+                                                            }
+                                                        }
+                                                    }}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -290,7 +304,14 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                     name="endDate"
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
-                                            <FormLabel>End Date & Time (Optional)</FormLabel>
+                                            <div className="flex items-center justify-between">
+                                                <FormLabel>End Date & Time</FormLabel>
+                                                <span className="text-[10px] text-muted-foreground font-mono">
+                                                    {watchedStartDate && watchedEndDate && new Date(watchedEndDate) >= new Date(watchedStartDate)
+                                                        ? `${Math.max(1, Math.round((new Date(watchedEndDate).getTime() - new Date(watchedStartDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)} Days Tour`
+                                                        : 'Auto-syncs'}
+                                                </span>
+                                            </div>
                                             <FormControl>
                                                 <DateTimePicker
                                                     date={field.value || undefined}
@@ -301,6 +322,29 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                         </FormItem>
                                     )}
                                 />
+                            </div>
+
+                            {/* Quick Tour Duration Presets */}
+                            <div className="flex flex-wrap items-center gap-1.5 p-2 bg-muted/30 border border-muted-foreground/15 rounded-lg text-xs">
+                                <span className="font-semibold text-muted-foreground mr-1">Quick Duration Presets:</span>
+                                {[1, 2, 3, 4, 5, 7, 10].map((d) => (
+                                    <Button
+                                        key={d}
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 px-2 text-xs font-medium bg-background hover:bg-primary/10 hover:text-primary"
+                                        onClick={() => {
+                                            const start = form.getValues('startDate') ? new Date(form.getValues('startDate')) : new Date();
+                                            const end = new Date(start);
+                                            end.setDate(start.getDate() + (d - 1));
+                                            end.setHours(18, 0, 0, 0);
+                                            form.setValue('endDate', end, { shouldValidate: true, shouldDirty: true });
+                                        }}
+                                    >
+                                        {d} {d === 1 ? 'Day' : 'Days'}
+                                    </Button>
+                                ))}
                             </div>
 
                             <div className="py-2">
@@ -337,11 +381,21 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                                             <FormControl>
                                                 <ComboboxField
                                                     options={schedules.map(s => ({
-                                                        label: s.name,
+                                                        label: s.days ? `${s.name} (${s.days} Days)` : s.name,
                                                         value: s.name
                                                     }))}
                                                     value={field.value || ''}
-                                                    onChange={field.onChange}
+                                                    onChange={(val) => {
+                                                        field.onChange(val);
+                                                        const selectedSched = schedules.find(s => s.name === val);
+                                                        if (selectedSched?.days) {
+                                                            const startVal = form.getValues('startDate') ? new Date(form.getValues('startDate')) : new Date();
+                                                            const endVal = new Date(startVal);
+                                                            endVal.setDate(startVal.getDate() + (selectedSched.days - 1));
+                                                            endVal.setHours(18, 0, 0, 0);
+                                                            form.setValue('endDate', endVal, { shouldValidate: true, shouldDirty: true });
+                                                        }
+                                                    }}
                                                     placeholder="Select or type a destination..."
                                                     allowCustomValue={true}
                                                 />
