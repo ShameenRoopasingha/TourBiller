@@ -229,7 +229,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         if (!parsed.success) {
             return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message || 'Invalid action' }, { status: 400 });
         }
-        const { action, note, meterReading, reason, location, changeType, extraKm, agreedByCustomer, pickupLocation, dropLocation, destination: destParam, stops } = parsed.data;
+        const { action, note, meterReading, reason, location, changeType, extraKm, agreedByCustomer, pickupLocation, dropLocation, destination: destParam, stops, routePolyline } = parsed.data;
 
         const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
         if (!booking || booking.driverId !== driverId) {
@@ -433,7 +433,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             const extraKmText = extraKm && extraKm > 0 ? `~${extraKm} km extra` : 'Standard route';
             const agreedText = agreedByCustomer ? 'Guests agreed to extra charges' : 'Standard tour terms';
 
-            const updateData: { pickupLocation?: string; destination?: string; dropLocation?: string; notes?: string } = {};
+            const updateData: { pickupLocation?: string; destination?: string; dropLocation?: string; notes?: string; routePolyline?: any } = {};
+            if (routePolyline) { updateData.routePolyline = routePolyline; }
 
             if (formattedPickup) {
                 updateData.pickupLocation = formattedPickup;

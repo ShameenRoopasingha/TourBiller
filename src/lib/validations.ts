@@ -757,6 +757,7 @@ export const DriverTourActionSchema = z.object({
   dropLocation: z.string().nullish().transform(v => v || undefined),
   destination: z.string().nullish().transform(v => v || undefined),
   stops: z.array(z.any()).nullish().transform(v => v || undefined),
+  routePolyline: z.any().nullish().transform(v => v || undefined),
 });
 
 export type DriverTourActionInput = z.infer<typeof DriverTourActionSchema>;

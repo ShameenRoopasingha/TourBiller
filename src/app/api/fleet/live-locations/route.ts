@@ -201,6 +201,19 @@ export async function GET(req: Request) {
                 handoverDetails,
                 hasPendingBreakdown,
                 breakdownDetails,
+                routePolyline: b.routePolyline || null,
+                intermediateStops: (() => {
+                    if (!b.notes) return [];
+                    const lines = b.notes.split('\n');
+                    for (let i = lines.length - 1; i >= 0; i--) {
+                        const line = lines[i];
+                        const match = line.match(/Stops:\s*([^()]+)/i);
+                        if (match) {
+                            return match[1].split('➔').map(s => s.trim()).filter(Boolean);
+                        }
+                    }
+                    return [];
+                })(),
             };
         });
 
