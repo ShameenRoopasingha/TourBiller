@@ -334,6 +334,44 @@ export async function searchPlacesOSM(
     }
   }
 
+  // Ultra-fast Photon Komoot OSM Elasticsearch Query (supports every rural village, junction, and town)
+  try {
+    const photonLat = (activeCountryCode === 'lk' || !activeCountryCode) ? 7.8731 : 20.0;
+    const photonLon = (activeCountryCode === 'lk' || !activeCountryCode) ? 80.7718 : 0.0;
+    const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(query.trim())}&lat=${photonLat}&lon=${photonLon}&limit=8`;
+    const photonRes = await fetch(photonUrl, { next: { revalidate: 3600 } });
+    if (photonRes.ok) {
+      const pJson = await photonRes.json();
+      const features = Array.isArray(pJson?.features) ? pJson.features : [];
+      for (const f of features) {
+        const c = f.geometry?.coordinates;
+        if (!c || c.length < 2) continue;
+        const pLat = c[1];
+        const pLon = c[0];
+        if (activeCountryCode === 'lk' || !activeCountryCode) {
+          if (pLat < 5.8 || pLat > 9.9 || pLon < 79.5 || pLon > 82.0) continue;
+        }
+        const p = f.properties || {};
+        const name = p.name || p.street || p.district || 'Location';
+        const subParts = [p.district, p.county, p.state].filter(Boolean);
+        const subText = subParts.length > 0 ? subParts.join(', ') : 'Sri Lanka';
+        const alreadyIn = matchedCurated.some(
+          (m) => Math.hypot(m.lat - pLat, m.lon - pLon) < 0.004 || m.shortName.toLowerCase() === name.toLowerCase()
+        );
+        if (!alreadyIn) {
+          matchedCurated.push({
+            displayName: `${name}, ${subText}`,
+            shortName: name,
+            lat: pLat,
+            lon: pLon,
+          });
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+
   try {
     let data: any[] = [];
 
