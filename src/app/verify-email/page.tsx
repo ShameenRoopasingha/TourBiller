@@ -66,21 +66,24 @@ function VerifyEmailContent() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
-            {/* Background ambient lighting */}
-            <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="min-h-screen bg-[#040504] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            {/* Background ambient lighting (Bitgard Matte Orange & Amber) */}
+            <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-[140px] pointer-events-none" />
+            <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-amber-500/15 rounded-full blur-[140px] pointer-events-none" />
 
             <div className="w-full max-w-md relative z-10">
                 <div className="text-center mb-6">
-                    <div className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-primary/10 border border-primary/20 text-primary mb-3 shadow-lg shadow-primary/5">
+                    <div className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-primary/10 border border-primary/25 text-primary mb-3 shadow-lg shadow-primary/10">
                         <ShieldCheck className="h-8 w-8" />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight text-white">VIGIL Tour Management</h1>
-                    <p className="text-sm text-slate-400 mt-1">Open-Source Email Verification Portal</p>
+                    <h1 className="text-2xl font-bold tracking-tight text-white font-montserrat">VIGIL</h1>
+                    <p className="text-xs text-primary uppercase tracking-wider font-semibold mt-0.5">Email Verification Portal</p>
                 </div>
 
-                <Card className="border-slate-800 bg-slate-900/90 backdrop-blur-xl shadow-2xl text-slate-100">
+                <div className="relative">
+                    <div className="absolute -inset-1 rounded-3xl bg-gradient-to-b from-[#E8732A]/20 via-[#E8732A]/5 to-transparent blur-xl pointer-events-none opacity-80" />
+                    <Card className="border-white/[0.12] bg-[#090B10]/95 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] text-slate-100 overflow-hidden relative">
+                        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#E8732A] to-transparent opacity-90" />
                     <CardHeader className="text-center pb-4">
                         <CardTitle className="text-xl">
                             {status === 'success' ? 'Email Verified Successfully!' : 'Account Activation'}
@@ -173,6 +176,7 @@ function VerifyEmailContent() {
                         </p>
                     </CardFooter>
                 </Card>
+                </div>
             </div>
         </div>
     );

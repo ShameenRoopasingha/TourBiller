@@ -114,21 +114,21 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="relative min-h-[100dvh] lg:h-[100dvh] w-full flex items-center justify-center p-2 sm:p-4 lg:p-6 overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-[#060911] text-slate-100 font-display">
-            {/* Ambient Multi-Layer Architectural Lighting */}
+        <div className="relative min-h-[100dvh] lg:h-[100dvh] w-full flex items-center justify-center p-2 sm:p-4 lg:p-6 overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-[#040504] text-slate-100 font-display">
+            {/* Ambient Multi-Layer Architectural Lighting (Bitgard Matte Orange & Amber) */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
                 <div 
-                    className="absolute -top-[20%] left-1/2 -translate-x-1/2 w-[1100px] h-[550px] rounded-full opacity-30 blur-[130px] pointer-events-none"
-                    style={{ background: 'radial-gradient(circle, rgba(37, 99, 235, 0.45) 0%, rgba(30, 58, 138, 0.2) 50%, transparent 75%)' }}
+                    className="absolute -top-[20%] left-1/2 -translate-x-1/2 w-[1100px] h-[550px] rounded-full opacity-35 blur-[140px] pointer-events-none"
+                    style={{ background: 'radial-gradient(circle, rgba(232, 115, 42, 0.28) 0%, rgba(153, 71, 22, 0.12) 50%, transparent 75%)' }}
                 />
                 <div 
-                    className="absolute -bottom-[20%] right-[-10%] w-[650px] h-[450px] rounded-full opacity-20 blur-[140px] pointer-events-none"
-                    style={{ background: 'radial-gradient(circle, rgba(14, 165, 233, 0.35) 0%, rgba(30, 64, 175, 0.15) 50%, transparent 70%)' }}
+                    className="absolute -bottom-[20%] right-[-10%] w-[650px] h-[450px] rounded-full opacity-25 blur-[150px] pointer-events-none"
+                    style={{ background: 'radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(68, 31, 10, 0.08) 50%, transparent 70%)' }}
                 />
 
                 {/* Subtle Geometric Precision Grid */}
                 <div 
-                    className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                    className="absolute inset-0 opacity-[0.035] pointer-events-none"
                     style={{
                         backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`,
                         backgroundSize: '36px 36px',
@@ -151,7 +151,7 @@ export default function LoginPage() {
                     className="w-full lg:max-w-lg xl:max-w-xl flex flex-col justify-between space-y-3 lg:space-y-4"
                 >
                     {/* Multi-Tenant Status Pill */}
-                    <div className="inline-flex items-center gap-2 self-start px-2.5 py-0.5 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-sm backdrop-blur-md">
+                    <div className="inline-flex items-center gap-2 self-start px-2.5 py-0.5 rounded-full bg-[#0A0B0D]/90 border border-white/10 shadow-sm backdrop-blur-md">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -176,14 +176,14 @@ export default function LoginPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                        className="rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800/80 p-3 sm:p-4 shadow-[0_15px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl relative overflow-hidden group"
+                        className="rounded-2xl bg-gradient-to-b from-[#0B0D12]/95 to-[#050608]/95 border border-white/[0.08] p-3 sm:p-4 shadow-[0_15px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl relative overflow-hidden group"
                     >
-                        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
+                        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E8732A]/50 to-transparent" />
                         
                         {/* Deck Header */}
-                        <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
                             <div className="flex items-center gap-2">
-                                <div className="p-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                                <div className="p-1 rounded-lg bg-primary/10 border border-primary/25 text-primary">
                                     <Layers className="w-3 h-3" />
                                 </div>
                                 <div>
@@ -200,8 +200,8 @@ export default function LoginPage() {
                         {/* 3 Core Capability Rows */}
                         <div className="space-y-1.5 py-2 text-xs">
                             {/* Feature 1 */}
-                            <div className="flex items-start gap-2.5 p-1.5 rounded-xl bg-slate-900/60 border border-slate-800/60">
-                                <div className="p-1.5 rounded-lg bg-slate-800/80 text-blue-400 shrink-0 mt-0.5">
+                            <div className="flex items-start gap-2.5 p-1.5 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
+                                <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0 mt-0.5">
                                     <Receipt className="w-3 h-3" />
                                 </div>
                                 <div className="min-w-0">
@@ -213,8 +213,8 @@ export default function LoginPage() {
                             </div>
 
                             {/* Feature 2 */}
-                            <div className="flex items-start gap-2.5 p-1.5 rounded-xl bg-slate-900/60 border border-slate-800/60">
-                                <div className="p-1.5 rounded-lg bg-slate-800/80 text-cyan-400 shrink-0 mt-0.5">
+                            <div className="flex items-start gap-2.5 p-1.5 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
+                                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 shrink-0 mt-0.5">
                                     <CalendarRange className="w-3 h-3" />
                                 </div>
                                 <div className="min-w-0">
@@ -226,8 +226,8 @@ export default function LoginPage() {
                             </div>
 
                             {/* Feature 3 */}
-                            <div className="flex items-start gap-2.5 p-1.5 rounded-xl bg-slate-900/60 border border-slate-800/60">
-                                <div className="p-1.5 rounded-lg bg-slate-800/80 text-emerald-400 shrink-0 mt-0.5">
+                            <div className="flex items-start gap-2.5 p-1.5 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
+                                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0 mt-0.5">
                                     <Car className="w-3 h-3" />
                                 </div>
                                 <div className="min-w-0">
@@ -240,16 +240,16 @@ export default function LoginPage() {
                         </div>
 
                         {/* Badges */}
-                        <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-800/80 text-center">
-                            <div className="p-1 rounded-lg bg-slate-950/50">
+                        <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-white/[0.08] text-center">
+                            <div className="p-1 rounded-lg bg-[#050608]/80 border border-white/[0.04]">
                                 <div className="text-[9px] text-slate-400 font-medium">Tenant Security</div>
                                 <div className="text-xs font-bold text-white tracking-tight">Data Scoped</div>
                             </div>
-                            <div className="p-1 rounded-lg bg-slate-950/50">
+                            <div className="p-1 rounded-lg bg-[#050608]/80 border border-white/[0.04]">
                                 <div className="text-[9px] text-slate-400 font-medium">Currency Engine</div>
-                                <div className="text-xs font-bold text-white tracking-tight">LKR / USD Rate</div>
+                                <div className="text-xs font-bold text-primary tracking-tight">LKR / USD Rate</div>
                             </div>
-                            <div className="p-1 rounded-lg bg-slate-950/50">
+                            <div className="p-1 rounded-lg bg-[#050608]/80 border border-white/[0.04]">
                                 <div className="text-[9px] text-slate-400 font-medium">Access Control</div>
                                 <div className="text-xs font-bold text-emerald-400 tracking-tight">RBAC Enforced</div>
                             </div>
@@ -259,12 +259,12 @@ export default function LoginPage() {
                     {/* Trust Strip */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5 text-[10px] text-slate-400">
                         <div className="flex items-center gap-1">
-                            <ShieldCheck className="w-3 h-3 text-blue-400" />
+                            <ShieldCheck className="w-3 h-3 text-primary" />
                             <span>Multi-Tenant Architecture</span>
                         </div>
                         <span className="text-slate-700 hidden sm:inline">•</span>
                         <div className="flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3 text-blue-400" />
+                            <CheckCircle2 className="w-3 h-3 text-primary" />
                             <span>Automated Meter Audits</span>
                         </div>
                         <span className="text-slate-700 hidden sm:inline">•</span>
@@ -284,25 +284,25 @@ export default function LoginPage() {
                     transition={{ duration: 0.5, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
                     className="w-full max-w-sm sm:max-w-md xl:max-w-lg shrink-0 flex flex-col justify-between relative"
                 >
-                    {/* Background Radial Glow */}
-                    <div className="absolute -inset-1 rounded-3xl bg-gradient-to-b from-blue-500/20 via-blue-600/5 to-transparent blur-xl pointer-events-none opacity-75" />
+                    {/* Background Radial Glow (Bitgard Matte Orange Halo) */}
+                    <div className="absolute -inset-1 rounded-3xl bg-gradient-to-b from-[#E8732A]/25 via-[#E8732A]/5 to-transparent blur-xl pointer-events-none opacity-80" />
 
                     {/* Interactive Glass Card with Spotlight */}
                     <div
                         ref={cardRef}
                         onMouseMove={handleMouseMove}
-                        className="relative flex-1 flex flex-col justify-between rounded-2xl bg-[#0c121f]/90 border border-slate-700/60 p-5 sm:p-6 lg:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl overflow-hidden transition-all duration-300"
+                        className="relative flex-1 flex flex-col justify-between rounded-2xl bg-[#090B10]/95 border border-white/[0.12] p-5 sm:p-6 lg:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl overflow-hidden transition-all duration-300"
                         style={{
-                            backgroundImage: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(59, 130, 246, 0.12), transparent 50%)`,
+                            backgroundImage: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(232, 115, 42, 0.14), transparent 50%)`,
                         }}
                     >
-                        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-80" />
+                        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#E8732A] to-transparent opacity-90" />
 
                         {/* Card Header & Brand Emblem */}
                         <div className="flex flex-col items-center text-center space-y-2 mb-2 sm:mb-3">
                             <div className="relative group">
-                                <div className="absolute -inset-2 bg-blue-500/25 rounded-2xl blur-md group-hover:bg-blue-400/35 transition-all duration-300" />
-                                <div className="relative p-2.5 rounded-2xl bg-white shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_12px_rgba(59,130,246,0.25)] border border-white shrink-0">
+                                <div className="absolute -inset-2 bg-[#E8732A]/25 rounded-2xl blur-md group-hover:bg-[#E8732A]/35 transition-all duration-300" />
+                                <div className="relative p-2.5 rounded-2xl bg-white shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_16px_rgba(232,115,42,0.3)] border border-white shrink-0">
                                     <Image 
                                         src="/logo-icon.png" 
                                         alt="VIGIL Platform Icon" 
@@ -318,7 +318,7 @@ export default function LoginPage() {
                                 <span className="text-2xl sm:text-3xl font-black tracking-tight text-white font-montserrat">
                                     VIGIL
                                 </span>
-                                <p className="text-[11px] sm:text-xs font-semibold tracking-wider text-cyan-400 uppercase">
+                                <p className="text-[11px] sm:text-xs font-semibold tracking-wider text-primary uppercase">
                                     Vehicle Hire & Travel Management
                                 </p>
                             </div>
@@ -360,7 +360,7 @@ export default function LoginPage() {
                                     Work Email
                                 </label>
                                 <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                                         <Mail className="w-4 h-4" />
                                     </div>
                                     <input
@@ -374,7 +374,7 @@ export default function LoginPage() {
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                         disabled={loading}
-                                        className="w-full h-10 sm:h-10.5 pl-9 pr-3 rounded-xl bg-slate-900/70 border border-slate-700/70 text-slate-100 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-900/95 transition-all duration-200 shadow-inner disabled:opacity-50"
+                                        className="w-full h-10 sm:h-10.5 pl-9 pr-3 rounded-xl bg-[#06070A]/85 border border-white/10 text-slate-100 placeholder:text-slate-500 text-xs sm:text-sm font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-[#080A0F] transition-all duration-200 shadow-inner disabled:opacity-50"
                                     />
                                 </div>
                             </div>
@@ -387,13 +387,13 @@ export default function LoginPage() {
                                     </label>
                                     <Link 
                                         href="/forgot-password" 
-                                        className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors focus:outline-none focus:underline"
+                                        className="text-xs font-semibold text-primary hover:text-primary-300 transition-colors focus:outline-none focus:underline"
                                     >
                                         Forgot password?
                                     </Link>
                                 </div>
                                 <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-400 transition-colors">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                                         <Lock className="w-4 h-4" />
                                     </div>
                                     <input
@@ -406,7 +406,7 @@ export default function LoginPage() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                         disabled={loading}
-                                        className="w-full h-10 sm:h-10.5 pl-9 pr-10 rounded-xl bg-slate-900/70 border border-slate-700/70 text-slate-100 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-900/95 transition-all duration-200 shadow-inner disabled:opacity-50"
+                                        className="w-full h-10 sm:h-10.5 pl-9 pr-10 rounded-xl bg-[#06070A]/85 border border-white/10 text-slate-100 placeholder:text-slate-500 text-xs sm:text-sm font-medium focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-[#080A0F] transition-all duration-200 shadow-inner disabled:opacity-50"
                                     />
                                     <button
                                         type="button"
@@ -427,7 +427,7 @@ export default function LoginPage() {
                                         type="checkbox"
                                         checked={rememberDevice}
                                         onChange={(e) => setRememberDevice(e.target.checked)}
-                                        className="h-3.5 w-3.5 rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-blue-500/30 focus:ring-offset-0 focus:ring-1 cursor-pointer transition"
+                                        className="h-3.5 w-3.5 rounded bg-[#06070A] border-white/20 text-primary focus:ring-primary/30 focus:ring-offset-0 focus:ring-1 cursor-pointer transition"
                                     />
                                     <span className="text-[11px] text-slate-400 group-hover:text-slate-300 transition-colors">
                                         Remember me
@@ -435,17 +435,17 @@ export default function LoginPage() {
                                 </label>
                                 <span className="text-[11px] text-slate-400">
                                     Need access?{' '}
-                                    <a href="mailto:support@vigiltours.com?subject=New%20Tenant%20Workspace%20Request" className="text-blue-400 hover:underline">
+                                    <a href="mailto:support@vigiltours.com?subject=New%20Tenant%20Workspace%20Request" className="text-primary hover:underline">
                                         Request Workspace
                                     </a>
                                 </span>
                             </div>
 
-                            {/* Tactile High-End Submit Button */}
+                            {/* Tactile High-End Submit Button (Bitgard Matte Orange) */}
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full h-10 sm:h-10.5 mt-2.5 relative group rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold text-xs sm:text-sm shadow-[0_6px_16px_rgba(37,99,235,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+                                className="w-full h-10 sm:h-10.5 mt-2.5 relative group rounded-xl bg-gradient-to-b from-[#F17E34] via-[#E8732A] to-[#D15F18] hover:from-[#EC8353] hover:to-[#C75C1D] text-white font-semibold text-xs sm:text-sm shadow-[0_6px_20px_rgba(232,115,42,0.38),inset_0_1px_0_rgba(255,255,255,0.25)] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
                             >
                                 {loading ? (
                                     <>
@@ -462,7 +462,7 @@ export default function LoginPage() {
                         </form>
 
                         {/* Card Security & Official Portal Link */}
-                        <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+                        <div className="mt-3 pt-3 border-t border-white/[0.08] flex items-center justify-between text-[11px] text-slate-400">
                             <span className="flex items-center gap-1.5">
                                 <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                 <span>256-bit SSL</span>
@@ -471,7 +471,7 @@ export default function LoginPage() {
                                 href={process.env.NEXT_PUBLIC_BITGARD_PORTAL_URL || 'https://bitgard.vercel.app/products/vehicle-hire'}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-cyan-400 hover:text-cyan-300 font-medium inline-flex items-center gap-1 transition-colors"
+                                className="text-primary hover:text-primary-300 font-medium inline-flex items-center gap-1 transition-colors"
                             >
                                 <span>Bitgard Vigil Portal</span>
                                 <ExternalLink className="w-3 h-3" />
