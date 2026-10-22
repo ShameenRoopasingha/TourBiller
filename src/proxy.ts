@@ -24,6 +24,8 @@ export default auth((req) => {
         pathname.startsWith('/api/keepalive') ||
         pathname.startsWith('/api/webhooks/subscription') ||
         pathname.startsWith('/api/cron') || // Vercel Cron uses Bearer token auth
+        pathname.startsWith('/api/v1/health') || // Health check & load telemetry
+        pathname.startsWith('/api/health') || // Base health check
         pathname.startsWith('/api/driver') // Mobile API routes use Bearer token auth, not cookies
     ) {
         return NextResponse.next();
@@ -65,4 +67,3 @@ export const config = {
         '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 };
-
