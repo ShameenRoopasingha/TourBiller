@@ -114,7 +114,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="relative min-h-[100dvh] lg:h-[100dvh] w-full flex items-center justify-center p-2 sm:p-4 lg:p-6 overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-[#040504] text-slate-100 font-sans antialiased">
+        <div className="relative min-h-[100dvh] w-full flex flex-col justify-center items-center py-6 px-3 sm:px-6 lg:px-8 overflow-x-hidden overflow-y-auto bg-[#040504] text-slate-100 font-sans antialiased">
             {/* Ambient Multi-Layer Architectural Lighting (Bitgard Matte Orange & Amber) */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
                 <div 
@@ -198,9 +198,9 @@ export default function LoginPage() {
                         </div>
 
                         {/* 3 Core Capability Rows */}
-                        <div className="space-y-1.5 py-2 text-xs">
+                        <div className="space-y-1.5 py-1.5 text-xs">
                             {/* Feature 1 */}
-                            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
+                            <div className="flex items-start gap-2.5 p-1.5 sm:p-2 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
                                 <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0 mt-0.5">
                                     <Receipt className="w-3.5 h-3.5" />
                                 </div>
@@ -213,7 +213,7 @@ export default function LoginPage() {
                             </div>
 
                             {/* Feature 2 */}
-                            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
+                            <div className="flex items-start gap-2.5 p-1.5 sm:p-2 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
                                 <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 shrink-0 mt-0.5">
                                     <CalendarRange className="w-3.5 h-3.5" />
                                 </div>
@@ -226,7 +226,7 @@ export default function LoginPage() {
                             </div>
 
                             {/* Feature 3 */}
-                            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
+                            <div className="flex items-start gap-2.5 p-1.5 sm:p-2 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
                                 <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0 mt-0.5">
                                     <Car className="w-3.5 h-3.5" />
                                 </div>
@@ -291,7 +291,7 @@ export default function LoginPage() {
                     <div
                         ref={cardRef}
                         onMouseMove={handleMouseMove}
-                        className="relative flex-1 flex flex-col justify-between rounded-2xl bg-[#090B10]/95 border border-white/[0.12] p-5 sm:p-6 lg:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl overflow-hidden transition-all duration-300"
+                        className="relative flex-1 flex flex-col justify-between rounded-2xl bg-[#090B10]/95 border border-white/[0.12] p-4 sm:p-5 lg:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl overflow-hidden transition-all duration-300"
                         style={{
                             backgroundImage: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(232, 115, 42, 0.14), transparent 50%)`,
                         }}
@@ -299,16 +299,16 @@ export default function LoginPage() {
                         <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#E8732A] to-transparent opacity-90" />
 
                         {/* Card Header & Brand Emblem */}
-                        <div className="flex flex-col items-center text-center space-y-2 mb-2 sm:mb-3">
+                        <div className="flex flex-col items-center text-center space-y-2 mb-2 sm:mb-2.5">
                             <div className="relative group">
                                 <div className="absolute -inset-2 bg-[#E8732A]/25 rounded-2xl blur-md group-hover:bg-[#E8732A]/35 transition-all duration-300" />
-                                <div className="relative p-2.5 rounded-2xl bg-white shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_16px_rgba(232,115,42,0.3)] border border-white shrink-0">
+                                <div className="relative p-2 rounded-2xl bg-card/90 dark:bg-card/70 shadow-[0_4px_16px_rgba(0,0,0,0.5),0_0_16px_rgba(232,115,42,0.25)] border border-border/70 shrink-0">
                                     <Image 
                                         src="/logo-icon.png" 
                                         alt="VIGIL Platform Icon" 
-                                        width={44} 
-                                        height={44} 
-                                        className="h-10 w-auto object-contain" 
+                                        width={40} 
+                                        height={40} 
+                                        className="h-9 w-auto object-contain" 
                                         priority 
                                     />
                                 </div>
@@ -480,7 +480,7 @@ export default function LoginPage() {
                     </div>
 
                     {/* Bottom Legal Navigation */}
-                    <div className="flex items-center justify-center gap-3 mt-3 text-[11px] font-sans text-slate-400 font-normal shrink-0">
+                    <div className="flex items-center justify-center gap-3 mt-3 pb-2 text-[11px] font-sans text-slate-400 font-normal shrink-0">
                         <Link href="/privacy" className="hover:text-slate-200 transition-colors">
                             Privacy Policy
                         </Link>
