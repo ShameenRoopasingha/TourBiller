@@ -373,7 +373,7 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
             </div>
           </div>
           <div className="text-right">
-            <h2 className="text-lg font-bold text-blue-700 uppercase">
+            <h2 className="text-lg font-bold text-foreground print:text-black uppercase">
               Financial Operating Statement
             </h2>
             <p className="text-xs text-gray-700 mt-0.5">Generated: {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
@@ -449,13 +449,13 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
             <CardTitle className="text-xs font-semibold uppercase text-muted-foreground print:text-black">Net Profit</CardTitle>
             {totals.netProfit >= 0 ? (
-              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             ) : (
               <TrendingDown className="h-4 w-4 text-red-600" />
             )}
           </CardHeader>
           <CardContent className="pt-0">
-            <div className={`text-xl font-bold ${totals.netProfit >= 0 ? 'text-blue-600 print:text-blue-800' : 'text-red-600 print:text-red-800'}`}>
+            <div className={`text-xl font-bold ${totals.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400 print:text-emerald-800' : 'text-red-600 print:text-red-800'}`}>
               {fmt(totals.netProfit)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -552,7 +552,7 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
                         <td className="px-3 py-2 print:border print:border-gray-300 text-right font-bold text-red-600 dark:text-red-400 whitespace-nowrap">
                           {fmt(row.totalExpense)}
                         </td>
-                        <td className={`px-3 py-2 print:border print:border-gray-300 text-right font-bold whitespace-nowrap ${isPositive ? 'text-blue-600 print:text-blue-800' : 'text-red-600 print:text-red-800'}`}>
+                        <td className={`px-3 py-2 print:border print:border-gray-300 text-right font-bold whitespace-nowrap ${isPositive ? 'text-emerald-600 dark:text-emerald-400 print:text-emerald-800' : 'text-red-600 print:text-red-800'}`}>
                           {fmt(row.netProfit)}
                         </td>
                         <td className="px-2.5 py-2 print:border print:border-gray-300 text-right text-muted-foreground whitespace-nowrap">
@@ -573,7 +573,7 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
                     <td className="px-2.5 py-3 print:border print:border-gray-300 text-right text-sky-700 dark:text-sky-400 whitespace-nowrap">{fmt(totals.driver)}</td>
                     <td className="px-2.5 py-3 print:border print:border-gray-300 text-right text-orange-700 dark:text-orange-400 whitespace-nowrap">{fmt(totals.repairsOther)}</td>
                     <td className="px-3 py-3 print:border print:border-gray-300 text-right text-red-700 dark:text-red-400 whitespace-nowrap">{fmt(totals.totalExpense)}</td>
-                    <td className={`px-3 py-3 print:border print:border-gray-300 text-right whitespace-nowrap ${totals.netProfit >= 0 ? 'text-blue-800' : 'text-red-800'}`}>
+                    <td className={`px-3 py-3 print:border print:border-gray-300 text-right whitespace-nowrap ${totals.netProfit >= 0 ? 'text-emerald-700 dark:text-emerald-400 print:text-emerald-800 font-bold' : 'text-red-700 dark:text-red-400 print:text-red-800 font-bold'}`}>
                       {fmt(totals.netProfit)}
                     </td>
                     <td className="px-2.5 py-3 print:border print:border-gray-300 text-right whitespace-nowrap">

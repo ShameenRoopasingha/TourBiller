@@ -223,7 +223,7 @@ export function PrintButton({
                             <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                             <>
-                                <Download className="h-4 w-4 mr-1 sm:mr-1.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                                <Download className="h-4 w-4 mr-1 sm:mr-1.5 text-primary shrink-0" />
                                 <span className="truncate">Download</span>
                             </>
                         )}
@@ -254,7 +254,7 @@ export function PrintButton({
                         type="button"
                         onClick={handleEmailButtonClick}
                         disabled={isGenerating}
-                        className="font-semibold text-white shadow-xs h-10 px-2 sm:px-3.5 text-xs sm:text-sm active:translate-y-[1px] transition-all bg-blue-600 hover:bg-blue-700 justify-center"
+                        className="font-semibold text-white shadow-xs h-10 px-2 sm:px-3.5 text-xs sm:text-sm active:translate-y-[1px] transition-all bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-700 justify-center"
                         title={recipientEmail ? `Email to ${recipientEmail}` : 'Send via Email'}
                     >
                         {isGenerating && activeAction === 'email' ? (

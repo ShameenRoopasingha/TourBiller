@@ -92,18 +92,18 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Link href="/" className="flex items-center gap-3 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center min-w-0">
-                            <div className="bg-white p-1.5 rounded-xl shadow-[0_2px_10px_rgba(0,180,216,0.2)] border border-slate-200 shrink-0">
+                            <div className="bg-card/80 dark:bg-card/60 p-1.5 rounded-xl shadow-[0_2px_12px_rgba(232,115,42,0.18)] border border-border/60 shrink-0">
                                 <Image src="/logo-icon.png" alt="VIGIL" width={32} height={32} className="h-8 w-auto object-contain" priority />
                             </div>
                             <div className="flex flex-col group-data-[collapsible=icon]:hidden transition-opacity min-w-0">
-                                <span className="font-black text-2xl tracking-tight leading-none text-foreground pb-0.5 font-montserrat">VIGIL</span>
-                                <span className="text-[0.55rem] font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase leading-tight truncate">Vehicle Hire &<br/>Travel Management</span>
+                                <span className="font-heading font-black text-2xl tracking-[0.16em] leading-none text-foreground pb-0.5 pl-[0.16em]">VIGIL</span>
+                                <span className="font-mono text-[9px] font-bold tracking-[0.14em] text-primary uppercase leading-tight truncate">Vehicle Hire &<br/>Travel Management</span>
                             </div>
                         </Link>
                     </TooltipTrigger>
                     <TooltipContent side="right" align="center" className="hidden group-data-[collapsible=icon]:block">
-                        <div className="font-bold text-xs">VIGIL</div>
-                        <div className="text-[10px] text-muted-foreground">Vehicle Hire & Travel Management</div>
+                        <div className="font-heading font-bold text-xs tracking-wider">VIGIL</div>
+                        <div className="text-[10px] text-muted-foreground font-mono">Vehicle Hire & Travel Management</div>
                     </TooltipContent>
                 </Tooltip>
             </div>

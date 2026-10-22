@@ -155,7 +155,7 @@ export function BluetoothPrintButton({ bill, companyName, tourScheduleName }: Bl
         <button
             onClick={handleBluetoothPrint}
             disabled={isPrinting}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl font-bold shadow-md transition-all disabled:opacity-70"
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground py-3 px-4 rounded-xl font-bold shadow-md transition-all disabled:opacity-70"
         >
             {isPrinting ? (
                 <>

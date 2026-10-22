@@ -113,7 +113,7 @@ export default async function RootLayout({
                         <div className="md:hidden flex items-center gap-2">
                           <Image src="/logo-icon.png" alt="VIGIL" width={28} height={28} className="h-7 w-auto drop-shadow-sm object-contain" priority />
                           <div className="flex flex-col justify-center">
-                            <span className="font-black text-xl tracking-tight leading-none text-foreground pb-0.5 font-montserrat">VIGIL</span>
+                            <span className="font-heading font-black text-xl tracking-[0.16em] leading-none text-foreground pb-0.5 pl-[0.16em]">VIGIL</span>
                           </div>
                         </div>
                         {/* Desktop trigger for collapsing sidebar */}

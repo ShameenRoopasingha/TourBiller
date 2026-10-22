@@ -227,7 +227,7 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
                                                     <Button 
                                                         variant="ghost" 
                                                         size="sm" 
-                                                        className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                                        className="h-8 px-2 text-primary hover:text-primary/90 hover:bg-primary/10 dark:hover:bg-primary/15"
                                                         onClick={() => {
                                                             setSelectedVehicle(vehicle);
                                                             setExpenseSheetOpen(true);
@@ -340,7 +340,7 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
                                                     <Button 
                                                         variant="ghost" 
                                                         size="sm" 
-                                                        className="mr-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        className="mr-2 text-primary hover:text-primary/90 hover:bg-primary/10 dark:hover:bg-primary/15"
                                                         onClick={() => {
                                                             setSelectedVehicle(vehicle);
                                                             setExpenseSheetOpen(true);

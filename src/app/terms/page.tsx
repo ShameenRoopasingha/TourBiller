@@ -11,7 +11,7 @@ export default function TermsPage() {
         <div className="min-h-screen bg-[#060911] text-slate-200 flex flex-col items-center justify-center p-6">
             <div className="w-full max-w-2xl bg-slate-900/80 border border-slate-800 rounded-2xl p-8 backdrop-blur-xl shadow-2xl space-y-6">
                 <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-                    <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                    <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary">
                         <Lock className="w-5 h-5" />
                     </div>
                     <div>

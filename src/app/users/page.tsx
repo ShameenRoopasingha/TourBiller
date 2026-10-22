@@ -537,7 +537,7 @@ export default function UsersPage() {
                                                     variant="ghost"
                                                     size="icon"
                                                     title="Reset Password"
-                                                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 h-8 w-8 shrink-0"
+                                                    className="text-primary hover:text-primary/90 hover:bg-primary/10 dark:hover:bg-primary/15 h-8 w-8 shrink-0"
                                                     onClick={() => handleAdminReset(user)}
                                                     disabled={isGeneratingReset}
                                                 >
@@ -672,7 +672,7 @@ export default function UsersPage() {
                                                             variant="ghost"
                                                             size="icon"
                                                             title="Generate Password Reset Link"
-                                                            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                                            className="text-primary hover:text-primary/90 hover:bg-primary/10 dark:hover:bg-primary/15"
                                                             onClick={() => handleAdminReset(user)}
                                                             disabled={isGeneratingReset}
                                                         >
