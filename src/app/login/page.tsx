@@ -114,7 +114,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="relative min-h-[100dvh] lg:h-[100dvh] w-full flex items-center justify-center p-2 sm:p-4 lg:p-6 overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-[#040504] text-slate-100 font-display">
+        <div className="relative min-h-[100dvh] lg:h-[100dvh] w-full flex items-center justify-center p-2 sm:p-4 lg:p-6 overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-[#040504] text-slate-100 font-sans antialiased">
             {/* Ambient Multi-Layer Architectural Lighting (Bitgard Matte Orange & Amber) */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
                 <div 
@@ -156,17 +156,17 @@ export default function LoginPage() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                         </span>
-                        <span className="text-[10px] font-semibold tracking-wide text-slate-300">
-                            Enterprise Cloud Platform <span className="text-slate-500">•</span> Multi-Tenant Architecture
+                        <span className="text-[10px] font-mono tracking-wider uppercase text-slate-300">
+                            Enterprise Cloud Platform <span className="text-slate-600">•</span> Multi-Tenant Architecture
                         </span>
                     </div>
 
                     {/* Authority Headline */}
-                    <div className="space-y-1">
-                        <h1 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold tracking-tight text-white leading-[1.12]">
+                    <div className="space-y-1.5">
+                        <h1 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold tracking-[-0.03em] text-white leading-[1.14] font-subheading">
                             Unified operations & billing for modern tour fleets.
                         </h1>
-                        <p className="text-xs sm:text-[13px] text-slate-400 leading-relaxed max-w-md font-normal">
+                        <p className="text-xs sm:text-[13px] text-slate-400 leading-relaxed max-w-md font-sans font-normal">
                             Dedicated enterprise workspaces for tour operators, vehicle hire agencies, and chauffeur fleets of any scale.
                         </p>
                     </div>
@@ -187,11 +187,11 @@ export default function LoginPage() {
                                     <Layers className="w-3 h-3" />
                                 </div>
                                 <div>
-                                    <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Platform Capabilities</div>
-                                    <div className="text-xs font-bold text-slate-200">Tenant Operations Workspace</div>
+                                    <div className="text-[9px] font-mono font-semibold uppercase tracking-[0.14em] text-slate-400">Platform Capabilities</div>
+                                    <div className="text-xs sm:text-[13px] font-bold text-slate-200 font-subheading tracking-tight">Tenant Operations Workspace</div>
                                 </div>
                             </div>
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-semibold tracking-wide">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono tracking-wide font-medium">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                                 Isolated Database Scope
                             </span>
@@ -200,39 +200,39 @@ export default function LoginPage() {
                         {/* 3 Core Capability Rows */}
                         <div className="space-y-1.5 py-2 text-xs">
                             {/* Feature 1 */}
-                            <div className="flex items-start gap-2.5 p-1.5 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
+                            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
                                 <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0 mt-0.5">
-                                    <Receipt className="w-3 h-3" />
+                                    <Receipt className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="min-w-0">
-                                    <div className="text-slate-200 font-semibold text-xs leading-none mb-0.5">Branded Invoicing & Meter Billing</div>
-                                    <div className="text-slate-400 text-[11px] leading-snug">
+                                    <div className="text-slate-100 font-bold text-xs sm:text-[13px] font-subheading leading-none mb-1">Branded Invoicing & Meter Billing</div>
+                                    <div className="text-slate-400 text-[11px] leading-relaxed font-sans font-normal">
                                         Company profiles, bank credentials, meter audits, excess Km charges & dual LKR/USD exchange.
                                     </div>
                                 </div>
                             </div>
 
                             {/* Feature 2 */}
-                            <div className="flex items-start gap-2.5 p-1.5 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
+                            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
                                 <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 shrink-0 mt-0.5">
-                                    <CalendarRange className="w-3 h-3" />
+                                    <CalendarRange className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="min-w-0">
-                                    <div className="text-slate-200 font-semibold text-xs leading-none mb-0.5">Day-by-Day Tour Itinerary Engine</div>
-                                    <div className="text-slate-400 text-[11px] leading-snug">
+                                    <div className="text-slate-100 font-bold text-xs sm:text-[13px] font-subheading leading-none mb-1">Day-by-Day Tour Itinerary Engine</div>
+                                    <div className="text-slate-400 text-[11px] leading-relaxed font-sans font-normal">
                                         Multi-day tour scheduling, itemized transport, accommodation & automated client quotations.
                                     </div>
                                 </div>
                             </div>
 
                             {/* Feature 3 */}
-                            <div className="flex items-start gap-2.5 p-1.5 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
+                            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-[#0E1015]/70 border border-white/[0.06]">
                                 <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0 mt-0.5">
-                                    <Car className="w-3 h-3" />
+                                    <Car className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="min-w-0">
-                                    <div className="text-slate-200 font-semibold text-xs leading-none mb-0.5">Fleet Health & Driver Allocations</div>
-                                    <div className="text-slate-400 text-[11px] leading-snug">
+                                    <div className="text-slate-100 font-bold text-xs sm:text-[13px] font-subheading leading-none mb-1">Fleet Health & Driver Allocations</div>
+                                    <div className="text-slate-400 text-[11px] leading-relaxed font-sans font-normal">
                                         Dedicated chauffeur assignments, maintenance mileage alerts (oil/filter) & license renewals.
                                     </div>
                                 </div>
@@ -241,35 +241,35 @@ export default function LoginPage() {
 
                         {/* Badges */}
                         <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-white/[0.08] text-center">
-                            <div className="p-1 rounded-lg bg-[#050608]/80 border border-white/[0.04]">
-                                <div className="text-[9px] text-slate-400 font-medium">Tenant Security</div>
-                                <div className="text-xs font-bold text-white tracking-tight">Data Scoped</div>
+                            <div className="p-1.5 rounded-lg bg-[#050608]/80 border border-white/[0.04]">
+                                <div className="text-[9px] font-mono text-slate-400 font-medium tracking-wider uppercase">Tenant Security</div>
+                                <div className="text-xs font-mono font-bold text-white tracking-wider uppercase">Data Scoped</div>
                             </div>
-                            <div className="p-1 rounded-lg bg-[#050608]/80 border border-white/[0.04]">
-                                <div className="text-[9px] text-slate-400 font-medium">Currency Engine</div>
-                                <div className="text-xs font-bold text-primary tracking-tight">LKR / USD Rate</div>
+                            <div className="p-1.5 rounded-lg bg-[#050608]/80 border border-white/[0.04]">
+                                <div className="text-[9px] font-mono text-slate-400 font-medium tracking-wider uppercase">Currency Engine</div>
+                                <div className="text-xs font-mono font-bold text-primary tracking-wider uppercase">LKR / USD Rate</div>
                             </div>
-                            <div className="p-1 rounded-lg bg-[#050608]/80 border border-white/[0.04]">
-                                <div className="text-[9px] text-slate-400 font-medium">Access Control</div>
-                                <div className="text-xs font-bold text-emerald-400 tracking-tight">RBAC Enforced</div>
+                            <div className="p-1.5 rounded-lg bg-[#050608]/80 border border-white/[0.04]">
+                                <div className="text-[9px] font-mono text-slate-400 font-medium tracking-wider uppercase">Access Control</div>
+                                <div className="text-xs font-mono font-bold text-emerald-400 tracking-wider uppercase">RBAC Enforced</div>
                             </div>
                         </div>
                     </motion.div>
 
                     {/* Trust Strip */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5 text-[10px] text-slate-400">
-                        <div className="flex items-center gap-1">
-                            <ShieldCheck className="w-3 h-3 text-primary" />
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5 text-[10px] font-mono text-slate-400 tracking-wider uppercase">
+                        <div className="flex items-center gap-1.5">
+                            <ShieldCheck className="w-3.5 h-3.5 text-primary" />
                             <span>Multi-Tenant Architecture</span>
                         </div>
                         <span className="text-slate-700 hidden sm:inline">•</span>
-                        <div className="flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3 text-primary" />
+                        <div className="flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
                             <span>Automated Meter Audits</span>
                         </div>
                         <span className="text-slate-700 hidden sm:inline">•</span>
-                        <div className="flex items-center gap-1">
-                            <Activity className="w-3 h-3 text-emerald-400" />
+                        <div className="flex items-center gap-1.5">
+                            <Activity className="w-3.5 h-3.5 text-emerald-400" />
                             <span>99.99% Uptime SLA</span>
                         </div>
                     </div>
@@ -314,16 +314,16 @@ export default function LoginPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-0.5">
-                                <span className="text-2xl sm:text-3xl font-black tracking-tight text-white font-montserrat">
+                            <div className="space-y-1">
+                                <span className="text-2xl sm:text-3xl font-black tracking-[0.22em] text-white font-heading uppercase pl-[0.22em]">
                                     VIGIL
                                 </span>
-                                <p className="text-[11px] sm:text-xs font-semibold tracking-wider text-primary uppercase">
+                                <p className="text-[10px] sm:text-[10.5px] font-mono font-bold tracking-[0.16em] text-primary uppercase">
                                     Vehicle Hire & Travel Management
                                 </p>
                             </div>
 
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-400 font-sans font-normal">
                                 Sign in to your operations workspace
                             </p>
                         </div>
@@ -463,15 +463,15 @@ export default function LoginPage() {
 
                         {/* Card Security & Official Portal Link */}
                         <div className="mt-3 pt-3 border-t border-white/[0.08] flex items-center justify-between text-[11px] text-slate-400">
-                            <span className="flex items-center gap-1.5">
-                                <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-400">
+                                <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
                                 <span>256-bit SSL</span>
                             </span>
                             <a 
                                 href={process.env.NEXT_PUBLIC_BITGARD_PORTAL_URL || 'https://bitgard.vercel.app/products/vehicle-hire'}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary hover:text-primary-300 font-medium inline-flex items-center gap-1 transition-colors"
+                                className="font-mono text-[11px] font-semibold text-primary hover:text-primary-300 tracking-wide inline-flex items-center gap-1 transition-colors"
                             >
                                 <span>Bitgard Vigil Portal</span>
                                 <ExternalLink className="w-3 h-3" />
@@ -480,16 +480,16 @@ export default function LoginPage() {
                     </div>
 
                     {/* Bottom Legal Navigation */}
-                    <div className="flex items-center justify-center gap-3 mt-3 text-[11px] text-slate-400 font-medium shrink-0">
-                        <Link href="/privacy" className="hover:text-slate-300 transition-colors">
+                    <div className="flex items-center justify-center gap-3 mt-3 text-[11px] font-sans text-slate-400 font-normal shrink-0">
+                        <Link href="/privacy" className="hover:text-slate-200 transition-colors">
                             Privacy Policy
                         </Link>
-                        <span>•</span>
-                        <Link href="/terms" className="hover:text-slate-300 transition-colors">
+                        <span className="text-slate-600">•</span>
+                        <Link href="/terms" className="hover:text-slate-200 transition-colors">
                             Terms of Service
                         </Link>
-                        <span>•</span>
-                        <span className="inline-flex items-center gap-1.5 text-slate-400">
+                        <span className="text-slate-600">•</span>
+                        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-400">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                             Operational
                         </span>

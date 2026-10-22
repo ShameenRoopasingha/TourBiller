@@ -66,7 +66,7 @@ function VerifyEmailContent() {
     };
 
     return (
-        <div className="min-h-screen bg-[#040504] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-[#040504] flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans antialiased">
             {/* Background ambient lighting (Bitgard Matte Orange & Amber) */}
             <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-[140px] pointer-events-none" />
             <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-amber-500/15 rounded-full blur-[140px] pointer-events-none" />
@@ -76,8 +76,8 @@ function VerifyEmailContent() {
                     <div className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-primary/10 border border-primary/25 text-primary mb-3 shadow-lg shadow-primary/10">
                         <ShieldCheck className="h-8 w-8" />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight text-white font-montserrat">VIGIL</h1>
-                    <p className="text-xs text-primary uppercase tracking-wider font-semibold mt-0.5">Email Verification Portal</p>
+                    <h1 className="text-2xl font-black tracking-[0.22em] text-white font-heading uppercase pl-[0.22em]">VIGIL</h1>
+                    <p className="text-[10px] font-mono font-bold text-primary uppercase tracking-[0.16em] mt-1">Email Verification Portal</p>
                 </div>
 
                 <div className="relative">

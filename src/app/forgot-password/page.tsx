@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="relative min-h-[100dvh] w-full flex items-center justify-center p-3 sm:p-5 lg:p-6 xl:p-8 overflow-x-hidden bg-[#040504] text-slate-100 font-display">
+        <div className="relative min-h-[100dvh] w-full flex items-center justify-center p-3 sm:p-5 lg:p-6 xl:p-8 overflow-x-hidden bg-[#040504] text-slate-100 font-sans antialiased">
             {/* Ambient Multi-Layer Architectural Lighting (Bitgard Matte Orange & Amber) */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
                 <div 
@@ -164,14 +164,14 @@ export default function ForgotPasswordPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-0.5">
-                                <span className="text-2xl font-black tracking-tight text-white font-montserrat">
+                            <div className="space-y-1">
+                                <span className="text-2xl font-black tracking-[0.22em] text-white font-heading uppercase pl-[0.22em]">
                                     VIGIL
                                 </span>
-                                <h2 className="text-sm font-semibold text-primary uppercase tracking-wide">
+                                <h2 className="text-[11px] font-mono font-bold text-primary uppercase tracking-[0.16em]">
                                     Account Recovery
                                 </h2>
-                                <p className="text-xs text-slate-400">
+                                <p className="text-xs text-slate-400 font-sans font-normal">
                                     Enter your work email address to receive a secure reset link
                                 </p>
                             </div>

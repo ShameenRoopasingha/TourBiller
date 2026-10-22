@@ -122,7 +122,7 @@ function ResetPasswordContent() {
     };
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-[#040504]">
+        <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-[#040504] font-sans antialiased">
             {/* Ambient Multi-Layer Architectural Lighting (Bitgard Matte Orange & Amber) */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <div 
@@ -143,14 +143,14 @@ function ResetPasswordContent() {
                 {/* Left Side: Hero Text & Branding */}
                 <div className="hidden lg:flex flex-col w-full max-w-xl text-white space-y-8 drop-shadow-2xl">
                     <div className="space-y-6">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-sm font-semibold backdrop-blur-md shadow-lg">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-mono uppercase tracking-wider backdrop-blur-md shadow-lg">
                             <KeyRound className="w-4 h-4 text-primary" />
                             <span>Universal Credential Recovery</span>
                         </div>
-                        <h1 className="text-5xl xl:text-6xl font-black tracking-tight text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] leading-tight">
+                        <h1 className="text-4xl sm:text-5xl xl:text-6xl font-extrabold tracking-[-0.03em] text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] leading-tight font-subheading">
                             Reset Your <br/> <span className="text-primary">Secure Access.</span>
                         </h1>
-                        <p className="text-lg xl:text-xl text-white/95 leading-relaxed font-medium max-w-lg drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                        <p className="text-base xl:text-lg text-white/90 leading-relaxed font-sans font-normal max-w-lg drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
                             Verify your identity using your 6-digit OTP code or direct secure link to regain immediate console access.
                         </p>
                     </div>
@@ -180,8 +180,8 @@ function ResetPasswordContent() {
                                         <Image src="/logo-icon.png" alt="VIGIL Logo Icon" width={60} height={60} className="h-12 w-auto relative z-10 object-contain" priority />
                                     </div>
                                 </div>
-                                <CardTitle className="text-2xl font-black tracking-tight text-white font-montserrat">VIGIL</CardTitle>
-                                <p className="text-xs text-primary uppercase tracking-wide font-semibold">Password Reset & Account Recovery</p>
+                                <CardTitle className="text-2xl font-black tracking-[0.22em] text-white font-heading uppercase pl-[0.22em]">VIGIL</CardTitle>
+                                <p className="text-[10px] font-mono font-bold text-primary uppercase tracking-[0.16em]">Password Reset & Account Recovery</p>
                             </div>
                         </CardHeader>
 
