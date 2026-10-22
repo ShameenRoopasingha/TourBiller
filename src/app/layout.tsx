@@ -67,7 +67,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#0d0d0d' },
+    { media: '(prefers-color-scheme: light)', color: '#FBF9F5' },
     { media: '(prefers-color-scheme: dark)', color: '#0d0d0d' },
   ],
   width: 'device-width',
@@ -94,7 +94,7 @@ export default async function RootLayout({
         className={`${orbitron.variable} ${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} ${plusJakartaSans.variable} ${montserrat.variable} ${inter.className} font-sans antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark" disableTransitionOnChange={false}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
           <AmbientAtmosphere />
           {session ? (
             <SessionProvider>

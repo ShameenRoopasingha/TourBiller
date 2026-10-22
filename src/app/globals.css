@@ -6,11 +6,94 @@
 @custom-variant dark (&:is(.dark *));
 
 /* =========================================================================
-   BITGARDWEB DESIGN SYSTEM SPECIFICATION (VISUAL ENGINEERING & TOKENS)
+   BITGARDWEB DUAL-THEME ENGINE (DAYLIGHT CERAMIC & MIDNIGHT OBSIDIAN)
    ========================================================================= */
 
 @layer base {
-  :root,
+  :root {
+    color-scheme: light;
+
+    /* Main Background & Foreground (Warm Alabaster Silk & Obsidian Graphite) */
+    --background: 35 24% 97.5%;            /* #FBF9F5 — Alabaster Silk Ceramic */
+    --foreground: 24 15% 12%;              /* #1F1D1A — Obsidian Graphite Typography */
+
+    /* Surfaces & Glass Panels */
+    --card: 0 0% 100%;                     /* #FFFFFF — Pure Frosted Alabaster Glass */
+    --card-foreground: 24 15% 12%;         /* #1F1D1A */
+    --popover: 0 0% 100%;                  /* #FFFFFF */
+    --popover-foreground: 24 15% 12%;      /* #1F1D1A */
+
+    /* Primary Brand Color (Matte Orange #E8732A) */
+    --primary: 23 81% 54%;                 /* #E8732A — Core Brand Color */
+    --primary-foreground: 0 0% 100%;       /* #FFFFFF — High Contrast Text */
+
+    /* Secondary & Muted Layers */
+    --secondary: 33 20% 93%;               /* #EFECE6 — Warm Titanium Keycap Fill */
+    --secondary-foreground: 24 15% 15%;    /* #262320 */
+    --muted: 33 22% 94.5%;                 /* #F3F0EA — Recessed Telemetry Wells */
+    --muted-foreground: 25 12% 46%;        /* #7B736B — Secondary Supporting Text */
+
+    /* Accents & States */
+    --accent: 258 75% 96%;                 /* #F3E8FF — Electric Violet Soft Tint */
+    --accent-foreground: 258 80% 48%;      /* #6D28D9 */
+    --destructive: 350 85% 58%;            /* #E11D48 — Crimson Alert */
+    --destructive-foreground: 0 0% 100%;   /* #FFFFFF */
+
+    /* Hairline Borders & Inputs */
+    --border: 33 15% 87%;                  /* #E2DDD4 — Precision Milled Ceramic Hairline */
+    --input: 33 20% 96%;                   /* #F7F4EE — Input Surface */
+    --ring: 23 81% 54%;                    /* #E8732A — Focus Ring */
+
+    /* Telemetry State Colors */
+    --telemetry-moving: #059669;           /* Emerald Glow (Active Fleet) */
+    --telemetry-idle: #D97706;             /* Amber Glow (Parked / Idle Fleet) */
+
+    /* Glow Tokens (Warm Amber Ambient Light) */
+    --shadow-glow: 0 0 35px rgba(232, 115, 42, 0.15);
+    --shadow-glow-strong: 0 0 50px rgba(232, 115, 42, 0.25);
+
+    /* Layout & Radius Tokens */
+    --radius: 0.75rem;
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    /* Specular Hairline Sheen (Daylight Top Sheen) */
+    --border-specular: rgba(255, 255, 255, 0.95);
+
+    /* Unified Sidebar Tokens (Frosted Alabaster) */
+    --sidebar: 35 24% 97.5%;
+    --sidebar-foreground: 24 15% 25%;
+    --sidebar-primary: 23 81% 54%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 20% 93%;
+    --sidebar-accent-foreground: 23 81% 45%;
+    --sidebar-border: 33 15% 88%;
+    --sidebar-ring: 23 81% 54%;
+    --sidebar-width: 16.5rem;
+    --sidebar-width-icon: 4.25rem;
+
+    /* Tactile Hardware Skeuomorphic Tokens (Daylight Titanium & Ceramic) */
+    --btn-secondary-bg: linear-gradient(180deg, #FFFFFF 0%, #F5F1EB 100%);
+    --btn-secondary-border: #DCD5CB;
+    --btn-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 #FFFFFF, inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+
+    --surface-recessed-bg: #F1ECE5;
+    --surface-recessed-border: #DDD7CC;
+    --surface-recessed-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06), 0 1px 0 0 rgba(255, 255, 255, 0.85);
+
+    --badge-plate-bg: linear-gradient(180deg, #FAF8F5 0%, #E8E2D8 100%);
+    --badge-plate-border: #C5BDB0;
+    --badge-plate-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+    /* Metallic & Laser-Etched Typography Variables (Light Mode) */
+    --kpi-gradient: linear-gradient(180deg, #1A1917 0%, #5E5851 100%);
+    --kpi-filter: none;
+    --instrument-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+    --switch-track-bg: #E8E2D8;
+    --switch-track-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12), 0 1px 0 rgba(255, 255, 255, 0.85);
+  }
+
   .dark {
     color-scheme: dark;
 
@@ -53,12 +136,6 @@
     --shadow-glow: 0 0 40px rgba(232, 115, 42, 0.2);
     --shadow-glow-strong: 0 0 60px rgba(232, 115, 42, 0.35);
 
-    /* Layout & Radius Tokens */
-    --radius: 0.75rem;
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
-
     /* Specular Hairline Sheen */
     --border-specular: rgba(255, 255, 255, 0.07);
 
@@ -71,8 +148,6 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 12%;
     --sidebar-ring: 23 81% 54%;
-    --sidebar-width: 16.5rem;
-    --sidebar-width-icon: 4.25rem;
 
     /* Tactile Hardware Skeuomorphic Tokens (Bitgard Obsidian Palette) */
     --btn-secondary-bg: linear-gradient(180deg, #222b3a 0%, #141a24 100%);
@@ -87,7 +162,7 @@
     --badge-plate-border: #1f1f1f;
     --badge-plate-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
-    /* Metallic & Laser-Etched Typography Variables */
+    /* Metallic & Laser-Etched Typography Variables (Dark Mode) */
     --kpi-gradient: linear-gradient(180deg, #FFFFFF 0%, #94a3b8 100%);
     --kpi-filter: drop-shadow(0 2px 10px rgba(232, 115, 42, 0.2));
     --instrument-text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.85);
@@ -192,8 +267,8 @@
   --color-slate-950: #020617;
 
   /* Specialty & Status Indicators */
-  --color-telemetry-moving: #10B981;
-  --color-telemetry-idle: #F59E0B;
+  --color-telemetry-moving: var(--telemetry-moving);
+  --color-telemetry-idle: var(--telemetry-idle);
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-destructive-red: #E64A85;
@@ -238,15 +313,15 @@
 .glass {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid hsl(var(--border) / 0.5);
-  background-color: hsl(var(--card) / 0.7);
+  border: 1px solid hsl(var(--border) / 0.7);
+  background-color: hsl(var(--card) / 0.75);
 }
 
 @utility glass {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid hsl(var(--border) / 0.5);
-  background-color: hsl(var(--card) / 0.7);
+  border: 1px solid hsl(var(--border) / 0.7);
+  background-color: hsl(var(--card) / 0.75);
 }
 
 /* Tactical Cards (.card) */
@@ -256,14 +331,15 @@
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid hsl(var(--border) / 0.5);
-  background-color: hsl(var(--card) / 0.5);
+  border: 1px solid hsl(var(--border) / 0.7);
+  background-color: hsl(var(--card) / 0.65);
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
 }
 
 .card-tactical:hover {
   transform: translateY(-4px);
   border-color: hsl(var(--primary) / 0.5);
-  box-shadow: 0 20px 40px -12px hsl(var(--primary) / 0.15);
+  box-shadow: 0 20px 40px -12px hsl(var(--primary) / 0.18);
 }
 
 @utility card-tactical {
@@ -272,13 +348,14 @@
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid hsl(var(--border) / 0.5);
-  background-color: hsl(var(--card) / 0.5);
+  border: 1px solid hsl(var(--border) / 0.7);
+  background-color: hsl(var(--card) / 0.65);
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
 
   &:hover {
     transform: translateY(-4px);
     border-color: hsl(var(--primary) / 0.5);
-    box-shadow: 0 20px 40px -12px hsl(var(--primary) / 0.15);
+    box-shadow: 0 20px 40px -12px hsl(var(--primary) / 0.18);
   }
 }
 
@@ -348,12 +425,12 @@
 
 /* Atmospheric Glass & Specular Card */
 @utility card-specular {
-  background-color: color-mix(in srgb, hsl(var(--card)) 50%, transparent);
+  background-color: color-mix(in srgb, hsl(var(--card)) 75%, transparent);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid hsl(var(--border) / 0.5);
+  border: 1px solid hsl(var(--border) / 0.7);
   box-shadow:
-    0 2px 8px -2px rgba(0, 0, 0, 0.5),
+    0 2px 10px -2px rgba(0, 0, 0, 0.05),
     inset 0 1px 0 0 var(--border-specular);
   transition:
     transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
@@ -362,12 +439,12 @@
 }
 
 @utility card-luxury {
-  background-color: color-mix(in srgb, hsl(var(--card)) 50%, transparent);
+  background-color: color-mix(in srgb, hsl(var(--card)) 75%, transparent);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid hsl(var(--border) / 0.5);
+  border: 1px solid hsl(var(--border) / 0.7);
   box-shadow:
-    0 2px 8px -2px rgba(0, 0, 0, 0.5),
+    0 2px 10px -2px rgba(0, 0, 0, 0.05),
     inset 0 1px 0 0 var(--border-specular);
   transition:
     transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
@@ -380,18 +457,18 @@
   background: linear-gradient(180deg, #ec8353 0%, #e8732a 50%, #c75c1d 100%);
   color: #FFFFFF;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.25),
     0 4px 14px -2px rgba(232, 115, 42, 0.45),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
-    inset 0 -2px 0 0 rgba(0, 0, 0, 0.35);
+    inset 0 -2px 0 0 rgba(0, 0, 0, 0.25);
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 
   &:hover {
     box-shadow:
       0 20px 50px -15px rgba(232, 115, 42, 0.35),
-      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 1px 2px rgba(0, 0, 0, 0.25),
       inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
-      inset 0 -2px 0 0 rgba(0, 0, 0, 0.35);
+      inset 0 -2px 0 0 rgba(0, 0, 0, 0.25);
   }
 
   &:active {
@@ -411,7 +488,6 @@
 
   &:hover {
     border-color: hsl(var(--border));
-    background: linear-gradient(180deg, #2a3547 0%, #1a222e 100%);
   }
 
   &:active {
@@ -445,7 +521,7 @@
   background-color: color-mix(in srgb, hsl(var(--card)) 90%, transparent);
   border: 1px solid hsl(var(--border));
   box-shadow:
-    0 4px 20px -4px rgba(0, 0, 0, 0.5),
+    0 4px 20px -4px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 0 var(--border-specular);
   mask-image: radial-gradient(circle at 0% var(--tear-y, 68%), transparent 10px, black 10.5px),
               radial-gradient(circle at 100% var(--tear-y, 68%), transparent 10px, black 10.5px);
