@@ -188,8 +188,8 @@ const CTRL_INDICES = [
 ];
 
 const Topography: React.FC<TopographyProps> = ({
-  lowColor = '#5227FF',
-  midColor = '#FF9FFC',
+  lowColor = '#E8732A',
+  midColor = '#F59E0B',
   highColor = '#FFFFFF',
   speed = 0.35,
   morphAmount = 3.0,

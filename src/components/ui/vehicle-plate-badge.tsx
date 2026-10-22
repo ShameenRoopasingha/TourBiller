@@ -38,9 +38,9 @@ const statusConfig: Record<
     label: 'Maintenance',
   },
   scheduled: {
-    ledGradient: 'radial-gradient(circle at 35% 35%, #C7D2FE 0%, #6366F1 50%, #4338CA 100%)',
-    shadow: '0 0 10px rgba(99, 102, 241, 0.65), 0 0 2px rgba(99, 102, 241, 0.9)',
-    ring: 'border-indigo-300/60 dark:border-indigo-700/60',
+    ledGradient: 'radial-gradient(circle at 35% 35%, #BAE6FD 0%, #0284C7 50%, #0369A1 100%)',
+    shadow: '0 0 10px rgba(2, 132, 199, 0.65), 0 0 2px rgba(2, 132, 199, 0.9)',
+    ring: 'border-sky-300/60 dark:border-sky-700/60',
     label: 'Scheduled',
   },
 };

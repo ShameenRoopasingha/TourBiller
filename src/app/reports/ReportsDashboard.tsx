@@ -467,7 +467,7 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
         <Card className="print:shadow-none print:border-gray-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
             <CardTitle className="text-xs font-semibold uppercase text-muted-foreground print:text-black">Operating Cost Pillars</CardTitle>
-            <Layers className="h-4 w-4 text-indigo-600" />
+            <Layers className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent className="pt-0 space-y-1">
             <div className="flex justify-between text-[11px]">
@@ -475,7 +475,7 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
               <span className="font-medium">{fmt(totals.fuel)}</span>
             </div>
             <div className="flex justify-between text-[11px]">
-              <span className="text-muted-foreground flex items-center gap-1"><Disc className="h-3 w-3 text-indigo-500" /> Tyres & Service:</span>
+              <span className="text-muted-foreground flex items-center gap-1"><Disc className="h-3 w-3 text-amber-500" /> Tyres & Service:</span>
               <span className="font-medium">{fmt(totals.service + totals.tyres)}</span>
             </div>
           </CardContent>
@@ -510,8 +510,8 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
                     <th className="px-3 py-2.5 print:border print:border-gray-300">Period</th>
                     <th className="px-3 py-2.5 print:border print:border-gray-300 text-right text-green-700 dark:text-green-400">Revenue</th>
                     <th className="px-2.5 py-2.5 print:border print:border-gray-300 text-right text-blue-700 dark:text-blue-400">Fuel</th>
-                    <th className="px-2.5 py-2.5 print:border print:border-gray-300 text-right text-purple-700 dark:text-purple-400">Service</th>
-                    <th className="px-2.5 py-2.5 print:border print:border-gray-300 text-right text-indigo-700 dark:text-indigo-400">Tyres</th>
+                    <th className="px-2.5 py-2.5 print:border print:border-gray-300 text-right text-slate-700 dark:text-slate-300">Service</th>
+                    <th className="px-2.5 py-2.5 print:border print:border-gray-300 text-right text-amber-700 dark:text-amber-400">Tyres</th>
                     <th className="px-2.5 py-2.5 print:border print:border-gray-300 text-right text-emerald-700 dark:text-emerald-400">Insurance</th>
                     <th className="px-2.5 py-2.5 print:border print:border-gray-300 text-right text-sky-700 dark:text-sky-400">Driver</th>
                     <th className="px-2.5 py-2.5 print:border print:border-gray-300 text-right text-orange-700 dark:text-orange-400">Repairs/Other</th>
@@ -534,10 +534,10 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
                         <td className="px-2.5 py-2 print:border print:border-gray-300 text-right text-blue-600 dark:text-blue-400 whitespace-nowrap">
                           {row.fuel > 0 ? fmt(row.fuel) : '-'}
                         </td>
-                        <td className="px-2.5 py-2 print:border print:border-gray-300 text-right text-purple-600 dark:text-purple-400 whitespace-nowrap">
+                        <td className="px-2.5 py-2 print:border print:border-gray-300 text-right text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           {row.service > 0 ? fmt(row.service) : '-'}
                         </td>
-                        <td className="px-2.5 py-2 print:border print:border-gray-300 text-right text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                        <td className="px-2.5 py-2 print:border print:border-gray-300 text-right text-amber-600 dark:text-amber-400 whitespace-nowrap">
                           {row.tyres > 0 ? fmt(row.tyres) : '-'}
                         </td>
                         <td className="px-2.5 py-2 print:border print:border-gray-300 text-right text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
@@ -567,8 +567,8 @@ export function ReportsDashboard({ bills, expenses, businessProfile }: ReportsDa
                     <td className="px-3 py-3 print:border print:border-gray-300 text-left uppercase">GRAND TOTAL</td>
                     <td className="px-3 py-3 print:border print:border-gray-300 text-right text-green-700 dark:text-green-400 whitespace-nowrap">{fmt(totals.income)}</td>
                     <td className="px-2.5 py-3 print:border print:border-gray-300 text-right text-blue-700 dark:text-blue-400 whitespace-nowrap">{fmt(totals.fuel)}</td>
-                    <td className="px-2.5 py-3 print:border print:border-gray-300 text-right text-purple-700 dark:text-purple-400 whitespace-nowrap">{fmt(totals.service)}</td>
-                    <td className="px-2.5 py-3 print:border print:border-gray-300 text-right text-indigo-700 dark:text-indigo-400 whitespace-nowrap">{fmt(totals.tyres)}</td>
+                    <td className="px-2.5 py-3 print:border print:border-gray-300 text-right text-slate-700 dark:text-slate-300 whitespace-nowrap">{fmt(totals.service)}</td>
+                    <td className="px-2.5 py-3 print:border print:border-gray-300 text-right text-amber-700 dark:text-amber-400 whitespace-nowrap">{fmt(totals.tyres)}</td>
                     <td className="px-2.5 py-3 print:border print:border-gray-300 text-right text-emerald-700 dark:text-emerald-400 whitespace-nowrap">{fmt(totals.insurance)}</td>
                     <td className="px-2.5 py-3 print:border print:border-gray-300 text-right text-sky-700 dark:text-sky-400 whitespace-nowrap">{fmt(totals.driver)}</td>
                     <td className="px-2.5 py-3 print:border print:border-gray-300 text-right text-orange-700 dark:text-orange-400 whitespace-nowrap">{fmt(totals.repairsOther)}</td>

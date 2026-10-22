@@ -23,7 +23,7 @@ const badgeVariants = cva(
         maintenance:
           "bg-rose-500/10 text-rose-800 border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-400/20 dark:shadow-[inset_0_1px_0_0_rgba(251,113,133,0.15)]",
         scheduled:
-          "bg-indigo-500/10 text-indigo-800 border-indigo-500/25 dark:bg-indigo-500/10 dark:text-indigo-300 dark:border-indigo-400/20 dark:shadow-[inset_0_1px_0_0_rgba(129,140,248,0.15)]",
+          "bg-sky-500/10 text-sky-800 border-sky-500/25 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-400/20 dark:shadow-[inset_0_1px_0_0_rgba(56,189,248,0.15)]",
         radar:
           "bg-emerald-600 text-white shadow-[0_0_16px_rgba(16,185,129,0.5)] dark:bg-emerald-400 dark:text-zinc-950 font-bold dark:shadow-[0_0_24px_rgba(52,211,153,0.7)]",
       },

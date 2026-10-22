@@ -53,7 +53,7 @@ const MACRO_ACTIONS: MacroAction[] = [
     },
     {
         type: 'HOTEL_CHECKIN', label: 'Hotel', icon: Hotel,
-        color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/30', border: 'border-purple-200 dark:border-purple-800',
+        color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/30', border: 'border-amber-200 dark:border-amber-800',
         needsAmount: false, placeholder: 'e.g. Grand Hotel, Nuwara Eliya'
     },
     {

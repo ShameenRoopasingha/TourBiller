@@ -34,8 +34,8 @@
     --muted-foreground: 25 12% 46%;        /* #7B736B — Secondary Supporting Text */
 
     /* Accents & States */
-    --accent: 258 75% 96%;                 /* #F3E8FF — Electric Violet Soft Tint */
-    --accent-foreground: 258 80% 48%;      /* #6D28D9 */
+    --accent: 23 85% 95%;                  /* #FDF2EC — Soft Matte Orange Tint */
+    --accent-foreground: 23 81% 40%;       /* #994716 — Deep Amber Focus */
     --destructive: 350 85% 58%;            /* #E11D48 — Crimson Alert */
     --destructive-foreground: 0 0% 100%;   /* #FFFFFF */
 
@@ -118,7 +118,7 @@
     --muted-foreground: 215 20% 65%;       /* #94a3b8 — Secondary Supporting Text */
 
     /* Accents & States */
-    --accent: 258 90% 66%;                 /* #8B5CF6 — Electric Violet Accent */
+    --accent: 23 45% 16%;                  /* #3A2316 — Deep Warm Obsidian Amber Tint */
     --accent-foreground: 0 0% 100%;
     --destructive: 330 80% 60%;            /* #E64A85 — Cyber Pink / Critical Emergency State */
     --destructive-foreground: 0 0% 100%;
@@ -272,8 +272,8 @@
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-destructive-red: #E64A85;
-  --color-shader-top: #5227FF;
-  --color-shader-bottom: #FF9FFC;
+  --color-shader-top: #E8732A;
+  --color-shader-bottom: #F59E0B;
 
   /* Sidebar Tokens */
   --color-sidebar: hsl(var(--sidebar));

@@ -115,7 +115,7 @@ export function TourScheduleDetail({ schedule }: TourScheduleDetailProps) {
                         <div className="text-lg font-bold text-primary leading-none">{formatCurrency(schedule.basePricePerPerson)}</div>
                     </CardContent>
                 </Card>
-                <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 border-none shadow-lg shadow-indigo-500/20 text-white overflow-hidden relative group">
+                <Card className="bg-gradient-to-br from-[#E8732A] via-[#D96620] to-[#B85314] border border-primary/30 shadow-lg shadow-primary/25 text-white overflow-hidden relative group">
                     <div className="absolute -right-2 -top-2 opacity-10 group-hover:scale-110 transition-transform">
                         <Clock className="h-16 w-16 rotate-12" />
                     </div>

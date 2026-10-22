@@ -374,11 +374,11 @@ export default async function BookingDetailsPage(props: {
                                     const isVehicleSwapped = act.type === 'VEHICLE_SWAPPED';
 
                                     const badgeClass = isBreakdown ? 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30' :
-                                        isVehicleSwapped ? 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30' :
+                                        isVehicleSwapped ? 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30' :
                                         isHandover ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30' :
-                                        isTakeover ? 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30' :
-                                        isStart ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30' :
-                                        isEnd ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30' :
+                                        isTakeover ? 'bg-primary/10 text-primary border-primary/30' :
+                                        isStart ? 'bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-500/30' :
+                                        isEnd ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30' :
                                         'bg-muted text-muted-foreground';
 
                                     return (

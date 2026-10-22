@@ -58,11 +58,11 @@ const CATEGORIES: { label: string; value: VehicleExpenseCategory; icon: React.Co
     { label: 'Repair', value: 'REPAIR', icon: Wrench, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/40' },
     { label: 'Breakdown', value: 'BREAKDOWN', icon: Zap, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/40' },
     { label: 'Fuel', value: 'FUEL', icon: Fuel, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/40' },
-    { label: 'Service', value: 'SERVICE', icon: Settings, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/40' },
+    { label: 'Service', value: 'SERVICE', icon: Settings, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-800/60' },
     { label: 'Oil Change', value: 'OIL_CHANGE', icon: Droplets, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/40' },
     { label: 'Filters', value: 'FILTER_CHANGE', icon: Filter, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-100 dark:bg-teal-900/40' },
     { label: 'Wash', value: 'BODY_WASH', icon: Sparkles, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-100 dark:bg-cyan-900/40' },
-    { label: 'Tyre', value: 'TYRE', icon: Disc, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/40' },
+    { label: 'Tyre', value: 'TYRE', icon: Disc, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/40' },
     { label: 'Insurance', value: 'INSURANCE', icon: ShieldCheck, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/40' },
     { label: 'Driver', value: 'DRIVER', icon: UserCheck, color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-100 dark:bg-sky-900/40' },
     { label: 'Other', value: 'OTHER', icon: MoreHorizontal, color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-900/40' },
@@ -499,7 +499,7 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
                                                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${exp.category === 'REPAIR' ? 'bg-orange-100 text-orange-700' :
                                                     exp.category === 'BREAKDOWN' ? 'bg-red-100 text-red-700' :
                                                         exp.category === 'FUEL' ? 'bg-blue-100 text-blue-700' :
-                                                            exp.category === 'SERVICE' ? 'bg-purple-100 text-purple-700' :
+                                                            exp.category === 'SERVICE' ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' :
                                                                 'bg-gray-100 text-gray-700'
                                                     }`}>
                                                     {exp.category}

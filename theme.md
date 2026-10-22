@@ -38,7 +38,7 @@ The Bitgard design language bridges high-tech tactical control-room aesthetics a
 | **`--muted-foreground`**| `hsl(25 12% 46%)` (`#7B736B`) | `hsl(215 20% 65%)` (`#94A3B8`) | Supporting labels, timestamps, metadata. |
 | **`--border`** | `hsl(33 15% 87%)` (`#E2DDD4`) | `hsl(0 0% 12%)` (`#1F1F1F`) | Hairline structural dividers (`1px`). |
 | **`--border-specular`** | `rgba(255, 255, 255, 0.95)` | `rgba(255, 255, 255, 0.07)` | Overhead studio light reflection (`inset 0 1px 0 0`) on glass cards and buttons. |
-| **`--accent`** | `hsl(258 75% 96%)` (`#F3E8FF`) | `hsl(258 90% 66%)` (`#8B5CF6`) | Electric Violet tint for special badges & AI highlights. |
+| **`--accent`** | `hsl(23 85% 95%)` (`#FDF2EC`) | `hsl(23 45% 16%)` (`#3A2316`) | Warm Amber/Obsidian tint for highlights & interactive focus. |
 | **`--destructive`** | `hsl(350 85% 58%)` (`#E11D48`) | `hsl(330 80% 60%)` (`#E64A85`) | Crimson alert for breakdowns, emergency dispatch, and cancellations. |
 
 ---

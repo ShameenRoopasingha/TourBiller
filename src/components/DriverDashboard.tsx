@@ -34,7 +34,7 @@ const ACTIVITY_CONFIG: Record<string, { icon: React.ElementType; color: string; 
     'FLAT_TIRE': { icon: Wrench, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30', label: 'Flat Tire' },
     'BREAKDOWN': { icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30', label: 'Breakdown' },
     'STOP': { icon: CircleStop, color: 'text-yellow-600', bg: 'bg-yellow-100 dark:bg-yellow-900/30', label: 'Stop' },
-    'HOTEL_CHECKIN': { icon: Hotel, color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30', label: 'Hotel Check-in' },
+    'HOTEL_CHECKIN': { icon: Hotel, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30', label: 'Hotel Check-in' },
     'RESUME': { icon: Car, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30', label: 'Resume Trip' },
     'NOTE': { icon: MoreHorizontal, color: 'text-gray-600', bg: 'bg-gray-100 dark:bg-gray-900/30', label: 'Note' },
 };
@@ -43,7 +43,7 @@ const EXPENSE_CONFIG: Record<string, { icon: React.ElementType; color: string; b
     'REPAIR': { icon: Wrench, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
     'BREAKDOWN': { icon: Zap, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' },
     'FUEL': { icon: Fuel, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-    'SERVICE': { icon: Settings, color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+    'SERVICE': { icon: Settings, color: 'text-primary', bg: 'bg-primary/10 dark:bg-primary/20' },
     'OIL_CHANGE': { icon: Droplets, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' },
     'FILTER_CHANGE': { icon: Filter, color: 'text-teal-600', bg: 'bg-teal-100 dark:bg-teal-900/30' },
     'BODY_WASH': { icon: Sparkles, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },

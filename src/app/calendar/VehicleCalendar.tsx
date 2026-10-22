@@ -81,11 +81,13 @@ export function VehicleCalendar({ vehicles, bookings }: VehicleCalendarProps) {
     const widthPercentage = (widthDays / daysCount) * 100;
 
     const bgColors = {
-      'CONFIRMED': 'bg-blue-500 hover:bg-blue-600',
-      'COMPLETED': 'bg-emerald-500 hover:bg-emerald-600',
-      'CANCELLED': 'bg-gray-400 hover:bg-gray-500',
+      'CONFIRMED': 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm shadow-primary/20',
+      'ACTIVE': 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm shadow-primary/20',
+      'IN_PROGRESS': 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-500/20',
+      'COMPLETED': 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20',
+      'CANCELLED': 'bg-muted-foreground/40 hover:bg-muted-foreground/60 text-white',
     };
-    const colorClass = bgColors[booking.status as keyof typeof bgColors] || 'bg-purple-500';
+    const colorClass = bgColors[booking.status as keyof typeof bgColors] || 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm shadow-primary/20';
 
     return {
       style: {
@@ -105,7 +107,12 @@ export function VehicleCalendar({ vehicles, bookings }: VehicleCalendarProps) {
           <CalendarIcon className="h-5 w-5 text-primary" />
           {format(currentDate, 'MMMM yyyy')}
         </CardTitle>
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto">
+          <div className="hidden md:flex items-center gap-3 text-[11px] text-muted-foreground mr-2 font-medium">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-primary" /> Confirmed / Active</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-amber-500" /> In Progress</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-600" /> Completed</span>
+          </div>
           <Button variant="outline" size="sm" onClick={today}>Today</Button>
           <div className="flex items-center rounded-md border">
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border-r" onClick={prevMonth}>

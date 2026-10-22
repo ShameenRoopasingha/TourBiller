@@ -497,15 +497,15 @@ export function MapDistanceCalculator({
 
             {/* Smart TSP Optimization (when 2+ stops) */}
             {waypoints.length > 1 && (
-              <label className="flex items-center gap-2 cursor-pointer select-none text-purple-700 dark:text-purple-300">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-primary dark:text-primary-400">
                 <input
                   type="checkbox"
                   checked={optimizeWaypoints}
                   onChange={(e) => setOptimizeWaypoints(e.target.checked)}
-                  className="rounded border-border text-purple-600 focus:ring-purple-500 w-3.5 h-3.5"
+                  className="rounded border-border text-primary focus:ring-primary w-3.5 h-3.5"
                 />
                 <span className="flex items-center gap-1 font-semibold">
-                  <Sparkles className="w-3 h-3 text-purple-500" />
+                  <Sparkles className="w-3 h-3 text-primary" />
                   Optimize Route Order (TSP)
                 </span>
               </label>
