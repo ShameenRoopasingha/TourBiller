@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Loader2, Search, Users, Plus, Pencil, Trash2, Phone, Mail, MapPin } from 'lucide-react';
 import { type Customer } from '@/lib/validations';
 import { notify } from '@/lib/notifications';
+import { useFuzzySearch } from '@/lib/use-fuzzy-search';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,12 +47,23 @@ export function CustomerList() {
 
     const query = searchParams.get('q') || '';
 
+    const { query: searchQuery, setQuery: setSearchQuery, results: filteredCustomers } = useFuzzySearch(
+        customers,
+        [
+            { name: 'name', weight: 0.4 },
+            { name: 'mobile', weight: 0.3 },
+            { name: 'email', weight: 0.2 },
+            { name: 'address', weight: 0.1 },
+        ],
+        { threshold: 0.35 }
+    );
+
     const fetchCustomers = useCallback(async () => {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await fetch(`/api/customers${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+            const response = await fetch('/api/customers');
             const result = await response.json();
 
             if (response.ok && result.success && result.data) {
@@ -127,10 +139,10 @@ export function CustomerList() {
                         <div className="relative w-full md:w-1/3">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder="Search customers..."
+                                placeholder="Fuzzy search customers (e.g. name, phone, email)..."
                                 className="pl-8"
-                                defaultValue={query}
-                                onChange={(e) => handleSearch(e.target.value)}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
                     </div>
@@ -156,7 +168,7 @@ export function CustomerList() {
                         <>
                             {/* Mobile View (Card-based) */}
                             <div className="grid gap-3 md:hidden">
-                                {customers.map((customer) => (
+                                {filteredCustomers.map((customer) => (
                                     <Card key={customer.id} className="p-4 space-y-2.5">
                                         <div className="flex items-start justify-between gap-2">
                                             <div>

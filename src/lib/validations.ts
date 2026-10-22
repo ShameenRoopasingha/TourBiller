@@ -322,6 +322,9 @@ export type ActionResult<T> = {
   success: boolean;
   data?: T;
   error?: string;
+  isDevFallback?: boolean;
+  resetLink?: string;
+  otpCode?: string;
 };
 
 // Vehicle validation schema
@@ -679,8 +682,12 @@ export const PasswordResetRequestSchema = z.object({
 export type PasswordResetRequestInput = z.infer<typeof PasswordResetRequestSchema>;
 
 export const PasswordResetConfirmSchema = z.object({
-  token: z.string().min(1, 'Token is required'),
+  token: z.string().optional(),
+  email: z.string().email('Valid email is required').optional(),
+  otpCode: z.string().min(4, 'OTP code is required').max(10).optional(),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+}).refine((data) => Boolean(data.token || (data.email && data.otpCode)), {
+  message: 'Either reset token or email and 6-digit OTP code is required',
 });
 
 export type PasswordResetConfirmInput = z.infer<typeof PasswordResetConfirmSchema>;

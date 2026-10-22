@@ -43,7 +43,9 @@ export async function POST(req: Request) {
       }
     }
 
-    const relativeExtraKm = Math.max(0, Math.round((routeResult.distanceKm - directDistanceKm) * 10) / 10);
+    const distKm = routeResult.distanceKm || 0;
+    const dirKm = directDistanceKm || 0;
+    const relativeExtraKm = Math.max(0, Math.round((distKm - dirKm) * 10) / 10);
 
     return NextResponse.json({
       success: true,

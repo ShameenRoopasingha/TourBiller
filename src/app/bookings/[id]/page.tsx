@@ -248,7 +248,7 @@ export default async function BookingDetailsPage(props: {
                                     vehicleNo={booking.vehicleNo}
                                     customerName={booking.customerName}
                                     currentStartDate={booking.startDate}
-                                    currentEndDate={booking.endDate}
+                                    currentEndDate={booking.endDate ?? null}
                                     driverId={booking.driverId}
                                     driverName={booking.driver?.name}
                                     isOngoing={isOngoing}
@@ -285,7 +285,7 @@ export default async function BookingDetailsPage(props: {
                                         vehicleNo={booking.vehicleNo}
                                         customerName={booking.customerName}
                                         currentStartDate={booking.startDate}
-                                        currentEndDate={booking.endDate}
+                                        currentEndDate={booking.endDate ?? null}
                                         driverId={booking.driverId}
                                         driverName={booking.driver?.name}
                                         isOngoing={isOngoing}

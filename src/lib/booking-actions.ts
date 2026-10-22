@@ -733,16 +733,18 @@ export async function updateBookingDates(
             },
         });
 
-        // Add a trip activity note for tour date adjustment
-        await prisma.tripActivity.create({
-            data: {
-                companyId: authCheck.companyId!,
-                bookingId: booking.id,
-                driverId: booking.driverId || null,
-                type: 'NOTE',
-                note: `Tour dates updated by admin. New End Date: ${newEndDate ? formatAppDateTime(newEndDate) : 'Open/Single Day'} (Start: ${formatAppDateTime(newStartDate)}).`,
-            },
-        });
+        // Add a trip activity note for tour date adjustment if a driver is assigned
+        if (booking.driverId) {
+            await prisma.tripActivity.create({
+                data: {
+                    companyId: authCheck.companyId!,
+                    bookingId: booking.id,
+                    driverId: booking.driverId,
+                    type: 'NOTE',
+                    note: `Tour dates updated by admin. New End Date: ${newEndDate ? formatAppDateTime(newEndDate) : 'Open/Single Day'} (Start: ${formatAppDateTime(newStartDate)}).`,
+                },
+            });
+        }
 
         revalidateFor('booking');
         revalidatePath(`/bookings/${bookingId}`);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { notify } from '@/lib/notifications';
 import Link from 'next/link';
+import { useFuzzySearch } from '@/lib/use-fuzzy-search';
 import { Plus, Search, Edit, Trash2, Map, Calendar, Eye } from 'lucide-react';
 
 
@@ -59,13 +60,16 @@ interface TourScheduleListProps {
 
 export function TourScheduleList({ schedules }: TourScheduleListProps) {
     const router = useRouter();
-    const [search, setSearch] = useState('');
     const [deleting, setDeleting] = useState<string | null>(null);
 
-    const filtered = schedules.filter(
-        (s) =>
-            s.name.toLowerCase().includes(search.toLowerCase()) ||
-            s.description?.toLowerCase().includes(search.toLowerCase())
+    const { query: search, setQuery: setSearch, results: filtered } = useFuzzySearch(
+        schedules,
+        [
+            { name: 'name', weight: 0.6 },
+            { name: 'description', weight: 0.3 },
+            { name: 'vehicleCategory', weight: 0.1 },
+        ],
+        { threshold: 0.35 }
     );
 
     const handleDelete = async (id: string) => {

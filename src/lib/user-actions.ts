@@ -6,6 +6,9 @@ import bcrypt from 'bcrypt';
 import { type ActionResult, type DriverAvailabilityConflict, UserCreateSchema } from '@/lib/validations';
 import { revalidatePath } from 'next/cache';
 import { formatActionError } from '@/lib/error-handler';
+import crypto from 'crypto';
+import { verifyEmailAddress } from '@/lib/email-verifier';
+import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/open-source-mailer';
 
 /**
  * Check driver availability for a given date range.
@@ -113,11 +116,12 @@ export async function checkDriverAvailability(
     }
 }
 
-type UserData = {
+export type UserData = {
     id: string;
     name: string;
     email: string;
     role: string;
+    emailVerified: Date | null;
     createdAt: Date;
 };
 
@@ -139,6 +143,7 @@ export async function getUsers(): Promise<ActionResult<UserData[]>> {
                 name: true,
                 email: true,
                 role: true,
+                emailVerified: true,
                 createdAt: true,
             },
             orderBy: { createdAt: 'desc' },
@@ -182,6 +187,12 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
             return { success: false, error: 'A user with this email already exists' };
         }
 
+        // 1. Level 1 & Level 2 Pre-verification: RFC 5322 Syntax + Disposable blocklist + DNS MX lookup
+        const emailCheck = await verifyEmailAddress(email);
+        if (!emailCheck.valid) {
+            return { success: false, error: emailCheck.error || 'Invalid email address' };
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await prisma.user.create({
@@ -192,6 +203,32 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
                 password: hashedPassword,
                 role,
             },
+        });
+
+        // 2. Level 3 OTP & Token Generation for Open-Source Verification
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const token = crypto.randomBytes(32).toString('hex');
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        await prisma.emailVerificationToken.deleteMany({
+            where: { email },
+        });
+
+        await prisma.emailVerificationToken.create({
+            data: {
+                email,
+                token,
+                otpCode,
+                expires,
+            },
+        });
+
+        // 3. Dispatch verification email via Nodemailer (or Dev console fallback)
+        await sendVerificationEmail({
+            to: email,
+            name,
+            otpCode,
+            token,
         });
 
         revalidatePath('/users');
@@ -273,4 +310,160 @@ export async function getDrivers(): Promise<ActionResult<DriverOption[]>> {
 export async function logoutUser() {
   const { signOut } = await import('@/lib/auth');
   await signOut({ redirectTo: '/login' });
+}
+
+/**
+ * Verify user email via 6-digit OTP code or direct token link
+ */
+export async function verifyUserEmail(email: string, tokenOrOtp: string): Promise<ActionResult<void>> {
+    try {
+        if (!email || !tokenOrOtp) {
+            return { success: false, error: 'Email and verification code/token are required.' };
+        }
+
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanCode = tokenOrOtp.trim();
+
+        const record = await prisma.emailVerificationToken.findFirst({
+            where: {
+                email: cleanEmail,
+                OR: [
+                    { otpCode: cleanCode },
+                    { token: cleanCode },
+                ],
+            },
+        });
+
+        if (!record) {
+            return { success: false, error: 'Invalid verification code or link. Please check and try again.' };
+        }
+
+        if (record.expires < new Date()) {
+            return { success: false, error: 'Verification code has expired. Please request a new one.' };
+        }
+
+        // Mark user email as verified
+        await prisma.user.updateMany({
+            where: { email: cleanEmail },
+            data: { emailVerified: new Date() },
+        });
+
+        // Delete used token
+        await prisma.emailVerificationToken.deleteMany({
+            where: { email: cleanEmail },
+        });
+
+        revalidatePath('/users');
+        return { success: true };
+    } catch (error) {
+        return formatActionError(error, 'Failed to verify email');
+    }
+}
+
+/**
+ * Resend verification OTP email for a pending user
+ */
+export async function resendVerificationEmail(userId: string): Promise<ActionResult<void>> {
+    try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+        const { companyId } = authCheck;
+
+        const user = await prisma.user.findFirst({
+            where: { id: userId, companyId },
+        });
+
+        if (!user) {
+            return { success: false, error: 'User not found' };
+        }
+
+        if (user.emailVerified) {
+            return { success: false, error: 'User email is already verified.' };
+        }
+
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const token = crypto.randomBytes(32).toString('hex');
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await prisma.emailVerificationToken.deleteMany({
+            where: { email: user.email },
+        });
+
+        await prisma.emailVerificationToken.create({
+            data: {
+                email: user.email,
+                token,
+                otpCode,
+                expires,
+            },
+        });
+
+        await sendVerificationEmail({
+            to: user.email,
+            name: user.name,
+            otpCode,
+            token,
+        });
+
+        return { success: true };
+    } catch (error) {
+        return formatActionError(error, 'Failed to resend verification email');
+    }
+}
+
+/**
+ * Admin action: Generate a direct password reset link for any team member
+ */
+export async function adminGenerateResetLink(userId: string): Promise<ActionResult<{ resetLink: string; email: string }>> {
+    try {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            return { success: false, error: authCheck.error };
+        }
+        const { companyId } = authCheck;
+
+        const user = await prisma.user.findFirst({
+            where: { id: userId, companyId },
+        });
+
+        if (!user) {
+            return { success: false, error: 'User not found' };
+        }
+
+        const token = crypto.randomBytes(32).toString('hex');
+        const expires = new Date(Date.now() + 3600000); // 1 hour
+
+        await prisma.passwordResetToken.deleteMany({
+            where: { email: user.email },
+        });
+
+        await prisma.passwordResetToken.create({
+            data: {
+                email: user.email,
+                token,
+                expires,
+            },
+        });
+
+        const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+
+        // Also try to send email if SMTP is configured
+        await sendPasswordResetEmail({
+            to: user.email,
+            name: user.name,
+            resetLink,
+        });
+
+        return {
+            success: true,
+            data: {
+                resetLink,
+                email: user.email,
+            },
+        };
+    } catch (error) {
+        return formatActionError(error, 'Failed to generate reset link');
+    }
 }

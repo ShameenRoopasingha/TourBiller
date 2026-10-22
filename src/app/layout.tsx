@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Montserrat, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
+import { Orbitron, Space_Grotesk, Inter, JetBrains_Mono, Plus_Jakarta_Sans, Montserrat } from 'next/font/google'
 import './globals.css'
 import Image from 'next/image'
 import { cookies } from 'next/headers'
@@ -19,24 +19,38 @@ import { ThemeSwitcher } from '@/components/layout/theme-switcher'
 import ChatAssistant from '@/components/ChatAssistant'
 import { EmergencyDispatchBanner } from '@/components/EmergencyDispatchBanner'
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const orbitron = Orbitron({
   subsets: ['latin'],
-  variable: '--font-plus-jakarta',
+  variable: '--font-heading',
   display: 'swap',
-  weight: ['600', '700', '800'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-subheading',
+  display: 'swap',
+  weight: ['300', '400', '500', '600', '700'],
 })
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-body',
   display: 'swap',
 })
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-jetbrains-mono',
+  variable: '--font-mono',
   display: 'swap',
-  weight: ['500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
+})
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-plus-jakarta',
+  display: 'swap',
+  weight: ['600', '700', '800'],
 })
 
 const montserrat = Montserrat({
@@ -53,8 +67,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#fcfcfd' },
-    { media: '(prefers-color-scheme: dark)', color: '#07070a' },
+    { media: '(prefers-color-scheme: light)', color: '#0d0d0d' },
+    { media: '(prefers-color-scheme: dark)', color: '#0d0d0d' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -73,19 +87,19 @@ export default async function RootLayout({
   return (
     <html
       lang="en-GB"
-      className={`${inter.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} ${montserrat.variable}`}
+      className={`${orbitron.variable} ${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} ${plusJakartaSans.variable} ${montserrat.variable}`}
       suppressHydrationWarning
     >
       <body
-        className={`${inter.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${inter.className} font-sans antialiased`}
+        className={`${orbitron.variable} ${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} ${plusJakartaSans.variable} ${montserrat.variable} ${inter.className} font-sans antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark" disableTransitionOnChange={false}>
           <AmbientAtmosphere />
           {session ? (
             <SessionProvider>
               <SidebarProvider defaultOpen={defaultOpen}>
-                <div className="flex min-h-screen bg-background relative selection:bg-primary/20 selection:text-primary w-full">
+                <div className="flex min-h-screen bg-background relative selection:bg-primary selection:text-primary-foreground w-full">
                   <div className="print:hidden z-40 shrink-0">
                     <Sidebar userRole={(session.user as { role?: string })?.role} userName={session.user?.name || 'User'} />
                   </div>

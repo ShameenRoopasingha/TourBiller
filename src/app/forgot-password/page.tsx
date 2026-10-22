@@ -9,16 +9,21 @@ import {
     AlertCircle, 
     CheckCircle2, 
     ShieldCheck,
-    ArrowRight
+    ArrowRight,
+    ExternalLink,
+    Globe
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ForgotPasswordPage() {
+    const bitgardPortalUrl = process.env.NEXT_PUBLIC_BITGARD_PORTAL_URL || 'https://bitgard.vercel.app/products/vehicle-hire';
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [devResetLink, setDevResetLink] = useState('');
+    const [devOtpCode, setDevOtpCode] = useState('');
     const [error, setError] = useState('');
     const [mousePos, setMousePos] = useState({ x: 200, y: 200 });
 
@@ -49,6 +54,12 @@ export default function ForgotPasswordPage() {
             const result = await response.json();
             if (response.ok && result.success) {
                 setSuccess(true);
+                if (result.resetLink || result.data?.resetLink) {
+                    setDevResetLink(result.resetLink || result.data?.resetLink);
+                }
+                if (result.otpCode || result.data?.otpCode) {
+                    setDevOtpCode(result.otpCode || result.data?.otpCode);
+                }
             } else {
                 setError(result.error || 'Failed to request password reset link.');
             }
@@ -176,21 +187,93 @@ export default function ForgotPasswordPage() {
                                     <CheckCircle2 className="w-6 h-6" />
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="text-base font-bold text-white">Verification Email Dispatched</h3>
+                                    <h3 className="text-base font-bold text-white">6-Digit OTP Dispatched</h3>
                                     <p className="text-xs text-slate-300 leading-relaxed">
-                                        If an active account corresponds to <span className="font-semibold text-blue-400">{email}</span>, a secure one-time reset link has been dispatched.
+                                        If an active account corresponds to <span className="font-semibold text-blue-400">{email}</span>, a 6-digit reset OTP code and secure link have been dispatched.
                                     </p>
                                 </div>
+
+                                {devOtpCode && (
+                                    <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-200 text-center space-y-2 my-2">
+                                        <div className="text-[11px] font-semibold uppercase tracking-wider text-blue-300">
+                                            Local Mode Reset OTP Code
+                                        </div>
+                                        <div className="text-2xl font-black tracking-[0.25em] text-white font-mono bg-slate-900/80 py-2 rounded-lg border border-slate-700">
+                                            {devOtpCode}
+                                        </div>
+                                        <p className="text-[10px] text-slate-400">
+                                            Use this 6-digit code on the reset page or click the link below:
+                                        </p>
+                                    </div>
+                                )}
+
+                                {devResetLink && (
+                                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200 text-xs text-left space-y-2 my-1">
+                                        <div className="flex items-center gap-1.5 font-semibold text-amber-300">
+                                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                            <span>Direct Local Link</span>
+                                        </div>
+                                        <a 
+                                            href={devResetLink}
+                                            className="w-full h-8 inline-flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors shadow-sm"
+                                        >
+                                            Reset Password Directly Now &rarr;
+                                        </a>
+                                    </div>
+                                )}
+
+                                <Link 
+                                    href={`/reset-password?email=${encodeURIComponent(email)}`}
+                                    className="w-full h-10 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white font-semibold text-xs shadow-md transition-colors"
+                                >
+                                    Enter 6-Digit OTP to Reset Now &rarr;
+                                </Link>
+
                                 <Link 
                                     href="/login" 
-                                    className="w-full h-10 inline-flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs border border-slate-700 transition-colors"
+                                    className="w-full h-9 inline-flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition-colors"
                                 >
                                     <ArrowLeft className="mr-2 h-3.5 w-3.5" />
                                     Return to Console Login
                                 </Link>
                             </motion.div>
                         ) : (
-                            <form onSubmit={handleSubmit} className="space-y-3 relative z-10">
+                            <div className="space-y-4 relative z-10">
+                                {/* Option 1: Official Bitgard Portal for Admins & Owners */}
+                                <div className="p-3.5 rounded-xl bg-gradient-to-r from-cyan-950/70 via-blue-950/50 to-slate-900/80 border border-cyan-500/30 space-y-2 shadow-sm">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
+                                            <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                                            <span>Bitgard &bull; Vigil Product Portal</span>
+                                        </div>
+                                        <span className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                                            Admin / Owner
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                                        Admins who registered & subscribed via Bitgard can retrieve licenses and manage credentials on the official Vigil product portal:
+                                    </p>
+                                    <a 
+                                        href={bitgardPortalUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="w-full h-8.5 py-1.5 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.99]"
+                                    >
+                                        <span>Open Vigil on Official Bitgard Website</span>
+                                        <ExternalLink className="w-3.5 h-3.5 text-cyan-200" />
+                                    </a>
+                                </div>
+
+                                {/* Divider */}
+                                <div className="relative flex items-center justify-center my-2">
+                                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-700/60" /></div>
+                                    <span className="relative bg-[#0c121f] px-2.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                                        OR In-App 6-Digit Email OTP
+                                    </span>
+                                </div>
+
+                                {/* Option 2: 6-Digit OTP for Drivers & Local Accounts */}
+                                <form onSubmit={handleSubmit} className="space-y-3">
                                 <AnimatePresence mode="wait">
                                     {error && (
                                         <motion.div 
@@ -237,11 +320,11 @@ export default function ForgotPasswordPage() {
                                     {loading ? (
                                         <>
                                             <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
-                                            <span>Issuing recovery token...</span>
+                                            <span>Issuing 6-digit OTP code...</span>
                                         </>
                                     ) : (
                                         <>
-                                            <span>Dispatch Recovery Link</span>
+                                            <span>Send 6-Digit OTP & Reset Link</span>
                                             <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                                         </>
                                     )}
@@ -257,7 +340,8 @@ export default function ForgotPasswordPage() {
                                     </Link>
                                 </div>
                             </form>
-                        )}
+                        </div>
+                    )}
 
                         <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-center gap-1.5 text-center">
                             <ShieldCheck className="w-3 h-3 text-slate-400 shrink-0" />

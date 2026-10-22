@@ -45,3 +45,17 @@ next-env.d.ts
 
 # Ignore Pandoc binaries
 pandoc/
+
+# Scratch & temporary test scripts/reports
+*-report.txt
+*-test.js
+test-*.js
+playwright-load.js
+playwright-report.txt
+results*.txt
+load-test-*.txt
+check.js
+check-db.js
+fix*.js
+expense-body.json
+post-body.json

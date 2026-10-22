@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { resetPassword, verifyResetToken } from '@/lib/auth-actions';
+import { resetPassword, verifyResetToken, verifyResetOtp } from '@/lib/auth-actions';
 
 export async function GET(req: NextRequest) {
     const token = req.nextUrl.searchParams.get('token') || '';
-    const valid = await verifyResetToken(token);
-    return NextResponse.json({ success: true, data: valid });
+    const email = req.nextUrl.searchParams.get('email') || '';
+    const otp = req.nextUrl.searchParams.get('otp') || '';
+
+    let valid = false;
+    if (token) {
+        valid = await verifyResetToken(token);
+    } else if (email && otp) {
+        valid = await verifyResetOtp(email, otp);
+    }
+
+    return NextResponse.json({ success: true, valid, data: valid });
 }
 
 export async function POST(req: NextRequest) {

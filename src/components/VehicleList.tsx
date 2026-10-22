@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Search, Car, Plus, Pencil, Trash2, Receipt, Droplets, Filter } from 'lucide-react';
 import { type Vehicle } from '@/lib/validations';
 import { notify } from '@/lib/notifications';
+import { useFuzzySearch } from '@/lib/use-fuzzy-search';
 import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
@@ -49,21 +50,17 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
     const router = useRouter();
     const pathname = usePathname();
 
-    const query = searchParams.get('q') || '';
+    const { query: searchQuery, setQuery: setSearchQuery, results: filteredVehicles } = useFuzzySearch(
+        initialVehicles,
+        [
+            { name: 'vehicleNo', weight: 0.4 },
+            { name: 'model', weight: 0.35 },
+            { name: 'category', weight: 0.15 },
+            { name: 'features', weight: 0.1 },
+        ],
+        { threshold: 0.35 }
+    );
     const vehicles = initialVehicles;
-
-    const handleSearch = (term: string) => {
-        const params = new URLSearchParams(searchParams);
-        if (term) {
-            params.set('q', term);
-        } else {
-            params.delete('q');
-        }
-        // Preserve expenseVehicleNo if present
-        const expenseVehicleNo = searchParams.get('expenseVehicleNo');
-        if (expenseVehicleNo) params.set('expenseVehicleNo', expenseVehicleNo);
-        router.replace(`${pathname}?${params.toString()}`);
-    };
 
     // Automatically open expense sheet if linked from notification
     useEffect(() => {
@@ -129,15 +126,15 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
                         <div className="relative w-full md:w-1/3">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder="Search vehicles..."
+                                placeholder="Fuzzy search vehicles (e.g. CBO-0087, KDH, Sealion)..."
                                 className="pl-8"
-                                defaultValue={query}
-                                onChange={(e) => handleSearch(e.target.value)}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
                     </div>
 
-                    {vehicles.length === 0 ? (
+                    {filteredVehicles.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
                             <Car className="mx-auto h-12 w-12 mb-3 text-muted-foreground/20" />
                             <p className="text-lg font-medium">No vehicles found</p>
@@ -147,7 +144,7 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
                         <>
                             {/* Mobile View (Card-based) */}
                             <div className="grid gap-3 md:hidden">
-                                {vehicles.map((vehicle) => {
+                                {filteredVehicles.map((vehicle) => {
                                     const oilDue = vehicle.currentMileage - vehicle.lastOilChangeMileage >= vehicle.oilChangeInterval;
                                     const filterDue = vehicle.currentMileage - vehicle.lastFilterChangeMileage >= vehicle.filterChangeInterval;
                                     const washDue = vehicle.currentMileage - vehicle.lastWashMileage >= vehicle.washInterval;
@@ -297,7 +294,7 @@ export function VehicleList({ initialVehicles }: VehicleListProps) {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {vehicles.map((vehicle) => (
+                                        {filteredVehicles.map((vehicle) => (
                                             <TableRow key={vehicle.id}>
                                                 <TableCell className="font-medium">{vehicle.vehicleNo}</TableCell>
                                                 <TableCell>{vehicle.model || '-'}</TableCell>

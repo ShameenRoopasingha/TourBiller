@@ -7,6 +7,7 @@ import { Search, Printer, Trash2, FileCheck, ArrowRight, ArrowRightLeft, Pencil,
 import { formatCurrency } from '@/lib/calculations';
 import { notify } from '@/lib/notifications';
 import { ConvertQuotationDialog } from '@/components/ConvertQuotationDialog';
+import { useFuzzySearch } from '@/lib/use-fuzzy-search';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -103,16 +104,21 @@ const STATUS_ACTIONS: Record<string, StatusActionConfig> = {
 
 export function QuotationList({ quotations, drivers = [] }: QuotationListProps) {
     const router = useRouter();
-    const [search, setSearch] = useState('');
     const [updating, setUpdating] = useState<string | null>(null);
     const [deleting, setDeleting] = useState<string | null>(null);
     const [converting, setConverting] = useState<string | null>(null);
 
-    const filtered = quotations.filter(
-        (q) =>
-            q.customerName.toLowerCase().includes(search.toLowerCase()) ||
-            (q.tourSchedule?.name || (q.pickupLocation && q.dropLocation ? `${q.pickupLocation} to ${q.dropLocation}` : '')).toLowerCase().includes(search.toLowerCase()) ||
-            String(q.quotationNumber).includes(search)
+    const { query: search, setQuery: setSearch, results: filtered } = useFuzzySearch(
+        quotations,
+        [
+            { name: 'customerName', weight: 0.35 },
+            { name: 'quotationNumber', weight: 0.25 },
+            { name: 'tourSchedule.name', weight: 0.2 },
+            { name: 'vehicleNo', weight: 0.1 },
+            { name: 'pickupLocation', weight: 0.05 },
+            { name: 'dropLocation', weight: 0.05 },
+        ],
+        { threshold: 0.35 }
     );
 
     const handleStatusUpdate = async (id: string, status: string) => {

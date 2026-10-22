@@ -10,11 +10,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(0,0,0,0.2),0_4px_12px_-2px_var(--primary-glow),inset_0_1px_0_0_rgba(255,255,255,0.35),inset_0_-2px_0_0_rgba(0,0,0,0.25)] hover:bg-primary/95 active:scale-[0.98] active:translate-y-[1px]",
+          "bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl shadow-lg shadow-primary-500/25 hover:-translate-y-0.5 hover:shadow-primary-500/40 active:translate-y-0 active:scale-[0.98] transition-all",
         tactile:
-          "btn-tactile-primary",
+          "btn-tactile-primary hover:shadow-[0_20px_50px_-15px_rgba(232,115,42,0.35)] hover:border-primary/50",
         "tactile-secondary":
           "btn-tactile-secondary",
+        "secondary-ghost":
+          "border-2 border-primary-500/70 text-primary-400 hover:bg-primary-500/10 hover:border-primary-500 hover:text-primary-300 rounded-xl",
         destructive:
           "bg-destructive text-destructive-foreground shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_0_0_rgba(255,255,255,0.25),inset_0_-2px_0_0_rgba(0,0,0,0.2)] hover:bg-destructive/90 active:scale-[0.98] active:translate-y-[1px]",
         outline:

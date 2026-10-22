@@ -18,7 +18,8 @@ import {
     Activity, 
     Layers, 
     Receipt, 
-    CalendarRange
+    CalendarRange,
+    ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -460,12 +461,21 @@ export default function LoginPage() {
                             </button>
                         </form>
 
-                        {/* Card Security Footnote */}
-                        <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-center gap-1.5 text-center">
-                            <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="text-[11px] text-slate-400">
-                                Enterprise-grade 256-bit SSL encryption
+                        {/* Card Security & Official Portal Link */}
+                        <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+                            <span className="flex items-center gap-1.5">
+                                <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <span>256-bit SSL</span>
                             </span>
+                            <a 
+                                href={process.env.NEXT_PUBLIC_BITGARD_PORTAL_URL || 'https://bitgard.vercel.app/products/vehicle-hire'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-cyan-400 hover:text-cyan-300 font-medium inline-flex items-center gap-1 transition-colors"
+                            >
+                                <span>Bitgard Vigil Portal</span>
+                                <ExternalLink className="w-3 h-3" />
+                            </a>
                         </div>
                     </div>
 
