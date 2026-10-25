@@ -33,7 +33,7 @@ interface MacroAction {
 const MACRO_ACTIONS: MacroAction[] = [
     {
         type: 'FUEL_FILL', label: 'Fuel Fill', icon: Fuel,
-        color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/30', border: 'border-blue-200 dark:border-blue-800',
+        color: 'text-primary', bg: 'bg-primary/10 dark:bg-primary/20', border: 'border-primary/25 dark:border-primary/40',
         needsAmount: true, expenseCategory: 'FUEL', placeholder: 'e.g. IOC Kandy - 20L'
     },
     {
@@ -240,7 +240,7 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
     // Macro grid
     return (
         <div className="space-y-3">
-            <h3 className="font-semibold text-base">Quick Actions</h3>
+            <h3 className="text-sm font-bold font-subheading uppercase tracking-wider text-muted-foreground">Quick Actions</h3>
             <div className="grid grid-cols-3 gap-2">
                 {MACRO_ACTIONS.map((action) => {
                     const Icon = action.icon;
@@ -248,7 +248,7 @@ export function QuickActionSheet({ bookingId, vehicleNo, onComplete }: QuickActi
                         <button
                             key={action.type}
                             onClick={() => setSelectedAction(action)}
-                            className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 ${action.border} ${action.bg} transition-all active:scale-95 min-h-[80px]`}
+                            className={`flex flex-col items-center justify-center p-3 rounded-xl border ${action.border} ${action.bg} hover:shadow-xs transition-all active:scale-95 min-h-[82px] cursor-pointer`}
                         >
                             <Icon className={`h-7 w-7 mb-1.5 ${action.color}`} />
                             <span className={`text-xs font-semibold ${action.color}`}>{action.label}</span>

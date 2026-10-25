@@ -12,6 +12,7 @@ import { notify } from '@/lib/notifications';
 import { VehicleExpenseManager } from '@/components/VehicleExpenseManager';
 import { QuickActionSheet } from '@/components/QuickActionSheet';
 import { DriverLiveNavigationCard } from '@/components/DriverLiveNavigationCard';
+import { ThemeSwitcher } from '@/components/layout/theme-switcher';
 
 interface BookingData {
     id: string;
@@ -50,10 +51,16 @@ export function DriverTourTabs({ activeBooking, vehicle, upcomingBookings, compl
 
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-bold">My Tours</h2>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-xl font-bold font-subheading text-foreground">My Tours</h2>
+                    <p className="text-xs text-muted-foreground font-sans">Active, upcoming & completed assignments</p>
+                </div>
+                <ThemeSwitcher />
+            </div>
 
             {/* Tab Bar */}
-            <div className="flex rounded-lg bg-muted p-1 gap-1">
+            <div className="flex rounded-xl bg-muted/80 dark:bg-muted/40 p-1 gap-1 border border-border/60">
                 {TABS.map((tab) => {
                     const count = tab === 'Upcoming' ? upcomingBookings.length
                         : tab === 'Completed' ? completedBookings.length
@@ -62,16 +69,16 @@ export function DriverTourTabs({ activeBooking, vehicle, upcomingBookings, compl
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`flex-1 py-2.5 px-3 rounded-md text-sm font-semibold transition-all ${
+                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
                                 activeTab === tab
-                                    ? 'bg-background text-foreground shadow-sm'
+                                    ? 'bg-card text-foreground shadow-xs border border-border/60 dark:bg-card/90 dark:text-white dark:border-white/10'
                                     : 'text-muted-foreground hover:text-foreground'
                             }`}
                         >
                             {tab}
                             {count > 0 && (
-                                <span className={`ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full ${
-                                    activeTab === tab ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/20'
+                                <span className={`ml-1.5 text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                                    activeTab === tab ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted-foreground/20 text-muted-foreground'
                                 }`}>
                                     {count}
                                 </span>
@@ -85,12 +92,12 @@ export function DriverTourTabs({ activeBooking, vehicle, upcomingBookings, compl
             {activeTab === 'Current' && (
                 <div className="space-y-5">
                     {!activeBooking ? (
-                        <Card className="border-dashed border-2">
+                        <Card className="border-dashed border-2 border-border/80 bg-card/60">
                             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                                 <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
                                     <Car className="h-10 w-10 text-muted-foreground/40" />
                                 </div>
-                                <h3 className="text-lg font-semibold">No Active Tour</h3>
+                                <h3 className="text-lg font-semibold font-subheading text-foreground">No Active Tour</h3>
                                 <p className="text-sm text-muted-foreground mt-2 max-w-[280px]">
                                     You are not currently assigned to any active tours.
                                 </p>
@@ -184,25 +191,25 @@ function TourBanner({ booking, vehicle }: { booking: BookingData; vehicle: Vehic
     const progressPercent = totalDays ? Math.min(Math.round((currentDay / totalDays) * 100), 100) : null;
 
     return (
-        <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-primary/90 to-primary dark:from-primary/80 dark:to-primary/60">
-            <CardContent className="p-4 text-primary-foreground">
+        <Card className="overflow-hidden border border-primary/30 shadow-[0_8px_25px_rgba(232,115,42,0.22)] bg-gradient-to-br from-[#F27830] via-[#E8732A] to-[#D6651F] dark:from-[#994716]/95 dark:via-[#6E3310]/85 dark:to-[#441F0A]/95 text-white dark:border-[#E8732A]/35 dark:shadow-[0_12px_35px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)]">
+            <CardContent className="p-4 text-white">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/20">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-black/25 dark:bg-black/40 backdrop-blur-sm border border-white/15">
                         🟢 Active
                     </span>
-                    <span className="text-xs opacity-80">
+                    <span className="text-xs font-mono opacity-90">
                         {format(startDate, 'dd MMM')}
                         {endDate ? ` → ${format(endDate, 'dd MMM')}` : ' → Ongoing'}
                     </span>
                 </div>
 
                 <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
-                        <Car className="h-6 w-6" />
+                    <div className="w-12 h-12 rounded-xl bg-white/20 dark:bg-white/10 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/15">
+                        <Car className="h-6 w-6 text-white" />
                     </div>
                     <div className="min-w-0">
-                        <h3 className="text-xl font-bold font-mono tracking-wider leading-none">{booking.vehicleNo}</h3>
-                        <p className="text-sm opacity-80 mt-0.5">
+                        <h3 className="text-xl sm:text-2xl font-black font-heading tracking-[0.14em] leading-none uppercase text-white drop-shadow-sm">{booking.vehicleNo}</h3>
+                        <p className="text-xs opacity-90 mt-1 font-sans font-medium">
                             {vehicle?.model || vehicle?.category || 'Vehicle'}
                             {vehicle?.seats ? ` • ${vehicle.seats} Seats` : ''}
                         </p>
@@ -211,25 +218,25 @@ function TourBanner({ booking, vehicle }: { booking: BookingData; vehicle: Vehic
 
                 {/* Progress Bar */}
                 <div className="mb-3">
-                    <div className="flex justify-between text-xs mb-1">
+                    <div className="flex justify-between text-xs mb-1 font-mono">
                         <span className="font-semibold">Day {currentDay}{totalDays ? ` of ${totalDays}` : ''}</span>
-                        {progressPercent !== null && <span className="opacity-80">{progressPercent}%</span>}
+                        {progressPercent !== null && <span className="opacity-90">{progressPercent}%</span>}
                     </div>
-                    <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-black/25 dark:bg-black/40 rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-white/80 rounded-full transition-all"
+                            className="h-full bg-white dark:bg-primary-100 rounded-full transition-all duration-500 shadow-sm"
                             style={{ width: progressPercent !== null ? `${progressPercent}%` : '10%' }}
                         />
                     </div>
                 </div>
 
-                <div className="space-y-1.5 pt-2 border-t border-white/15 text-sm">
+                <div className="space-y-1.5 pt-2 border-t border-white/20 text-xs font-medium">
                     <div className="flex items-center gap-2">
-                        <MapPin className="h-3.5 w-3.5 opacity-70 shrink-0" />
+                        <MapPin className="h-3.5 w-3.5 opacity-80 shrink-0 text-amber-200" />
                         <span className="truncate">{booking.customerName}</span>
                         {booking.destination && (
                             <>
-                                <ArrowRight className="h-3 w-3 opacity-50 shrink-0" />
+                                <ArrowRight className="h-3 w-3 opacity-60 shrink-0 text-amber-200" />
                                 <span className="truncate">{booking.destination}</span>
                             </>
                         )}
@@ -246,41 +253,41 @@ function BookingCard({ booking, variant }: { booking: BookingData; variant: 'upc
     const totalDays = endDate ? differenceInCalendarDays(endDate, startDate) + 1 : null;
 
     return (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden border border-border/70 shadow-xs bg-card dark:bg-card/70 dark:border-border/50">
             <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                            variant === 'upcoming' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-green-100 dark:bg-green-900/30'
+                            variant === 'upcoming' ? 'bg-primary/10 dark:bg-primary/20 text-primary' : 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                         }`}>
                             {variant === 'upcoming'
-                                ? <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                : <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                ? <Clock className="h-4 w-4" />
+                                : <CheckCircle2 className="h-4 w-4" />
                             }
                         </div>
                         <div>
-                            <h4 className="text-sm font-bold font-mono">{booking.vehicleNo}</h4>
+                            <h4 className="text-sm font-bold font-heading tracking-wider uppercase text-foreground">{booking.vehicleNo}</h4>
                             <p className="text-xs text-muted-foreground">{booking.customerName}</p>
                         </div>
                     </div>
                     {totalDays && (
-                        <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-mono font-semibold text-muted-foreground bg-muted/80 px-2.5 py-0.5 rounded-full border border-border/50">
                             {totalDays} day{totalDays > 1 ? 's' : ''}
                         </span>
                     )}
                 </div>
 
-                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2 pt-2 border-t">
-                    <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
+                <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground mt-2 pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-primary" />
                         <span>
                             {format(startDate, 'dd MMM yyyy')}
                             {endDate ? ` → ${format(endDate, 'dd MMM')}` : ''}
                         </span>
                     </div>
                     {booking.destination && (
-                        <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
+                        <div className="flex items-center gap-1.5 font-sans">
+                            <MapPin className="h-3.5 w-3.5 text-primary" />
                             <span className="truncate">{booking.destination}</span>
                         </div>
                     )}
@@ -341,20 +348,20 @@ function TripControlCard({ booking, onStatusChange }: { booking: BookingData; on
     };
 
     return (
-        <Card className="border border-border/60 shadow-sm overflow-hidden">
+        <Card className="border border-border/70 shadow-xs bg-card dark:bg-card/70 dark:border-border/50 overflow-hidden">
             <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Gauge className="w-5 h-5 text-primary" />
                         <div>
-                            <span className="text-sm font-bold text-foreground">Trip Controller</span>
+                            <span className="text-sm font-bold font-subheading text-foreground">Trip Controller</span>
                             <div className="text-xs text-muted-foreground">
                                 {isOngoing ? 'Trip is actively in progress' : 'Trip is scheduled to start'}
                             </div>
                         </div>
                     </div>
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
-                        isOngoing ? 'bg-emerald-500/15 text-emerald-600 border border-emerald-500/30' : 'bg-blue-500/15 text-blue-600 border border-blue-500/30'
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-mono font-bold ${
+                        isOngoing ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-primary/15 text-primary border border-primary/30'
                     }`}>
                         {booking.status}
                     </span>
@@ -418,7 +425,7 @@ function TripControlCard({ booking, onStatusChange }: { booking: BookingData; on
                         <Button
                             onClick={handleConfirm}
                             disabled={isSubmitting}
-                            className={actionType === 'START_TRIP' ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold' : 'bg-red-600 hover:bg-red-700 text-white font-bold'}
+                            className={actionType === 'START_TRIP' ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold' : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold'}
                         >
                             {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                             Confirm & {actionType === 'START_TRIP' ? 'Start Trip' : 'End Trip'}

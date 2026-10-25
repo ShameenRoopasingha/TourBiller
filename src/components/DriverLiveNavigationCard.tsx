@@ -159,10 +159,10 @@ export function DriverLiveNavigationCard({
         : null;
 
     return (
-        <Card className={`border shadow-md transition-all ${
+        <Card className={`border shadow-xs transition-all ${
             isOngoing
-                ? 'border-emerald-500/30 bg-emerald-950/20'
-                : 'border-blue-500/20 bg-blue-950/10'
+                ? 'border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-950/30 dark:border-emerald-500/30'
+                : 'border-border/70 bg-card dark:bg-card/70 dark:border-border/50'
         }`}>
             <CardContent className="p-4 space-y-3">
                 {/* Live Tracking Header */}
@@ -174,10 +174,10 @@ export function DriverLiveNavigationCard({
                                 <span className="absolute w-5 h-5 rounded-full bg-emerald-500/40 animate-ping"></span>
                             </div>
                         ) : (
-                            <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                            <div className="w-3 h-3 rounded-full bg-amber-500/80 dark:bg-amber-400/80"></div>
                         )}
                         <div>
-                            <span className={`text-sm font-bold ${isOngoing ? 'text-emerald-400' : 'text-blue-400'}`}>
+                            <span className={`text-sm font-bold font-subheading ${isOngoing ? 'text-emerald-700 dark:text-emerald-400' : 'text-foreground'}`}>
                                 {isOngoing ? 'Live GPS Radar Active' : 'GPS Radar Standby'}
                             </span>
                             <div className="text-[11px] text-muted-foreground">
@@ -188,10 +188,10 @@ export function DriverLiveNavigationCard({
 
                     {isOngoing && (
                         <div className="text-right">
-                            <span className="text-xs font-mono font-bold bg-emerald-900/60 text-emerald-300 px-2 py-0.5 rounded border border-emerald-700/60">
+                            <span className="text-xs font-mono font-bold bg-emerald-500/15 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-lg border border-emerald-500/30">
                                 {speed > 5 ? '20s (Moving)' : '60s (Parked)'}
                             </span>
-                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                            <div className="text-[10px] font-mono text-muted-foreground mt-0.5">
                                 {Math.round(speed)} km/h
                             </div>
                         </div>
@@ -200,14 +200,14 @@ export function DriverLiveNavigationCard({
 
                 {/* Status or Offline Badge */}
                 {isOngoing && (
-                    <div className="flex items-center justify-between text-xs pt-1 border-t border-emerald-900/40">
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-emerald-900/20 dark:border-emerald-900/40 font-mono">
                         <span className="text-muted-foreground">
                             {lastPingTime
                                 ? `Last ping: ${Math.round((Date.now() - lastPingTime.getTime()) / 1000)}s ago`
                                 : 'Acquiring GPS fix...'}
                         </span>
                         {offlineCount > 0 && (
-                            <span className="flex items-center gap-1 text-amber-400 font-semibold bg-amber-950/40 px-2 py-0.5 rounded border border-amber-800">
+                            <span className="flex items-center gap-1 text-amber-700 dark:text-amber-400 font-bold bg-amber-500/10 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-500/30">
                                 <WifiOff className="w-3 h-3" />
                                 {offlineCount} offline points cached
                             </span>
@@ -216,8 +216,8 @@ export function DriverLiveNavigationCard({
                 )}
 
                 {errorMsg && (
-                    <div className="text-[11px] text-amber-400 flex items-center gap-1 bg-amber-950/30 p-2 rounded">
-                        <AlertCircle className="w-3 h-3 shrink-0" />
+                    <div className="text-[11px] font-medium text-amber-800 dark:text-amber-400 flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 p-2 rounded-lg">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                         <span>{errorMsg} (Please ensure device Location/GPS is enabled in browser)</span>
                     </div>
                 )}
@@ -234,11 +234,11 @@ export function DriverLiveNavigationCard({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="w-full text-xs font-bold border-blue-600/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                    className="w-full text-xs font-bold border-border/80 hover:bg-muted/70 text-foreground transition-all shadow-2xs"
                                     asChild
                                 >
                                     <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
-                                        <Navigation className="w-3.5 h-3.5 mr-1 text-blue-600" />
+                                        <Navigation className="w-3.5 h-3.5 mr-1 text-primary" />
                                         Google Maps
                                     </a>
                                 </Button>
@@ -247,7 +247,7 @@ export function DriverLiveNavigationCard({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="w-full text-xs font-bold border-cyan-600/30 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-950/30"
+                                    className="w-full text-xs font-bold border-cyan-500/30 text-cyan-700 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/30 transition-all shadow-2xs"
                                     asChild
                                 >
                                     <a href={wazeUrl} target="_blank" rel="noopener noreferrer">

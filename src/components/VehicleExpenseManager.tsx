@@ -57,7 +57,7 @@ interface VehicleExpenseManagerProps {
 const CATEGORIES: { label: string; value: VehicleExpenseCategory; icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; color: string; bg: string }[] = [
     { label: 'Repair', value: 'REPAIR', icon: Wrench, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/40' },
     { label: 'Breakdown', value: 'BREAKDOWN', icon: Zap, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/40' },
-    { label: 'Fuel', value: 'FUEL', icon: Fuel, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/40' },
+    { label: 'Fuel', value: 'FUEL', icon: Fuel, color: 'text-primary', bg: 'bg-primary/10 dark:bg-primary/20' },
     { label: 'Service', value: 'SERVICE', icon: Settings, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-800/60' },
     { label: 'Oil Change', value: 'OIL_CHANGE', icon: Droplets, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/40' },
     { label: 'Filters', value: 'FILTER_CHANGE', icon: Filter, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-100 dark:bg-teal-900/40' },
@@ -498,7 +498,7 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
                                             <TableCell>
                                                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${exp.category === 'REPAIR' ? 'bg-orange-100 text-orange-700' :
                                                     exp.category === 'BREAKDOWN' ? 'bg-red-100 text-red-700' :
-                                                        exp.category === 'FUEL' ? 'bg-blue-100 text-blue-700' :
+                                                        exp.category === 'FUEL' ? 'bg-primary/10 text-primary dark:bg-primary/20' :
                                                             exp.category === 'SERVICE' ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' :
                                                                 'bg-gray-100 text-gray-700'
                                                     }`}>
