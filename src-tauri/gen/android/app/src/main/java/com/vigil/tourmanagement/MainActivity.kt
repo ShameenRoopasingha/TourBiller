@@ -118,6 +118,8 @@ class MainActivity : TauriActivity() {
         super.onWebViewCreate(webView)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
+        webView.settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+        webView.clearCache(true)
         webView.addJavascriptInterface(AndroidBridge(this), "AndroidBridge")
     }
 }

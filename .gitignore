@@ -59,3 +59,7 @@ check-db.js
 fix*.js
 expense-body.json
 post-body.json
+
+# Tauri & Android binaries
+*.apk
+*.aab
