@@ -15,6 +15,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 export type QuotationFormData = QuotationFormInput;
 import { formatCurrency } from '@/lib/calculations';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { ComboboxField } from '@/components/ComboboxField';
 import { TourScheduleForm } from '@/components/TourScheduleForm';
 import { QuotationAIChat } from '@/components/QuotationAIChat';
@@ -522,7 +523,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
         };
     }, [selectedSchedule, watchedHireRate, watchedKmPerDay, watchedTotalDistance, watchedMarkup, watchedDiscount, watchedDriverCost, watchedExcessKmRate]);
 
-    const onSubmit = async (data: QuotationFormData) => {
+    const submitQuotation = async (data: QuotationFormData, redirectOnSuccess = true): Promise<boolean> => {
         setIsSubmitting(true);
         setError(null);
 
@@ -533,7 +534,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             if (routingMode === 'schedule' && !finalScheduleId) {
                 form.setError('tourScheduleId', { message: 'Tour schedule is required for predefined packages' });
                 setIsSubmitting(false);
-                return;
+                return false;
             }
 
             // In Map mode, quotations are saved directly without creating a dummy TourSchedule
@@ -561,23 +562,47 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
             if (response.ok && result.success) {
                 notify.success(initialData ? 'Quotation updated successfully' : 'Quotation created successfully');
                 setSuccess(true);
+                form.reset(data);
                 router.refresh();
-                setTimeout(() => {
-                    router.push(`/quotations/${result.data}`);
-                }, 2000);
+                if (redirectOnSuccess) {
+                    setTimeout(() => {
+                        router.push(`/quotations/${result.data}`);
+                    }, 2000);
+                }
+                return true;
             } else {
                 const message = result.error || 'Failed to process quotation';
                 notify.error(message);
                 setError(message);
+                return false;
             }
         } catch (e) {
             setError('An unexpected error occurred');
             console.error(e);
             notify.error('Failed to process quotation. Please try again.');
+            return false;
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const onSubmit = (data: QuotationFormData) => submitQuotation(data, true);
+
+    const { confirmNavigation } = useUnsavedChanges(
+        form.formState.isDirty && !success,
+        {
+            title: initialData ? 'Discard Quotation Edits?' : 'Discard New Quotation?',
+            description: 'You have unsaved changes in this quotation. Do you want to discard your current work before leaving?',
+            onSave: async () => {
+                let saved = false;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await form.handleSubmit(async (data: any) => {
+                    saved = await submitQuotation(data, false);
+                })();
+                return saved;
+            },
+        }
+    );
 
     const fmt = formatCurrency;
 
@@ -1403,7 +1428,7 @@ export function QuotationCreator({ schedules, customers, vehicles, drivers = [],
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={() => router.push('/quotations')}
+                    onClick={() => confirmNavigation(() => router.push('/quotations'))}
                 >
                     Cancel
                 </Button>

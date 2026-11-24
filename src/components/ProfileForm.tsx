@@ -9,6 +9,7 @@ import { Loader2, Save, KeyRound, LogOut } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { notify } from '@/lib/notifications';
 import { SignOutButton } from '@/components/SignOutButton';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 interface ProfileFormProps {
     user: {
@@ -22,6 +23,8 @@ interface ProfileFormProps {
 export default function ProfileForm({ user }: ProfileFormProps) {
     const { update } = useSession();
 
+    const [savedName, setSavedName] = useState(user.name);
+    const [savedEmail, setSavedEmail] = useState(user.email);
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);
     const [updatingProfile, setUpdatingProfile] = useState(false);
@@ -35,8 +38,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     const [passwordSuccess, setPasswordSuccess] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
-    const handleUpdateProfile = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const saveProfileChanges = async (): Promise<boolean> => {
         setProfileError('');
         setProfileSuccess('');
         setUpdatingProfile(true);
@@ -52,20 +54,30 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             if (response.ok && result.success) {
                 notify.success('Profile updated successfully');
                 setProfileSuccess('Profile updated successfully.');
+                setSavedName(name);
+                setSavedEmail(email);
                 await update({ name, email });
+                return true;
             } else {
                 const message = result.error || 'Failed to update profile.';
                 notify.error(message);
                 setProfileError(message);
+                return false;
             }
         } catch (error) {
             console.error('Error updating profile:', error);
             const message = 'Failed to update profile. Please try again.';
             notify.error(message);
             setProfileError(message);
+            return false;
         } finally {
             setUpdatingProfile(false);
         }
+    };
+
+    const handleUpdateProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await saveProfileChanges();
     };
 
     const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -113,6 +125,15 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             setUpdatingPassword(false);
         }
     };
+
+    const isProfileDirty = name !== savedName || email !== savedEmail;
+    const isPasswordDirty = currentPassword.length > 0 || newPassword.length > 0 || confirmPassword.length > 0;
+
+    useUnsavedChanges(isProfileDirty || isPasswordDirty, {
+        title: 'Discard Profile Changes?',
+        description: 'You have unsaved account updates. Do you want to discard them before leaving?',
+        onSave: isProfileDirty && !isPasswordDirty ? saveProfileChanges : undefined,
+    });
 
     return (
         <div className="space-y-6">

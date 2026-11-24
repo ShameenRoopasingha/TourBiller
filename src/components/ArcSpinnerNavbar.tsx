@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import { useUnsavedChangesContext } from '@/components/UnsavedChangesProvider';
 import gsap from 'gsap';
 import {
   LayoutDashboard,
@@ -52,6 +53,7 @@ export function ArcSpinnerNavbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { resolvedTheme } = useTheme();
+  const { confirmNavigation } = useUnsavedChangesContext();
 
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -364,7 +366,7 @@ export function ArcSpinnerNavbar() {
       },
       onComplete: () => {
         closeMenu(() => {
-          router.push(href);
+          confirmNavigation(() => router.push(href));
         });
       },
     });

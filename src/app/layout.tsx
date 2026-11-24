@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 import { Sidebar } from '@/components/Sidebar'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { UnsavedChangesProvider } from '@/components/UnsavedChangesProvider'
 import { SessionProvider } from '@/components/SessionProvider'
 import { auth } from '@/lib/auth'
 import { PageTransition } from '@/components/PageTransition'
@@ -95,7 +96,8 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
-          <AmbientAtmosphere />
+          <UnsavedChangesProvider>
+            <AmbientAtmosphere />
           {session ? (
             <SessionProvider>
               <SidebarProvider defaultOpen={defaultOpen}>
@@ -152,6 +154,7 @@ export default async function RootLayout({
             </div>
           )}
           <ToastProvider />
+          </UnsavedChangesProvider>
         </ThemeProvider>
       </body>
     </html>

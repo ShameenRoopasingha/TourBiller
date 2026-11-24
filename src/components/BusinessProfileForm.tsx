@@ -11,6 +11,7 @@ import { BusinessProfileFormSchema, type BusinessProfileFormInput, type Business
 // For backward compatibility
 export type BusinessProfileFormData = BusinessProfileFormInput;
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { SUPPORTED_COUNTRIES } from '@/components/FirstTimeCurrencyModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,7 +60,7 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
         },
     });
 
-    const onSubmit = async (data: BusinessProfileFormData) => {
+    const submitBusinessProfile = async (data: BusinessProfileFormData): Promise<boolean> => {
         setIsSubmitting(true);
         setError(null);
         setSuccess(false);
@@ -87,21 +88,39 @@ export function BusinessProfileForm({ initialData }: BusinessProfileFormProps) {
             if (result.success) {
                 notify.success('Business profile updated successfully');
                 setSuccess(true);
+                form.reset(data);
                 setTimeout(() => setSuccess(false), 3000);
+                return true;
             } else {
                 const message = result.error || 'Failed to update profile';
                 notify.error(message);
                 setError(message);
+                return false;
             }
         } catch (submitError) {
             console.error('Error updating business profile:', submitError);
             const message = submitError instanceof Error ? submitError.message : 'Failed to update profile. Please try again.';
             notify.error(message);
             setError(message);
+            return false;
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const onSubmit = (data: BusinessProfileFormData) => submitBusinessProfile(data);
+
+    useUnsavedChanges(form.formState.isDirty, {
+        title: 'Discard Business Settings?',
+        description: 'You have unsaved business profile changes. Do you want to discard them before leaving?',
+        onSave: async () => {
+            let saved = false;
+            await form.handleSubmit(async (data) => {
+                saved = await submitBusinessProfile(data);
+            })();
+            return saved;
+        },
+    });
 
     const handleSyncLiveRate = async () => {
         setIsSyncingRate(true);

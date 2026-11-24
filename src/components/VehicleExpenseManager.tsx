@@ -25,6 +25,7 @@ import {
 import { format } from 'date-fns';
 import type { VehicleExpense, VehicleExpenseCategory } from '@/lib/validations';
 import { notify } from '@/lib/notifications';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -132,11 +133,10 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
         };
     }, [vehicleNo]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const saveExpense = async (): Promise<boolean> => {
         if (!amount || isNaN(Number(amount))) {
             setError('Please enter a valid amount');
-            return;
+            return false;
         }
 
         setSubmitting(true);
@@ -172,20 +172,37 @@ export function VehicleExpenseManager({ vehicleNo, bookingId, userRole = 'ADMIN'
                 
                 await fetchExpenses();
                 router.refresh(); // Refresh Next.js server components so the UI updates (e.g., removing the oil icon)
+                return true;
             } else {
                 const message = result.error || 'Failed to add expense';
                 notify.error(message);
                 setError(message);
+                return false;
             }
         } catch (error) {
             console.error('Error adding vehicle expense:', error);
             const message = 'Failed to add expense. Please try again.';
             notify.error(message);
             setError(message);
+            return false;
         } finally {
             setSubmitting(false);
         }
     };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await saveExpense();
+    };
+
+    useUnsavedChanges(
+        amount.trim().length > 0 || description.trim().length > 0,
+        {
+            title: 'Discard Vehicle Expense?',
+            description: 'You have an unsaved expense entry. Do you want to discard it before leaving?',
+            onSave: saveExpense,
+        }
+    );
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this expense?')) return;

@@ -10,6 +10,7 @@ import { notify } from '@/lib/notifications';
 // For backward compatibility
 export type BookingFormData = BookingFormInput;
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ interface BookingCreatorProps {
 export function BookingCreator({ vehicles, customers, schedules, drivers = [] }: BookingCreatorProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const [availabilityConflict, setAvailabilityConflict] = useState<VehicleAvailabilityConflict | null>(null);
@@ -124,7 +126,7 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
         return () => clearTimeout(timer);
     }, [watchedVehicleNo, watchedDriverId, watchedStartDate, watchedEndDate]);
 
-    const onSubmit = async (data: BookingFormData) => {
+    const submitBooking = async (data: BookingFormData, redirectOnSuccess = true): Promise<boolean> => {
         setIsSubmitting(true);
         setError(null);
 
@@ -143,22 +145,46 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
 
             if (response.ok && result.success) {
                 notify.success('Booking created successfully');
+                setIsSaved(true);
+                form.reset(data);
                 router.refresh();
-                router.push('/bookings');
+                if (redirectOnSuccess) {
+                    router.push('/bookings');
+                }
+                return true;
             } else {
                 const message = result.error || 'Failed to create booking';
                 notify.error(message);
                 setError(message);
+                return false;
             }
         } catch (submitError) {
             console.error('Error creating booking:', submitError);
             const message = 'Failed to create booking. Please try again.';
             notify.error(message);
             setError(message);
+            return false;
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const onSubmit = (data: BookingFormData) => submitBooking(data, true);
+
+    const { confirmNavigation } = useUnsavedChanges(
+        form.formState.isDirty && !isSaved,
+        {
+            title: 'Discard New Booking?',
+            description: 'You have unsaved booking details. Do you want to discard this task before leaving?',
+            onSave: async () => {
+                let saved = false;
+                await form.handleSubmit(async (data) => {
+                    saved = await submitBooking(data, false);
+                })();
+                return saved;
+            },
+        }
+    );
 
     return (
         <div className="space-y-6">
@@ -445,7 +471,7 @@ export function BookingCreator({ vehicles, customers, schedules, drivers = [] }:
                             />
 
                             <div className="flex justify-end gap-2">
-                                <Button variant="outline" type="button" onClick={() => router.back()}>
+                                <Button variant="outline" type="button" onClick={() => confirmNavigation(() => router.back())}>
                                     Cancel
                                 </Button>
                                 <Button type="submit" disabled={isSubmitting || !!availabilityConflict}>

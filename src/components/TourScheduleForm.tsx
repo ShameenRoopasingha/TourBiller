@@ -12,6 +12,7 @@ import { DayMapRoutePlanner } from '@/components/DayMapRoutePlanner';
 // For backward compatibility
 export type TourScheduleFormData = TourScheduleFormInput;
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { ComboboxField } from '@/components/ComboboxField';
 
 import { Button } from '@/components/ui/button';
@@ -286,10 +287,10 @@ export function TourScheduleForm({
         form.setValue('days', remaining.length);
     };
 
-    const onSubmit = async (data: TourScheduleFormData) => {
+    const submitSchedule = async (data: TourScheduleFormData, redirectOnSuccess = true): Promise<boolean> => {
         if (isNameDuplicate) {
             setError('This tour name already exists. Please use a unique name.');
-            return;
+            return false;
         }
         setIsSubmitting(true);
         setError(null);
@@ -305,26 +306,50 @@ export function TourScheduleForm({
             if (response.ok && result.success) {
                 notify.success(isEditing ? 'Tour schedule updated successfully' : 'Tour schedule created successfully');
                 setSuccess(true);
+                form.reset(data);
                 router.refresh();
-                if (onSuccess) {
-                    onSuccess(result.data!);
-                } else {
-                    // Keep isSubmitting true during transition
-                    setTimeout(() => router.push('/tour-schedules'), 1000);
+                if (redirectOnSuccess) {
+                    if (onSuccess) {
+                        onSuccess(result.data!);
+                    } else {
+                        // Keep isSubmitting true during transition
+                        setTimeout(() => router.push('/tour-schedules'), 1000);
+                    }
                 }
+                return true;
             } else {
                 const message = result.error || 'An error occurred';
                 notify.error(message);
                 setError(message);
                 setIsSubmitting(false);
+                return false;
             }
         } catch {
             const message = 'An unexpected error occurred';
             notify.error(message);
             setError(message);
             setIsSubmitting(false);
+            return false;
         }
     };
+
+    const onSubmit = (data: TourScheduleFormData) => submitSchedule(data, true);
+
+    const { confirmNavigation } = useUnsavedChanges(
+        !hideHeader && form.formState.isDirty && !success,
+        {
+            title: isEditing ? 'Discard Tour Schedule Edits?' : 'Discard New Tour Schedule?',
+            description: 'You have unsaved itinerary changes. Do you want to discard this schedule before leaving?',
+            onSave: async () => {
+                let saved = false;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await form.handleSubmit(async (data: any) => {
+                    saved = await submitSchedule(data, false);
+                })();
+                return saved;
+            },
+        }
+    );
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6" onKeyDown={handleEnterKey}>
@@ -726,7 +751,7 @@ export function TourScheduleForm({
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={() => onCancel ? onCancel() : router.push('/tour-schedules')}
+                    onClick={() => onCancel ? onCancel() : confirmNavigation(() => router.push('/tour-schedules'))}
                 >
                     Cancel
                 </Button>

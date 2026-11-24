@@ -15,6 +15,7 @@ import { parseBillItinerary } from '@/lib/bill-itinerary';
 
 import { useCalculationEngine } from '@/hooks/useCalculationEngine';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { ComboboxField } from '@/components/ComboboxField';
 import { TourScheduleForm } from '@/components/TourScheduleForm';
 import { BillChargeFields } from '@/components/bills/BillChargeFields';
@@ -444,7 +445,7 @@ export function BillCreator({
 
 
 
-    const onSubmit = async (data: BillFormData) => {
+    const submitBill = async (data: BillFormData, redirectOnSuccess = true): Promise<boolean> => {
         setIsSubmitting(true);
         setError(null);
         setSuccessId(null);
@@ -500,24 +501,48 @@ export function BillCreator({
                 if (!initialData) {
                     form.reset();
                     resetCalculations();
+                } else {
+                    form.reset(data);
                 }
 
                 router.refresh();
-                router.push(`/bills/${result.data}/print`);
+                if (redirectOnSuccess) {
+                    router.push(`/bills/${result.data}/print`);
+                }
+                return true;
             } else {
                 const message = result.error || (initialData ? 'Failed to update bill' : 'Failed to create bill');
                 notify.error(message);
                 setError(message);
+                return false;
             }
         } catch (submitError) {
             console.error('Error saving bill:', submitError);
             const message = initialData ? 'Failed to update bill. Please try again.' : 'Failed to create bill. Please try again.';
             notify.error(message);
             setError(message);
+            return false;
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const onSubmit = (data: BillFormData) => submitBill(data, true);
+
+    useUnsavedChanges(
+        form.formState.isDirty && !successId,
+        {
+            title: initialData ? 'Discard Bill Edits?' : 'Discard New Bill?',
+            description: 'You have unsaved billing details. Do you want to discard this bill before leaving?',
+            onSave: async () => {
+                let saved = false;
+                await form.handleSubmit(async (data) => {
+                    saved = await submitBill(data, false);
+                })();
+                return saved;
+            },
+        }
+    );
 
     const handleNumericChange = (
         e: React.ChangeEvent<HTMLInputElement>,

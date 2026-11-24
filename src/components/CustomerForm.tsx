@@ -11,6 +11,7 @@ import { notify } from '@/lib/notifications';
 // For backward compatibility - alias the type
 export type CustomerFormData = CustomerFormInput;
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -29,6 +30,7 @@ interface CustomerFormProps {
 
 export function CustomerForm({ customer }: CustomerFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
     const handleEnterKey = useEnterNavigation();
@@ -44,7 +46,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         },
     });
 
-    const onSubmit = async (data: CustomerFormData) => {
+    const submitCustomer = async (data: CustomerFormData, redirectOnSuccess = true): Promise<boolean> => {
         setIsSubmitting(true);
         setError(null);
 
@@ -65,23 +67,46 @@ export function CustomerForm({ customer }: CustomerFormProps) {
 
             if (response.ok && result.success) {
                 notify.success(customer ? 'Customer updated successfully' : 'Customer created successfully');
+                setIsSaved(true);
+                form.reset(data);
                 router.refresh();
-                router.push('/customers');
-                return;
+                if (redirectOnSuccess) {
+                    router.push('/customers');
+                }
+                return true;
             }
 
             const message = result.error || 'Failed to save customer';
             notify.error(message);
             setError(message);
+            return false;
         } catch (submitError) {
             console.error('Error saving customer:', submitError);
             const message = 'Failed to save customer. Please try again.';
             notify.error(message);
             setError(message);
+            return false;
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const onSubmit = (data: CustomerFormData) => submitCustomer(data, true);
+
+    const { confirmNavigation } = useUnsavedChanges(
+        form.formState.isDirty && !isSaved,
+        {
+            title: customer ? 'Discard Customer Updates?' : 'Discard New Customer?',
+            description: 'You have unsaved customer details. Do you want to discard your changes before leaving?',
+            onSave: async () => {
+                let saved = false;
+                await form.handleSubmit(async (data) => {
+                    saved = await submitCustomer(data, false);
+                })();
+                return saved;
+            },
+        }
+    );
 
     return (
         <div className="max-w-2xl mx-auto">
@@ -155,7 +180,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
                     </div>
 
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" type="button" onClick={() => router.back()}>
+                        <Button variant="outline" type="button" onClick={() => confirmNavigation(() => router.back())}>
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>

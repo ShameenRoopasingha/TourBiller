@@ -11,6 +11,7 @@ import { notify } from '@/lib/notifications';
 // For backward compatibility - alias the type
 export type VehicleFormData = VehicleFormInput;
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { ComboboxField } from '@/components/ComboboxField';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -31,6 +32,7 @@ interface VehicleFormProps {
 
 export function VehicleForm({ vehicle }: VehicleFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [rateMode, setRateMode] = useState<'PER_DAY' | 'PER_KM'>(
         vehicle?.ratePerDay === 0 && vehicle?.kmPerDay === 0 && (vehicle?.excessKmRate || 0) > 0 ? 'PER_KM' : 'PER_DAY'
@@ -101,7 +103,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
         };
     }, [watchedServiceCost, watchedOilInterval, watchedAnnualInsurance, watchedKmPerDay, watchedTyreCost, watchedTyreLifespan, watchedFuelEfficiency]);
 
-    const onSubmit = async (data: VehicleFormData) => {
+    const submitVehicle = async (data: VehicleFormData, redirectOnSuccess = true): Promise<boolean> => {
         setIsSubmitting(true);
         setError(null);
 
@@ -130,22 +132,46 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
 
             if (response.ok && result.success) {
                 notify.success(vehicle ? 'Vehicle updated successfully' : 'Vehicle created successfully');
+                setIsSaved(true);
+                form.reset(data);
                 router.refresh();
-                router.push('/vehicles');
-                return;
+                if (redirectOnSuccess) {
+                    router.push('/vehicles');
+                }
+                return true;
             }
 
             notify.error(result.error || 'Failed to save vehicle');
             setError(result.error || 'Failed to save vehicle');
+            return false;
         } catch (submitError) {
             console.error('Error saving vehicle:', submitError);
             const message = submitError instanceof Error ? submitError.message : 'Failed to save vehicle. Please try again.';
             notify.error(message);
             setError(message);
+            return false;
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const onSubmit = (data: VehicleFormData) => submitVehicle(data, true);
+
+    const { confirmNavigation } = useUnsavedChanges(
+        form.formState.isDirty && !isSaved,
+        {
+            title: vehicle ? 'Discard Vehicle Updates?' : 'Discard New Vehicle?',
+            description: 'You have unsaved vehicle details. Do you want to discard your changes before leaving?',
+            onSave: async () => {
+                let saved = false;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await form.handleSubmit(async (data: any) => {
+                    saved = await submitVehicle(data, false);
+                })();
+                return saved;
+            },
+        }
+    );
 
     return (
         <div className="max-w-2xl mx-auto">
@@ -746,7 +772,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                     </div>
 
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" type="button" onClick={() => router.back()}>
+                        <Button variant="outline" type="button" onClick={() => confirmNavigation(() => router.back())}>
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
