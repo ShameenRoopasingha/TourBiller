@@ -329,7 +329,7 @@ export function UnsavedChangesProvider({ children }: { children: React.ReactNode
           }
         }}
       >
-        <AlertDialogContent className="sm:max-w-[480px] border-border/80 bg-card/95 backdrop-blur-xl shadow-2xl">
+        <AlertDialogContent className="w-[calc(100vw-2rem)] sm:max-w-[560px] border border-border bg-card shadow-2xl rounded-2xl p-6">
           <AlertDialogHeader>
             <div className="flex items-center gap-3 mb-1">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
@@ -345,44 +345,49 @@ export function UnsavedChangesProvider({ children }: { children: React.ReactNode
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-2 pt-3 border-t border-border/50">
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2.5 sm:space-x-0 pt-4 border-t border-border/60">
             <Button
               type="button"
               variant="destructive"
+              size="sm"
               onClick={handleDiscardAndLeave}
               disabled={isSaving}
-              className="w-full sm:w-auto sm:mr-auto cursor-pointer"
+              className="w-full sm:w-auto h-10 px-4 whitespace-nowrap cursor-pointer"
             >
-              <Trash2 className="h-4 w-4 mr-1.5" />
+              <Trash2 className="h-4 w-4 mr-1.5 shrink-0" />
               Discard & Leave
             </Button>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleKeepEditing}
-              disabled={isSaving}
-              className="w-full sm:w-auto cursor-pointer"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              Keep Editing
-            </Button>
-
-            {activeDirtyGuard?.onSave && (
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
               <Button
                 type="button"
-                onClick={handleSaveAndContinue}
+                variant="outline"
+                size="sm"
+                onClick={handleKeepEditing}
                 disabled={isSaving}
-                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer"
+                className="w-full sm:w-auto h-10 px-4 whitespace-nowrap cursor-pointer"
               >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-1.5" />
-                )}
-                {isSaving ? 'Saving...' : 'Save & Continue'}
+                <ArrowLeft className="h-4 w-4 mr-1.5 shrink-0" />
+                Keep Editing
               </Button>
-            )}
+
+              {activeDirtyGuard?.onSave && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleSaveAndContinue}
+                  disabled={isSaving}
+                  className="w-full sm:w-auto h-10 px-4 whitespace-nowrap bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 mr-1.5 shrink-0 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-1.5 shrink-0" />
+                  )}
+                  {isSaving ? 'Saving...' : 'Save & Continue'}
+                </Button>
+              )}
+            </div>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
