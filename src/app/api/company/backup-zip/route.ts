@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth-guard';
+import { escapeCsvCell, getClientIp, hashIpAddress } from '@/lib/security';
+import { recordAuditLog } from '@/lib/audit';
 import JSZip from 'jszip';
 
 // CSV එකක් විදියට JSON array එකක් convert කරන function එක
-function toCsv(data: any[]) {
+function toCsv<T extends object>(data: T[]) {
   if (!data || data.length === 0) return '';
-  const headers = Object.keys(data[0]);
-  const csvRows = [headers.join(',')];
+  const headers = Object.keys(data[0] as Record<string, unknown>);
+  const csvRows = [headers.map((h) => escapeCsvCell(h)).join(',')];
   for (const row of data) {
-    const values = headers.map(header => {
-      const val = row[header];
-      if (val === null || val === undefined) return '';
-      // Escape double quotes and wrap in quotes to prevent comma issues
-      return `"${String(val).replace(/"/g, '""')}"`;
-    });
+    const record = row as Record<string, unknown>;
+    const values = headers.map((header) => escapeCsvCell(record[header]));
     csvRows.push(values.join(','));
   }
   return csvRows.join('\n');
@@ -38,7 +36,21 @@ export async function GET(request: NextRequest) {
     // අදාල Business එකේ සියලුම data DB එකෙන් ගන්න
     const businessInfo = await prisma.businessProfile.findUnique({ where: { id: companyId } });
     const [users, vehicles] = await Promise.all([
-      prisma.user.findMany({ where: { companyId } }),
+      prisma.user.findMany({
+        where: { companyId },
+        select: {
+          id: true,
+          companyId: true,
+          name: true,
+          email: true,
+          role: true,
+          avatarUrl: true,
+          phone: true,
+          emailVerified: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
       prisma.vehicle.findMany({ where: { companyId } }),
     ]);
     const [customers, bookings] = await Promise.all([
@@ -76,6 +88,16 @@ export async function GET(request: NextRequest) {
 
     // සම්පූර්ණ ZIP file එක generate කරනවා
     const zipContent = await zip.generateAsync({ type: 'nodebuffer' });
+
+    await recordAuditLog({
+      companyId,
+      actorId: authCheck.userId,
+      actorRole: authCheck.role,
+      action: 'COMPANY_BACKUP_ZIP',
+      resourceType: 'BusinessProfile',
+      resourceId: companyId,
+      ipAddress: hashIpAddress(getClientIp(request)),
+    });
 
     // ZIP file එක download වෙන්න return කරනවා
     return new NextResponse(zipContent as any, {

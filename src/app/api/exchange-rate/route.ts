@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLiveExchangeRate, convertCurrencyAmount } from '@/lib/exchange-rate';
+import { authenticateBearerOrSession, getClientIp } from '@/lib/security';
+import { checkDistributedRateLimit } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
     try {
+        const caller = await authenticateBearerOrSession(req);
+        if (!caller.authenticated) {
+            return NextResponse.json({ success: false, error: caller.error }, { status: caller.status });
+        }
+
+        const ip = getClientIp(req);
+        const { limited } = await checkDistributedRateLimit(`fx:${caller.companyId}:${ip}`, 60, 60 * 1000);
+        if (limited) {
+            return NextResponse.json({ success: false, error: 'Rate limit exceeded' }, { status: 429 });
+        }
+
         const { searchParams } = new URL(req.url);
         const from = searchParams.get('from') || 'USD';
         const to = searchParams.get('to') || 'LKR';

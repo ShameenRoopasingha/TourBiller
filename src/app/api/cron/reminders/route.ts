@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { verifyCronSecret } from '@/lib/security';
 
 export async function GET(request: Request) {
     try {
-        // Vercel Cron secures the endpoint automatically via header if configured,
-        // but it's good practice to verify authorization headers here in production.
+        const cronCheck = verifyCronSecret(
+            request.headers.get('authorization'),
+            process.env.CRON_SECRET
+        );
+        if (!cronCheck.valid) {
+            return NextResponse.json(
+                { success: false, error: cronCheck.error },
+                { status: cronCheck.status }
+            );
+        }
 
         const now = new Date();
         const allVehicles = await prisma.vehicle.findMany({

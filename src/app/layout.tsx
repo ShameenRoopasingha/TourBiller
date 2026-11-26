@@ -141,10 +141,12 @@ export default async function RootLayout({
                     </main>
                   </SidebarInset>
                   
-                  {/* AI Assistant Chat UI */}
-                  <div className="print:hidden">
-                    <ChatAssistant />
-                  </div>
+                  {/* AI Assistant Chat UI (Admin/Owner only) */}
+                  {(session.user as { role?: string })?.role === 'ADMIN' || (session.user as { role?: string })?.role === 'OWNER' ? (
+                    <div className="print:hidden">
+                      <ChatAssistant />
+                    </div>
+                  ) : null}
                 </div>
               </SidebarProvider>
             </SessionProvider>

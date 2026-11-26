@@ -20,7 +20,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self' https://vigil-pos.vercel.app; script-src 'self' 'unsafe-inline' https://vigil-pos.vercel.app https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https://vigil-pos.vercel.app https: wss:; frame-ancestors 'none'; base-uri 'self'"
     }
   },
   "bundle": {

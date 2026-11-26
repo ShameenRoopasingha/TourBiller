@@ -1,10 +1,26 @@
 import { NextResponse } from 'next/server';
 import { calculateRouteOSRM } from '@/lib/osrm-actions';
+import { authenticateBearerOrSession, getClientIp } from '@/lib/security';
+import { checkDistributedRateLimit } from '@/lib/rate-limit';
 
 // POST: High-speed server-side OSRM driving route calculator for Driver App
 // Avoids mobile carrier CGNAT / Cloudflare blocking on Dialog & Mobitel
 export async function POST(req: Request) {
   try {
+    const authRes = await authenticateBearerOrSession(req, ['DRIVER', 'ADMIN', 'OWNER']);
+    if (!authRes.authenticated) {
+      return NextResponse.json({ success: false, error: authRes.error }, { status: authRes.status });
+    }
+
+    const ip = getClientIp(req);
+    const { limited } = await checkDistributedRateLimit(`driver-route:${authRes.userId}:${ip}`, 60, 60 * 1000);
+    if (limited) {
+      return NextResponse.json(
+        { success: false, error: 'Too many route calculation requests. Please wait a moment.' },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { origin, destination, originCoords, destCoords, waypoints } = body;
 
@@ -68,10 +84,11 @@ export async function POST(req: Request) {
       legs: routeResult.legs || [],
       waypoints: routeResult.waypoints || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Server route calculation error:', error);
+    const message = error instanceof Error ? error.message : 'Internal route calculation error';
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal route calculation error' },
+      { success: false, error: message },
       { status: 500 }
     );
   }

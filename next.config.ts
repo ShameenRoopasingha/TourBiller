@@ -3,10 +3,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['bcrypt'],
-  typescript: { ignoreBuildErrors: true },
   experimental: {
     serverActions: {
-      bodySizeLimit: '10mb',
+      bodySizeLimit: '2mb',
     },
   },
   // reactCompiler: true, // Temporarily disabled to fix React DevTools crash
@@ -29,6 +28,10 @@ const nextConfig: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
           // Force HTTPS in production (1 year)
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+          // Prevent speculative DNS leaks & isolate cross-origin windows/resources
+          { key: 'X-DNS-Prefetch-Control', value: 'off' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
           // Content Security Policy against XSS and malicious script injection
           {
             key: 'Content-Security-Policy',

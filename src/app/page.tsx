@@ -6,12 +6,21 @@ import { AutoRefresh } from '@/components/AutoRefresh';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import { requireActiveSubscription } from '@/lib/subscription';
 
 export default async function DashboardPage() {
   const session = await auth();
   
   if (!session) {
     redirect('/login');
+  }
+
+  const companyId = (session?.user as { companyId?: string })?.companyId;
+  if (companyId) {
+    const subCheck = await requireActiveSubscription(companyId);
+    if (!subCheck.allowed) {
+      redirect('/subscription-required');
+    }
   }
 
   const userRole = (session?.user as { role?: string })?.role || 'ADMIN';

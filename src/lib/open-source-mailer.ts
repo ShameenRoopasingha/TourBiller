@@ -260,8 +260,17 @@ export async function sendVerificationEmail(
 
   const transporter = getSmtpTransporter();
 
-  // If SMTP is not configured in local environment, log gracefully so dev/testing is never blocked
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // If SMTP is not configured in local environment, log gracefully so dev/testing is never blocked;
+  // in production, fail closed and never log OTPs or return tokens.
   if (!transporter) {
+    if (isProduction) {
+      return {
+        success: false,
+        error: 'Email delivery service (SMTP) is not configured in production.',
+      };
+    }
     console.log('====================================================');
     console.log('[OPEN-SOURCE MAILER] SMTP NOT CONFIGURED (DEV FALLBACK)');
     console.log(`[OPEN-SOURCE MAILER] Verification Email for: ${to} (${name || 'User'})`);
@@ -296,11 +305,12 @@ export async function sendVerificationEmail(
       success: true,
       messageId: info.messageId,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[OPEN-SOURCE MAILER] Failed to dispatch verification email:', error);
+    const message = error instanceof Error ? error.message : 'Failed to send verification email via SMTP.';
     return {
       success: false,
-      error: error?.message || 'Failed to send verification email via SMTP.',
+      error: message,
     };
   }
 }
@@ -319,6 +329,12 @@ export async function sendPasswordResetEmail(options: {
   const transporter = getSmtpTransporter();
 
   if (!transporter) {
+    if (process.env.NODE_ENV === 'production') {
+      return {
+        success: false,
+        error: 'Email delivery service (SMTP) is not configured in production.',
+      };
+    }
     console.log('====================================================');
     console.log('[OPEN-SOURCE MAILER] SMTP NOT CONFIGURED (DEV FALLBACK)');
     console.log(`[OPEN-SOURCE MAILER] Password Reset Email for: ${to} (${name || 'User'})`);
@@ -361,11 +377,12 @@ export async function sendPasswordResetEmail(options: {
       success: true,
       messageId: info.messageId,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[OPEN-SOURCE MAILER] Failed to dispatch password reset email:', error);
+    const message = error instanceof Error ? error.message : 'Failed to send password reset email via SMTP.';
     return {
       success: false,
-      error: error?.message || 'Failed to send password reset email via SMTP.',
+      error: message,
     };
   }
 }

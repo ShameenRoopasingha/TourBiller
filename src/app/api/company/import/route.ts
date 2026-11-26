@@ -4,6 +4,9 @@ import { requireAdmin } from '@/lib/auth-guard';
 import { CompanyImportSchema } from '@/lib/validations';
 import { VehicleCategory } from '@prisma/client';
 import { formatApiErrorResponse } from '@/lib/error-handler';
+import { checkVehicleQuota, isSubscriptionEnforcementEnabled, requireActiveSubscription } from '@/lib/subscription';
+import { recordAuditLog } from '@/lib/audit';
+import { getClientIp, hashIpAddress } from '@/lib/security';
 
 function normalizeVehicleCategory(raw: unknown): VehicleCategory {
   if (typeof raw !== 'string') return VehicleCategory.CAR;
@@ -40,6 +43,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
     }
 
+    const subCheck = await requireActiveSubscription(companyId);
+    if (!subCheck.allowed) {
+      return NextResponse.json(
+        { success: false, code: subCheck.code, error: subCheck.error },
+        { status: 403 }
+      );
+    }
+
     let importedCount = 0;
 
     if (entityType === 'customers') {
@@ -60,6 +71,14 @@ export async function POST(request: NextRequest) {
       importedCount = result.count;
     } 
     else if (entityType === 'vehicles') {
+      const quotaCheck = await checkVehicleQuota(companyId);
+      if (!quotaCheck.allowed) {
+        return NextResponse.json(
+          { success: false, code: quotaCheck.code, error: quotaCheck.error },
+          { status: 403 }
+        );
+      }
+
       const vehiclesToInsert = data
         .map((row: any) => ({
           companyId,
@@ -71,6 +90,30 @@ export async function POST(request: NextRequest) {
         }))
         .filter((v: any) => v.vehicleNo); // Vehicle No is mandatory
 
+      if (isSubscriptionEnforcementEnabled() && vehiclesToInsert.length > 0) {
+        const existingVehicles = await prisma.vehicle.findMany({
+          where: { companyId },
+          select: { vehicleNo: true },
+        });
+        const existingSet = new Set(existingVehicles.map((v) => v.vehicleNo));
+        const newUniqueNos = new Set(
+          vehiclesToInsert
+            .map((v) => v.vehicleNo)
+            .filter((no) => !existingSet.has(no))
+        );
+        if (existingSet.size + newUniqueNos.size > quotaCheck.entitlements.maxVehicles) {
+          const remaining = Math.max(0, quotaCheck.entitlements.maxVehicles - existingSet.size);
+          return NextResponse.json(
+            {
+              success: false,
+              code: 'QUOTA_EXCEEDED',
+              error: `Bulk import exceeds vehicle limit for your ${quotaCheck.entitlements.label} plan (${existingSet.size}/${quotaCheck.entitlements.maxVehicles} used, only ${remaining} remaining slot(s)).`,
+            },
+            { status: 403 }
+          );
+        }
+      }
+
       const result = await prisma.vehicle.createMany({
         data: vehiclesToInsert,
         skipDuplicates: true,
@@ -80,6 +123,16 @@ export async function POST(request: NextRequest) {
     else {
       return NextResponse.json({ success: false, error: 'Unsupported entity type' }, { status: 400 });
     }
+
+    await recordAuditLog({
+      companyId,
+      actorId: authCheck.userId,
+      actorRole: authCheck.role,
+      action: 'COMPANY_BULK_IMPORT',
+      resourceType: entityType,
+      ipAddress: hashIpAddress(getClientIp(request)),
+      metadata: { entityType, importedCount },
+    });
 
     return NextResponse.json({ success: true, importedCount });
 

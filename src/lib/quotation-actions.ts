@@ -8,6 +8,7 @@ import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { checkDriverAvailability } from '@/lib/user-actions';
 import { formatActionError } from '@/lib/error-handler';
 import { formatAppDate } from '@/lib/date-utils';
+import { recordAuditLog } from '@/lib/audit';
 
 // Types for server responses
 
@@ -527,6 +528,16 @@ export async function deleteQuotation(id: string): Promise<ActionResult<void>> {
             where: { id, companyId: authCheck.companyId },
         });
         if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
+
+        await recordAuditLog({
+            companyId: authCheck.companyId,
+            actorId: authCheck.userId,
+            actorRole: authCheck.role,
+            action: 'QUOTATION_DELETED',
+            resourceType: 'Quotation',
+            resourceId: id,
+            metadata: { deletedCount: _res.count },
+        });
 
         revalidateFor('quotation');
         return { success: true };

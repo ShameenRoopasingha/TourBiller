@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '@/lib/jwt';
+import { checkTierFeature } from '@/lib/subscription';
 
 async function verifyAdminOrOwner(req: Request) {
     // 1. Session-based check (Next.js Dashboard)
@@ -41,6 +42,13 @@ export async function GET(req: Request) {
         }
 
         const companyId = authUser.companyId;
+        const radarCheck = await checkTierFeature(companyId, 'liveGpsRadar');
+        if (!radarCheck.allowed) {
+            return NextResponse.json(
+                { success: false, code: radarCheck.code, error: radarCheck.error },
+                { status: 403 }
+            );
+        }
 
         // 1. Fetch active ongoing tours or tours with urgent dispatch alerts
         const activeBookings = await prisma.booking.findMany({

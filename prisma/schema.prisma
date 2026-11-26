@@ -20,6 +20,28 @@ enum VehicleCategory {
   THREE_WHEELER @map("THREE WHEELER")
 }
 
+enum SubscriptionTier {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+  LIFETIME
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  LIFETIME
+  PAST_DUE
+  EXPIRED
+  CANCELLED
+  REVOKED
+}
+
 model BusinessProfile {
   id              String   @id @default(cuid())
   companyName     String   @default("My Transport Company")
@@ -51,8 +73,52 @@ model BusinessProfile {
   tripActivities   TripActivity[]
   driverLocations  DriverLocation[]
   vehicleSwapLogs  VehicleSwapLog[]
+  auditLogs        AuditLog[]
+  subscription     Subscription?
 
   @@map("business_profile")
+}
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  companyId             String             @unique
+  ownerEmail            String
+  licenseKey            String?            @unique
+  tier                  SubscriptionTier   @default(STARTER)
+  billingCycle          BillingCycle       @default(MONTHLY)
+  status                SubscriptionStatus @default(ACTIVE)
+  source                String             @default("DODO_PAYMENTS") // DODO_PAYMENTS | MANUAL_ADMIN
+  isLifetime            Boolean            @default(false)
+  bitgardSubscriptionId String?            @unique
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  note                  String?
+  lastSyncedAt          DateTime           @default(now())
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  company BusinessProfile     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  events  SubscriptionEvent[]
+
+  @@index([ownerEmail])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model SubscriptionEvent {
+  id             String              @id @default(cuid())
+  subscriptionId String
+  deliveryId     String              @unique
+  eventType      String
+  tier           SubscriptionTier?
+  status         SubscriptionStatus?
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, createdAt])
+  @@map("subscription_events")
 }
 
 model Bill {
@@ -172,10 +238,11 @@ model User {
   email     String   @unique
   password  String
   role      String   @default("ADMIN") // ADMIN, DRIVER, OWNER
-  avatarUrl String?
-  phone     String?
-  emailVerified DateTime?
-  createdAt DateTime @default(now())
+  avatarUrl        String?
+  phone            String?
+  emailVerified    DateTime?
+  tokenVersion     Int              @default(0)
+  createdAt        DateTime         @default(now())
   updatedAt DateTime @updatedAt
 
   lastLat          Float?
@@ -456,9 +523,10 @@ model DriverLocation {
   lon        Float
   heading    Float?
   speed      Float?
-  accuracy   Float?
-  battery    Float?
-  timestamp  DateTime @default(now())
+  accuracy         Float?
+  battery          Float?
+  timestamp        DateTime @default(now())
+  serverReceivedAt DateTime @default(now())
 
   company    BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
   driver     User            @relation(fields: [driverId], references: [id], onDelete: Cascade)
@@ -469,4 +537,23 @@ model DriverLocation {
   @@index([driverId, timestamp])
   @@index([bookingId])
   @@map("driver_locations")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  companyId    String
+  actorId      String?
+  actorRole    String?
+  action       String
+  resourceType String
+  resourceId   String?
+  ipAddress    String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  company BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([actorId])
+  @@map("audit_logs")
 }

@@ -27,8 +27,8 @@ const cleanupTimer = setInterval(() => {
     pruneExpired(Date.now());
 }, 5 * 60 * 1000);
 
-if (typeof cleanupTimer === 'object' && typeof (cleanupTimer as any).unref === 'function') {
-    (cleanupTimer as any).unref();
+if (typeof cleanupTimer === 'object' && cleanupTimer !== null && 'unref' in cleanupTimer && typeof (cleanupTimer as { unref?: () => void }).unref === 'function') {
+    (cleanupTimer as { unref: () => void }).unref();
 }
 
 /**
@@ -79,4 +79,71 @@ export function rateLimit(
     // Increment and allow
     entry.count++;
     return { limited: false, remaining: maxAttempts - entry.count, retryAfterMs: 0 };
+}
+
+/**
+ * Distributed sliding-window counter backed by Upstash Redis REST API when
+ * UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are configured.
+ * Falls back gracefully to the bounded in-memory rate limiter in single-instance/test environments.
+ */
+export async function checkDistributedRateLimit(
+    key: string,
+    maxAttempts: number,
+    windowMs: number = 15 * 60 * 1000
+): Promise<{ limited: boolean; remaining: number; retryAfterMs: number }> {
+    const restUrl = process.env.UPSTASH_REDIS_REST_URL?.trim().replace(/\/+$/, '');
+    const restToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+
+    if (!restUrl || !restToken) {
+        return rateLimit(key, maxAttempts, windowMs);
+    }
+
+    try {
+        const redisKey = `rl:${key}`;
+        const response = await fetch(`${restUrl}/pipeline`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${restToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify([
+                ['INCR', redisKey],
+                ['PTTL', redisKey],
+            ]),
+            signal: AbortSignal.timeout(2500),
+        });
+
+        if (!response.ok) {
+            return rateLimit(key, maxAttempts, windowMs);
+        }
+
+        const results = (await response.json()) as Array<{ result?: number; error?: string }>;
+        const count = Number(results?.[0]?.result ?? 0);
+        let ttlMs = Number(results?.[1]?.result ?? -1);
+
+        if (count === 1 || ttlMs < 0) {
+            await fetch(`${restUrl}/pexpire/${encodeURIComponent(redisKey)}/${windowMs}`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${restToken}` },
+                signal: AbortSignal.timeout(2500),
+            }).catch(() => {});
+            ttlMs = windowMs;
+        }
+
+        if (count > maxAttempts) {
+            return {
+                limited: true,
+                remaining: 0,
+                retryAfterMs: ttlMs > 0 ? ttlMs : windowMs,
+            };
+        }
+
+        return {
+            limited: false,
+            remaining: Math.max(0, maxAttempts - count),
+            retryAfterMs: 0,
+        };
+    } catch {
+        return rateLimit(key, maxAttempts, windowMs);
+    }
 }

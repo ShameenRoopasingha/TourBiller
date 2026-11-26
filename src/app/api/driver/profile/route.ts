@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { auth } from '@/lib/auth';
 import { getJwtSecret } from '@/lib/jwt';
-import { rateLimit } from '@/lib/rate-limit';
+import { checkDistributedRateLimit } from '@/lib/rate-limit';
+import { authenticateBearerOrSession, getClientIp } from '@/lib/security';
 import { z } from 'zod';
 
 const DriverProfileUpdateSchema = z.object({
@@ -15,49 +15,14 @@ const DriverProfileUpdateSchema = z.object({
     newPassword: z.string().min(6, 'New password must be at least 6 characters long').optional(),
 });
 
-async function authenticateDriver(req: Request) {
-    let driverId: string | null = null;
-    let companyId: string | null = null;
-
-    // 1. Bearer Token check (Mobile App)
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
-        try {
-            const decoded = jwt.verify(token, getJwtSecret()) as any;
-            if (decoded?.role === 'DRIVER' && decoded?.id) {
-                driverId = decoded.id;
-                companyId = decoded.companyId;
-            }
-        } catch {
-            // Invalid token
-        }
-    }
-
-    // 2. NextAuth Session check (Web Portal)
-    if (!driverId) {
-        try {
-            const session = await auth();
-            const user = session?.user as { id?: string; role?: string; companyId?: string } | undefined;
-            if (user?.id && user?.role === 'DRIVER') {
-                driverId = user.id;
-                companyId = user.companyId || null;
-            }
-        } catch {
-            // Session error
-        }
-    }
-
-    return { driverId, companyId };
-}
-
 // GET: Fetch current driver's profile information
 export async function GET(req: Request) {
     try {
-        const { driverId } = await authenticateDriver(req);
-        if (!driverId) {
-            return NextResponse.json({ success: false, error: 'Unauthorized: Driver access required' }, { status: 401 });
+        const authRes = await authenticateBearerOrSession(req, ['DRIVER']);
+        if (!authRes.authenticated) {
+            return NextResponse.json({ success: false, error: 'Unauthorized: Driver access required' }, { status: authRes.status });
         }
+        const driverId = authRes.userId;
 
         const user = await prisma.user.findUnique({
             where: { id: driverId },
@@ -91,13 +56,14 @@ export async function GET(req: Request) {
 // PUT: Update driver's email and/or password
 export async function PUT(req: Request) {
     try {
-        const { driverId } = await authenticateDriver(req);
-        if (!driverId) {
-            return NextResponse.json({ success: false, error: 'Unauthorized: Driver access required' }, { status: 401 });
+        const authRes = await authenticateBearerOrSession(req, ['DRIVER']);
+        if (!authRes.authenticated) {
+            return NextResponse.json({ success: false, error: 'Unauthorized: Driver access required' }, { status: authRes.status });
         }
+        const driverId = authRes.userId;
 
-        const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown-ip';
-        const { limited, retryAfterMs } = rateLimit(`driver-profile-update:${driverId}:${ip}`, 15, 15 * 60 * 1000);
+        const ip = getClientIp(req);
+        const { limited, retryAfterMs } = await checkDistributedRateLimit(`driver-profile-update:${driverId}:${ip}`, 15, 15 * 60 * 1000);
         if (limited) {
             const retryMinutes = Math.ceil(retryAfterMs / 60000);
             return NextResponse.json(
@@ -126,7 +92,13 @@ export async function PUT(req: Request) {
             return NextResponse.json({ success: false, error: 'Driver not found' }, { status: 404 });
         }
 
-        const updateData: { name?: string; avatarUrl?: string | null; email?: string; password?: string } = {};
+        const updateData: {
+            name?: string;
+            avatarUrl?: string | null;
+            email?: string;
+            password?: string;
+            tokenVersion?: { increment: number };
+        } = {};
 
         // 1. Name update
         if (name && name.trim() && name.trim() !== driver.name) {
@@ -174,6 +146,7 @@ export async function PUT(req: Request) {
 
             const hashedPassword = await bcrypt.hash(newPassword, 10);
             updateData.password = hashedPassword;
+            updateData.tokenVersion = { increment: 1 };
         }
 
         // If no changes provided
@@ -203,11 +176,17 @@ export async function PUT(req: Request) {
             include: { company: true }
         });
 
-        // Issue fresh token if email changed or generally to refresh
+        // Issue fresh token if email or password changed
         const token = jwt.sign(
-            { id: updatedDriver.id, email: updatedDriver.email, companyId: updatedDriver.companyId, role: updatedDriver.role },
+            {
+                id: updatedDriver.id,
+                email: updatedDriver.email,
+                companyId: updatedDriver.companyId,
+                role: updatedDriver.role,
+                tokenVersion: updatedDriver.tokenVersion ?? 0,
+            },
             getJwtSecret(),
-            { expiresIn: '30d' }
+            { expiresIn: '7d' }
         );
 
         return NextResponse.json({

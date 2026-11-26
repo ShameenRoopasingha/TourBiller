@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcrypt';
 import { prisma } from '@/lib/prisma';
-import { rateLimit } from '@/lib/rate-limit';
+import { checkDistributedRateLimit } from '@/lib/rate-limit';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
@@ -18,7 +18,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 }
 
                 // Rate limit: 10 login attempts per email per 15 minutes
-                const { limited } = rateLimit(
+                const { limited } = await checkDistributedRateLimit(
                     `login:${credentials.email}`,
                     10,
                     15 * 60 * 1000
@@ -58,9 +58,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     callbacks: {
         async jwt({ token, user, trigger, session }) {
             if (user) {
-                token.role = (user as { role?: string }).role;
+                const authUser = user as { role?: string; companyId?: string };
+                token.role = authUser.role;
                 token.id = user.id;
-                token.companyId = (user as any).companyId;
+                token.companyId = authUser.companyId;
                 token.name = user.name;
                 token.email = user.email;
             }
@@ -72,9 +73,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         },
         async session({ session, token }) {
             if (session.user) {
-                (session.user as any).role = token.role as string;
-                (session.user as any).id = token.id as string;
-                (session.user as any).companyId = token.companyId as string;
+                const sessionUser = session.user as { role?: string; id?: string; companyId?: string };
+                sessionUser.role = token.role as string;
+                sessionUser.id = token.id as string;
+                sessionUser.companyId = token.companyId as string;
                 if (token.name) session.user.name = token.name as string;
                 if (token.email) session.user.email = token.email as string;
             }

@@ -5,6 +5,7 @@ import { CustomerSchema, type ActionResult, type Customer } from '@/lib/validati
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { formatActionError } from '@/lib/error-handler';
+import { recordAuditLog } from '@/lib/audit';
 
 /**
  * Create a new customer
@@ -141,6 +142,16 @@ export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
             where: { id, companyId },
         });
         if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
+
+        await recordAuditLog({
+            companyId,
+            actorId: authCheck.userId,
+            actorRole: authCheck.role,
+            action: 'CUSTOMER_DELETED',
+            resourceType: 'Customer',
+            resourceId: id,
+            metadata: { customerName: customer.name },
+        });
 
         revalidateFor('customer');
 

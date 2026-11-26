@@ -1,6 +1,5 @@
 'use server';
 
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { 
     BookingSchema, 
@@ -11,7 +10,6 @@ import {
     type DriverHandoverOptions,
     DriverHandoverOptionsSchema
 } from '@/lib/validations';
-import { type Booking } from '@prisma/client';
 import { revalidateFor } from '@/lib/revalidation';
 import { revalidatePath } from 'next/cache';
 import { requireAuth, requireAdmin } from '@/lib/auth-guard';
@@ -19,6 +17,8 @@ import { checkVehicleAvailability } from '@/lib/vehicle-actions';
 import { checkDriverAvailability } from '@/lib/user-actions';
 import { formatActionError } from '@/lib/error-handler';
 import { formatAppDate, formatAppDateTime } from '@/lib/date-utils';
+import { checkTierFeature } from '@/lib/subscription';
+import { recordAuditLog } from '@/lib/audit';
 
 
 /**
@@ -395,6 +395,11 @@ export async function swapBookingVehicle(
         }
 
         const companyId = authCheck.companyId!;
+        const swapTierCheck = await checkTierFeature(companyId, 'vehicleSwapAudit');
+        if (!swapTierCheck.allowed) {
+            return { success: false, error: swapTierCheck.error };
+        }
+
         const booking = await prisma.booking.findFirst({
             where: { id: bookingId, companyId },
             include: { driver: true }
@@ -575,6 +580,25 @@ export async function swapBookingVehicle(
                     note: noteText,
                 }
             });
+        });
+
+        await recordAuditLog({
+            companyId,
+            actorId: authCheck.userId,
+            actorRole: authCheck.role,
+            action: 'BOOKING_VEHICLE_SWAPPED',
+            resourceType: 'Booking',
+            resourceId: bookingId,
+            metadata: {
+                previousVehicleNo: oldVehicleNo,
+                newVehicleNo,
+                swapType: validOptions.swapType,
+                reason: validOptions.reason,
+                ...(validOptions.swapType === 'EXTERNAL' && validOptions.supplierName
+                    ? { supplierName: validOptions.supplierName }
+                    : {}),
+                ...(validOptions.hireCost ? { hireCost: validOptions.hireCost } : {}),
+            },
         });
 
         revalidateFor('booking');

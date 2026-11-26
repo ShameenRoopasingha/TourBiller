@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-guard';
+import { getCompanySubscriptionStatus } from '@/lib/subscription';
 
 export async function GET() {
     try {
@@ -11,6 +12,10 @@ export async function GET() {
 
         const now = new Date();
         const companyId = authCheck.companyId;
+        const subStatus = await getCompanySubscriptionStatus(companyId);
+        const allowMaintenanceAlerts =
+            !subStatus.enforcementActive ||
+            (subStatus.active && subStatus.entitlements.features.maintenanceAlerts);
         const todayStart = new Date(now);
         todayStart.setHours(0, 0, 0, 0);
         const dayAfterTomorrow = new Date(todayStart);
@@ -163,9 +168,9 @@ export async function GET() {
             data: { 
                 maintenanceAlerts: [
                     ...urgentDispatchAlerts,
-                    ...maintenanceAlerts, 
-                    ...billingAlerts, 
-                    ...upcomingAlerts, 
+                    ...(allowMaintenanceAlerts ? maintenanceAlerts : []),
+                    ...billingAlerts,
+                    ...upcomingAlerts,
                     ...expenseAlerts
                 ] 
             } 

@@ -50,3 +50,49 @@ if (typeof process !== 'undefined' && typeof process.on === 'function') {
   process.once('SIGINT', disconnect);
   process.once('SIGTERM', disconnect);
 }
+
+/**
+ * Returns a tenant-scoped Prisma client extension that automatically injects
+ * `companyId` into queries/mutations for multi-tenant operational tables (`I6` defense-in-depth).
+ */
+export function createTenantPrisma(companyId: string) {
+  const tenantModels = new Set([
+    'Bill',
+    'Vehicle',
+    'Customer',
+    'Booking',
+    'TourSchedule',
+    'Quotation',
+    'VehicleExpense',
+    'TripActivity',
+    'DriverLocation',
+    'VehicleSwapLog',
+    'AuditLog',
+  ]);
+
+  return prisma.$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          if (!model || !tenantModels.has(model)) {
+            return query(args);
+          }
+          const scopedArgs = (args ?? {}) as Record<string, unknown>;
+          if (
+            operation === 'findMany' ||
+            operation === 'findFirst' ||
+            operation === 'count' ||
+            operation === 'updateMany' ||
+            operation === 'deleteMany' ||
+            operation === 'aggregate'
+          ) {
+            scopedArgs.where = { ...((scopedArgs.where as object) ?? {}), companyId };
+          } else if (operation === 'create') {
+            scopedArgs.data = { ...((scopedArgs.data as object) ?? {}), companyId };
+          }
+          return query(scopedArgs);
+        },
+      },
+    },
+  });
+}

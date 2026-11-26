@@ -9,6 +9,9 @@ import { formatActionError } from '@/lib/error-handler';
 import crypto from 'crypto';
 import { verifyEmailAddress } from '@/lib/email-verifier';
 import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/open-source-mailer';
+import { checkUserCreationQuota } from '@/lib/subscription';
+import { hashOpaqueToken } from '@/lib/crypto-utils';
+import { recordAuditLog } from '@/lib/audit';
 
 /**
  * Check driver availability for a given date range.
@@ -181,6 +184,11 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
 
         const { name, email, password, role } = parsed.data;
 
+        const quotaCheck = await checkUserCreationQuota(companyId, role);
+        if (!quotaCheck.allowed) {
+            return { success: false, error: quotaCheck.error };
+        }
+
         // Check if email already exists
         const existing = await prisma.user.findFirst({ where: { email, companyId } });
         if (existing) {
@@ -205,8 +213,8 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
             },
         });
 
-        // 2. Level 3 OTP & Token Generation for Open-Source Verification
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        // 2. Level 3 OTP & Token Generation for Open-Source Verification (stored as SHA-256 digests)
+        const otpCode = crypto.randomInt(100000, 1000000).toString();
         const token = crypto.randomBytes(32).toString('hex');
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
@@ -217,8 +225,8 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
         await prisma.emailVerificationToken.create({
             data: {
                 email,
-                token,
-                otpCode,
+                token: hashOpaqueToken(token),
+                otpCode: hashOpaqueToken(otpCode),
                 expires,
             },
         });
@@ -229,6 +237,16 @@ export async function createUser(formData: FormData): Promise<ActionResult<strin
             name,
             otpCode,
             token,
+        });
+
+        await recordAuditLog({
+            companyId,
+            actorId: authCheck.userId,
+            actorRole: authCheck.role,
+            action: 'USER_CREATED',
+            resourceType: 'User',
+            resourceId: user.id,
+            metadata: { targetEmail: email, role },
         });
 
         revalidatePath('/users');
@@ -275,6 +293,14 @@ export async function deleteUser(id: string): Promise<ActionResult<void>> {
 
         const _res = await prisma.user.deleteMany({ where: { id, companyId } });
         if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
+        await recordAuditLog({
+            companyId,
+            actorId: userId,
+            actorRole: authCheck.role,
+            action: 'USER_DELETED',
+            resourceType: 'User',
+            resourceId: id,
+        });
         revalidatePath('/users');
         return { success: true };
     } catch (error) {
@@ -322,14 +348,14 @@ export async function verifyUserEmail(email: string, tokenOrOtp: string): Promis
         }
 
         const cleanEmail = email.trim().toLowerCase();
-        const cleanCode = tokenOrOtp.trim();
+        const hashedCode = hashOpaqueToken(tokenOrOtp);
 
         const record = await prisma.emailVerificationToken.findFirst({
             where: {
                 email: cleanEmail,
                 OR: [
-                    { otpCode: cleanCode },
-                    { token: cleanCode },
+                    { otpCode: hashedCode },
+                    { token: hashedCode },
                 ],
             },
         });
@@ -383,7 +409,7 @@ export async function resendVerificationEmail(userId: string): Promise<ActionRes
             return { success: false, error: 'User email is already verified.' };
         }
 
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpCode = crypto.randomInt(100000, 1000000).toString();
         const token = crypto.randomBytes(32).toString('hex');
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -394,8 +420,8 @@ export async function resendVerificationEmail(userId: string): Promise<ActionRes
         await prisma.emailVerificationToken.create({
             data: {
                 email: user.email,
-                token,
-                otpCode,
+                token: hashOpaqueToken(token),
+                otpCode: hashOpaqueToken(otpCode),
                 expires,
             },
         });
@@ -442,7 +468,7 @@ export async function adminGenerateResetLink(userId: string): Promise<ActionResu
         await prisma.passwordResetToken.create({
             data: {
                 email: user.email,
-                token,
+                token: hashOpaqueToken(token),
                 expires,
             },
         });
@@ -454,6 +480,16 @@ export async function adminGenerateResetLink(userId: string): Promise<ActionResu
             to: user.email,
             name: user.name,
             resetLink,
+        });
+
+        await recordAuditLog({
+            companyId,
+            actorId: authCheck.userId,
+            actorRole: authCheck.role,
+            action: 'ADMIN_GENERATED_RESET_LINK',
+            resourceType: 'User',
+            resourceId: userId,
+            metadata: { targetEmail: user.email },
         });
 
         return {

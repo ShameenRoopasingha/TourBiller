@@ -3,8 +3,9 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { revalidateFor } from '@/lib/revalidation';
-import { type ActionResult, VehicleExpenseSchema, type VehicleExpense, type VehicleExpenseFormData, type Vehicle } from '@/lib/validations';
+import { type ActionResult, VehicleExpenseSchema, type VehicleExpense, type VehicleExpenseFormData } from '@/lib/validations';
 import { formatActionError } from '@/lib/error-handler';
+import { recordAuditLog } from '@/lib/audit';
 
 /**
  * Add a new vehicle expense
@@ -149,6 +150,16 @@ export async function deleteVehicleExpense(id: string): Promise<ActionResult<boo
             where: { id, companyId: authCheck.companyId },
         });
         if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
+
+        await recordAuditLog({
+            companyId: authCheck.companyId,
+            actorId: authCheck.userId,
+            actorRole: authCheck.role,
+            action: 'VEHICLE_EXPENSE_DELETED',
+            resourceType: 'VehicleExpense',
+            resourceId: id,
+            metadata: { deletedCount: _res.count },
+        });
 
         revalidateFor('vehicle-expenses');
         return { success: true, data: true };

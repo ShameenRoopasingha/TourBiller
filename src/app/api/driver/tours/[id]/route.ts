@@ -1,57 +1,32 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
-import { auth } from '@/lib/auth';
 import { DriverTourActionSchema } from '@/lib/validations';
-import { getJwtSecret } from '@/lib/jwt';
+import { authenticateBearerOrSession } from '@/lib/security';
 import { extractHandoverNavigation } from '@/lib/handover-navigation';
 import { formatApiErrorResponse } from '@/lib/error-handler';
-
-// Middleware-like function to verify driver (Bearer token for Mobile App or NextAuth for Web Portal)
-async function verifyDriver(req: Request) {
-    // 1. Try Bearer token
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
-        try {
-            const decoded = jwt.verify(token, getJwtSecret()) as any;
-            if (decoded?.id && decoded?.companyId) {
-                return { driver: decoded };
-            }
-        } catch {
-            // Ignore and try session next
-        }
-    }
-
-    // 2. Try NextAuth session
-    try {
-        const session = await auth();
-        const user = session?.user as { id?: string; companyId?: string; role?: string } | undefined;
-        if (user?.id && user?.companyId && user?.role === 'DRIVER') {
-            return {
-                driver: {
-                    id: user.id,
-                    companyId: user.companyId,
-                    role: user.role,
-                }
-            };
-        }
-    } catch {
-        // Session failed
-    }
-
-    return { error: 'Unauthorized', status: 401 };
-}
+import { checkTierFeature } from '@/lib/subscription';
 
 // GET: Fetch single tour details with activities, vehicle, and navigation info
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const auth = await verifyDriver(req);
-        if (auth.error) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+        const authRes = await authenticateBearerOrSession(req, ['DRIVER']);
+        if (!authRes.authenticated) {
+            return NextResponse.json({ success: false, error: authRes.error }, { status: authRes.status });
+        }
 
         const resolvedParams = await params;
         const bookingId = resolvedParams.id;
-        const driverId = auth.driver.id;
+        const driverId = authRes.userId;
+
+        if (authRes.companyId) {
+            const subCheck = await checkTierFeature(authRes.companyId, 'driverMobileSync');
+            if (!subCheck.allowed) {
+                return NextResponse.json(
+                    { success: false, code: subCheck.code, error: subCheck.error },
+                    { status: 403 }
+                );
+            }
+        }
 
         const booking = await prisma.booking.findUnique({
             where: { id: bookingId },
@@ -211,12 +186,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 // PUT: Update tour status or add activity
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const auth = await verifyDriver(req);
-        if (auth.error) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+        const authRes = await authenticateBearerOrSession(req, ['DRIVER']);
+        if (!authRes.authenticated) {
+            return NextResponse.json({ success: false, error: authRes.error }, { status: authRes.status });
+        }
 
         const resolvedParams = await params;
         const bookingId = resolvedParams.id;
-        const { companyId, id: driverId } = auth.driver;
+        const { companyId, userId: driverId } = authRes;
+
+        const subCheck = await checkTierFeature(companyId, 'driverMobileSync');
+        if (!subCheck.allowed) {
+            return NextResponse.json(
+                { success: false, code: subCheck.code, error: subCheck.error },
+                { status: 403 }
+            );
+        }
         
         let body: any;
         try {

@@ -4,8 +4,9 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import { type ActionResult, PasswordResetRequestSchema, PasswordResetConfirmSchema } from '@/lib/validations';
 import crypto from 'crypto';
-import { rateLimit } from '@/lib/rate-limit';
+import { checkDistributedRateLimit } from '@/lib/rate-limit';
 import { sendPasswordResetEmail } from '@/lib/open-source-mailer';
+import { hashOpaqueToken } from '@/lib/crypto-utils';
 
 /**
  * Request a password reset OTP and link (forgot password)
@@ -20,7 +21,7 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
         const { email } = parsed.data;
 
         // Rate limit: 5 password reset requests per email per 15 minutes
-        const { limited, retryAfterMs } = rateLimit(`pwd-reset:${email}`, 5, 15 * 60 * 1000);
+        const { limited, retryAfterMs } = await checkDistributedRateLimit(`pwd-reset:${email}`, 5, 15 * 60 * 1000);
         if (limited) {
             const retryMinutes = Math.ceil(retryAfterMs / 60000);
             return { success: false, error: `Too many reset attempts. Please try again in ${retryMinutes} minute(s).` };
@@ -33,13 +34,9 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
             return { success: true };
         }
 
-        // Generate a 6-digit OTP code for instant entry
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-        // Generate a secure random token for 1-click links
+        // Generate a 6-digit OTP code using CSPRNG and a secure random token
+        const otpCode = crypto.randomInt(100000, 1000000).toString();
         const token = crypto.randomBytes(32).toString('hex');
-        
-        // Token expires in 1 hour
         const expires = new Date(Date.now() + 3600000);
 
         // Delete any existing tokens for this email
@@ -47,12 +44,12 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
             where: { email }
         });
 
-        // Save new token with 6-digit OTP code
+        // Save only SHA-256 hashes of the reset token & OTP at rest
         await prisma.passwordResetToken.create({
             data: {
                 email,
-                token,
-                otpCode,
+                token: hashOpaqueToken(token),
+                otpCode: hashOpaqueToken(otpCode),
                 expires
             }
         });
@@ -67,7 +64,11 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
             otpCode,
         });
 
-        if (mailResult.isDevFallback) {
+        if (!mailResult.success) {
+            return { success: false, error: mailResult.error || 'Failed to send password reset email' };
+        }
+
+        if (mailResult.isDevFallback && process.env.NODE_ENV !== 'production') {
             return {
                 success: true,
                 data: {
@@ -96,7 +97,7 @@ export async function verifyResetToken(token: string): Promise<boolean> {
         if (!token) return false;
 
         const resetToken = await prisma.passwordResetToken.findUnique({
-            where: { token }
+            where: { token: hashOpaqueToken(token) }
         });
 
         if (!resetToken) return false;
@@ -121,12 +122,12 @@ export async function verifyResetOtp(email: string, otpCode: string): Promise<bo
         if (!email || !otpCode) return false;
 
         const cleanEmail = email.trim().toLowerCase();
-        const cleanOtp = otpCode.trim();
+        const hashedOtp = hashOpaqueToken(otpCode);
 
         const resetRecord = await prisma.passwordResetToken.findFirst({
             where: {
                 email: cleanEmail,
-                otpCode: cleanOtp,
+                otpCode: hashedOtp,
                 expires: { gt: new Date() }
             }
         });
@@ -162,26 +163,26 @@ export async function resetPassword(formData: FormData): Promise<ActionResult<vo
         }
 
         // Rate limit: 5 reset attempts per identifier per 15 minutes
-        const rateLimitKey = token ? `pwd-token:${token}` : `pwd-otp:${email}`;
-        const { limited, retryAfterMs } = rateLimit(rateLimitKey, 5, 15 * 60 * 1000);
+        const rateLimitKey = token ? `pwd-token:${hashOpaqueToken(token)}` : `pwd-otp:${email}`;
+        const { limited, retryAfterMs } = await checkDistributedRateLimit(rateLimitKey, 5, 15 * 60 * 1000);
         if (limited) {
             const retryMinutes = Math.ceil(retryAfterMs / 60000);
             return { success: false, error: `Too many attempts. Please try again in ${retryMinutes} minute(s).` };
         }
 
-        // Atomic: verify, update password, and delete token in one transaction
+        // Atomic: verify, update password, increment tokenVersion (revokes mobile JWTs), and delete token
         await prisma.$transaction(async (tx) => {
             let resetToken = null;
 
             if (token) {
                 resetToken = await tx.passwordResetToken.findUnique({
-                    where: { token }
+                    where: { token: hashOpaqueToken(token) }
                 });
             } else if (email && otpCode) {
                 resetToken = await tx.passwordResetToken.findFirst({
                     where: {
                         email,
-                        otpCode,
+                        otpCode: hashOpaqueToken(otpCode),
                         expires: { gt: new Date() }
                     }
                 });
@@ -202,10 +203,13 @@ export async function resetPassword(formData: FormData): Promise<ActionResult<vo
             // Hash new password
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Update password and delete all tokens for this user
+            // Update password, increment tokenVersion, and delete all tokens for this user
             await tx.user.update({
                 where: { email: user.email },
-                data: { password: hashedPassword }
+                data: {
+                    password: hashedPassword,
+                    tokenVersion: { increment: 1 },
+                }
             });
 
             await tx.passwordResetToken.deleteMany({
@@ -214,8 +218,9 @@ export async function resetPassword(formData: FormData): Promise<ActionResult<vo
         });
 
         return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error resetting password:', error);
-        return { success: false, error: error?.message || 'Failed to reset password' };
+        const message = error instanceof Error ? error.message : 'Failed to reset password';
+        return { success: false, error: message };
     }
 }

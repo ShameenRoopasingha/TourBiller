@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth-guard';
+import { recordAuditLog } from '@/lib/audit';
+import { getClientIp, hashIpAddress } from '@/lib/security';
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +22,21 @@ export async function GET(request: NextRequest) {
     // අදාල Business එකේ සියලුම data DB එකෙන් ගන්න
     const businessInfo = await prisma.businessProfile.findUnique({ where: { id: companyId } });
     const [users, vehicles] = await Promise.all([
-      prisma.user.findMany({ where: { companyId } }),
+      prisma.user.findMany({
+        where: { companyId },
+        select: {
+          id: true,
+          companyId: true,
+          name: true,
+          email: true,
+          role: true,
+          avatarUrl: true,
+          phone: true,
+          emailVerified: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
       prisma.vehicle.findMany({ where: { companyId } }),
     ]);
     const [customers, bookings] = await Promise.all([
@@ -39,6 +55,16 @@ export async function GET(request: NextRequest) {
     if (!businessInfo) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 });
     }
+
+    await recordAuditLog({
+      companyId,
+      actorId: authCheck.userId,
+      actorRole: authCheck.role,
+      action: 'COMPANY_BACKUP_JSON',
+      resourceType: 'BusinessProfile',
+      resourceId: companyId,
+      ipAddress: hashIpAddress(getClientIp(request)),
+    });
 
     // මේ ඔක්කොම එකතු කරලා එක object එකක් හදනවා
     const fullBackup = {

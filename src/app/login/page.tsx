@@ -468,7 +468,7 @@ export default function LoginPage() {
                                 <span>256-bit SSL</span>
                             </span>
                             <a 
-                                href={process.env.NEXT_PUBLIC_BITGARD_PORTAL_URL || 'https://bitgard.vercel.app/products/vehicle-hire'}
+                                href={process.env.NEXT_PUBLIC_BITGARD_PORTAL_URL || 'https://bitgard.vercel.app/products/vigil'}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="font-mono text-[11px] font-semibold text-primary hover:text-primary-300 tracking-wide inline-flex items-center gap-1 transition-colors"

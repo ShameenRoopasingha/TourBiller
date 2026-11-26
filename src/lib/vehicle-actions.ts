@@ -1,6 +1,5 @@
 'use server';
 
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { VehicleCategory } from '@prisma/client';
 import { VehicleSchema, type ActionResult, type Vehicle, type VehicleAvailabilityConflict } from '@/lib/validations';
@@ -8,6 +7,8 @@ import { revalidateFor } from '@/lib/revalidation';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { formatActionError } from '@/lib/error-handler';
+import { checkVehicleQuota } from '@/lib/subscription';
+import { recordAuditLog } from '@/lib/audit';
 
 /**
  * Create a new vehicle
@@ -17,6 +18,11 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
+        }
+
+        const quotaCheck = await checkVehicleQuota(authCheck.companyId);
+        if (!quotaCheck.allowed) {
+            return { success: false, error: quotaCheck.error };
         }
 
         const rawData = {
@@ -213,6 +219,16 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
             where: { id, companyId: cid },
         });
         if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
+
+        await recordAuditLog({
+            companyId: cid,
+            actorId: authCheck.userId,
+            actorRole: authCheck.role,
+            action: 'VEHICLE_DELETED',
+            resourceType: 'Vehicle',
+            resourceId: id,
+            metadata: { vehicleNo: vno },
+        });
 
         revalidatePath('/vehicles');
 

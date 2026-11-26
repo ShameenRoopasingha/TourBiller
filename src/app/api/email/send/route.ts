@@ -43,7 +43,8 @@ export async function POST(req: Request) {
             ? await prisma.businessProfile.findUnique({ where: { id: companyId } })
             : null;
 
-        const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || '';
+        const appBaseUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+        const origin = appBaseUrl.startsWith('http://') || appBaseUrl.startsWith('https://') ? appBaseUrl : '';
 
         if (documentType === 'quotation') {
             const quotation = await prisma.quotation.findFirst({

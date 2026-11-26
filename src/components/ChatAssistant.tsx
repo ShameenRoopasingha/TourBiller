@@ -10,6 +10,7 @@ import remarkGfm from 'remark-gfm';
 export default function ChatAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [allowMutations, setAllowMutations] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   
@@ -80,7 +81,7 @@ export default function ChatAssistant() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    sendMessage({ role: 'user', content: input });
+    sendMessage({ role: 'user', content: input }, { body: { allowMutations } });
     setInput('');
   };
   
@@ -111,17 +112,42 @@ export default function ChatAssistant() {
         className={`fixed bottom-6 right-6 w-[380px] h-[600px] max-h-[80vh] bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col z-40 transition-all duration-300 transform origin-bottom-right ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}
       >
         {/* Header */}
-        <div className="bg-primary text-white p-4 rounded-t-2xl flex justify-between items-center">
+        <div className="bg-primary text-white p-4 rounded-t-2xl flex justify-between items-center gap-2">
           <div>
             <h3 className="font-semibold flex items-center gap-2">
               VIGIL AI Assistant
               <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">Beta</span>
             </h3>
-            <p className="text-xs opacity-80 mt-0.5">Ask me about bookings or vehicles</p>
+            <p className="text-xs opacity-80 mt-0.5">
+              {allowMutations ? 'DB Write Mode Enabled' : 'Read-Only Safe Mode'}
+            </p>
           </div>
-          <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/20 rounded-md transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                if (!allowMutations) {
+                  const confirmed = window.confirm(
+                    'Enable AI database writes? Only enable when you explicitly intend the assistant to create or update records.'
+                  );
+                  if (confirmed) setAllowMutations(true);
+                } else {
+                  setAllowMutations(false);
+                }
+              }}
+              className={`px-2 py-1 text-[11px] font-medium rounded-md border transition-colors ${
+                allowMutations
+                  ? 'bg-amber-400 text-slate-900 border-amber-300'
+                  : 'bg-white/15 text-white border-white/25 hover:bg-white/25'
+              }`}
+              title="Toggle whether the AI assistant may execute database write tools"
+            >
+              {allowMutations ? 'Writes: ON' : 'Writes: OFF'}
+            </button>
+            <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/20 rounded-md transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Messages */}

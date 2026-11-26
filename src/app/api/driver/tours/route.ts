@@ -1,45 +1,29 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
-
-import { auth } from '@/lib/auth';
-import { getJwtSecret } from '@/lib/jwt';
-
+import { authenticateBearerOrSession } from '@/lib/security';
 import { extractHandoverNavigation } from '@/lib/handover-navigation';
+import { checkTierFeature } from '@/lib/subscription';
 
 export async function GET(req: Request) {
     try {
-        let driverId: string | null = null;
-
-        // 1. Bearer Token check (Mobile App)
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.split(' ')[1];
-            try {
-                const decoded = jwt.verify(token, getJwtSecret()) as any;
-                if (decoded?.role === 'DRIVER' && decoded?.id) {
-                    driverId = decoded.id;
-                }
-            } catch {
-                // Ignore token error and try session
-            }
+        const authRes = await authenticateBearerOrSession(req, ['DRIVER']);
+        if (!authRes.authenticated) {
+            return NextResponse.json({ success: false, error: 'Unauthorized: Driver access required' }, { status: authRes.status });
         }
+        const driverId = authRes.userId;
 
-        // 2. NextAuth Session check (Web Portal)
-        if (!driverId) {
-            try {
-                const session = await auth();
-                const user = session?.user as { id?: string; role?: string } | undefined;
-                if (user?.id && user?.role === 'DRIVER') {
-                    driverId = user.id;
-                }
-            } catch {
-                // Session error
+        const driverRecord = await prisma.user.findUnique({
+            where: { id: driverId },
+            select: { companyId: true },
+        });
+        if (driverRecord?.companyId) {
+            const subCheck = await checkTierFeature(driverRecord.companyId, 'driverMobileSync');
+            if (!subCheck.allowed) {
+                return NextResponse.json(
+                    { success: false, code: subCheck.code, error: subCheck.error },
+                    { status: 403 }
+                );
             }
-        }
-
-        if (!driverId) {
-            return NextResponse.json({ success: false, error: 'Unauthorized: Driver access required' }, { status: 401 });
         }
         
         // Find assigned tours for this driver

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { timingSafeEqualStrings, isAllowedSourceIp } from '@/lib/security';
 import v8 from 'v8';
 import path from 'path';
 import fs from 'fs';
@@ -13,8 +14,24 @@ let cachedDbStatus = 'healthy';
 let cachedDbLatency = 0;
 const DB_HEALTH_CACHE_MS = 2000;
 
+function isDiagnosticAuthorized(request: Request): boolean {
+    if (!isAllowedSourceIp(request, process.env.DIAGNOSTIC_ALLOWED_IPS)) {
+        return false;
+    }
+    const configuredSecret = process.env.DIAGNOSTIC_SECRET?.trim();
+    if (!configuredSecret) {
+        return false;
+    }
+    const secretHeader = request.headers.get('x-diagnostic-secret')?.trim() || '';
+    if (!secretHeader) {
+        return false;
+    }
+    return timingSafeEqualStrings(secretHeader, configuredSecret);
+}
+
 export async function GET(request: Request) {
     const startTime = Date.now();
+    const isAuthorizedDiagnostic = isDiagnosticAuthorized(request);
     const mem = process.memoryUsage();
     const heapStats = v8.getHeapStatistics();
     const heapUsedMb = Number((mem.heapUsed / (1024 * 1024)).toFixed(2));
@@ -24,29 +41,29 @@ export async function GET(request: Request) {
     const heapUsageRatio = heapStats.heap_size_limit > 0 ? mem.heapUsed / heapStats.heap_size_limit : 0;
     const isUnderMemoryPressure = heapUsageRatio > 0.85;
 
-    // Check query params for heap snapshot action
+    // Heap snapshots are disabled in production and gated strictly behind DIAGNOSTIC_SECRET in dev.
     const url = new URL(request.url);
     const action = url.searchParams.get('action');
 
     let heapSnapshotFile: string | null = null;
     if (action === 'snapshot') {
-        const isDev = process.env.NODE_ENV !== 'production';
-        const secretHeader = request.headers.get('x-diagnostic-secret');
-        const configuredSecret = process.env.DIAGNOSTIC_SECRET || 'vigil-internal-profiler';
-
-        if (isDev || secretHeader === configuredSecret) {
-            try {
-                const dumpDir = path.join(process.cwd(), 'diagnostics');
-                if (!fs.existsSync(dumpDir)) {
-                    fs.mkdirSync(dumpDir, { recursive: true });
-                }
-                const filename = `heap-${Date.now()}.heapsnapshot`;
-                const fullPath = path.join(dumpDir, filename);
-                v8.writeHeapSnapshot(fullPath);
-                heapSnapshotFile = fullPath;
-            } catch (snapError) {
-                console.error('[Health] Failed to write heap snapshot:', snapError);
+        if (process.env.NODE_ENV === 'production' || !isAuthorizedDiagnostic) {
+            return NextResponse.json(
+                { status: 'forbidden', error: 'Diagnostic snapshots are disabled in production or require valid x-diagnostic-secret.' },
+                { status: 403 }
+            );
+        }
+        try {
+            const dumpDir = path.join(process.cwd(), 'diagnostics');
+            if (!fs.existsSync(dumpDir)) {
+                fs.mkdirSync(dumpDir, { recursive: true });
             }
+            const filename = `heap-${Date.now()}.heapsnapshot`;
+            const fullPath = path.join(dumpDir, filename);
+            v8.writeHeapSnapshot(fullPath);
+            heapSnapshotFile = fullPath;
+        } catch (snapError) {
+            console.error('[Health] Failed to write heap snapshot:', snapError);
         }
     }
 
@@ -65,8 +82,28 @@ export async function GET(request: Request) {
         }
     }
 
+    const overallStatus = isUnderMemoryPressure || cachedDbStatus !== 'healthy' ? 'degraded' : 'healthy';
+
+    if (!isAuthorizedDiagnostic) {
+        return NextResponse.json(
+            {
+                status: overallStatus,
+                timestamp: new Date().toISOString(),
+                telemetry: {
+                    dbStatus: cachedDbStatus,
+                },
+            },
+            {
+                status: overallStatus === 'healthy' ? 200 : 503,
+                headers: {
+                    'Cache-Control': 'no-store, no-cache, must-revalidate',
+                },
+            }
+        );
+    }
+
     const payload = {
-        status: isUnderMemoryPressure || cachedDbStatus !== 'healthy' ? 'degraded' : 'healthy',
+        status: overallStatus,
         timestamp: new Date().toISOString(),
         uptimeSeconds: Math.floor(process.uptime()),
         telemetry: {
@@ -91,7 +128,7 @@ export async function GET(request: Request) {
     };
 
     return NextResponse.json(payload, {
-        status: isUnderMemoryPressure || cachedDbStatus !== 'healthy' ? 503 : 200,
+        status: overallStatus === 'healthy' ? 200 : 503,
         headers: {
             'Cache-Control': 'no-store, no-cache, must-revalidate',
             'X-Vigil-Memory-Rss': `${rssMb}MB`,

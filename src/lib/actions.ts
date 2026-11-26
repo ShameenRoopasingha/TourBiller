@@ -7,6 +7,8 @@ import { calculateTotalAmount } from '@/lib/calculations';
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { formatActionError } from '@/lib/error-handler';
+import { checkTierFeature } from '@/lib/subscription';
+import { recordAuditLog } from '@/lib/audit';
 
 /**
  * Create a new bill
@@ -49,6 +51,13 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
 
     // Validate the data
     const validatedData = BillSchema.parse(rawData);
+
+    if (validatedData.currency && validatedData.currency.toUpperCase() !== 'LKR') {
+      const fxTierCheck = await checkTierFeature(authCheck.companyId, 'multiCurrency');
+      if (!fxTierCheck.allowed) {
+        return { success: false, error: fxTierCheck.error };
+      }
+    }
 
     // Calculate days for bill
     let days = 1;
@@ -143,6 +152,16 @@ export async function createBill(formData: FormData): Promise<ActionResult<strin
       }
     }
 
+    await recordAuditLog({
+      companyId: authCheck.companyId,
+      actorId: authCheck.userId,
+      actorRole: authCheck.role,
+      action: 'BILL_CREATED',
+      resourceType: 'Bill',
+      resourceId: createdBill.id,
+      metadata: { vehicleNo: createdBill.vehicleNo, totalAmount },
+    });
+
     // Revalidate all affected pages
     revalidateFor('bill', 'booking');
 
@@ -196,6 +215,13 @@ export async function updateBill(id: string, formData: FormData): Promise<Action
 
     // Validate the data
     const validatedData = BillSchema.parse(rawData);
+
+    if (validatedData.currency && validatedData.currency.toUpperCase() !== 'LKR') {
+      const fxTierCheck = await checkTierFeature(authCheck.companyId, 'multiCurrency');
+      if (!fxTierCheck.allowed) {
+        return { success: false, error: fxTierCheck.error };
+      }
+    }
 
     // Calculate days for bill (Inclusive Calendar Days)
     let days = 1;
@@ -257,6 +283,16 @@ export async function updateBill(id: string, formData: FormData): Promise<Action
       console.warn('Could not update vehicle mileage:', vehicleError);
     }
 
+    await recordAuditLog({
+      companyId: authCheck.companyId,
+      actorId: authCheck.userId,
+      actorRole: authCheck.role,
+      action: 'BILL_UPDATED',
+      resourceType: 'Bill',
+      resourceId: id,
+      metadata: { vehicleNo: validatedData.vehicleNo, totalAmount },
+    });
+
     // Revalidate all affected pages
     revalidateFor('bill', 'booking');
 
@@ -278,6 +314,7 @@ export async function getBills(searchQuery?: string): Promise<ActionResult<Bill[
     if (!authCheck.authorized) {
       return { success: false, error: authCheck.error };
     }
+
     const companyId = authCheck.companyId;
 
     const cleanedQuery = searchQuery?.replace(/^#/, '') || '';
@@ -393,6 +430,13 @@ export async function updateBusinessProfile(formData: FormData): Promise<ActionR
 
     const validatedData = BusinessProfileSchema.parse(rawData);
 
+    if (validatedData.currency && validatedData.currency.toUpperCase() !== 'LKR') {
+      const fxTierCheck = await checkTierFeature(authCheck.companyId, 'multiCurrency');
+      if (!fxTierCheck.allowed) {
+        return { success: false, error: fxTierCheck.error };
+      }
+    }
+
     const profile = await prisma.businessProfile.update({
       where: { id: authCheck.companyId },
       data: validatedData,
@@ -419,6 +463,14 @@ export async function configureInitialCurrency(
     const authCheck = await requireAdmin();
     if (!authCheck.authorized) {
       return { success: false, error: authCheck.error };
+    }
+
+    const normalizedCurrency = (currency || 'LKR').toUpperCase().trim();
+    if (normalizedCurrency !== 'LKR') {
+      const fxTierCheck = await checkTierFeature(authCheck.companyId, 'multiCurrency');
+      if (!fxTierCheck.allowed) {
+        return { success: false, error: fxTierCheck.error };
+      }
     }
 
     const profile = await prisma.businessProfile.update({
@@ -455,6 +507,15 @@ export async function deleteBill(id: string): Promise<ActionResult<void>> {
     if (deleted.count === 0) {
       return { success: false, error: 'Bill not found or unauthorized' };
     }
+
+    await recordAuditLog({
+      companyId: authCheck.companyId,
+      actorId: authCheck.userId,
+      actorRole: authCheck.role,
+      action: 'BILL_DELETED',
+      resourceType: 'Bill',
+      resourceId: id,
+    });
 
     revalidateFor('bill');
 

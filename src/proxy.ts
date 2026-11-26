@@ -18,11 +18,12 @@ export default auth((req) => {
         pathname.startsWith('/login') ||
         pathname.startsWith('/forgot-password') ||
         pathname.startsWith('/reset-password') ||
+        pathname.startsWith('/subscription-required') ||
         pathname.startsWith('/privacy') ||
         pathname.startsWith('/terms') ||
         pathname.startsWith('/api/auth') ||
         pathname.startsWith('/api/keepalive') ||
-        pathname.startsWith('/api/webhooks/subscription') ||
+        pathname.startsWith('/api/bitgard/subscription-sync') ||
         pathname.startsWith('/api/cron') || // Vercel Cron uses Bearer token auth
         pathname.startsWith('/api/v1/health') || // Health check & load telemetry
         pathname.startsWith('/api/health') || // Base health check

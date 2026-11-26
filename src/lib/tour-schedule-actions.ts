@@ -1,12 +1,13 @@
 'use server';
 
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { VehicleCategory } from '@prisma/client';
 import { TourScheduleSchema, type ActionResult } from '@/lib/validations';
 import { revalidateFor } from '@/lib/revalidation';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { formatActionError } from '@/lib/error-handler';
+import { checkTierFeature } from '@/lib/subscription';
+import { recordAuditLog } from '@/lib/audit';
 
 // Types for server responses
 export type TourScheduleWithItems = {
@@ -76,6 +77,11 @@ export async function createTourSchedule(
         const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
+        }
+
+        const tierCheck = await checkTierFeature(authCheck.companyId, 'itineraryRouting');
+        if (!tierCheck.allowed) {
+            return { success: false, error: tierCheck.error };
         }
 
         const validated = TourScheduleSchema.parse(data);
@@ -172,16 +178,20 @@ export async function createTourSchedule(
 
         revalidateFor('tourSchedule');
         return { success: true, data: { id: schedule.id, name: schedule.name } };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error creating tour schedule:', error);
         // Handle Prisma P2002 unique constraint error gracefully
-        if (error?.code === 'P2002') {
+        const errorCode =
+            typeof error === 'object' && error !== null && 'code' in error
+                ? (error as { code?: unknown }).code
+                : undefined;
+        if (errorCode === 'P2002') {
             try {
                 const authCheck = await requireAdmin();
                 const fallbackExisting = await prisma.tourSchedule.findFirst({
                     where: {
                         companyId: authCheck.authorized ? authCheck.companyId : undefined,
-                        name: (data as any)?.name,
+                        name: data?.name,
                     },
                     select: { id: true, name: true }
                 });
@@ -193,7 +203,7 @@ export async function createTourSchedule(
             }
             return {
                 success: false,
-                error: `A tour schedule with the name "${(data as any)?.name}" already exists. Please choose a different name.`
+                error: `A tour schedule with the name "${data?.name}" already exists. Please choose a different name.`
             };
         }
         return formatActionError(error, 'Failed to create tour schedule');
@@ -306,6 +316,11 @@ export async function updateTourSchedule(
             return { success: false, error: authCheck.error };
         }
 
+        const tierCheck = await checkTierFeature(authCheck.companyId, 'itineraryRouting');
+        if (!tierCheck.allowed) {
+            return { success: false, error: tierCheck.error };
+        }
+
         const validated = TourScheduleSchema.parse(data);
 
         await prisma.$transaction(async (tx) => {
@@ -375,6 +390,16 @@ export async function deleteTourSchedule(id: string): Promise<ActionResult<void>
             data: { isActive: false },
         });
         if (_res.count === 0) return { success: false, error: 'Record not found or unauthorized' };
+
+        await recordAuditLog({
+            companyId: authCheck.companyId,
+            actorId: authCheck.userId,
+            actorRole: authCheck.role,
+            action: 'TOUR_SCHEDULE_DELETED',
+            resourceType: 'TourSchedule',
+            resourceId: id,
+            metadata: { softDelete: true, isActive: false },
+        });
 
         revalidateFor('tourSchedule');
         return { success: true };

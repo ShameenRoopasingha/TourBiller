@@ -1,58 +1,64 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
-import { auth } from '@/lib/auth';
 import { DriverLocationPingSchema, DriverLocationBatchSchema } from '@/lib/validations';
-import { getJwtSecret } from '@/lib/jwt';
+import { authenticateBearerOrSession } from '@/lib/security';
+import { checkTierFeature } from '@/lib/subscription';
 
-async function authenticateDriverOrUser(req: Request) {
-    // 1. Try Bearer token (Mobile App)
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
-        try {
-            const decoded = jwt.verify(token, getJwtSecret()) as any;
-            if (decoded?.id && decoded?.companyId) {
-                return {
-                    driverId: decoded.id as string,
-                    companyId: decoded.companyId as string,
-                    role: decoded.role as string,
-                };
-            }
-        } catch {
-            // Ignore error and try session next
+async function resolveAuthorizedBookingId(
+    requestedBookingId: string | null | undefined,
+    companyId: string,
+    driverId: string
+): Promise<
+    | { ok: true; bookingId: string | null }
+    | { ok: false; status: 403 | 404; code?: string; error: string }
+> {
+    if (requestedBookingId) {
+        const booking = await prisma.booking.findFirst({
+            where: { id: requestedBookingId, companyId },
+            select: { id: true, driverId: true },
+        });
+        if (!booking) {
+            return { ok: false, status: 404, error: 'Booking not found for this company' };
         }
-    }
-
-    // 2. Try NextAuth session (Web Driver Portal or Admin)
-    try {
-        const session = await auth();
-        const user = session?.user as { id?: string; companyId?: string; role?: string } | undefined;
-        if (user?.id && user?.companyId) {
+        if (booking.driverId !== driverId) {
             return {
-                driverId: user.id,
-                companyId: user.companyId,
-                role: user.role || 'DRIVER',
+                ok: false,
+                status: 403,
+                code: 'TOUR_HANDED_OVER',
+                error: 'This tour has been reassigned to another driver by dispatch.',
             };
         }
-    } catch {
-        // Session resolution failed
+        return { ok: true, bookingId: booking.id };
     }
 
-    return null;
+    const currentBooking = await prisma.booking.findFirst({
+        where: { driverId, companyId, status: 'ONGOING' },
+        select: { id: true },
+    });
+    return { ok: true, bookingId: currentBooking?.id || null };
 }
 
 // POST: Save driver GPS ping (Single or Batch for Offline Sync)
 export async function POST(req: Request) {
     try {
-        const authUser = await authenticateDriverOrUser(req);
-        if (!authUser) {
-            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        const authRes = await authenticateBearerOrSession(req, ['DRIVER', 'ADMIN', 'OWNER']);
+        if (!authRes.authenticated) {
+            return NextResponse.json({ success: false, error: authRes.error }, { status: authRes.status });
         }
 
         const body = await req.json();
-        const driverId = authUser.driverId;
-        const companyId = authUser.companyId;
+        const driverId = authRes.userId;
+        const companyId = authRes.companyId;
+        const serverNow = new Date();
+        const maxAllowedClientTimeMs = serverNow.getTime() + 5 * 60 * 1000;
+
+        const subCheck = await checkTierFeature(companyId, 'driverMobileSync');
+        if (!subCheck.allowed) {
+            return NextResponse.json(
+                { success: false, code: subCheck.code, error: subCheck.error },
+                { status: 403 }
+            );
+        }
 
         // Check if this is an offline batch sync
         if (body.batch !== undefined && Array.isArray(body.batch)) {
@@ -62,40 +68,32 @@ export async function POST(req: Request) {
             }
 
             const batchPoints = parsedBatch.data.batch;
-            let activeBookingId = parsedBatch.data.bookingId;
-
-            if (activeBookingId) {
-                const booking = await prisma.booking.findFirst({
-                    where: { id: activeBookingId, companyId },
-                    select: { id: true, driverId: true }
-                });
-                if (booking && booking.driverId !== driverId) {
-                    return NextResponse.json({
-                        success: false,
-                        code: 'TOUR_HANDED_OVER',
-                        error: 'This tour has been reassigned to another driver by dispatch.'
-                    }, { status: 403 });
-                }
-            } else {
-                const currentBooking = await prisma.booking.findFirst({
-                    where: { driverId, status: 'ONGOING' },
-                    select: { id: true }
-                });
-                activeBookingId = currentBooking?.id || null;
+            const resolvedBooking = await resolveAuthorizedBookingId(parsedBatch.data.bookingId, companyId, driverId);
+            if (!resolvedBooking.ok) {
+                return NextResponse.json(
+                    { success: false, ...(resolvedBooking.code ? { code: resolvedBooking.code } : {}), error: resolvedBooking.error },
+                    { status: resolvedBooking.status }
+                );
             }
+            const activeBookingId = resolvedBooking.bookingId;
 
-            const validRecords = batchPoints.map(p => ({
-                companyId,
-                driverId,
-                bookingId: activeBookingId,
-                lat: p.lat,
-                lon: p.lon,
-                heading: p.heading,
-                speed: p.speed,
-                accuracy: p.accuracy,
-                battery: p.battery,
-                timestamp: p.timestamp,
-            }));
+            const validRecords = batchPoints.map((p) => {
+                const rawTs = p.timestamp instanceof Date ? p.timestamp : new Date(p.timestamp);
+                const clampedTs = Number.isNaN(rawTs.getTime()) || rawTs.getTime() > maxAllowedClientTimeMs ? serverNow : rawTs;
+                return {
+                    companyId,
+                    driverId,
+                    bookingId: activeBookingId,
+                    lat: p.lat,
+                    lon: p.lon,
+                    heading: p.heading,
+                    speed: p.speed,
+                    accuracy: p.accuracy,
+                    battery: p.battery,
+                    timestamp: clampedTs,
+                    serverReceivedAt: serverNow,
+                };
+            });
 
             if (validRecords.length > 0) {
                 await prisma.driverLocation.createMany({
@@ -143,30 +141,14 @@ export async function POST(req: Request) {
 
         const { bookingId, lat, lon, heading, speed, accuracy, battery } = parsedPing.data;
 
-        // Find active booking if not explicitly provided
-        let activeBookingId = bookingId;
-        if (activeBookingId) {
-            const booking = await prisma.booking.findFirst({
-                where: { id: activeBookingId, companyId },
-                select: { id: true, driverId: true }
-            });
-            if (booking && booking.driverId !== driverId) {
-                return NextResponse.json({
-                    success: false,
-                    code: 'TOUR_HANDED_OVER',
-                    error: 'This tour has been reassigned to another driver by dispatch.'
-                }, { status: 403 });
-            }
-        } else {
-            const currentBooking = await prisma.booking.findFirst({
-                where: {
-                    driverId: driverId,
-                    status: 'ONGOING'
-                },
-                select: { id: true }
-            });
-            activeBookingId = currentBooking?.id || null;
+        const resolvedBooking = await resolveAuthorizedBookingId(bookingId, companyId, driverId);
+        if (!resolvedBooking.ok) {
+            return NextResponse.json(
+                { success: false, ...(resolvedBooking.code ? { code: resolvedBooking.code } : {}), error: resolvedBooking.error },
+                { status: resolvedBooking.status }
+            );
         }
+        const activeBookingId = resolvedBooking.bookingId;
 
         const now = new Date();
 
@@ -183,6 +165,7 @@ export async function POST(req: Request) {
                 accuracy: typeof accuracy === 'number' ? accuracy : null,
                 battery: typeof battery === 'number' ? battery : null,
                 timestamp: now,
+                serverReceivedAt: now,
             }
         });
 
@@ -227,21 +210,30 @@ export async function POST(req: Request) {
 // GET: Retrieve location history (breadcrumbs) for a tour/booking
 export async function GET(req: Request) {
     try {
-        const authUser = await authenticateDriverOrUser(req);
-        if (!authUser) {
-            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        const authRes = await authenticateBearerOrSession(req, ['DRIVER', 'ADMIN', 'OWNER']);
+        if (!authRes.authenticated) {
+            return NextResponse.json({ success: false, error: authRes.error }, { status: authRes.status });
         }
 
         const url = new URL(req.url);
         const bookingId = url.searchParams.get('bookingId');
-        const driverId = url.searchParams.get('driverId') || authUser.driverId;
+        const driverId = url.searchParams.get('driverId') || authRes.userId;
         const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10), 500);
 
-        const whereClause: any = {
-            companyId: authUser.companyId,
+        const whereClause: {
+            companyId: string;
+            driverId?: string;
+            bookingId?: string;
+        } = {
+            companyId: authRes.companyId,
         };
 
-        if (bookingId) {
+        if (authRes.role === 'DRIVER') {
+            whereClause.driverId = authRes.userId;
+            if (bookingId) {
+                whereClause.bookingId = bookingId;
+            }
+        } else if (bookingId) {
             whereClause.bookingId = bookingId;
         } else if (driverId) {
             whereClause.driverId = driverId;
