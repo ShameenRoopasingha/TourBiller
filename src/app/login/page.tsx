@@ -434,10 +434,10 @@ export default function LoginPage() {
                                     </span>
                                 </label>
                                 <span className="text-[11px] text-slate-400">
-                                    Need access?{' '}
-                                    <a href="mailto:support@vigiltours.com?subject=New%20Tenant%20Workspace%20Request" className="text-primary hover:underline">
-                                        Request Workspace
-                                    </a>
+                                    New subscriber?{' '}
+                                    <Link href="/forgot-password" className="text-primary hover:underline font-medium">
+                                        Set Password / Activate
+                                    </Link>
                                 </span>
                             </div>
 

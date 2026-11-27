@@ -1,4 +1,13 @@
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey || apiKey === 're_123456789') {
+    return null;
+  }
+  return new Resend(apiKey);
+}
 
 export interface SendVerificationEmailOptions {
   to: string;
@@ -259,16 +268,40 @@ export async function sendVerificationEmail(
   const verifyLink = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(to)}`;
 
   const transporter = getSmtpTransporter();
-
   const isProduction = process.env.NODE_ENV === 'production';
+  const htmlContent = generateVerificationEmailHtml({
+    name,
+    otpCode,
+    verifyLink,
+  });
+  const subject = `Verify your email address - Vigil Tour Management [Code: ${otpCode}]`;
+  const text = `Hello ${name || 'there'},\n\nYour 6-digit verification code is: ${otpCode}\n\nOr verify directly at: ${verifyLink}\n\nThis code expires in 24 hours.`;
 
-  // If SMTP is not configured in local environment, log gracefully so dev/testing is never blocked;
-  // in production, fail closed and never log OTPs or return tokens.
   if (!transporter) {
+    const resend = getResendClient();
+    if (resend) {
+      try {
+        const fromResend = process.env.EMAIL_FROM || 'VIGIL Tours <onboarding@resend.dev>';
+        const { data, error } = await resend.emails.send({
+          from: fromResend,
+          to,
+          subject,
+          text,
+          html: htmlContent,
+        });
+        if (!error) {
+          return { success: true, messageId: data?.id };
+        }
+        console.warn('[OPEN-SOURCE MAILER] Resend verification fallback error:', error.message);
+      } catch (resendErr) {
+        console.warn('[OPEN-SOURCE MAILER] Resend verification fallback failed:', resendErr);
+      }
+    }
+
     if (isProduction) {
       return {
         success: false,
-        error: 'Email delivery service (SMTP) is not configured in production.',
+        error: 'Email delivery service (SMTP/Resend) is not configured in production.',
       };
     }
     console.log('====================================================');
@@ -287,17 +320,12 @@ export async function sendVerificationEmail(
 
   try {
     const fromAddress = process.env.SMTP_FROM || `"VIGIL Tour Management" <noreply@vigil.app>`;
-    const htmlContent = generateVerificationEmailHtml({
-      name,
-      otpCode,
-      verifyLink,
-    });
 
     const info = await transporter.sendMail({
       from: fromAddress,
       to,
-      subject: `Verify your email address - Vigil Tour Management [Code: ${otpCode}]`,
-      text: `Hello ${name || 'there'},\n\nYour 6-digit verification code is: ${otpCode}\n\nOr verify directly at: ${verifyLink}\n\nThis code expires in 24 hours.`,
+      subject,
+      text,
       html: htmlContent,
     });
 
@@ -327,12 +355,45 @@ export async function sendPasswordResetEmail(options: {
 }): Promise<SendVerificationEmailResult> {
   const { to, name, resetLink, otpCode } = options;
   const transporter = getSmtpTransporter();
+  const htmlContent = generatePasswordResetEmailHtml({
+    name,
+    resetLink,
+    otpCode,
+  });
+
+  const subject = otpCode
+    ? `Reset your password - Vigil Tour Management [OTP: ${otpCode}]`
+    : `Set up your Vigil workspace password - Vigil Tour Management`;
+
+  const textContent = otpCode
+    ? `Hello ${name || 'there'},\n\nYour 6-digit password reset OTP is: ${otpCode}\n\nAlternatively, reset your password using the link below:\n\n${resetLink}\n\nThis OTP and link expire in 15-60 minutes.`
+    : `Hello ${name || 'there'},\n\nUse the link below to set your Vigil workspace password and sign in:\n\n${resetLink}\n\nThis link expires in 1 hour.`;
 
   if (!transporter) {
+    const resend = getResendClient();
+    if (resend) {
+      try {
+        const fromResend = process.env.EMAIL_FROM || 'VIGIL Tours <onboarding@resend.dev>';
+        const { data, error } = await resend.emails.send({
+          from: fromResend,
+          to,
+          subject,
+          text: textContent,
+          html: htmlContent,
+        });
+        if (!error) {
+          return { success: true, messageId: data?.id };
+        }
+        console.warn('[OPEN-SOURCE MAILER] Resend password reset fallback error:', error.message);
+      } catch (resendErr) {
+        console.warn('[OPEN-SOURCE MAILER] Resend password reset fallback failed:', resendErr);
+      }
+    }
+
     if (process.env.NODE_ENV === 'production') {
       return {
         success: false,
-        error: 'Email delivery service (SMTP) is not configured in production.',
+        error: 'Email delivery service (SMTP/Resend) is not configured in production.',
       };
     }
     console.log('====================================================');
@@ -351,19 +412,6 @@ export async function sendPasswordResetEmail(options: {
 
   try {
     const fromAddress = process.env.SMTP_FROM || `"VIGIL Tour Management" <noreply@vigil.app>`;
-    const htmlContent = generatePasswordResetEmailHtml({
-      name,
-      resetLink,
-      otpCode,
-    });
-
-    const subject = otpCode
-      ? `Reset your password - Vigil Tour Management [OTP: ${otpCode}]`
-      : `Reset your password - Vigil Tour Management`;
-
-    const textContent = otpCode
-      ? `Hello ${name || 'there'},\n\nYour 6-digit password reset OTP is: ${otpCode}\n\nAlternatively, reset your password using the link below:\n\n${resetLink}\n\nThis OTP and link expire in 15-60 minutes.`
-      : `Hello ${name || 'there'},\n\nWe received a request to reset your password. Use the link below to set a new password:\n\n${resetLink}\n\nThis link expires in 1 hour.`;
 
     const info = await transporter.sendMail({
       from: fromAddress,

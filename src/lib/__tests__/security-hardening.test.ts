@@ -80,6 +80,7 @@ import {
 } from '@/lib/subscription';
 import { cancelCompanySubscription } from '@/lib/subscription-actions';
 import { POST as bitgardSyncPOST } from '@/app/api/bitgard/subscription-sync/route';
+import { POST as bitgardOnboardingPOST } from '@/app/api/bitgard/onboarding-token/route';
 import { GET as customerExportGET } from '@/app/api/customers/export/route';
 import { POST as chatPOST } from '@/app/api/chat/route';
 import { POST as transcribePOST } from '@/app/api/transcribe/route';
@@ -313,6 +314,56 @@ describe('BitgardWeb <-> Vigil Security & Subscription Mitigations', () => {
             expect(sendPasswordResetEmail).toHaveBeenCalledWith(
                 expect.objectContaining({ to: 'vip@tours.lk' })
             );
+        });
+
+        it('issues onboarding setupUrl ONLY for brand-new ADMIN/OWNER accounts with tokenVersion=0', async () => {
+            process.env.BITGARD_SYNC_SECRET = TEST_SYNC_SECRET;
+            process.env.NEXT_PUBLIC_APP_URL = 'https://vigil-pos.vercel.app';
+
+            const body = JSON.stringify({
+                email: 'founder@tours.lk',
+                sessionId: 'cks_test_123456',
+            });
+
+            // 1. Existing user who already set/reset password (tokenVersion = 1) -> NOT eligible
+            (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+                id: 'usr-old',
+                email: 'founder@tours.lk',
+                role: 'ADMIN',
+                tokenVersion: 1,
+                createdAt: new Date(),
+            });
+            const ineligibleRes = await bitgardOnboardingPOST(
+                new Request('http://localhost/api/bitgard/onboarding-token', {
+                    method: 'POST',
+                    headers: makeBitgardSyncHeaders(body, TEST_SYNC_SECRET, 'onb_001'),
+                    body,
+                })
+            );
+            const ineligibleJson = await ineligibleRes.json();
+            expect(ineligibleRes.status).toBe(200);
+            expect(ineligibleJson).toMatchObject({ success: true, eligible: false, setupUrl: null });
+
+            // 2. Newly provisioned workspace owner (tokenVersion = 0) -> issues setupUrl
+            (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+                id: 'usr-new',
+                email: 'founder@tours.lk',
+                role: 'ADMIN',
+                tokenVersion: 0,
+                createdAt: new Date(),
+            });
+            const okRes = await bitgardOnboardingPOST(
+                new Request('http://localhost/api/bitgard/onboarding-token', {
+                    method: 'POST',
+                    headers: makeBitgardSyncHeaders(body, TEST_SYNC_SECRET, 'onb_002'),
+                    body,
+                })
+            );
+            const okJson = await okRes.json();
+            expect(okRes.status).toBe(200);
+            expect(okJson.eligible).toBe(true);
+            expect(okJson.setupUrl).toContain('https://vigil-pos.vercel.app/reset-password?token=');
+            expect(okJson.setupUrl).toContain('onboarding=1');
         });
     });
 

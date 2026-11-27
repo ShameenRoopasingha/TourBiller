@@ -11,6 +11,10 @@ const syncPayloadSchema = z.object({
     eventType: z.string().trim().min(1).max(120),
     email: z.string().trim().email().max(254),
     companyName: z.string().trim().min(1).max(160),
+    contactName: z.string().trim().max(120).nullable().optional(),
+    phone: z.string().trim().max(40).nullable().optional(),
+    address: z.string().trim().max(240).nullable().optional(),
+    country: z.string().trim().max(60).nullable().optional(),
     tier: z.enum(['STARTER', 'PROFESSIONAL', 'ENTERPRISE']),
     billingCycle: z.enum(['MONTHLY', 'ANNUAL', 'LIFETIME']),
     status: z.enum([
@@ -132,7 +136,11 @@ export async function POST(request: Request) {
         }
 
         let createdNewTenant = false;
+        let setupUrl: string | null = null;
         let resolvedCompanyId = targetCompanyId;
+        const normalizedCountryCode = data.country?.trim()
+            ? data.country.trim().toLowerCase().slice(0, 2)
+            : undefined;
 
         if (!resolvedCompanyId) {
             const effectivePassword =
@@ -144,13 +152,16 @@ export async function POST(request: Request) {
                     data: {
                         companyName: data.companyName,
                         email,
+                        ...(data.address?.trim() ? { address: data.address.trim() } : {}),
+                        ...(data.phone?.trim() ? { phone: data.phone.trim() } : {}),
+                        ...(normalizedCountryCode ? { countryCode: normalizedCountryCode } : {}),
                     },
                 });
 
                 await tx.user.create({
                     data: {
                         email,
-                        name: data.companyName,
+                        name: data.contactName?.trim() || data.companyName,
                         password: hashedPassword,
                         role: 'ADMIN',
                         companyId: profile.id,
@@ -207,15 +218,36 @@ export async function POST(request: Request) {
                 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
                 const resetLink = `${baseUrl}/reset-password?token=${setupToken}&email=${encodeURIComponent(
                     email
-                )}`;
+                )}&onboarding=1`;
+                setupUrl = resetLink;
                 await sendPasswordResetEmail({
                     to: email,
-                    name: data.companyName,
+                    name: data.contactName?.trim() || data.companyName,
                     resetLink,
                 });
             }
         } else {
             await prisma.$transaction(async (tx) => {
+                if (data.address?.trim() || data.phone?.trim() || normalizedCountryCode) {
+                    const existingProfile = await tx.businessProfile.findUnique({
+                        where: { id: resolvedCompanyId! },
+                        select: { address: true, phone: true, countryCode: true },
+                    });
+                    if (existingProfile) {
+                        await tx.businessProfile.update({
+                            where: { id: resolvedCompanyId! },
+                            data: {
+                                ...(!existingProfile.address && data.address?.trim()
+                                    ? { address: data.address.trim() }
+                                    : {}),
+                                ...(!existingProfile.phone && data.phone?.trim()
+                                    ? { phone: data.phone.trim() }
+                                    : {}),
+                                ...(normalizedCountryCode ? { countryCode: normalizedCountryCode } : {}),
+                            },
+                        });
+                    }
+                }
                 const sub = await tx.subscription.upsert({
                     where: { companyId: resolvedCompanyId! },
                     update: {
@@ -270,6 +302,7 @@ export async function POST(request: Request) {
             success: true,
             companyId: resolvedCompanyId,
             createdTenant: createdNewTenant,
+            setupUrl,
             status: data.status,
             tier: data.tier,
         });

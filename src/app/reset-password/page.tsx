@@ -15,6 +15,7 @@ function ResetPasswordContent() {
     const searchParams = useSearchParams();
     const token = searchParams.get('token') || '';
     const initialEmail = searchParams.get('email') || '';
+    const isOnboarding = searchParams.get('onboarding') === '1';
 
     // If token is present, start in token verification mode; otherwise start in OTP mode
     const [mode, setMode] = useState<'token' | 'otp'>(token ? 'token' : 'otp');
@@ -148,10 +149,16 @@ function ResetPasswordContent() {
                             <span>Universal Credential Recovery</span>
                         </div>
                         <h1 className="text-4xl sm:text-5xl xl:text-6xl font-extrabold tracking-[-0.03em] text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] leading-tight font-subheading">
-                            Reset Your <br/> <span className="text-primary">Secure Access.</span>
+                            {isOnboarding ? (
+                                <>Activate Your <br/> <span className="text-primary">Workspace Access.</span></>
+                            ) : (
+                                <>Reset Your <br/> <span className="text-primary">Secure Access.</span></>
+                            )}
                         </h1>
                         <p className="text-base xl:text-lg text-white/90 leading-relaxed font-sans font-normal max-w-lg drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-                            Verify your identity using your 6-digit OTP code or direct secure link to regain immediate console access.
+                            {isOnboarding
+                                ? `Choose a password for your Vigil workspace (${initialEmail || 'your business email'}) to complete first-time setup.`
+                                : 'Verify your identity using your 6-digit OTP code or direct secure link to regain immediate console access.'}
                         </p>
                     </div>
 
@@ -181,7 +188,9 @@ function ResetPasswordContent() {
                                     </div>
                                 </div>
                                 <CardTitle className="text-2xl font-black tracking-[0.22em] text-white font-heading uppercase pl-[0.22em]">VIGIL</CardTitle>
-                                <p className="text-[10px] font-mono font-bold text-primary uppercase tracking-[0.16em]">Password Reset & Account Recovery</p>
+                                <p className="text-[10px] font-mono font-bold text-primary uppercase tracking-[0.16em]">
+                                    {isOnboarding ? 'First-Time Workspace Setup' : 'Password Reset & Account Recovery'}
+                                </p>
                             </div>
                         </CardHeader>
 
