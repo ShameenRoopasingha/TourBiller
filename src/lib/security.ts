@@ -7,6 +7,7 @@ export {
     timingSafeEqualStrings,
     hashOpaqueToken,
     verifyBitgardSyncSignature,
+    signBitgardSyncPayload,
     verifyCronSecret,
     isAdminOrOwnerRole,
     escapeCsvCell,

@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 
 export type TierName = 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
+export type BillingCycleName = 'MONTHLY' | 'ANNUAL' | 'LIFETIME';
+export type LicenseSourceName = 'DODO_PAYMENTS' | 'MANUAL_ADMIN';
 export type SubscriptionStatusName =
     | 'TRIALING'
     | 'ACTIVE'
@@ -96,18 +98,41 @@ export interface SubscriptionAccessEvaluation {
     active: boolean;
     isLifetime: boolean;
     tier: TierName;
+    billingCycle: BillingCycleName | null;
     status: SubscriptionStatusName | 'NONE';
     reason?: 'NO_SUBSCRIPTION' | 'EXPIRED' | 'PAST_DUE' | 'CANCELLED' | 'REVOKED';
+    source: LicenseSourceName | null;
+    bitgardSubscriptionId: string | null;
+    currentPeriodStart: Date | null;
     currentPeriodEnd: Date | null;
     licenseKey: string | null;
     note: string | null;
 }
 
+function normalizeBillingCycle(raw?: string | null, isLifetime?: boolean): BillingCycleName | null {
+    if (isLifetime) return 'LIFETIME';
+    if (raw === 'MONTHLY' || raw === 'ANNUAL' || raw === 'LIFETIME') {
+        return raw;
+    }
+    return null;
+}
+
+function normalizeLicenseSource(raw?: string | null): LicenseSourceName | null {
+    if (raw === 'DODO_PAYMENTS' || raw === 'MANUAL_ADMIN') {
+        return raw;
+    }
+    return null;
+}
+
 export function evaluateSubscriptionRecord(
     sub: {
         tier: string;
+        billingCycle?: string | null;
         status: string;
+        source?: string | null;
         isLifetime: boolean;
+        bitgardSubscriptionId?: string | null;
+        currentPeriodStart?: Date | null;
         currentPeriodEnd: Date | null;
         licenseKey?: string | null;
         note?: string | null;
@@ -119,8 +144,12 @@ export function evaluateSubscriptionRecord(
             active: false,
             isLifetime: false,
             tier: 'STARTER',
+            billingCycle: null,
             status: 'NONE',
             reason: 'NO_SUBSCRIPTION',
+            source: null,
+            bitgardSubscriptionId: null,
+            currentPeriodStart: null,
             currentPeriodEnd: null,
             licenseKey: null,
             note: null,
@@ -131,6 +160,9 @@ export function evaluateSubscriptionRecord(
         ? sub.tier
         : 'STARTER') as TierName;
     const status = sub.status as SubscriptionStatusName;
+    const source = normalizeLicenseSource(sub.source);
+    const bitgardSubscriptionId = sub.bitgardSubscriptionId ?? null;
+    const currentPeriodStart = sub.currentPeriodStart ?? null;
 
     // LIFETIME licenses always bypass billing/expiry verification and grant assigned tier privileges
     if (sub.isLifetime || status === 'LIFETIME') {
@@ -138,12 +170,18 @@ export function evaluateSubscriptionRecord(
             active: true,
             isLifetime: true,
             tier,
+            billingCycle: 'LIFETIME',
             status: 'LIFETIME',
+            source,
+            bitgardSubscriptionId,
+            currentPeriodStart,
             currentPeriodEnd: null,
             licenseKey: sub.licenseKey ?? null,
             note: sub.note ?? null,
         };
     }
+
+    const billingCycle = normalizeBillingCycle(sub.billingCycle, false);
 
     if (status === 'ACTIVE' || status === 'TRIALING') {
         if (sub.currentPeriodEnd && sub.currentPeriodEnd.getTime() < now.getTime()) {
@@ -151,8 +189,12 @@ export function evaluateSubscriptionRecord(
                 active: false,
                 isLifetime: false,
                 tier,
+                billingCycle,
                 status: 'EXPIRED',
                 reason: 'EXPIRED',
+                source,
+                bitgardSubscriptionId,
+                currentPeriodStart,
                 currentPeriodEnd: sub.currentPeriodEnd,
                 licenseKey: sub.licenseKey ?? null,
                 note: sub.note ?? null,
@@ -162,7 +204,11 @@ export function evaluateSubscriptionRecord(
             active: true,
             isLifetime: false,
             tier,
+            billingCycle,
             status,
+            source,
+            bitgardSubscriptionId,
+            currentPeriodStart,
             currentPeriodEnd: sub.currentPeriodEnd,
             licenseKey: sub.licenseKey ?? null,
             note: sub.note ?? null,
@@ -180,8 +226,12 @@ export function evaluateSubscriptionRecord(
         active: false,
         isLifetime: false,
         tier,
+        billingCycle,
         status,
         reason: reasonMap[status] || 'EXPIRED',
+        source,
+        bitgardSubscriptionId,
+        currentPeriodStart,
         currentPeriodEnd: sub.currentPeriodEnd,
         licenseKey: sub.licenseKey ?? null,
         note: sub.note ?? null,

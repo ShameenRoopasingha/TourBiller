@@ -35,10 +35,19 @@ export default async function SubscriptionRequiredPage() {
             Subscription Inactive or Expired
           </h1>
           <p className="text-sm text-muted-foreground">
-            Your workspace subscription status is currently{' '}
+            Your workspace subscription ({subState?.entitlements.label || 'Starter'}
+            {subState?.billingCycle ? ` • ${subState.billingCycle}` : ''}) is currently{' '}
             <strong className="text-foreground">
               {subState?.status || 'NONE'}
             </strong>
+            {subState?.currentPeriodEnd
+              ? ` (period end: ${new Date(subState.currentPeriodEnd).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  timeZone: 'UTC',
+                })})`
+              : ''}
             . Renew or activate a Vigil plan on Bitgard to restore workspace access.
           </p>
         </div>

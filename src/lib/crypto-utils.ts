@@ -73,6 +73,32 @@ export function verifyBitgardSyncSignature(
 }
 
 /**
+ * Signs an outbound Vigil -> BitgardWeb request using HMAC-SHA256 with `BITGARD_SYNC_SECRET`.
+ */
+export function signBitgardSyncPayload(
+    rawBody: string,
+    syncSecret: string,
+    deliveryId: string = crypto.randomUUID(),
+    timestampSeconds: number = Math.floor(Date.now() / 1000)
+): {
+    'x-bitgard-delivery-id': string;
+    'x-bitgard-timestamp': string;
+    'x-bitgard-signature': string;
+} {
+    const signedContent = `${timestampSeconds}.${deliveryId}.${rawBody}`;
+    const digest = crypto
+        .createHmac('sha256', syncSecret)
+        .update(signedContent, 'utf8')
+        .digest('base64');
+
+    return {
+        'x-bitgard-delivery-id': deliveryId,
+        'x-bitgard-timestamp': String(timestampSeconds),
+        'x-bitgard-signature': `v1,${digest}`,
+    };
+}
+
+/**
  * Verifies Vercel / external cron Bearer secret in constant time.
  */
 export function verifyCronSecret(

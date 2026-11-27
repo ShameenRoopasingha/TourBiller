@@ -12,7 +12,7 @@ jest.mock('@/lib/prisma', () => ({
         bill: { create: jest.fn(), count: jest.fn() },
         vehicle: { findMany: jest.fn(), findFirst: jest.fn(), findUnique: jest.fn(), count: jest.fn(), create: jest.fn(), deleteMany: jest.fn() },
         vehicleExpense: { count: jest.fn(), deleteMany: jest.fn() },
-        subscription: { findUnique: jest.fn(), upsert: jest.fn(), create: jest.fn() },
+        subscription: { findUnique: jest.fn(), upsert: jest.fn(), create: jest.fn(), update: jest.fn() },
         subscriptionEvent: { findUnique: jest.fn(), create: jest.fn() },
         passwordResetToken: { deleteMany: jest.fn(), create: jest.fn() },
         auditLog: { create: jest.fn() },
@@ -78,6 +78,7 @@ import {
     checkVehicleQuota,
     checkTierFeature,
 } from '@/lib/subscription';
+import { cancelCompanySubscription } from '@/lib/subscription-actions';
 import { POST as bitgardSyncPOST } from '@/app/api/bitgard/subscription-sync/route';
 import { GET as customerExportGET } from '@/app/api/customers/export/route';
 import { POST as chatPOST } from '@/app/api/chat/route';
@@ -354,6 +355,133 @@ describe('BitgardWeb <-> Vigil Security & Subscription Mitigations', () => {
                 code: 'TIER_UPGRADE_REQUIRED',
                 requiredTier: 'Enterprise',
             });
+        });
+
+        it('exposes billingCycle and currentPeriodStart clearly on evaluated subscriptions', () => {
+            const start = new Date('2026-11-01T00:00:00.000Z');
+            const end = new Date(Date.now() + 30 * 86_400_000);
+            const evalRes = evaluateSubscriptionRecord({
+                tier: 'ENTERPRISE',
+                billingCycle: 'ANNUAL',
+                status: 'ACTIVE',
+                source: 'DODO_PAYMENTS',
+                isLifetime: false,
+                currentPeriodStart: start,
+                currentPeriodEnd: end,
+                licenseKey: 'VGL-TEST-1234',
+            });
+            expect(evalRes).toMatchObject({
+                active: true,
+                tier: 'ENTERPRISE',
+                billingCycle: 'ANNUAL',
+                status: 'ACTIVE',
+                source: 'DODO_PAYMENTS',
+                currentPeriodStart: start,
+                currentPeriodEnd: end,
+            });
+        });
+
+        it('rejects subscription cancellation for DRIVER users and protects LIFETIME VIP licenses', async () => {
+            (authGuard.requireAuth as jest.Mock).mockResolvedValueOnce({
+                authorized: true,
+                userId: 'drv-1',
+                role: 'DRIVER',
+                companyId: 'comp-1',
+            });
+
+            const driverCancel = await cancelCompanySubscription('No longer needed');
+            expect(driverCancel.success).toBe(false);
+            expect(driverCancel.error).toContain('Admin or Owner');
+
+            (authGuard.requireAuth as jest.Mock).mockResolvedValueOnce({
+                authorized: true,
+                userId: 'own-1',
+                role: 'OWNER',
+                companyId: 'comp-1',
+            });
+            (prisma.subscription.findUnique as jest.Mock).mockResolvedValueOnce({
+                id: 'sub-life',
+                companyId: 'comp-1',
+                ownerEmail: 'vip@tours.lk',
+                tier: 'ENTERPRISE',
+                billingCycle: 'LIFETIME',
+                status: 'LIFETIME',
+                source: 'MANUAL_ADMIN',
+                isLifetime: true,
+            });
+
+            const lifetimeCancel = await cancelCompanySubscription();
+            expect(lifetimeCancel.success).toBe(false);
+            expect(lifetimeCancel.error).toContain('Lifetime VIP');
+            expect(prisma.subscription.update).not.toHaveBeenCalled();
+        });
+
+        it('fails closed for DODO_PAYMENTS cancellation when BITGARD_SYNC_SECRET is missing, and cancels MANUAL_ADMIN cleanly with audit log', async () => {
+            delete process.env.BITGARD_SYNC_SECRET;
+            (authGuard.requireAuth as jest.Mock).mockResolvedValue({
+                authorized: true,
+                userId: 'adm-1',
+                role: 'ADMIN',
+                companyId: 'comp-1',
+            });
+
+            (prisma.subscription.findUnique as jest.Mock).mockResolvedValueOnce({
+                id: 'sub-dodo',
+                companyId: 'comp-1',
+                ownerEmail: 'ops@tours.lk',
+                tier: 'PROFESSIONAL',
+                billingCycle: 'MONTHLY',
+                status: 'ACTIVE',
+                source: 'DODO_PAYMENTS',
+                bitgardSubscriptionId: 'bg-sub-1',
+                isLifetime: false,
+            });
+
+            const failedDodo = await cancelCompanySubscription('Switching plan');
+            expect(failedDodo.success).toBe(false);
+            expect(prisma.subscription.update).not.toHaveBeenCalled();
+
+            (prisma.subscription.findUnique as jest.Mock).mockResolvedValueOnce({
+                id: 'sub-manual',
+                companyId: 'comp-1',
+                ownerEmail: 'ops@tours.lk',
+                tier: 'STARTER',
+                billingCycle: 'MONTHLY',
+                status: 'ACTIVE',
+                source: 'MANUAL_ADMIN',
+                bitgardSubscriptionId: null,
+                isLifetime: false,
+            });
+
+            const manualCancel = await cancelCompanySubscription('Seasonal pause');
+            expect(manualCancel).toMatchObject({
+                success: true,
+                status: 'CANCELLED',
+                remoteBillingCancelled: false,
+            });
+            expect(prisma.subscription.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { id: 'sub-manual' },
+                    data: expect.objectContaining({ status: 'CANCELLED' }),
+                })
+            );
+            expect(prisma.subscriptionEvent.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        subscriptionId: 'sub-manual',
+                        eventType: 'subscription.cancelled_by_customer',
+                        status: 'CANCELLED',
+                    }),
+                })
+            );
+            expect(prisma.auditLog.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        companyId: 'comp-1',
+                        action: 'SUBSCRIPTION_CANCEL',
+                    }),
+                })
+            );
         });
     });
 
