@@ -19,6 +19,7 @@ import { AmbientAtmosphere } from '@/components/layout/ambient-atmosphere'
 import { ThemeSwitcher } from '@/components/layout/theme-switcher'
 import ChatAssistant from '@/components/ChatAssistant'
 import { EmergencyDispatchBanner } from '@/components/EmergencyDispatchBanner'
+import { WorkstationGuard } from '@/components/WorkstationGuard'
 
 const orbitron = Orbitron({
   subsets: ['latin'],
@@ -144,6 +145,10 @@ export default async function RootLayout({
                   {/* AI Assistant Chat UI (Admin/Owner only) */}
                   {(session.user as { role?: string })?.role === 'ADMIN' || (session.user as { role?: string })?.role === 'OWNER' ? (
                     <div className="print:hidden">
+                      <WorkstationGuard
+                        deviceId={(session.user as { deviceId?: string })?.deviceId}
+                        isAdminOrOwner={true}
+                      />
                       <ChatAssistant />
                     </div>
                   ) : null}

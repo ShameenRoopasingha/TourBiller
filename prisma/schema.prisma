@@ -74,6 +74,7 @@ model BusinessProfile {
   driverLocations  DriverLocation[]
   vehicleSwapLogs  VehicleSwapLog[]
   auditLogs        AuditLog[]
+  workstations     ActiveWorkstation[]
   subscription     Subscription?
 
   @@map("business_profile")
@@ -258,9 +259,32 @@ model User {
   driverLocations  DriverLocation[]
   acknowledgedEmergencies Booking[] @relation("EmergencyAcknowledger")
   vehicleSwaps     VehicleSwapLog[]
+  workstations     ActiveWorkstation[]
 
   @@index([companyId])
   @@map("users")
+}
+
+model ActiveWorkstation {
+  id          String    @id @default(cuid())
+  companyId   String
+  userId      String
+  deviceId    String
+  deviceLabel String
+  platform    String?
+  userAgent   String?
+  status      String    @default("ACTIVE") // ACTIVE | REVOKED
+  lastSeenAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+
+  company BusinessProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, deviceId])
+  @@index([companyId, status])
+  @@index([userId, status])
+  @@map("active_workstations")
 }
 
 model PasswordResetToken {

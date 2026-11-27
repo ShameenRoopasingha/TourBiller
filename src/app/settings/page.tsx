@@ -10,7 +10,9 @@ import { prisma } from '@/lib/prisma';
 import { BackupButton } from '@/components/BackupButton';
 import { CsvImport } from '@/components/CsvImport';
 import { SubscriptionCancelButton } from '@/components/SubscriptionCancelButton';
+import { ActiveWorkstationsCard } from '@/components/ActiveWorkstationsCard';
 import { getCompanySubscriptionStatus } from '@/lib/subscription';
+import { listActiveWorkstations } from '@/lib/workstations';
 
 function formatBillingDate(value: Date | null): string | null {
     if (!value) return null;
@@ -50,10 +52,11 @@ async function SettingsContent() {
     const profile = result.success ? result.data : undefined;
     const isAdmin = user.role === 'ADMIN' || user.role === 'OWNER';
 
-    const [subStatus, vehicleCount, adminCount] = await Promise.all([
+    const [subStatus, vehicleCount, adminCount, activeWorkstations] = await Promise.all([
         getCompanySubscriptionStatus(user.companyId),
         prisma.vehicle.count({ where: { companyId: user.companyId } }),
         prisma.user.count({ where: { companyId: user.companyId, role: { in: ['ADMIN', 'OWNER'] } } }),
+        isAdmin ? listActiveWorkstations(user.companyId) : Promise.resolve([]),
     ]);
 
     const portalUrl =
@@ -192,7 +195,7 @@ async function SettingsContent() {
                             <strong>{vehicleCount} / {subStatus.entitlements.maxVehicles}</strong>
                         </div>
                         <div>
-                            <span className="text-muted-foreground">Workstations:</span>{' '}
+                            <span className="text-muted-foreground">Admin Users:</span>{' '}
                             <strong>{adminCount} / {subStatus.entitlements.maxAdminWorkstations}</strong>
                         </div>
                         <div>
@@ -205,6 +208,15 @@ async function SettingsContent() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {isAdmin && (
+                <ActiveWorkstationsCard
+                    workstations={activeWorkstations}
+                    maxWorkstations={subStatus.entitlements.maxAdminWorkstations}
+                    planLabel={subStatus.entitlements.label}
+                    currentDeviceId={(session.user as { deviceId?: string }).deviceId}
+                />
             )}
 
             <Tabs defaultValue="account" className="w-full">

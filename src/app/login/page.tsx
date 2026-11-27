@@ -19,11 +19,64 @@ import {
     Layers, 
     Receipt, 
     CalendarRange,
-    ExternalLink
+    ExternalLink,
+    Laptop,
+    LogOut,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+
+interface ActiveWorkstationConflictItem {
+    id: string;
+    deviceLabel: string;
+    userName: string;
+    userEmail: string;
+    lastSeenAt: string;
+}
+
+function getOrCreateWorkstationIdentity(): { deviceId: string; deviceLabel: string; platform: string } {
+    if (typeof window === 'undefined') {
+        return { deviceId: 'server-ssr', deviceLabel: 'Workstation', platform: 'unknown' };
+    }
+    let deviceId = '';
+    try {
+        deviceId = localStorage.getItem('vigil_device_id') || '';
+        if (!deviceId || deviceId.length < 8) {
+            deviceId =
+                typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+                    ? crypto.randomUUID()
+                    : `ws_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+            localStorage.setItem('vigil_device_id', deviceId);
+        }
+    } catch {
+        deviceId = `ws_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    const ua = navigator.userAgent || '';
+    const isTauri = '__TAURI_INTERNALS__' in window || '__TAURI__' in window;
+    let os = 'Desktop';
+    if (ua.includes('Windows')) os = 'Windows';
+    else if (ua.includes('Mac')) os = 'macOS';
+    else if (ua.includes('Android')) os = 'Android';
+    else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+    else if (ua.includes('Linux')) os = 'Linux';
+
+    let client = isTauri ? 'Vigil Desktop' : 'Web Browser';
+    if (!isTauri) {
+        if (ua.includes('Edg/')) client = 'Edge';
+        else if (ua.includes('Chrome/')) client = 'Chrome';
+        else if (ua.includes('Firefox/')) client = 'Firefox';
+        else if (ua.includes('Safari/')) client = 'Safari';
+    }
+
+    const shortTag = deviceId.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || 'PC';
+    return {
+        deviceId,
+        deviceLabel: `${client} • ${os} (#${shortTag})`,
+        platform: os,
+    };
+}
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -32,6 +85,12 @@ export default function LoginPage() {
     const [rememberDevice, setRememberDevice] = useState(true);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [seatConflict, setSeatConflict] = useState<{
+        maxWorkstations: number;
+        planLabel: string;
+        activeWorkstations: ActiveWorkstationConflictItem[];
+    } | null>(null);
+    const [switchingId, setSwitchingId] = useState<string | null>(null);
     const [mousePos, setMousePos] = useState({ x: 200, y: 200 });
 
     const cardRef = useRef<HTMLDivElement>(null);
@@ -45,6 +104,8 @@ export default function LoginPage() {
         if (urlError) {
             if (urlError === 'CredentialsSignin') {
                 setError('Invalid email or password. Please verify your credentials.');
+            } else if (urlError === 'WorkstationRevoked') {
+                setError('This workstation was deactivated from another device or workspace settings. Sign in again to re-activate.');
             } else if (urlError === 'SessionRequired') {
                 setError('Your session has timed out. Please sign in again.');
             } else {
@@ -75,15 +136,19 @@ export default function LoginPage() {
         });
     };
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
+    const completeSignIn = async (deactivateWorkstationId?: string) => {
         setError('');
-        setLoading(true);
+        if (deactivateWorkstationId) {
+            setSwitchingId(deactivateWorkstationId);
+        } else {
+            setLoading(true);
+            setSeatConflict(null);
+        }
 
         const cleanEmail = email.trim().toLowerCase();
+        const { deviceId, deviceLabel, platform } = getOrCreateWorkstationIdentity();
 
         try {
-            // Save or clear remembered workstation email
             if (rememberDevice) {
                 try {
                     localStorage.setItem('vigil_remembered_email', cleanEmail);
@@ -94,15 +159,55 @@ export default function LoginPage() {
                 } catch {}
             }
 
+            const checkRes = await fetch('/api/auth/workstation-check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: cleanEmail,
+                    password,
+                    deviceId,
+                    deviceLabel,
+                    platform,
+                    ...(deactivateWorkstationId ? { deactivateWorkstationId } : {}),
+                }),
+            });
+
+            const checkData = (await checkRes.json().catch(() => ({}))) as {
+                allowed?: boolean;
+                code?: string;
+                error?: string;
+                maxWorkstations?: number;
+                planLabel?: string;
+                activeWorkstations?: ActiveWorkstationConflictItem[];
+            };
+
+            if (checkRes.status === 409 && checkData.code === 'WORKSTATION_LIMIT_REACHED') {
+                setSeatConflict({
+                    maxWorkstations: checkData.maxWorkstations || 1,
+                    planLabel: checkData.planLabel || 'Current',
+                    activeWorkstations: checkData.activeWorkstations || [],
+                });
+                return;
+            }
+
+            if (!checkRes.ok || !checkData.allowed) {
+                setError(checkData.error || 'Invalid email or password. Please verify your credentials.');
+                return;
+            }
+
             const result = await signIn('credentials', {
                 email: cleanEmail,
                 password,
+                deviceId,
+                deviceLabel,
+                ...(deactivateWorkstationId ? { deactivateWorkstationId } : {}),
                 redirect: false,
             });
 
             if (result?.error) {
                 setError('Invalid email or password. Please verify your credentials.');
             } else {
+                setSeatConflict(null);
                 router.push(callbackUrl);
                 router.refresh();
             }
@@ -110,7 +215,13 @@ export default function LoginPage() {
             setError('Authentication service unreachable. Please try again shortly.');
         } finally {
             setLoading(false);
+            setSwitchingId(null);
         }
+    };
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        await completeSignIn();
     };
 
     return (
@@ -350,6 +461,66 @@ export default function LoginPage() {
                                         >
                                             <X className="w-3.5 h-3.5" />
                                         </button>
+                                    </motion.div>
+                                )}
+
+                                {seatConflict && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -4 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -4 }}
+                                        className="p-3 rounded-xl bg-amber-950/60 border border-amber-500/40 space-y-2.5 text-amber-100 text-xs"
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="space-y-0.5">
+                                                <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                                                    <Laptop className="w-3.5 h-3.5" />
+                                                    <span>
+                                                        Workstation Limit Reached ({seatConflict.activeWorkstations.length}/{seatConflict.maxWorkstations} &bull; {seatConflict.planLabel})
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-amber-200/80">
+                                                    Replacing a broken or old computer? Deactivate an active PC below to switch seats immediately:
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSeatConflict(null)}
+                                                className="text-amber-300/70 hover:text-amber-200 p-0.5"
+                                                aria-label="Close workstation switcher"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            {seatConflict.activeWorkstations.map((ws) => (
+                                                <div
+                                                    key={ws.id}
+                                                    className="flex items-center justify-between gap-2 rounded-lg bg-black/50 border border-white/10 px-2.5 py-2"
+                                                >
+                                                    <div className="min-w-0">
+                                                        <div className="font-semibold text-white truncate">{ws.deviceLabel}</div>
+                                                        <div className="text-[10px] text-slate-400 truncate">
+                                                            {ws.userName} &bull; Last active {new Date(ws.lastSeenAt).toLocaleDateString()}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        disabled={switchingId === ws.id}
+                                                        onClick={() => void completeSignIn(ws.id)}
+                                                        className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary hover:bg-primary-600 text-white font-semibold text-[11px] disabled:opacity-50"
+                                                    >
+                                                        {switchingId === ws.id ? (
+                                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                                        ) : (
+                                                            <LogOut className="w-3 h-3" />
+                                                        )}
+                                                        <span>Switch Here</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>

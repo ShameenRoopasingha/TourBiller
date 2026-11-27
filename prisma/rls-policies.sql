@@ -20,6 +20,7 @@ ALTER TABLE public.subscription_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.password_reset_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.email_verification_tokens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.active_workstations ENABLE ROW LEVEL SECURITY;
 
 -- Optional app-session scoped policy template when connecting with a non-superuser role setting `app.company_id`:
 -- CREATE POLICY tenant_isolation_bills ON public.bills

@@ -16,6 +16,7 @@ jest.mock('@/lib/prisma', () => ({
         subscriptionEvent: { findUnique: jest.fn(), create: jest.fn() },
         passwordResetToken: { deleteMany: jest.fn(), create: jest.fn() },
         auditLog: { create: jest.fn() },
+        activeWorkstation: { findMany: jest.fn(), findFirst: jest.fn(), findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
         $transaction: jest.fn(),
         $queryRaw: jest.fn(),
     },
@@ -78,7 +79,12 @@ import {
     checkVehicleQuota,
     checkTierFeature,
 } from '@/lib/subscription';
-import { cancelCompanySubscription } from '@/lib/subscription-actions';
+import {
+    cancelCompanySubscription,
+    deactivateCompanyWorkstation,
+} from '@/lib/subscription-actions';
+import { registerOrSwitchWorkstation } from '@/lib/workstations';
+import { POST as workstationHeartbeatPOST } from '@/app/api/auth/workstation-heartbeat/route';
 import { POST as bitgardSyncPOST } from '@/app/api/bitgard/subscription-sync/route';
 import { POST as bitgardOnboardingPOST } from '@/app/api/bitgard/onboarding-token/route';
 import { GET as customerExportGET } from '@/app/api/customers/export/route';
@@ -533,6 +539,92 @@ describe('BitgardWeb <-> Vigil Security & Subscription Mitigations', () => {
                     }),
                 })
             );
+        });
+
+        it('enforces Starter 1-workstation limit, allows self-serve switch, and revokes old device heartbeat', async () => {
+            (prisma.subscription.findUnique as jest.Mock).mockResolvedValue({
+                tier: 'STARTER',
+                billingCycle: 'MONTHLY',
+                status: 'ACTIVE',
+                source: 'DODO_PAYMENTS',
+                isLifetime: false,
+                currentPeriodEnd: new Date(Date.now() + 86_400_000),
+            });
+
+            // 1 existing active workstation occupies the 1 Starter slot
+            (prisma.activeWorkstation.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'ws-broken-1',
+                    companyId: 'comp-1',
+                    userId: 'adm-1',
+                    deviceId: 'old-broken-device-uuid',
+                    deviceLabel: 'Vigil Desktop • Windows (#1111)',
+                    platform: 'Windows',
+                    status: 'ACTIVE',
+                    lastSeenAt: new Date(),
+                    createdAt: new Date(),
+                    user: { name: 'Kasun', email: 'kasun@tours.lk' },
+                },
+            ]);
+
+            // New PC without deactivateWorkstationId -> blocked
+            const blocked = await registerOrSwitchWorkstation({
+                companyId: 'comp-1',
+                userId: 'adm-1',
+                role: 'ADMIN',
+                deviceId: 'new-laptop-device-uuid',
+                deviceLabel: 'Edge • Windows (#2222)',
+            });
+            expect(blocked).toMatchObject({
+                allowed: false,
+                code: 'WORKSTATION_LIMIT_REACHED',
+                maxWorkstations: 1,
+            });
+
+            // New PC switching away from broken PC -> revokes old PC & activates new PC
+            (prisma.activeWorkstation.upsert as jest.Mock).mockResolvedValueOnce({ id: 'ws-new-2' });
+            const switched = await registerOrSwitchWorkstation({
+                companyId: 'comp-1',
+                userId: 'adm-1',
+                role: 'ADMIN',
+                deviceId: 'new-laptop-device-uuid',
+                deviceLabel: 'Edge • Windows (#2222)',
+                deactivateWorkstationId: 'ws-broken-1',
+            });
+            expect(switched).toMatchObject({
+                allowed: true,
+                workstationId: 'ws-new-2',
+                switchedFromId: 'ws-broken-1',
+            });
+            expect(prisma.activeWorkstation.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { id: 'ws-broken-1' },
+                    data: expect.objectContaining({ status: 'REVOKED' }),
+                })
+            );
+
+            // Revoked workstation heartbeat triggers 401 WORKSTATION_REVOKED
+            (auth as jest.Mock).mockResolvedValueOnce({
+                user: { id: 'adm-1', companyId: 'comp-1', role: 'ADMIN', deviceId: 'old-broken-device-uuid' },
+            });
+            (prisma.activeWorkstation.findUnique as jest.Mock).mockResolvedValueOnce({
+                id: 'ws-broken-1',
+                status: 'REVOKED',
+            });
+            const hbRes = await workstationHeartbeatPOST(
+                new Request('http://localhost/api/auth/workstation-heartbeat', { method: 'POST' })
+            );
+            expect(hbRes.status).toBe(401);
+
+            // RBAC on deactivateCompanyWorkstation
+            (authGuard.requireAuth as jest.Mock).mockResolvedValueOnce({
+                authorized: true,
+                userId: 'drv-1',
+                role: 'DRIVER',
+                companyId: 'comp-1',
+            });
+            const drvRes = await deactivateCompanyWorkstation('ws-new-2');
+            expect(drvRes.success).toBe(false);
         });
     });
 

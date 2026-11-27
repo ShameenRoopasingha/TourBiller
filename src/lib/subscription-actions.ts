@@ -206,3 +206,66 @@ export async function cancelCompanySubscription(
         };
     }
 }
+
+/**
+ * Allows an authenticated workspace Admin or Owner to deactivate/sign out
+ * an active workstation (e.g., broken/replaced computer or freeing a seat).
+ */
+export async function deactivateCompanyWorkstation(
+    workstationId: string
+): Promise<{ success: boolean; error?: string }> {
+    const authCheck = await requireAuth();
+    if (!authCheck.authorized) {
+        return { success: false, error: authCheck.error };
+    }
+
+    if (!isAdminOrOwnerRole(authCheck.role)) {
+        return {
+            success: false,
+            error: 'Unauthorized: Only an Admin or Owner can manage active workstations.',
+        };
+    }
+
+    const cleanId = (workstationId || '').trim();
+    if (!cleanId) {
+        return { success: false, error: 'Missing workstation ID.' };
+    }
+
+    try {
+        const target = await prisma.activeWorkstation.findFirst({
+            where: {
+                id: cleanId,
+                companyId: authCheck.companyId,
+            },
+            select: { id: true, deviceLabel: true, status: true },
+        });
+
+        if (!target) {
+            return { success: false, error: 'Workstation not found for this workspace.' };
+        }
+
+        await prisma.activeWorkstation.update({
+            where: { id: target.id },
+            data: {
+                status: 'REVOKED',
+                revokedAt: new Date(),
+            },
+        });
+
+        await recordAuditLog({
+            companyId: authCheck.companyId,
+            actorId: authCheck.userId,
+            actorRole: authCheck.role,
+            action: 'WORKSTATION_DEACTIVATE',
+            resourceType: 'ActiveWorkstation',
+            resourceId: target.id,
+            metadata: { deviceLabel: target.deviceLabel },
+        });
+
+        revalidatePath('/settings');
+        return { success: true };
+    } catch (error) {
+        console.error('Workstation deactivate error:', error);
+        return { success: false, error: 'Failed to deactivate workstation.' };
+    }
+}
