@@ -63,3 +63,5 @@ post-body.json
 # Tauri & Android binaries
 *.apk
 *.aab
+.vercel
+.env*
