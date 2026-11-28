@@ -5,6 +5,7 @@ import { CompanyImportSchema } from '@/lib/validations';
 import { VehicleCategory } from '@prisma/client';
 import { formatApiErrorResponse } from '@/lib/error-handler';
 import { checkVehicleQuota, isSubscriptionEnforcementEnabled, requireActiveSubscription } from '@/lib/subscription';
+import { reportCompanyVehicleUsage } from '@/lib/vehicle-usage';
 import { recordAuditLog } from '@/lib/audit';
 import { getClientIp, hashIpAddress } from '@/lib/security';
 
@@ -25,7 +26,7 @@ function normalizeVehicleCategory(raw: unknown): VehicleCategory {
 
 export async function POST(request: NextRequest) {
   try {
-    let body: any;
+    let body: unknown;
     try {
       body = await request.json();
     } catch {
@@ -55,14 +56,14 @@ export async function POST(request: NextRequest) {
 
     if (entityType === 'customers') {
       const customersToInsert = data
-        .map((row: any) => ({
+        .map((row: Record<string, unknown>) => ({
           companyId,
-          name: row.Name || row.name,
+          name: String(row.Name || row.name || ''),
           mobile: String(row.Mobile || row.mobile || ''),
-          email: row.Email || row.email || null,
-          address: row.Address || row.address || null,
+          email: row.Email || row.email ? String(row.Email || row.email) : null,
+          address: row.Address || row.address ? String(row.Address || row.address) : null,
         }))
-        .filter((c: any) => c.name); // Customer name is mandatory
+        .filter((c) => Boolean(c.name)); // Customer name is mandatory
 
       const result = await prisma.customer.createMany({
         data: customersToInsert,
@@ -80,17 +81,17 @@ export async function POST(request: NextRequest) {
       }
 
       const vehiclesToInsert = data
-        .map((row: any) => ({
+        .map((row: Record<string, unknown>) => ({
           companyId,
           vehicleNo: String(row['Vehicle No'] || row.vehicleNo || row.VehicleNo || '').trim().toUpperCase(),
-          model: row.Model || row.model || null,
-          category: normalizeVehicleCategory(row.Category || row.category),
-          ratePerDay: parseFloat(row['Rate Per Day'] || row.ratePerDay || '0') || 0,
-          kmPerDay: parseFloat(row['Km Per Day'] || row.kmPerDay || '0') || 0,
+          model: row.Model || row.model ? String(row.Model || row.model) : null,
+          category: normalizeVehicleCategory(String(row.Category || row.category || '')),
+          ratePerDay: parseFloat(String(row['Rate Per Day'] || row.ratePerDay || '0')) || 0,
+          kmPerDay: parseFloat(String(row['Km Per Day'] || row.kmPerDay || '0')) || 0,
         }))
-        .filter((v: any) => v.vehicleNo); // Vehicle No is mandatory
+        .filter((v) => Boolean(v.vehicleNo)); // Vehicle No is mandatory
 
-      if (isSubscriptionEnforcementEnabled() && vehiclesToInsert.length > 0) {
+      if (isSubscriptionEnforcementEnabled() && process.env.HARD_BLOCK_VEHICLE_OVERAGE === 'true' && vehiclesToInsert.length > 0) {
         const existingVehicles = await prisma.vehicle.findMany({
           where: { companyId },
           select: { vehicleNo: true },
@@ -118,6 +119,7 @@ export async function POST(request: NextRequest) {
         data: vehiclesToInsert,
         skipDuplicates: true,
       });
+      await reportCompanyVehicleUsage(companyId);
       importedCount = result.count;
     } 
     else {

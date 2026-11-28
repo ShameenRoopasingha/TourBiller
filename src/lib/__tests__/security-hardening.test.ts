@@ -389,7 +389,9 @@ describe('BitgardWeb <-> Vigil Security & Subscription Mitigations', () => {
             });
         });
 
-        it('respects ENABLE_SUBSCRIPTION_ENFORCEMENT toggle for test run vs production enforcement', async () => {
+        it('enforces per-tier extra-vehicle overage rates ($2.10 Starter, $1.80 Pro, $1.56 Enterprise)', async () => {
+            process.env.ENABLE_SUBSCRIPTION_ENFORCEMENT = 'true';
+
             (prisma.subscription.findUnique as jest.Mock).mockResolvedValue({
                 tier: 'STARTER',
                 status: 'ACTIVE',
@@ -397,20 +399,60 @@ describe('BitgardWeb <-> Vigil Security & Subscription Mitigations', () => {
                 currentPeriodEnd: new Date(Date.now() + 86_400_000),
             });
             (prisma.vehicle.count as jest.Mock).mockResolvedValue(10);
+            const starterOverage = await checkVehicleQuota('comp-1');
+            expect(starterOverage).toMatchObject({
+                allowed: true,
+                overageActive: true,
+                projectedExtraVehicles: 1,
+                extraVehicleRateUsd: 2.1,
+                projectedMonthlyOverageUsd: 2.1,
+            });
 
-            process.env.ENABLE_SUBSCRIPTION_ENFORCEMENT = 'false';
-            const testRunAllowed = await checkVehicleQuota('comp-1');
-            expect(testRunAllowed.allowed).toBe(true);
+            (prisma.subscription.findUnique as jest.Mock).mockResolvedValue({
+                tier: 'PROFESSIONAL',
+                status: 'ACTIVE',
+                isLifetime: false,
+                currentPeriodEnd: new Date(Date.now() + 86_400_000),
+            });
+            (prisma.vehicle.count as jest.Mock).mockResolvedValue(26);
+            const proOverage = await checkVehicleQuota('comp-1');
+            expect(proOverage).toMatchObject({
+                allowed: true,
+                overageActive: true,
+                projectedExtraVehicles: 2,
+                extraVehicleRateUsd: 1.8,
+                projectedMonthlyOverageUsd: 3.6,
+            });
 
-            process.env.ENABLE_SUBSCRIPTION_ENFORCEMENT = 'true';
-            const enforcedBlocked = await checkVehicleQuota('comp-1');
-            expect(enforcedBlocked).toMatchObject({ allowed: false, code: 'QUOTA_EXCEEDED' });
+            (prisma.subscription.findUnique as jest.Mock).mockResolvedValue({
+                tier: 'ENTERPRISE',
+                status: 'ACTIVE',
+                isLifetime: false,
+                currentPeriodEnd: new Date(Date.now() + 86_400_000),
+            });
+            (prisma.vehicle.count as jest.Mock).mockResolvedValue(75);
+            const entOverage = await checkVehicleQuota('comp-1');
+            expect(entOverage).toMatchObject({
+                allowed: true,
+                overageActive: true,
+                projectedExtraVehicles: 1,
+                extraVehicleRateUsd: 1.56,
+                projectedMonthlyOverageUsd: 1.56,
+            });
+
+            (prisma.subscription.findUnique as jest.Mock).mockResolvedValue({
+                tier: 'STARTER',
+                status: 'REVOKED',
+                isLifetime: false,
+                currentPeriodEnd: new Date(Date.now() + 86_400_000),
+            });
+            const revokedBlocked = await checkVehicleQuota('comp-1');
+            expect(revokedBlocked).toMatchObject({ allowed: false, code: 'SUBSCRIPTION_INACTIVE' });
 
             const multiCurrencyBlocked = await checkTierFeature('comp-1', 'multiCurrency');
             expect(multiCurrencyBlocked).toMatchObject({
                 allowed: false,
-                code: 'TIER_UPGRADE_REQUIRED',
-                requiredTier: 'Enterprise',
+                code: 'SUBSCRIPTION_INACTIVE',
             });
         });
 
@@ -815,9 +857,10 @@ describe('BitgardWeb <-> Vigil Security & Subscription Mitigations', () => {
             expect(defaultTools).not.toContain('addVehicle');
             expect(defaultTools).not.toContain('createBill');
 
-            // /api/company/import enforces remaining vehicle quota when enforcement is enabled
+            // /api/company/import enforces hard quota when HARD_BLOCK_VEHICLE_OVERAGE=true and allows metered overage otherwise
             process.env.ENABLE_SUBSCRIPTION_ENFORCEMENT = 'true';
-            (authGuard.requireAdmin as jest.Mock).mockResolvedValueOnce({
+            process.env.HARD_BLOCK_VEHICLE_OVERAGE = 'true';
+            (authGuard.requireAdmin as jest.Mock).mockResolvedValue({
                 authorized: true,
                 userId: 'adm-1',
                 role: 'ADMIN',
@@ -829,8 +872,8 @@ describe('BitgardWeb <-> Vigil Security & Subscription Mitigations', () => {
                 isLifetime: false,
                 currentPeriodEnd: new Date(Date.now() + 86_400_000),
             });
-            (prisma.vehicle.count as jest.Mock).mockResolvedValueOnce(9);
-            (prisma.vehicle.findMany as jest.Mock).mockResolvedValueOnce(
+            (prisma.vehicle.count as jest.Mock).mockResolvedValue(9);
+            (prisma.vehicle.findMany as jest.Mock).mockResolvedValue(
                 Array.from({ length: 9 }, (_, i) => ({ vehicleNo: `CAB-${i}` }))
             );
             const importOverflow = await companyImportPOST(
@@ -847,6 +890,7 @@ describe('BitgardWeb <-> Vigil Security & Subscription Mitigations', () => {
                 })
             );
             expect(importOverflow.status).toBe(403);
+            delete process.env.HARD_BLOCK_VEHICLE_OVERAGE;
 
             // Optional IP isolation on Bitgard Sync & Diagnostics while masking logged IPs
             expect(hashIpAddress('203.0.113.55')).toMatch(/^ip_[a-f0-9]{16}$/);

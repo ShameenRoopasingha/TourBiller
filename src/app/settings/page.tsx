@@ -193,6 +193,14 @@ async function SettingsContent() {
                         <div>
                             <span className="text-muted-foreground">Vehicles:</span>{' '}
                             <strong>{vehicleCount} / {subStatus.entitlements.maxVehicles}</strong>
+                            {!subStatus.isLifetime && (
+                                <span className="block text-[11px] text-muted-foreground">
+                                    +${subStatus.entitlements.extraVehicleRateUsd.toFixed(2)}/extra vehicle
+                                    {vehicleCount > subStatus.entitlements.maxVehicles
+                                        ? ` (+$${((vehicleCount - subStatus.entitlements.maxVehicles) * subStatus.entitlements.extraVehicleRateUsd).toFixed(2)}/mo)`
+                                        : ''}
+                                </span>
+                            )}
                         </div>
                         <div>
                             <span className="text-muted-foreground">Admin Users:</span>{' '}

@@ -25,6 +25,7 @@ export interface TierEntitlements {
     tier: TierName;
     label: string;
     maxVehicles: number;
+    extraVehicleRateUsd: number;
     maxAdminWorkstations: number;
     features: Record<TierFeatureKey, boolean>;
 }
@@ -37,6 +38,7 @@ export const TIER_ENTITLEMENTS: Record<TierName, TierEntitlements> = {
         tier: 'STARTER',
         label: 'Starter',
         maxVehicles: 10,
+        extraVehicleRateUsd: 2.1,
         maxAdminWorkstations: 1,
         features: {
             itineraryRouting: false,
@@ -52,6 +54,7 @@ export const TIER_ENTITLEMENTS: Record<TierName, TierEntitlements> = {
         tier: 'PROFESSIONAL',
         label: 'Professional',
         maxVehicles: 25,
+        extraVehicleRateUsd: 1.8,
         maxAdminWorkstations: 3,
         features: {
             itineraryRouting: true,
@@ -67,6 +70,7 @@ export const TIER_ENTITLEMENTS: Record<TierName, TierEntitlements> = {
         tier: 'ENTERPRISE',
         label: 'Enterprise',
         maxVehicles: 75,
+        extraVehicleRateUsd: 1.56,
         maxAdminWorkstations: 10,
         features: {
             itineraryRouting: true,
@@ -269,6 +273,11 @@ export type EntitlementCheckResult =
           tier: TierName;
           isLifetime: boolean;
           entitlements: TierEntitlements;
+          currentVehicles?: number;
+          projectedExtraVehicles?: number;
+          extraVehicleRateUsd?: number;
+          projectedMonthlyOverageUsd?: number;
+          overageActive?: boolean;
       }
     | {
           allowed: false;
@@ -338,15 +347,41 @@ export async function checkVehicleQuota(companyId: string): Promise<EntitlementC
     if (!base.enforcementActive) return base;
 
     const currentCount = await prisma.vehicle.count({ where: { companyId } });
-    if (currentCount >= base.entitlements.maxVehicles) {
+    const included = base.entitlements.maxVehicles;
+
+    if (base.isLifetime) {
         return {
-            allowed: false,
-            code: 'QUOTA_EXCEEDED',
-            error: `Vehicle limit reached (${currentCount}/${base.entitlements.maxVehicles}) for the ${base.entitlements.label} plan. Upgrade on Bitgard to add more vehicles.`,
+            ...base,
+            currentVehicles: currentCount,
+            projectedExtraVehicles: 0,
+            extraVehicleRateUsd: 0,
+            projectedMonthlyOverageUsd: 0,
+            overageActive: false,
         };
     }
 
-    return base;
+    if (process.env.HARD_BLOCK_VEHICLE_OVERAGE === 'true' && currentCount >= included) {
+        return {
+            allowed: false,
+            code: 'QUOTA_EXCEEDED',
+            error: `Vehicle limit reached (${currentCount}/${included}) for the ${base.entitlements.label} plan. Upgrade on Bitgard to add more vehicles.`,
+        };
+    }
+
+    const projectedExtraVehicles = Math.max(0, currentCount + 1 - included);
+    const extraVehicleRateUsd = base.entitlements.extraVehicleRateUsd;
+    const projectedMonthlyOverageUsd = Number(
+        (projectedExtraVehicles * extraVehicleRateUsd).toFixed(2)
+    );
+
+    return {
+        ...base,
+        currentVehicles: currentCount,
+        projectedExtraVehicles,
+        extraVehicleRateUsd,
+        projectedMonthlyOverageUsd,
+        overageActive: projectedExtraVehicles > 0,
+    };
 }
 
 export async function checkUserCreationQuota(

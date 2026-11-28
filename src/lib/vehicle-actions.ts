@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 import { formatActionError } from '@/lib/error-handler';
 import { checkVehicleQuota } from '@/lib/subscription';
+import { reportCompanyVehicleUsage } from '@/lib/vehicle-usage';
 import { recordAuditLog } from '@/lib/audit';
 
 /**
@@ -64,6 +65,7 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
             },
         });
 
+        await reportCompanyVehicleUsage(authCheck.companyId);
         revalidateFor('vehicle');
 
         return {
@@ -230,6 +232,7 @@ export async function deleteVehicle(id: string): Promise<ActionResult<void>> {
             metadata: { vehicleNo: vno },
         });
 
+        await reportCompanyVehicleUsage(cid);
         revalidatePath('/vehicles');
 
         return { success: true };
