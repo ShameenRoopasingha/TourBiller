@@ -26,6 +26,7 @@ import {
     Bell
 } from 'lucide-react';
 import { ActiveTourVehicle } from '@/components/FleetLiveMap';
+import { UpgradeFeatureWall } from '@/components/UpgradeFeatureWall';
 import { 
     playBreakdownAlarm, 
     playHandoverChime, 
@@ -64,6 +65,7 @@ export default function LiveTrackingPage() {
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [mobileTab, setMobileTab] = useState<'map' | 'list'>('map');
     const [error, setError] = useState<string | null>(null);
+    const [upgradeRequired, setUpgradeRequired] = useState<string | null>(null);
     const [fitAllTrigger, setFitAllTrigger] = useState<number>(0);
     const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
     const [showSoundPopover, setShowSoundPopover] = useState<boolean>(false);
@@ -85,7 +87,12 @@ export default function LiveTrackingPage() {
         try {
             const res = await fetch('/api/fleet/live-locations');
             const data = await res.json();
-            if (data.success && data.data) {
+            if (res.status === 403 && (data.code === 'TIER_UPGRADE_REQUIRED' || data.code === 'SUBSCRIPTION_INACTIVE')) {
+                setUpgradeRequired(
+                    data.error || 'Live GPS Fleet Radar requires the Professional plan or higher.'
+                );
+                setError(null);
+            } else if (data.success && data.data) {
                 const tours: ActiveTourVehicle[] = data.data.activeTours || [];
                 setVehicles(tours);
                 setLastUpdated(new Date());
@@ -129,7 +136,7 @@ export default function LiveTrackingPage() {
             } else {
                 setError(data.error || 'Failed to fetch live locations');
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error fetching fleet locations:', err);
             setError('Network connection error while fetching live positions');
         } finally {
@@ -140,13 +147,14 @@ export default function LiveTrackingPage() {
 
     // Polling every 10 seconds
     useEffect(() => {
+        if (upgradeRequired) return;
         fetchLiveLocations();
         const interval = setInterval(() => {
             fetchLiveLocations();
         }, 10000);
 
         return () => clearInterval(interval);
-    }, [fetchLiveLocations]);
+    }, [fetchLiveLocations, upgradeRequired]);
 
     // Aggregate statistics
     const totalTours = vehicles.length;
@@ -183,6 +191,17 @@ export default function LiveTrackingPage() {
         // On mobile, automatically show the map when a vehicle is selected from the list
         setMobileTab('map');
     };
+
+    if (upgradeRequired) {
+        return (
+            <UpgradeFeatureWall
+                featureName="Live GPS Fleet Radar & Telemetry"
+                description={upgradeRequired}
+                requiredTier="Professional"
+                currentPlan="Starter"
+            />
+        );
+    }
 
     return (
         <div className="-m-2 sm:-m-4 md:-m-8 h-[calc(100dvh-4rem)] flex flex-col overflow-hidden bg-slate-950 text-slate-100">

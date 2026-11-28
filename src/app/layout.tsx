@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import { UnsavedChangesProvider } from '@/components/UnsavedChangesProvider'
 import { SessionProvider } from '@/components/SessionProvider'
 import { auth } from '@/lib/auth'
+import { getCompanySubscriptionStatus } from '@/lib/subscription'
 import { PageTransition } from '@/components/PageTransition'
 import { NotificationBell } from '@/components/NotificationBell'
 import { RefreshButton } from '@/components/RefreshButton'
@@ -85,6 +86,19 @@ export default async function RootLayout({
   const session = await auth();
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
+  const sessionCompanyId = (session?.user as { companyId?: string } | undefined)?.companyId;
+  const subStatus = sessionCompanyId ? await getCompanySubscriptionStatus(sessionCompanyId) : null;
+  const lockedPaths: Record<string, string> =
+    subStatus && subStatus.enforcementActive
+      ? {
+          ...(!subStatus.active || !subStatus.entitlements.features.liveGpsRadar
+            ? { '/live-tracking': 'PRO' }
+            : {}),
+          ...(!subStatus.active || !subStatus.entitlements.features.itineraryRouting
+            ? { '/tour-schedules': 'PRO' }
+            : {}),
+        }
+      : {};
 
   return (
     <html
@@ -104,7 +118,11 @@ export default async function RootLayout({
               <SidebarProvider defaultOpen={defaultOpen}>
                 <div className="flex min-h-screen bg-background relative selection:bg-primary selection:text-primary-foreground w-full">
                   <div className="print:hidden z-40 shrink-0">
-                    <Sidebar userRole={(session.user as { role?: string })?.role} userName={session.user?.name || 'User'} />
+                    <Sidebar
+                      userRole={(session.user as { role?: string })?.role}
+                      userName={session.user?.name || 'User'}
+                      lockedPaths={lockedPaths}
+                    />
                   </div>
 
                   <SidebarInset className="flex flex-1 min-w-0 flex-col bg-transparent relative">

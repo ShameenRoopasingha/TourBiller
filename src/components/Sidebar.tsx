@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { logoutUser } from '@/lib/user-actions';
-import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, LogOut, UserCog, BarChart3, CalendarRange, Radio } from 'lucide-react';
+import { LayoutDashboard, Car, Users, FileText, CalendarDays, Settings, Map, FileCheck, LogOut, UserCog, BarChart3, CalendarRange, Radio, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
     Sidebar as ShadcnSidebar,
@@ -64,10 +64,11 @@ const navItems: NavItem[] = [
 interface SidebarProps {
     userRole?: string;
     userName?: string;
+    lockedPaths?: Record<string, string>;
     className?: string;
 }
 
-export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: SidebarProps) {
+export function Sidebar({ userRole = 'ADMIN', userName = 'User', lockedPaths = {}, className }: SidebarProps) {
     const pathname = usePathname();
     const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
     const { state, isMobile } = useSidebar();
@@ -131,9 +132,15 @@ export function Sidebar({ userRole = 'ADMIN', userName = 'User', className }: Si
                                             className="flex items-center gap-3 px-2.5 w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
                                         >
                                             <item.icon className="h-5 w-5 shrink-0" />
-                                            <span className="font-medium text-sm group-data-[collapsible=icon]:hidden transition-opacity">
+                                            <span className="font-medium text-sm group-data-[collapsible=icon]:hidden transition-opacity flex-1 truncate">
                                                 {item.name}
                                             </span>
+                                            {lockedPaths[item.href] && (
+                                                <span className="group-data-[collapsible=icon]:hidden inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[9px] font-bold uppercase tracking-wider shrink-0">
+                                                    <Lock className="w-2.5 h-2.5" />
+                                                    {lockedPaths[item.href]}
+                                                </span>
+                                            )}
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
