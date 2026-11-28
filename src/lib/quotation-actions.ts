@@ -199,7 +199,7 @@ export async function getQuotations(
     searchQuery?: string
 ): Promise<ActionResult<QuotationWithSchedule[]>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -245,7 +245,7 @@ export async function getQuotationById(
     id: string
 ): Promise<ActionResult<QuotationWithSchedule>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -285,7 +285,7 @@ export async function updateQuotation(
     formData: FormData
 ): Promise<ActionResult<string>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -450,7 +450,7 @@ export async function updateQuotationStatus(
     status: string
 ): Promise<ActionResult<void>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }

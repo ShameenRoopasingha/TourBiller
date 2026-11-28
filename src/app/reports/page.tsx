@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-guard';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { ReportsDashboard } from './ReportsDashboard';
@@ -9,21 +9,15 @@ export const metadata = {
 };
 
 export default async function ReportsPage() {
-    const session = await auth();
-
-    if (!session || !session.user || !session.user.email) {
-        redirect('/login');
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized) {
+        if (authCheck.error === 'Not authenticated' || authCheck.error.includes('revoked')) {
+            redirect('/login');
+        }
+        redirect('/');
     }
 
-    const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-    });
-
-    if (!user) {
-        redirect('/login');
-    }
-
-    const companyId = user.companyId;
+    const companyId = authCheck.companyId;
 
     // Fetch Income (Bills)
     const billsRaw = await prisma.bill.findMany({

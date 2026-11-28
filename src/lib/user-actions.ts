@@ -25,7 +25,7 @@ export async function checkDriverAvailability(
     currentType?: 'Booking' | 'Quotation'
 ): Promise<ActionResult<{ available: boolean; conflicts: DriverAvailabilityConflict[] }>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -133,7 +133,7 @@ export type UserData = {
  */
 export async function getUsers(): Promise<ActionResult<UserData[]>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -315,7 +315,7 @@ export type DriverOption = { id: string; name: string; email: string };
  */
 export async function getDrivers(): Promise<ActionResult<DriverOption[]>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }

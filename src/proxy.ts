@@ -8,6 +8,21 @@ const ADMIN_ONLY_ROUTES = [
     '/tour-schedules',
     '/quotations',
     '/users',
+    '/bookings',
+    '/calendar',
+    '/reports',
+    '/live-tracking',
+    '/debug-tour-schedules',
+    '/api/customers',
+    '/api/quotations',
+    '/api/bookings',
+    '/api/tour-schedules',
+    '/api/email/send',
+    '/api/vehicles',
+    '/api/users',
+    '/api/fleet',
+    '/api/bills',
+    '/api/company',
 ];
 
 export default auth((req) => {
@@ -34,8 +49,13 @@ export default auth((req) => {
         return NextResponse.next();
     }
 
-    // If not authenticated, redirect to login
-    if (!req.auth) {
+    const sessionUser = req.auth?.user as { id?: string; companyId?: string; role?: string } | undefined;
+
+    // If not authenticated or session was revoked/invalidated, reject cleanly
+    if (!req.auth || !sessionUser?.id || !sessionUser?.companyId) {
+        if (pathname.startsWith('/api/')) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
         const loginUrl = new URL('/login', req.url);
         if (req.headers.get('x-forwarded-proto') === 'https') {
             loginUrl.protocol = 'https:';
@@ -44,19 +64,25 @@ export default auth((req) => {
         return NextResponse.redirect(loginUrl);
     }
 
-    const role = (req.auth.user as { role?: string })?.role;
+    const role = sessionUser.role;
 
-    // If driver tries to access admin-only routes, redirect to dashboard
+    // If driver tries to access admin-only routes, reject or redirect to dashboard
     if (role === 'DRIVER') {
         const isAdminRoute = ADMIN_ONLY_ROUTES.some(
-            (route) => pathname.startsWith(route)
+            (route) => pathname === route || pathname.startsWith(`${route}/`)
         );
-        if (isAdminRoute) {
-            return NextResponse.redirect(new URL('/', req.url));
-        }
+        const isBlockedBillRoute =
+            pathname === '/bills' ||
+            pathname === '/bills/new' ||
+            /^\/bills\/[^/]+\/edit$/.test(pathname);
 
-        // Block drivers from creating new bills (but allow viewing/printing)
-        if (pathname === '/bills/new') {
+        if (isAdminRoute || isBlockedBillRoute) {
+            if (pathname.startsWith('/api/')) {
+                return NextResponse.json(
+                    { success: false, error: 'Forbidden: Admin access required' },
+                    { status: 403 }
+                );
+            }
             return NextResponse.redirect(new URL('/', req.url));
         }
     }

@@ -79,6 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     role: user.role,
                     companyId: user.companyId,
                     deviceId: rawDeviceId || undefined,
+                    tokenVersion: user.tokenVersion ?? 0,
                 };
             },
         }),
@@ -91,32 +92,106 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     callbacks: {
         async jwt({ token, user, trigger, session }) {
             if (user) {
-                const authUser = user as { role?: string; companyId?: string; deviceId?: string };
+                const authUser = user as {
+                    role?: string;
+                    companyId?: string;
+                    deviceId?: string;
+                    tokenVersion?: number;
+                };
                 token.role = authUser.role;
                 token.id = user.id;
                 token.companyId = authUser.companyId;
                 token.deviceId = authUser.deviceId;
+                token.tokenVersion = typeof authUser.tokenVersion === 'number' ? authUser.tokenVersion : 0;
+                token.revoked = false;
                 token.name = user.name;
                 token.email = user.email;
+            } else if (typeof token.id === 'string' && typeof token.companyId === 'string' && !token.revoked) {
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: token.id },
+                    select: { tokenVersion: true, role: true, companyId: true },
+                });
+
+                const tokenVersionMismatch =
+                    typeof token.tokenVersion === 'number' &&
+                    dbUser !== null &&
+                    dbUser.tokenVersion !== token.tokenVersion;
+
+                if (!dbUser || tokenVersionMismatch) {
+                    token.revoked = true;
+                    delete token.id;
+                    delete token.companyId;
+                    delete token.role;
+                    delete token.deviceId;
+                    delete token.tokenVersion;
+                    return token;
+                }
+
+                token.role = dbUser.role;
+                token.companyId = dbUser.companyId;
+
+                if (isAdminOrOwnerRole(dbUser.role) && typeof token.deviceId === 'string' && token.deviceId.trim()) {
+                    const workstation = await prisma.activeWorkstation.findUnique({
+                        where: {
+                            companyId_deviceId: {
+                                companyId: dbUser.companyId,
+                                deviceId: token.deviceId,
+                            },
+                        },
+                        select: { status: true },
+                    });
+
+                    if (!workstation || workstation.status !== 'ACTIVE') {
+                        token.revoked = true;
+                        delete token.id;
+                        delete token.companyId;
+                        delete token.role;
+                        delete token.deviceId;
+                        delete token.tokenVersion;
+                        return token;
+                    }
+                }
             }
-            if (trigger === "update" && session) {
+            if (trigger === "update" && session && !token.revoked) {
                 if (session.name) token.name = session.name;
                 if (session.email) token.email = session.email;
             }
             return token;
         },
         async session({ session, token }) {
+            if (token.revoked || !token.id || !token.companyId) {
+                if (session.user) {
+                    const sessionUser = session.user as {
+                        role?: string;
+                        id?: string;
+                        companyId?: string;
+                        deviceId?: string;
+                        tokenVersion?: number;
+                    };
+                    sessionUser.id = undefined;
+                    sessionUser.companyId = undefined;
+                    sessionUser.role = undefined;
+                    sessionUser.deviceId = undefined;
+                    sessionUser.tokenVersion = undefined;
+                    session.user.name = '';
+                    session.user.email = '';
+                }
+                return session;
+            }
+
             if (session.user) {
                 const sessionUser = session.user as {
                     role?: string;
                     id?: string;
                     companyId?: string;
                     deviceId?: string;
+                    tokenVersion?: number;
                 };
                 sessionUser.role = token.role as string;
                 sessionUser.id = token.id as string;
                 sessionUser.companyId = token.companyId as string;
                 sessionUser.deviceId = token.deviceId as string | undefined;
+                sessionUser.tokenVersion = typeof token.tokenVersion === 'number' ? token.tokenVersion : undefined;
                 if (token.name) session.user.name = token.name as string;
                 if (token.email) session.user.email = token.email as string;
             }

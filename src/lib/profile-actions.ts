@@ -1,6 +1,6 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth-guard';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import { type ActionResult, ProfileUpdateSchema, PasswordChangeSchema } from '@/lib/validations';
@@ -10,8 +10,8 @@ import { type ActionResult, ProfileUpdateSchema, PasswordChangeSchema } from '@/
  */
 export async function updateProfile(formData: FormData): Promise<ActionResult<void>> {
     try {
-        let session = await auth();
-        if (!session?.user?.id) {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
             return { success: false, error: 'Unauthorized' };
         }
 
@@ -29,12 +29,12 @@ export async function updateProfile(formData: FormData): Promise<ActionResult<vo
 
         // Check if email is being changed to one that already exists
         const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser && existingUser.id !== session.user.id) {
+        if (existingUser && existingUser.id !== authCheck.userId) {
             return { success: false, error: 'Email is already in use by another account' };
         }
 
         await prisma.user.update({
-            where: { id: session.user.id },
+            where: { id: authCheck.userId },
             data: { name, email },
         });
 
@@ -50,8 +50,8 @@ export async function updateProfile(formData: FormData): Promise<ActionResult<vo
  */
 export async function updatePassword(formData: FormData): Promise<ActionResult<void>> {
     try {
-        let session = await auth();
-        if (!session?.user?.id) {
+        const authCheck = await requireAuth();
+        if (!authCheck.authorized) {
             return { success: false, error: 'Unauthorized' };
         }
 
@@ -68,7 +68,7 @@ export async function updatePassword(formData: FormData): Promise<ActionResult<v
         const { currentPassword, newPassword } = parsed.data;
 
         const user = await prisma.user.findUnique({
-            where: { id: session.user.id }
+            where: { id: authCheck.userId }
         });
 
         if (!user) {
@@ -83,8 +83,11 @@ export async function updatePassword(formData: FormData): Promise<ActionResult<v
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         await prisma.user.update({
-            where: { id: session.user.id },
-            data: { password: hashedPassword },
+            where: { id: authCheck.userId },
+            data: {
+                password: hashedPassword,
+                tokenVersion: { increment: 1 },
+            },
         });
 
         return { success: true };

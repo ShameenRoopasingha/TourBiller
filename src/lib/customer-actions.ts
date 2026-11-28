@@ -47,7 +47,7 @@ export async function createCustomer(formData: FormData): Promise<ActionResult<s
  */
 export async function getCustomers(searchQuery?: string): Promise<ActionResult<Customer[]>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }

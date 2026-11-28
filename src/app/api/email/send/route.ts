@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-guard';
 import { prisma } from '@/lib/prisma';
 import { sendDocumentEmail } from '@/lib/email-service';
 
 export async function POST(req: Request) {
     try {
-        const session = await auth();
-        if (!session?.user) {
+        const authCheck = await requireAdmin();
+        if (!authCheck.authorized) {
+            const isUnauthorized =
+                authCheck.error === 'Not authenticated' ||
+                authCheck.error.includes('revoked');
             return NextResponse.json(
-                { success: false, error: 'Unauthorized. Please sign in.' },
-                { status: 401 }
+                { success: false, error: authCheck.error },
+                { status: isUnauthorized ? 401 : 403 }
             );
         }
 
@@ -38,10 +41,15 @@ export async function POST(req: Request) {
             );
         }
 
-        const companyId = (session.user as any).companyId;
-        const profile = companyId
-            ? await prisma.businessProfile.findUnique({ where: { id: companyId } })
-            : null;
+        if (!documentId || typeof documentId !== 'string') {
+            return NextResponse.json(
+                { success: false, error: 'Document ID is required.' },
+                { status: 400 }
+            );
+        }
+
+        const companyId = authCheck.companyId;
+        const profile = await prisma.businessProfile.findUnique({ where: { id: companyId } });
 
         const appBaseUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
         const origin = appBaseUrl.startsWith('http://') || appBaseUrl.startsWith('https://') ? appBaseUrl : '';

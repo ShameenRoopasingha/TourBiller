@@ -119,7 +119,7 @@ export async function createBooking(formData: FormData): Promise<ActionResult<st
  */
 export async function getBookings(searchQuery?: string): Promise<ActionResult<BookingWithDriver[]>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -220,7 +220,7 @@ export async function cancelBooking(id: string): Promise<ActionResult<void>> {
  */
 export async function getBookingById(id: string): Promise<ActionResult<BookingWithDriver>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -616,7 +616,7 @@ export async function swapBookingVehicle(
  */
 export async function acknowledgeEmergencyAlarm(bookingId: string): Promise<ActionResult<void>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -644,7 +644,7 @@ export async function acknowledgeEmergencyAlarm(bookingId: string): Promise<Acti
  */
 export async function getVehicleSwapLogs(bookingId: string) {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }

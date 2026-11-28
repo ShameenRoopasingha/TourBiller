@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth-guard';
+import { requireAdmin } from '@/lib/auth-guard';
 
 export async function POST(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
-            return NextResponse.json({ success: false, error: authCheck.error }, { status: 401 });
+            const isUnauthorized =
+                authCheck.error === 'Not authenticated' || authCheck.error.includes('revoked');
+            return NextResponse.json(
+                { success: false, error: authCheck.error },
+                { status: isUnauthorized ? 401 : 403 }
+            );
         }
 
         const { id } = await params;

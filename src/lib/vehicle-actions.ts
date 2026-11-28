@@ -82,7 +82,7 @@ export async function createVehicle(formData: FormData): Promise<ActionResult<st
  */
 export async function getVehicles(searchQuery?: string): Promise<ActionResult<Vehicle[]>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -253,7 +253,7 @@ export async function checkVehicleAvailability(
     currentType?: 'Bill' | 'Booking' | 'Quotation'
 ): Promise<ActionResult<{ available: boolean; conflicts: VehicleAvailabilityConflict[] }>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -392,7 +392,7 @@ export async function getActiveVehicles(): Promise<ActionResult<{
     currentMileage: number;
 }[]>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }

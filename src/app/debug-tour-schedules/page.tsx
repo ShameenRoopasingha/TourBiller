@@ -1,8 +1,19 @@
+import { notFound } from 'next/navigation';
+import { requireAdmin } from '@/lib/auth-guard';
 import { getTourSchedules } from '@/lib/tour-schedule-actions';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DebugTourSchedulesPage() {
+    if (process.env.NODE_ENV === 'production') {
+        notFound();
+    }
+
+    const authCheck = await requireAdmin();
+    if (!authCheck.authorized) {
+        notFound();
+    }
+
     // Let's hardcode an example ID for debugging
     const [schedulesResult] = await Promise.all([
         getTourSchedules(),

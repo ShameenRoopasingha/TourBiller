@@ -1,44 +1,16 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
-import jwt from 'jsonwebtoken';
-import { getJwtSecret } from '@/lib/jwt';
+import { authenticateBearerOrSession } from '@/lib/security';
 import { checkTierFeature } from '@/lib/subscription';
-
-async function verifyAdminOrOwner(req: Request) {
-    // 1. Session-based check (Next.js Dashboard)
-    try {
-        const session = await auth();
-        const user = session?.user as { id?: string; companyId?: string; role?: string } | undefined;
-        if (user?.id && user?.companyId && (user.role === 'ADMIN' || user.role === 'OWNER')) {
-            return { companyId: user.companyId, userId: user.id, role: user.role };
-        }
-    } catch {
-        // Continue to check Bearer token
-    }
-
-    // 2. Bearer token check (Mobile Admin or API)
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
-        try {
-            const decoded = jwt.verify(token, getJwtSecret()) as any;
-            if (decoded?.companyId && (decoded.role === 'ADMIN' || decoded.role === 'OWNER')) {
-                return { companyId: decoded.companyId, userId: decoded.id, role: decoded.role };
-            }
-        } catch {
-            return null;
-        }
-    }
-
-    return null;
-}
 
 export async function GET(req: Request) {
     try {
-        const authUser = await verifyAdminOrOwner(req);
-        if (!authUser) {
-            return NextResponse.json({ success: false, error: 'Unauthorized: Admin access required' }, { status: 401 });
+        const authUser = await authenticateBearerOrSession(req, ['ADMIN', 'OWNER']);
+        if (!authUser.authenticated) {
+            return NextResponse.json(
+                { success: false, error: authUser.error },
+                { status: authUser.status }
+            );
         }
 
         const companyId = authUser.companyId;

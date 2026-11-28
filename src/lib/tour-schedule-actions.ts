@@ -217,7 +217,7 @@ export async function getTourSchedules(
     searchQuery?: string
 ): Promise<ActionResult<TourScheduleWithItems[]>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }
@@ -257,7 +257,7 @@ export async function getTourScheduleById(
     id: string
 ): Promise<ActionResult<TourScheduleWithItems>> {
     try {
-        const authCheck = await requireAuth();
+        const authCheck = await requireAdmin();
         if (!authCheck.authorized) {
             return { success: false, error: authCheck.error };
         }

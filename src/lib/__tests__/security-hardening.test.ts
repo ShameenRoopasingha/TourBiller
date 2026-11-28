@@ -1068,4 +1068,128 @@ describe('BitgardWeb <-> Vigil Security & Subscription Mitigations', () => {
             });
         });
     });
+
+    describe('Phase 5: Session Revocation, RBAC & Debug Surface Hardening', () => {
+        it('rejects revoked JWT tokenVersion and revoked ActiveWorkstation sessions while allowing OWNER in requireAdmin', async () => {
+            const actualAuthGuard = jest.requireActual('@/lib/auth-guard') as typeof import('@/lib/auth-guard');
+
+            // 1. Token version mismatch after password reset -> rejected
+            (auth as jest.Mock).mockResolvedValueOnce({
+                user: {
+                    id: 'adm-1',
+                    email: 'admin@test.com',
+                    companyId: 'comp-a',
+                    role: 'ADMIN',
+                    deviceId: 'dev-1',
+                    tokenVersion: 0,
+                },
+            });
+            (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+                role: 'ADMIN',
+                companyId: 'comp-a',
+                tokenVersion: 1,
+            });
+            const tvMismatch = await actualAuthGuard.requireAuth();
+            expect(tvMismatch.authorized).toBe(false);
+
+            // 2. Revoked workstation seat -> rejected immediately even before 45s client poll
+            (auth as jest.Mock).mockResolvedValueOnce({
+                user: {
+                    id: 'adm-1',
+                    email: 'admin@test.com',
+                    companyId: 'comp-a',
+                    role: 'ADMIN',
+                    deviceId: 'dev-revoked',
+                    tokenVersion: 1,
+                },
+            });
+            (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+                role: 'ADMIN',
+                companyId: 'comp-a',
+                tokenVersion: 1,
+            });
+            (prisma.activeWorkstation.findUnique as jest.Mock).mockResolvedValueOnce({
+                status: 'REVOKED',
+            });
+            const wsRevoked = await actualAuthGuard.requireAdmin();
+            expect(wsRevoked.authorized).toBe(false);
+
+            // 3. OWNER role with active workstation -> authorized in requireAdmin
+            (auth as jest.Mock).mockResolvedValueOnce({
+                user: {
+                    id: 'own-1',
+                    email: 'owner@test.com',
+                    companyId: 'comp-a',
+                    role: 'OWNER',
+                    deviceId: 'dev-active',
+                    tokenVersion: 1,
+                },
+            });
+            (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+                role: 'OWNER',
+                companyId: 'comp-a',
+                tokenVersion: 1,
+            });
+            (prisma.activeWorkstation.findUnique as jest.Mock).mockResolvedValueOnce({
+                status: 'ACTIVE',
+            });
+            const ownerAllowed = await actualAuthGuard.requireAdmin();
+            expect(ownerAllowed).toEqual({
+                authorized: true,
+                userId: 'own-1',
+                role: 'OWNER',
+                companyId: 'comp-a',
+            });
+
+            // 4. DRIVER role -> rejected in requireAdmin
+            (auth as jest.Mock).mockResolvedValueOnce({
+                user: {
+                    id: 'drv-1',
+                    email: 'driver@test.com',
+                    companyId: 'comp-a',
+                    role: 'DRIVER',
+                    tokenVersion: 1,
+                },
+            });
+            (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+                role: 'DRIVER',
+                companyId: 'comp-a',
+                tokenVersion: 1,
+            });
+            const driverDenied = await actualAuthGuard.requireAdmin();
+            expect(driverDenied.authorized).toBe(false);
+        });
+
+        it('enforces admin-only RBAC on /api/email/send and admin read server actions', async () => {
+            const { POST: emailSendPOST } = await import('@/app/api/email/send/route');
+            const { getCustomers } = await import('@/lib/customer-actions');
+            const { getBookings } = await import('@/lib/booking-actions');
+            const { getQuotations } = await import('@/lib/quotation-actions');
+            const { getTourSchedules } = await import('@/lib/tour-schedule-actions');
+            const { getUsers } = await import('@/lib/user-actions');
+
+            (authGuard.requireAdmin as jest.Mock).mockResolvedValue({
+                authorized: false,
+                error: 'Unauthorized: Admin access required',
+            });
+
+            const emailRes = await emailSendPOST(
+                new Request('http://localhost/api/email/send', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        to: 'victim@example.com',
+                        documentType: 'bill',
+                        documentId: 'bill-1',
+                    }),
+                })
+            );
+            expect(emailRes.status).toBe(403);
+
+            expect((await getCustomers()).success).toBe(false);
+            expect((await getBookings()).success).toBe(false);
+            expect((await getQuotations()).success).toBe(false);
+            expect((await getTourSchedules()).success).toBe(false);
+            expect((await getUsers()).success).toBe(false);
+        });
+    });
 });
