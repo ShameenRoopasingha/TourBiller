@@ -24,10 +24,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
                 const cleanEmail = String(credentials.email).trim().toLowerCase();
 
-                // Rate limit: 10 login attempts per email per 15 minutes
+                // Rate limit: 30 login attempts per email per 15 minutes (supports 10-seat Enterprise offices)
                 const { limited } = await checkDistributedRateLimit(
                     `login:${cleanEmail}`,
-                    10,
+                    30,
                     15 * 60 * 1000
                 );
                 if (limited) {

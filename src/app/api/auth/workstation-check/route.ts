@@ -19,7 +19,7 @@ const checkSchema = z.object({
 export async function POST(request: Request) {
     try {
         const clientIp = getClientIp(request);
-        const ipRl = await checkDistributedRateLimit(`ws-check-ip:${clientIp}`, 25, 15 * 60 * 1000);
+        const ipRl = await checkDistributedRateLimit(`ws-check-ip:${clientIp}`, 60, 15 * 60 * 1000);
         if (ipRl.limited) {
             return NextResponse.json(
                 { allowed: false, error: 'Too many login attempts. Please try again later.' },
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
         }
 
         const email = parsed.data.email.toLowerCase();
-        const emailRl = await checkDistributedRateLimit(`ws-check:${email}`, 10, 15 * 60 * 1000);
+        const emailRl = await checkDistributedRateLimit(`ws-check:${email}`, 30, 15 * 60 * 1000);
         if (emailRl.limited) {
             return NextResponse.json(
                 { allowed: false, error: 'Too many login attempts for this email. Please wait 15 minutes.' },

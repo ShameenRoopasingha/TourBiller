@@ -10,6 +10,12 @@ import { UpgradeFeatureWall } from '@/components/UpgradeFeatureWall';
 export const dynamic = 'force-dynamic';
 
 async function SchedulesList() {
+    const result = await getTourSchedules();
+    const schedules = result.success && result.data ? result.data : [];
+    return <TourScheduleList schedules={schedules} />;
+}
+
+export default async function TourSchedulesPage() {
     const session = await auth();
     const companyId = (session?.user as { companyId?: string } | undefined)?.companyId;
     if (!companyId) {
@@ -32,12 +38,6 @@ async function SchedulesList() {
         );
     }
 
-    const result = await getTourSchedules();
-    const schedules = result.success && result.data ? result.data : [];
-    return <TourScheduleList schedules={schedules} />;
-}
-
-export default function TourSchedulesPage() {
     return (
         <Suspense fallback={
             <div className="flex justify-center items-center h-64">
