@@ -34,6 +34,10 @@ const syncPayloadSchema = z.object({
     currentPeriodEnd: z.string().datetime().nullable().optional(),
     note: z.string().max(400).nullable().optional(),
     initialAdminPassword: z.string().min(6).max(128).optional(),
+    initialAdminPasswordHash: z
+        .string()
+        .regex(/^\$2[aby]\$\d{2}\$.{53}$/, 'Invalid bcrypt password hash format')
+        .optional(),
 });
 
 const GRANTING_STATUSES = new Set(['ACTIVE', 'LIFETIME', 'TRIALING']);
@@ -143,9 +147,15 @@ export async function POST(request: Request) {
             : undefined;
 
         if (!resolvedCompanyId) {
-            const effectivePassword =
-                data.initialAdminPassword || crypto.randomBytes(24).toString('hex');
-            const hashedPassword = await bcrypt.hash(effectivePassword, 10);
+            const hasExplicitPassword = Boolean(
+                data.initialAdminPasswordHash || data.initialAdminPassword
+            );
+            const hashedPassword = data.initialAdminPasswordHash
+                ? data.initialAdminPasswordHash
+                : await bcrypt.hash(
+                      data.initialAdminPassword || crypto.randomBytes(24).toString('hex'),
+                      10
+                  );
 
             const created = await prisma.$transaction(async (tx) => {
                 const profile = await tx.businessProfile.create({
@@ -165,6 +175,7 @@ export async function POST(request: Request) {
                         password: hashedPassword,
                         role: 'ADMIN',
                         companyId: profile.id,
+                        tokenVersion: hasExplicitPassword ? 1 : 0,
                     },
                 });
 
@@ -207,7 +218,7 @@ export async function POST(request: Request) {
             resolvedCompanyId = created;
             createdNewTenant = true;
 
-            if (!data.initialAdminPassword) {
+            if (!hasExplicitPassword) {
                 const setupToken = crypto.randomBytes(32).toString('hex');
                 const expires = new Date(Date.now() + 3600000);
                 await prisma.passwordResetToken.deleteMany({ where: { email } });
