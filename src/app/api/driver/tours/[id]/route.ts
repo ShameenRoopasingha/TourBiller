@@ -5,6 +5,7 @@ import { authenticateBearerOrSession } from '@/lib/security';
 import { extractHandoverNavigation } from '@/lib/handover-navigation';
 import { formatApiErrorResponse } from '@/lib/error-handler';
 import { checkTierFeature } from '@/lib/subscription';
+import { enforceApiRateLimit } from '@/lib/api-rate-limit';
 
 // GET: Fetch single tour details with activities, vehicle, and navigation info
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -13,6 +14,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         if (!authRes.authenticated) {
             return NextResponse.json({ success: false, error: authRes.error }, { status: authRes.status });
         }
+
+        const rl = await enforceApiRateLimit(req, {
+            prefix: 'driver-tour-detail',
+            identifier: authRes.userId,
+            maxAttempts: 60,
+            windowMs: 60 * 1000,
+        });
+        if (rl.limited) return rl.response;
 
         const resolvedParams = await params;
         const bookingId = resolvedParams.id;
@@ -190,6 +199,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         if (!authRes.authenticated) {
             return NextResponse.json({ success: false, error: authRes.error }, { status: authRes.status });
         }
+
+        const rl = await enforceApiRateLimit(req, {
+            prefix: 'driver-tour-update',
+            identifier: authRes.userId,
+            maxAttempts: 60,
+            windowMs: 60 * 1000,
+        });
+        if (rl.limited) return rl.response;
 
         const resolvedParams = await params;
         const bookingId = resolvedParams.id;

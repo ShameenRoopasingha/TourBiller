@@ -95,6 +95,42 @@ export async function checkDistributedRateLimit(
     const restToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 
     if (!restUrl || !restToken) {
+        // Distributed PostgreSQL atomic rate-limit fallback for serverless instances without Redis
+        if (process.env.DATABASE_URL && process.env.NODE_ENV !== 'test') {
+            try {
+                const { prisma } = await import('@/lib/prisma');
+                const nowMs = Date.now();
+                const nextReset = new Date(nowMs + windowMs);
+                const rows = await prisma.$queryRaw<Array<{ count: number; reset_at: Date }>>`
+                    INSERT INTO "rate_limit_buckets" ("key", "count", "resetAt")
+                    VALUES (${key}, 1, ${nextReset})
+                    ON CONFLICT ("key") DO UPDATE SET
+                        "count" = CASE WHEN "rate_limit_buckets"."resetAt" <= NOW() THEN 1 ELSE "rate_limit_buckets"."count" + 1 END,
+                        "resetAt" = CASE WHEN "rate_limit_buckets"."resetAt" <= NOW() THEN ${nextReset} ELSE "rate_limit_buckets"."resetAt" END
+                    RETURNING "count", "resetAt" AS "reset_at"
+                `;
+
+                if (Array.isArray(rows) && rows.length > 0 && typeof rows[0]?.count === 'number') {
+                    const count = Number(rows[0].count);
+                    const resetAtMs = new Date(rows[0].reset_at).getTime();
+                    if (count > maxAttempts) {
+                        return {
+                            limited: true,
+                            remaining: 0,
+                            retryAfterMs: Math.max(0, resetAtMs - nowMs),
+                        };
+                    }
+                    return {
+                        limited: false,
+                        remaining: Math.max(0, maxAttempts - count),
+                        retryAfterMs: 0,
+                    };
+                }
+            } catch {
+                // Fall back safely to bounded in-memory limiter if DB table is unavailable
+            }
+        }
+
         return rateLimit(key, maxAttempts, windowMs);
     }
 
@@ -146,4 +182,16 @@ export async function checkDistributedRateLimit(
     } catch {
         return rateLimit(key, maxAttempts, windowMs);
     }
+}
+
+/**
+ * Consumes a single-use replay nonce within `windowMs`.
+ * Returns `true` on the first sighting and `false` if replayed within the window.
+ */
+export async function consumeReplayNonce(
+    nonceKey: string,
+    windowMs: number = 6 * 60 * 1000
+): Promise<boolean> {
+    const res = await checkDistributedRateLimit(`replay:${nonceKey}`, 1, windowMs);
+    return !res.limited;
 }

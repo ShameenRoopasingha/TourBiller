@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-guard';
 import { escapeCsvCell, isAdminOrOwnerRole } from '@/lib/security';
+import { enforceApiRateLimit } from '@/lib/api-rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,6 +13,14 @@ export async function GET(request: NextRequest) {
     if (!isAdminOrOwnerRole(authCheck.role)) {
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
+
+    const rl = await enforceApiRateLimit(request, {
+      prefix: 'customers-export',
+      identifier: authCheck.companyId,
+      maxAttempts: 20,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (rl.limited) return rl.response;
 
     // 1. Get the customer ID from the URL query string
     const searchParams = request.nextUrl.searchParams;

@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { checkDistributedRateLimit } from '@/lib/rate-limit';
 import { registerOrSwitchWorkstation } from '@/lib/workstations';
 import { isAdminOrOwnerRole } from '@/lib/crypto-utils';
+import { verifyMfaChallengeAgainstUser } from '@/lib/mfa';
+import { recordAuditLog } from '@/lib/audit';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
@@ -13,6 +15,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             credentials: {
                 email: { label: 'Email', type: 'email' },
                 password: { label: 'Password', type: 'password' },
+                totpCode: { label: 'Authenticator Code', type: 'text' },
                 deviceId: { label: 'Device ID', type: 'text' },
                 deviceLabel: { label: 'Device Label', type: 'text' },
                 deactivateWorkstationId: { label: 'Deactivate Workstation ID', type: 'text' },
@@ -47,6 +50,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
                 if (!passwordMatch) return null;
 
+                let consumedBackupHashes: string[] | null = null;
+                if (user.mfaEnabled) {
+                    const mfaRl = await checkDistributedRateLimit(
+                        `mfa-auth:${user.id}`,
+                        8,
+                        15 * 60 * 1000
+                    );
+                    if (mfaRl.limited) {
+                        throw new Error('Too many authenticator attempts. Please try again later.');
+                    }
+
+                    const rawTotp = credentials.totpCode ? String(credentials.totpCode).trim() : '';
+                    if (!rawTotp) {
+                        return null;
+                    }
+
+                    const mfaCheck = verifyMfaChallengeAgainstUser({
+                        encryptedSecret: user.mfaSecret,
+                        backupHashes: user.mfaBackupCodes || [],
+                        code: rawTotp,
+                    });
+                    if (!mfaCheck.valid) {
+                        return null;
+                    }
+                    if (mfaCheck.usedBackupCode) {
+                        consumedBackupHashes = mfaCheck.remainingHashes;
+                    }
+                }
+
                 const rawDeviceId = credentials.deviceId ? String(credentials.deviceId).trim() : '';
                 const rawDeviceLabel = credentials.deviceLabel
                     ? String(credentials.deviceLabel).trim()
@@ -70,6 +102,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     if (!seatCheck.allowed) {
                         return null;
                     }
+                }
+
+                if (consumedBackupHashes !== null) {
+                    await prisma.user.update({
+                        where: { id: user.id },
+                        data: { mfaBackupCodes: consumedBackupHashes },
+                    });
+                    await recordAuditLog({
+                        companyId: user.companyId,
+                        actorId: user.id,
+                        actorRole: user.role,
+                        action: 'MFA_BACKUP_CODE_USED',
+                        resourceType: 'User',
+                        resourceId: user.id,
+                        metadata: { remainingBackupCodes: consumedBackupHashes.length },
+                    });
                 }
 
                 return {

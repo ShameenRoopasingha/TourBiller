@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { DriverLocationPingSchema, DriverLocationBatchSchema } from '@/lib/validations';
 import { authenticateBearerOrSession } from '@/lib/security';
 import { checkTierFeature } from '@/lib/subscription';
+import { enforceApiRateLimit } from '@/lib/api-rate-limit';
 
 async function resolveAuthorizedBookingId(
     requestedBookingId: string | null | undefined,
@@ -45,6 +46,14 @@ export async function POST(req: Request) {
         if (!authRes.authenticated) {
             return NextResponse.json({ success: false, error: authRes.error }, { status: authRes.status });
         }
+
+        const rl = await enforceApiRateLimit(req, {
+            prefix: 'driver-location',
+            identifier: authRes.userId,
+            maxAttempts: 120,
+            windowMs: 60 * 1000,
+        });
+        if (rl.limited) return rl.response;
 
         const body = await req.json();
         const driverId = authRes.userId;
@@ -214,6 +223,14 @@ export async function GET(req: Request) {
         if (!authRes.authenticated) {
             return NextResponse.json({ success: false, error: authRes.error }, { status: authRes.status });
         }
+
+        const rl = await enforceApiRateLimit(req, {
+            prefix: 'driver-location',
+            identifier: authRes.userId,
+            maxAttempts: 120,
+            windowMs: 60 * 1000,
+        });
+        if (rl.limited) return rl.response;
 
         const url = new URL(req.url);
         const bookingId = url.searchParams.get('bookingId');

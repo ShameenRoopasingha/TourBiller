@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { authenticateBearerOrSession } from '@/lib/security';
 import { extractHandoverNavigation } from '@/lib/handover-navigation';
 import { checkTierFeature } from '@/lib/subscription';
+import { enforceApiRateLimit } from '@/lib/api-rate-limit';
 
 export async function GET(req: Request) {
     try {
@@ -10,6 +11,14 @@ export async function GET(req: Request) {
         if (!authRes.authenticated) {
             return NextResponse.json({ success: false, error: 'Unauthorized: Driver access required' }, { status: authRes.status });
         }
+
+        const rl = await enforceApiRateLimit(req, {
+            prefix: 'driver-tours',
+            identifier: authRes.userId,
+            maxAttempts: 60,
+            windowMs: 60 * 1000,
+        });
+        if (rl.limited) return rl.response;
         const driverId = authRes.userId;
 
         const driverRecord = await prisma.user.findUnique({

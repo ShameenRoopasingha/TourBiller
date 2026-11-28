@@ -11,6 +11,7 @@ import { BackupButton } from '@/components/BackupButton';
 import { CsvImport } from '@/components/CsvImport';
 import { SubscriptionCancelButton } from '@/components/SubscriptionCancelButton';
 import { ActiveWorkstationsCard } from '@/components/ActiveWorkstationsCard';
+import { MfaSettingsCard } from '@/components/MfaSettingsCard';
 import { getCompanySubscriptionStatus } from '@/lib/subscription';
 import { listActiveWorkstations } from '@/lib/workstations';
 
@@ -239,8 +240,12 @@ async function SettingsContent() {
                     )}
                 </TabsList>
 
-                <TabsContent value="account" className="pt-4">
+                <TabsContent value="account" className="pt-4 space-y-6">
                     <ProfileForm user={{ id: user.id, name: user.name, email: user.email, role: user.role }} />
+                    <MfaSettingsCard
+                        initialEnabled={Boolean(user.mfaEnabled)}
+                        initialBackupCodesRemaining={user.mfaBackupCodes?.length ?? 0}
+                    />
                 </TabsContent>
 
                 {isAdmin && (

@@ -8,6 +8,8 @@ import {
     isAllowedSourceIp,
     isAdminOrOwnerRole,
 } from '@/lib/security';
+import { enforceApiRateLimit } from '@/lib/api-rate-limit';
+import { consumeReplayNonce } from '@/lib/rate-limit';
 
 const onboardingRequestSchema = z.object({
     email: z.string().trim().email().max(254),
@@ -18,6 +20,13 @@ const ONBOARDING_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours for brand-new worksp
 
 export async function POST(request: Request) {
     try {
+        const rl = await enforceApiRateLimit(request, {
+            prefix: 'bitgard-onboarding',
+            maxAttempts: 60,
+            windowMs: 60 * 1000,
+        });
+        if (rl.limited) return rl.response;
+
         if (!isAllowedSourceIp(request, process.env.BITGARD_SYNC_ALLOWED_IPS)) {
             return NextResponse.json(
                 { success: false, error: 'Source IP is not allowlisted for Bitgard sync' },
@@ -33,11 +42,12 @@ export async function POST(request: Request) {
             );
         }
 
+        const deliveryId = request.headers.get('x-bitgard-delivery-id');
         const rawBody = await request.text();
         const verification = verifyBitgardSyncSignature(
             rawBody,
             {
-                deliveryId: request.headers.get('x-bitgard-delivery-id'),
+                deliveryId,
                 timestamp: request.headers.get('x-bitgard-timestamp'),
                 signature: request.headers.get('x-bitgard-signature'),
             },
@@ -49,6 +59,16 @@ export async function POST(request: Request) {
                 { success: false, error: verification.reason },
                 { status: 401 }
             );
+        }
+
+        if (deliveryId) {
+            const fresh = await consumeReplayNonce(`onb:${deliveryId}`);
+            if (!fresh) {
+                return NextResponse.json(
+                    { success: false, error: 'Duplicate Bitgard deliveryId rejected' },
+                    { status: 409 }
+                );
+            }
         }
 
         let rawJson: unknown;

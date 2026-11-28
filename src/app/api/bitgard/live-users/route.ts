@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyBitgardSyncSignature, isAllowedSourceIp } from '@/lib/security';
+import { enforceApiRateLimit } from '@/lib/api-rate-limit';
+import { consumeReplayNonce } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +11,13 @@ const DRIVER_LIVE_WINDOW_MS = 10 * 60 * 1000;
 
 export async function POST(request: Request) {
     try {
+        const rl = await enforceApiRateLimit(request, {
+            prefix: 'bitgard-live-users',
+            maxAttempts: 60,
+            windowMs: 60 * 1000,
+        });
+        if (rl.limited) return rl.response;
+
         if (!isAllowedSourceIp(request, process.env.BITGARD_SYNC_ALLOWED_IPS)) {
             return NextResponse.json(
                 { success: false, error: 'Source IP is not allowlisted for Bitgard telemetry' },
@@ -24,11 +33,12 @@ export async function POST(request: Request) {
             );
         }
 
+        const deliveryId = request.headers.get('x-bitgard-delivery-id');
         const rawBody = await request.text();
         const verification = verifyBitgardSyncSignature(
             rawBody,
             {
-                deliveryId: request.headers.get('x-bitgard-delivery-id'),
+                deliveryId,
                 timestamp: request.headers.get('x-bitgard-timestamp'),
                 signature: request.headers.get('x-bitgard-signature'),
             },
@@ -40,6 +50,16 @@ export async function POST(request: Request) {
                 { success: false, error: verification.reason },
                 { status: 401 }
             );
+        }
+
+        if (deliveryId) {
+            const fresh = await consumeReplayNonce(`live:${deliveryId}`);
+            if (!fresh) {
+                return NextResponse.json(
+                    { success: false, error: 'Duplicate telemetry deliveryId rejected' },
+                    { status: 409 }
+                );
+            }
         }
 
         const now = Date.now();

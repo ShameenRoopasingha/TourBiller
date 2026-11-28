@@ -83,6 +83,8 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [rememberDevice, setRememberDevice] = useState(true);
+    const [mfaRequired, setMfaRequired] = useState(false);
+    const [totpCode, setTotpCode] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [seatConflict, setSeatConflict] = useState<{
@@ -165,6 +167,7 @@ export default function LoginPage() {
                 body: JSON.stringify({
                     email: cleanEmail,
                     password,
+                    ...(totpCode.trim() ? { totpCode: totpCode.trim() } : {}),
                     deviceId,
                     deviceLabel,
                     platform,
@@ -175,11 +178,18 @@ export default function LoginPage() {
             const checkData = (await checkRes.json().catch(() => ({}))) as {
                 allowed?: boolean;
                 code?: string;
+                mfaRequired?: boolean;
                 error?: string;
                 maxWorkstations?: number;
                 planLabel?: string;
                 activeWorkstations?: ActiveWorkstationConflictItem[];
             };
+
+            if (checkData.code === 'MFA_REQUIRED' || checkData.mfaRequired) {
+                setMfaRequired(true);
+                setError('');
+                return;
+            }
 
             if (checkRes.status === 409 && checkData.code === 'WORKSTATION_LIMIT_REACHED') {
                 setSeatConflict({
@@ -198,6 +208,7 @@ export default function LoginPage() {
             const result = await signIn('credentials', {
                 email: cleanEmail,
                 password,
+                ...(totpCode.trim() ? { totpCode: totpCode.trim() } : {}),
                 deviceId,
                 deviceLabel,
                 ...(deactivateWorkstationId ? { deactivateWorkstationId } : {}),
@@ -590,6 +601,44 @@ export default function LoginPage() {
                                     </button>
                                 </div>
                             </div>
+
+                            {mfaRequired && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="space-y-1.5 p-3 rounded-xl bg-emerald-950/35 border border-emerald-500/35"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <label htmlFor="login-totp" className="text-xs font-semibold text-emerald-300 tracking-wide flex items-center gap-1.5">
+                                            <ShieldCheck className="w-3.5 h-3.5" />
+                                            <span>2FA Authenticator / Backup Code</span>
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setMfaRequired(false);
+                                                setTotpCode('');
+                                                setError('');
+                                            }}
+                                            className="text-[11px] text-slate-400 hover:text-slate-200"
+                                        >
+                                            Reset
+                                        </button>
+                                    </div>
+                                    <input
+                                        id="login-totp"
+                                        type="text"
+                                        autoFocus
+                                        autoComplete="one-time-code"
+                                        placeholder="Enter 6-digit code or XXXX-XXXX"
+                                        value={totpCode}
+                                        onChange={(e) => setTotpCode(e.target.value)}
+                                        required
+                                        disabled={loading}
+                                        className="w-full h-10 px-3 rounded-xl bg-[#06070A]/90 border border-emerald-500/40 text-slate-100 placeholder:text-slate-500 text-xs sm:text-sm font-mono tracking-widest focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                                    />
+                                </motion.div>
+                            )}
 
                             {/* Session Preferences */}
                             <div className="flex items-center justify-between pt-0.5">

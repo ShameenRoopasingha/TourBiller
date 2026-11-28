@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { DriverExpenseApiSchema } from '@/lib/validations';
 import { authenticateBearerOrSession } from '@/lib/security';
 import { checkTierFeature } from '@/lib/subscription';
+import { enforceApiRateLimit } from '@/lib/api-rate-limit';
 
 export async function POST(req: Request) {
     try {
@@ -10,6 +11,14 @@ export async function POST(req: Request) {
         if (!authRes.authenticated) {
             return NextResponse.json({ success: false, error: authRes.error }, { status: authRes.status });
         }
+
+        const rl = await enforceApiRateLimit(req, {
+            prefix: 'driver-expenses',
+            identifier: authRes.userId,
+            maxAttempts: 60,
+            windowMs: 60 * 1000,
+        });
+        if (rl.limited) return rl.response;
 
         const { userId: driverId, companyId } = authRes;
         const subCheck = await checkTierFeature(companyId, 'driverMobileSync');

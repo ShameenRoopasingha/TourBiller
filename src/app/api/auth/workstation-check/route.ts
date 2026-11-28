@@ -6,10 +6,12 @@ import { checkDistributedRateLimit } from '@/lib/rate-limit';
 import { getClientIp, hashIpAddress } from '@/lib/crypto-utils';
 import { registerOrSwitchWorkstation } from '@/lib/workstations';
 import { recordAuditLog } from '@/lib/audit';
+import { verifyMfaChallengeAgainstUser } from '@/lib/mfa';
 
 const checkSchema = z.object({
     email: z.string().trim().email().max(254),
     password: z.string().min(1).max(200),
+    totpCode: z.string().trim().max(32).optional(),
     deviceId: z.string().trim().min(8).max(120),
     deviceLabel: z.string().trim().max(120).optional().default('Workstation Browser'),
     platform: z.string().trim().max(80).optional(),
@@ -59,6 +61,44 @@ export async function POST(request: Request) {
                 { allowed: false, error: 'Invalid email or password. Please verify your credentials.' },
                 { status: 401 }
             );
+        }
+
+        if (user.mfaEnabled) {
+            const mfaRl = await checkDistributedRateLimit(
+                `ws-mfa:${user.id}:${clientIp}`,
+                8,
+                15 * 60 * 1000
+            );
+            if (mfaRl.limited) {
+                return NextResponse.json(
+                    { allowed: false, error: 'Too many authenticator attempts. Please try again in 15 minutes.' },
+                    { status: 429 }
+                );
+            }
+
+            if (!parsed.data.totpCode) {
+                return NextResponse.json({
+                    allowed: false,
+                    code: 'MFA_REQUIRED',
+                    mfaRequired: true,
+                });
+            }
+
+            const mfaCheck = verifyMfaChallengeAgainstUser({
+                encryptedSecret: user.mfaSecret,
+                backupHashes: user.mfaBackupCodes || [],
+                code: parsed.data.totpCode,
+            });
+            if (!mfaCheck.valid) {
+                return NextResponse.json(
+                    {
+                        allowed: false,
+                        code: 'INVALID_MFA_CODE',
+                        error: 'Invalid 6-digit authenticator or backup code.',
+                    },
+                    { status: 401 }
+                );
+            }
         }
 
         const userAgent = request.headers.get('user-agent');

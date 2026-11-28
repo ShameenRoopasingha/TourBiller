@@ -8,6 +8,7 @@ import { checkVehicleQuota, isSubscriptionEnforcementEnabled, requireActiveSubsc
 import { reportCompanyVehicleUsage } from '@/lib/vehicle-usage';
 import { recordAuditLog } from '@/lib/audit';
 import { getClientIp, hashIpAddress } from '@/lib/security';
+import { enforceApiRateLimit } from '@/lib/api-rate-limit';
 
 function normalizeVehicleCategory(raw: unknown): VehicleCategory {
   if (typeof raw !== 'string') return VehicleCategory.CAR;
@@ -43,6 +44,14 @@ export async function POST(request: NextRequest) {
     if (!authCheck.authorized || authCheck.companyId !== companyId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
     }
+
+    const rl = await enforceApiRateLimit(request, {
+      prefix: 'company-import',
+      identifier: companyId,
+      maxAttempts: 15,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (rl.limited) return rl.response;
 
     const subCheck = await requireActiveSubscription(companyId);
     if (!subCheck.allowed) {

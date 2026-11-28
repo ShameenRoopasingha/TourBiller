@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-guard';
 import { prisma } from '@/lib/prisma';
 import { sendDocumentEmail } from '@/lib/email-service';
+import { enforceApiRateLimit } from '@/lib/api-rate-limit';
 
 export async function POST(req: Request) {
     try {
@@ -15,6 +16,14 @@ export async function POST(req: Request) {
                 { status: isUnauthorized ? 401 : 403 }
             );
         }
+
+        const rl = await enforceApiRateLimit(req, {
+            prefix: 'email-send',
+            identifier: `${authCheck.companyId}:${authCheck.userId}`,
+            maxAttempts: 30,
+            windowMs: 15 * 60 * 1000,
+        });
+        if (rl.limited) return rl.response;
 
         const body = await req.json();
         const {

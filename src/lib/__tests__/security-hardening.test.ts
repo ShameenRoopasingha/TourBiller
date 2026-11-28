@@ -1192,4 +1192,116 @@ describe('BitgardWeb <-> Vigil Security & Subscription Mitigations', () => {
             expect((await getUsers()).success).toBe(false);
         });
     });
+
+    describe('Phase 6: TOTP MFA Encryption, Single-Use Backup Codes, API Rate Limit & Nonce Replay', () => {
+        it('generates and verifies RFC 6238 TOTP codes, AES-256-GCM secret encryption, and single-use backup codes', async () => {
+            const {
+                generateTotpSecret,
+                decodeBase32,
+                generateTotpTokenForStep,
+                verifyTotpCode,
+                encryptMfaSecret,
+                decryptMfaSecret,
+                generateBackupCodes,
+                verifyMfaChallengeAgainstUser,
+            } = await import('@/lib/mfa');
+
+            const secret = generateTotpSecret();
+            expect(secret.length).toBeGreaterThanOrEqual(32);
+
+            const nowMs = Date.UTC(2026, 10, 28, 12, 0, 0);
+            const step = Math.floor(nowMs / 1000 / 30);
+            const validCode = generateTotpTokenForStep(decodeBase32(secret), step);
+
+            expect(verifyTotpCode(secret, validCode, nowMs)).toBe(true);
+            expect(verifyTotpCode(secret, '000000', nowMs)).toBe(
+                validCode === '000000'
+            );
+
+            const encrypted = encryptMfaSecret(secret);
+            expect(encrypted.startsWith('v1:')).toBe(true);
+            expect(encrypted).not.toContain(secret);
+            expect(decryptMfaSecret(encrypted)).toBe(secret);
+
+            const { plainCodes, hashedCodes } = generateBackupCodes(8);
+            expect(plainCodes).toHaveLength(8);
+            expect(hashedCodes).toHaveLength(8);
+            expect(hashedCodes[0]).not.toBe(plainCodes[0]);
+
+            const challengeOk = verifyMfaChallengeAgainstUser({
+                encryptedSecret: encrypted,
+                backupHashes: hashedCodes,
+                code: plainCodes[0].toLowerCase(),
+            });
+            expect(challengeOk.valid).toBe(true);
+            expect(challengeOk.usedBackupCode).toBe(true);
+            expect(challengeOk.remainingHashes).toHaveLength(7);
+
+            const replayBackup = verifyMfaChallengeAgainstUser({
+                encryptedSecret: encrypted,
+                backupHashes: challengeOk.remainingHashes,
+                code: plainCodes[0],
+            });
+            expect(replayBackup.valid).toBe(false);
+        });
+
+        it('enforces 429 Retry-After rate limits and rejects duplicate Bitgard deliveryId replays (409)', async () => {
+            const { enforceApiRateLimit } = await import('@/lib/api-rate-limit');
+            _clearRateLimitStore();
+
+            for (let i = 0; i < 2; i += 1) {
+                const ok = await enforceApiRateLimit(
+                    new Request('http://localhost/api/test', {
+                        headers: { 'x-forwarded-for': '203.0.113.77' },
+                    }),
+                    { prefix: 'phase6-rl', maxAttempts: 2, windowMs: 60_000 }
+                );
+                expect(ok.limited).toBe(false);
+            }
+
+            const blocked = await enforceApiRateLimit(
+                new Request('http://localhost/api/test', {
+                    headers: { 'x-forwarded-for': '203.0.113.77' },
+                }),
+                { prefix: 'phase6-rl', maxAttempts: 2, windowMs: 60_000 }
+            );
+            expect(blocked.limited).toBe(true);
+            if (blocked.limited) {
+                expect(blocked.response.status).toBe(429);
+                expect(blocked.response.headers.get('Retry-After')).toBeTruthy();
+            }
+
+            // Duplicate deliveryId on /api/bitgard/onboarding-token is rejected with 409
+            process.env.BITGARD_SYNC_SECRET = TEST_SYNC_SECRET;
+            const body = JSON.stringify({
+                email: 'replay-check@tours.lk',
+                sessionId: 'cks_replay_1',
+            });
+            (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+                id: 'usr-1',
+                email: 'replay-check@tours.lk',
+                role: 'ADMIN',
+                tokenVersion: 1,
+                createdAt: new Date(),
+            });
+
+            const firstCall = await bitgardOnboardingPOST(
+                new Request('http://localhost/api/bitgard/onboarding-token', {
+                    method: 'POST',
+                    headers: makeBitgardSyncHeaders(body, TEST_SYNC_SECRET, 'onb_replay_same'),
+                    body,
+                })
+            );
+            expect(firstCall.status).toBe(200);
+
+            const secondCall = await bitgardOnboardingPOST(
+                new Request('http://localhost/api/bitgard/onboarding-token', {
+                    method: 'POST',
+                    headers: makeBitgardSyncHeaders(body, TEST_SYNC_SECRET, 'onb_replay_same'),
+                    body,
+                })
+            );
+            expect(secondCall.status).toBe(409);
+        });
+    });
 });

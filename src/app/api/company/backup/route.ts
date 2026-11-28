@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth-guard';
 import { recordAuditLog } from '@/lib/audit';
 import { getClientIp, hashIpAddress } from '@/lib/security';
+import { enforceApiRateLimit } from '@/lib/api-rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +19,14 @@ export async function GET(request: NextRequest) {
     if (!authCheck.authorized || authCheck.companyId !== companyId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
+
+    const rl = await enforceApiRateLimit(request, {
+      prefix: 'company-backup',
+      identifier: companyId,
+      maxAttempts: 15,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (rl.limited) return rl.response;
 
     // අදාල Business එකේ සියලුම data DB එකෙන් ගන්න
     const businessInfo = await prisma.businessProfile.findUnique({ where: { id: companyId } });
