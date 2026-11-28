@@ -25,6 +25,7 @@ export default auth((req) => {
         pathname.startsWith('/api/keepalive') ||
         pathname.startsWith('/api/bitgard/subscription-sync') ||
         pathname.startsWith('/api/bitgard/onboarding-token') ||
+        pathname.startsWith('/api/bitgard/live-users') ||
         pathname.startsWith('/api/cron') || // Vercel Cron uses Bearer token auth
         pathname.startsWith('/api/v1/health') || // Health check & load telemetry
         pathname.startsWith('/api/health') || // Base health check
